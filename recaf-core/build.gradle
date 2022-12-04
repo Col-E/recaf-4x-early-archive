@@ -1,0 +1,7 @@
+apply plugin: 'java-library'
+
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+}

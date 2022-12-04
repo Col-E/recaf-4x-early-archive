@@ -1,0 +1,74 @@
+plugins {
+    id "com.github.ben-manes.versions" version "0.42.0" apply false
+    id 'gov.tak.gradle.plugins.coverage-report-aggregator' version '1.2.0'
+}
+
+allprojects {
+    group 'me.coley'
+    version '3.0.0-SNAPSHOT'
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'jacoco'
+    apply plugin: 'checkstyle'
+    apply plugin: 'com.github.ben-manes.versions'
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+
+    // ========================== COMPILE ==========================
+
+    // https://docs.gradle.org/current/userguide/toolchains.html
+    // gradlew -q javaToolchains - see the list of detected toolchains.
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(11)
+        }
+    }
+
+    checkstyleMain.exclude '**/generated-src/**'
+
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+        options.incremental = true
+    }
+
+    // Append options for unchecked/deprecation
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile) {
+            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+        }
+    }
+
+    // ========================== TESTING ==========================
+
+    test {
+        useJUnitPlatform()
+
+        systemProperty 'junit.jupiter.execution.parallel.enabled', true
+        systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
+
+        testLogging {
+            events "passed", "skipped", "failed"
+        }
+    }
+
+    tasks.withType(Test).configureEach {
+        reports.html.required = false
+        reports.junitXml.required = false
+
+        jacoco {
+            includes = ['me/coley/recaf/**']
+        }
+
+        finalizedBy jacocoTestReport
+    }
+}
+
+jacocoAggregation {
+    // Ensure HTML report is always generated
+    outputHtml = true
+}
