@@ -3,7 +3,7 @@ package software.coley.recaf.info.properties.builtin;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.properties.BasicProperty;
 import software.coley.recaf.info.properties.PropertyContainer;
-import software.coley.recaf.workspace.model.WorkspaceResource;
+import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 /**
  * Built in property associating a property container info-type with a {@link WorkspaceResource}.
