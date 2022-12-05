@@ -5,3 +5,7 @@ repositories {
         dirs 'libs'
     }
 }
+
+dependencies {
+    api cdi_impl
+}

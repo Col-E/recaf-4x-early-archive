@@ -4,7 +4,7 @@ plugins {
 }
 
 allprojects {
-    group 'me.coley'
+    group 'software.coley'
     version '3.0.0-SNAPSHOT'
 }
 
@@ -18,6 +18,10 @@ subprojects {
         mavenLocal()
         mavenCentral()
     }
+
+    // ======================= DEPENDENCIES ========================
+
+    apply from: rootProject.file('dependencies.gradle')
 
     // ========================== COMPILE ==========================
 
@@ -54,6 +58,12 @@ subprojects {
         testLogging {
             events "passed", "skipped", "failed"
         }
+    }
+
+    dependencies {
+        testImplementation junit_api
+        testImplementation junit_params
+        testRuntimeOnly junit_engine
     }
 
     tasks.withType(Test).configureEach {
