@@ -240,4 +240,10 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 	public Set<Entry<String, I>> entrySet() {
 		return backing.entrySet();
 	}
+
+	@Override
+	public void close() {
+		listeners.clear();
+		clear();
+	}
 }

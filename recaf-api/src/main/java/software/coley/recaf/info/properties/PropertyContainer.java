@@ -33,6 +33,12 @@ public interface PropertyContainer {
 
 	/**
 	 * @param key
+	 * 		Key of property to remove.
+	 */
+	void removeProperty(String key);
+
+	/**
+	 * @param key
 	 * 		Property key.
 	 * @param <V>
 	 * 		Property value type.

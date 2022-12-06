@@ -2,6 +2,7 @@ package software.coley.recaf.workspace.model.bundle;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.info.Info;
 
 import java.util.Map;
@@ -16,7 +17,7 @@ import java.util.Stack;
  *
  * @author Matt Coley
  */
-public interface Bundle<I extends Info> extends Map<String, I>, Iterable<I> {
+public interface Bundle<I extends Info> extends Map<String, I>, Iterable<I>, Closing {
 	/**
 	 * History stack for the given item key.
 	 *

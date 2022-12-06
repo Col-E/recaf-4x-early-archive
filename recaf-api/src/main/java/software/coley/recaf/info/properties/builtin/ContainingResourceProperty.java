@@ -13,8 +13,6 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 public class ContainingResourceProperty extends BasicProperty<WorkspaceResource> {
 	public static final String KEY = "associated-workspace-resource";
 
-	// TODO: When creating a new workspace, iterate over all info objects and assign this property
-
 	/**
 	 * @param value
 	 * 		Workspace resource
@@ -31,6 +29,14 @@ public class ContainingResourceProperty extends BasicProperty<WorkspaceResource>
 	 */
 	public static void set(PropertyContainer container, WorkspaceResource resource) {
 		container.setProperty(KEY, new ContainingResourceProperty(resource));
+	}
+
+	/**
+	 * @param container
+	 * 		Container to disassociate with any resource.
+	 */
+	public static void remove(PropertyContainer container) {
+		container.removeProperty(KEY);
 	}
 
 	/**

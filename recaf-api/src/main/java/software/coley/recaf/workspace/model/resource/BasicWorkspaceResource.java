@@ -1,8 +1,12 @@
 package software.coley.recaf.workspace.model.resource;
 
+import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.info.Info;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.properties.PropertyContainer;
+import software.coley.recaf.info.properties.builtin.ContainingResourceProperty;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.BundleListener;
@@ -62,6 +66,7 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 		this.androidClassBundles = androidClassBundles;
 		this.fileBundles = fileBundles;
 		setupListenerDelegation();
+		linkContentsToResource();
 	}
 
 	/**
@@ -118,6 +123,40 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 				fileListeners.forEach(l -> l.onRemoveFile(resource, bundle, file));
 			}
 		}));
+	}
+
+	/**
+	 * Ensure {@link ContainingResourceProperty} is assigned to all {@link Info} values within this resource.
+	 */
+	private void linkContentsToResource() {
+		// Link all existing items in all contained bundles.
+		bundleStream()
+				.flatMap(bundle -> bundle.values().stream())
+				.filter(info -> info instanceof PropertyContainer)
+				.forEach(info -> ContainingResourceProperty.set((PropertyContainer) info, this));
+
+		// Register listener to ensure all resources on this workspace have the built-in property
+		// assigned for quick lookup of info-to-resource.
+		WorkspaceResource resource = this;
+		BundleListener<Info> bundleListener = new BundleListener<>() {
+			@Override
+			public void onNewItem(String key, Info info) {
+				if (info instanceof PropertyContainer)
+					ContainingResourceProperty.set((PropertyContainer) info, resource);
+			}
+
+			@Override
+			public void onUpdateItem(String key, Info oldInfo, Info newInfo) {
+				if (newInfo instanceof PropertyContainer)
+					ContainingResourceProperty.set((PropertyContainer) newInfo, resource);
+			}
+
+			@Override
+			public void onRemoveItem(String key, Info info) {
+				// no-op
+			}
+		};
+		bundleStream().forEach(bundle -> bundle.addBundleListener(bundleListener));
 	}
 
 	@Override
@@ -183,9 +222,11 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 	 */
 	@Override
 	public void close() {
+		// Clear all listeners
 		jvmClassListeners.clear();
 		androidClassListeners.clear();
 		fileListeners.clear();
+		bundleStream().forEach(Closing::close);
 	}
 
 	@Override

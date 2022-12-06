@@ -2,13 +2,18 @@ package software.coley.recaf.workspace.model.resource;
 
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.behavior.Closing;
+import software.coley.recaf.info.Info;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
+import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
 import java.util.Map;
 import java.util.stream.Stream;
+
+import static java.util.stream.Stream.concat;
+import static java.util.stream.Stream.of;
 
 /**
  * Component of a {@link Workspace}. Contain classes and files.
@@ -84,7 +89,7 @@ public interface WorkspaceResource extends Closing {
 	 * @return Stream of all JVM class bundles in the resource.
 	 */
 	default Stream<JvmClassBundle> jvmClassBundleStream() {
-		return Stream.concat(Stream.of(getPrimaryClassBundle()), getJvmClassBundles().values().stream());
+		return concat(of(getPrimaryClassBundle()), getJvmClassBundles().values().stream());
 	}
 
 	/**
@@ -98,7 +103,18 @@ public interface WorkspaceResource extends Closing {
 	 * @return Stream of all file bundles in the resource.
 	 */
 	default Stream<FileBundle> fileBundleStream() {
-		return Stream.concat(Stream.of(getPrimaryFileBundle()), getFileBundles().values().stream());
+		return concat(of(getPrimaryFileBundle()), getFileBundles().values().stream());
+	}
+
+	/**
+	 * @return Stream of all bundles in the resource.
+	 */
+	@SuppressWarnings("unchecked")
+	default <I extends Info> Stream<Bundle<I>> bundleStream() {
+		// Cast to object is a hack to allow generic usage of this method with <Info>.
+		// Using <? extends Info> prevents <Info> usage.
+		return (Stream<Bundle<I>>) (Object)
+				concat(concat(jvmClassBundleStream(), androidClassBundleStream()), fileBundleStream());
 	}
 
 	/**
