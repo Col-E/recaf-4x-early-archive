@@ -1,12 +1,15 @@
 package software.coley.recaf.workspace.model.resource;
 
+import software.coley.recaf.info.AndroidClassInfo;
+import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
+import software.coley.recaf.workspace.model.bundle.BundleListener;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Basic workspace resource implementation.
@@ -15,6 +18,9 @@ import java.util.Objects;
  * @see WorkspaceResourceBuilder Helper for creating instances.
  */
 public class BasicWorkspaceResource implements WorkspaceResource {
+	private final List<ResourceJvmClassListener> jvmClassListeners = new ArrayList<>();
+	private final List<ResourceAndroidClassListener> androidClassListeners = new ArrayList<>();
+	private final List<ResourceFileListener> fileListeners = new ArrayList<>();
 	private final JvmClassBundle primaryJvmClassBundle;
 	private final FileBundle primaryFileBundle;
 	private final Map<String, JvmClassBundle> jvmClassBundles;
@@ -55,6 +61,63 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 		this.jvmClassBundles = jvmClassBundles;
 		this.androidClassBundles = androidClassBundles;
 		this.fileBundles = fileBundles;
+		setupListenerDelegation();
+	}
+
+	/**
+	 * Add listeners to all bundles contained in the resource,
+	 * which forward to the appropriate resource-level listener types.
+	 */
+	private void setupListenerDelegation() {
+		WorkspaceResource resource = this;
+		jvmClassBundleStream().forEach(bundle -> bundle.addBundleListener(new BundleListener<>() {
+			@Override
+			public void onNewItem(String key, JvmClassInfo cls) {
+				jvmClassListeners.forEach(l -> l.onNewClass(resource, bundle, cls));
+			}
+
+			@Override
+			public void onUpdateItem(String key, JvmClassInfo oldCls, JvmClassInfo newCls) {
+				jvmClassListeners.forEach(l -> l.onUpdateClass(resource, bundle, oldCls, newCls));
+			}
+
+			@Override
+			public void onRemoveItem(String key, JvmClassInfo cls) {
+				jvmClassListeners.forEach(l -> l.onRemoveClass(resource, bundle, cls));
+			}
+		}));
+		androidClassBundleStream().forEach(bundle -> bundle.addBundleListener(new BundleListener<>() {
+			@Override
+			public void onNewItem(String key, AndroidClassInfo cls) {
+				androidClassListeners.forEach(l -> l.onNewClass(resource, bundle, cls));
+			}
+
+			@Override
+			public void onUpdateItem(String key, AndroidClassInfo oldCls, AndroidClassInfo newCls) {
+				androidClassListeners.forEach(l -> l.onUpdateClass(resource, bundle, oldCls, newCls));
+			}
+
+			@Override
+			public void onRemoveItem(String key, AndroidClassInfo cls) {
+				androidClassListeners.forEach(l -> l.onRemoveClass(resource, bundle, cls));
+			}
+		}));
+		fileBundleStream().forEach(bundle -> bundle.addBundleListener(new BundleListener<>() {
+			@Override
+			public void onNewItem(String key, FileInfo file) {
+				fileListeners.forEach(l -> l.onNewFile(resource, bundle, file));
+			}
+
+			@Override
+			public void onUpdateItem(String key, FileInfo oldFile, FileInfo newFile) {
+				fileListeners.forEach(l -> l.onUpdateFile(resource, bundle, oldFile, newFile));
+			}
+
+			@Override
+			public void onRemoveItem(String key, FileInfo file) {
+				fileListeners.forEach(l -> l.onRemoveFile(resource, bundle, file));
+			}
+		}));
 	}
 
 	@Override
@@ -83,6 +146,46 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 	public Map<String, FileBundle> getFileBundles() {
 		if (fileBundles == null) return Collections.emptyMap();
 		return fileBundles;
+	}
+
+	@Override
+	public void addResourceJvmClassListener(ResourceJvmClassListener listener) {
+		jvmClassListeners.add(listener);
+	}
+
+	@Override
+	public void removeResourceJvmClassListener(ResourceJvmClassListener listener) {
+		jvmClassListeners.remove(listener);
+	}
+
+	@Override
+	public void addResourceAndroidClassListener(ResourceAndroidClassListener listener) {
+		androidClassListeners.add(listener);
+	}
+
+	@Override
+	public void removeResourceAndroidClassListener(ResourceAndroidClassListener listener) {
+		androidClassListeners.remove(listener);
+	}
+
+	@Override
+	public void addResourceFileListener(ResourceFileListener listener) {
+		fileListeners.add(listener);
+	}
+
+	@Override
+	public void removeResourceFileListener(ResourceFileListener listener) {
+		fileListeners.remove(listener);
+	}
+
+	/**
+	 * Called by containing {@link Workspace#close()}.
+	 */
+	@Override
+	public void close() {
+		jvmClassListeners.clear();
+		androidClassListeners.clear();
+		fileListeners.clear();
 	}
 
 	@Override

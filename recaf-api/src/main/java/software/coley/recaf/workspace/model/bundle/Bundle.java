@@ -7,7 +7,6 @@ import software.coley.recaf.info.Info;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
-import java.util.TreeSet;
 
 /**
  * Base bundle type.
@@ -19,15 +18,6 @@ import java.util.TreeSet;
  */
 public interface Bundle<I extends Info> extends Map<String, I>, Iterable<I> {
 	/**
-	 * History contains a stack of prior states of items.
-	 * If an item has not been modified there is no entry in this map.
-	 *
-	 * @return Map of historical states of items within this bundle.
-	 */
-	@Nonnull
-	Map<String, Stack<I>> getHistory();
-
-	/**
 	 * History stack for the given item key.
 	 *
 	 * @param key
@@ -36,23 +26,48 @@ public interface Bundle<I extends Info> extends Map<String, I>, Iterable<I> {
 	 * @return History of item.
 	 */
 	@Nullable
-	default Stack<I> getHistoryStack(String key) {
-		return getHistory().get(key);
-	}
+	Stack<I> getHistory(String key);
 
 	/**
 	 * @return Keys of items that have been modified <i>(Containing any history values)</i>.
 	 */
 	@Nonnull
-	default Set<String> getDirtyItems() {
-		Set<String> dirty = new TreeSet<>();
-		getHistory().forEach((key, itemHistory) -> {
-			if (itemHistory.size() > 1) {
-				dirty.add(key);
-			}
-		});
-		return dirty;
-	}
+	Set<String> getDirtyKeys();
+
+	/**
+	 * @param key Item key.
+	 * @return {@code true} if the item has a history. Any such item will also be present in {@link #getDirtyKeys()}.
+	 */
+	boolean hasHistory(String key);
+
+	/**
+	 * If the given item isn't part of the bundle, it is added and no historical record is kept.
+	 * Otherwise, the existing item's history is incremented.
+	 *
+	 * @param info Item to update.
+	 */
+	void incrementHistory(I info);
+
+	/**
+	 * Decrement the history of the value associated with the key.
+	 * The value removed in this operation then replaces the value of the item map.
+	 *
+	 * @param key
+	 * 		Item key.
+	 */
+	void decrementHistory(String key);
+
+	/**
+	 * @param listener
+	 * 		Listener to add.
+	 */
+	void addBundleListener(BundleListener<I> listener);
+
+	/**
+	 * @param listener
+	 * 		Listener to remove.
+	 */
+	void removeBundleListener(BundleListener<I> listener);
 
 	// TODO: Copy from 'ResourceItemMap'
 	//  - Use custom listeners here

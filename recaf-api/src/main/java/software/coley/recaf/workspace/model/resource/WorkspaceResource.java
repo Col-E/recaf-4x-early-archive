@@ -2,12 +2,13 @@ package software.coley.recaf.workspace.model.resource;
 
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.behavior.Closing;
+import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
-import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * Component of a {@link Workspace}. Contain classes and files.
@@ -80,19 +81,94 @@ public interface WorkspaceResource extends Closing {
 	Map<String, FileBundle> getFileBundles();
 
 	/**
+	 * @return Stream of all JVM class bundles in the resource.
+	 */
+	default Stream<JvmClassBundle> jvmClassBundleStream() {
+		return Stream.concat(Stream.of(getPrimaryClassBundle()), getJvmClassBundles().values().stream());
+	}
+
+	/**
+	 * @return Stream of all Android class bundles in the resource.
+	 */
+	default Stream<AndroidClassBundle> androidClassBundleStream() {
+		return getAndroidClassBundles().values().stream();
+	}
+
+	/**
+	 * @return Stream of all file bundles in the resource.
+	 */
+	default Stream<FileBundle> fileBundleStream() {
+		return Stream.concat(Stream.of(getPrimaryFileBundle()), getFileBundles().values().stream());
+	}
+
+	/**
+	 * @param listener
+	 * 		Generic object to add as any supported listener type.
+	 */
+	default void addListener(Object listener) {
+		if (listener instanceof ResourceJvmClassListener)
+			addResourceJvmClassListener((ResourceJvmClassListener) listener);
+		if (listener instanceof ResourceAndroidClassListener)
+			addResourceAndroidClassListener((ResourceAndroidClassListener) listener);
+		if (listener instanceof ResourceFileListener)
+			addResourceFileListener((ResourceFileListener) listener);
+	}
+
+	/**
+	 * @param listener
+	 * 		Generic object to remove as any supported listener type.
+	 */
+	default void removeListener(Object listener) {
+		if (listener instanceof ResourceJvmClassListener)
+			removeResourceJvmClassListener((ResourceJvmClassListener) listener);
+		if (listener instanceof ResourceAndroidClassListener)
+			removeResourceAndroidClassListener((ResourceAndroidClassListener) listener);
+		if (listener instanceof ResourceFileListener)
+			removeResourceFileListener((ResourceFileListener) listener);
+	}
+
+	/**
+	 * @param listener
+	 * 		Listener to add.
+	 */
+	void addResourceJvmClassListener(ResourceJvmClassListener listener);
+
+	/**
+	 * @param listener
+	 * 		Listener to remove.
+	 */
+	void removeResourceJvmClassListener(ResourceJvmClassListener listener);
+
+	/**
+	 * @param listener
+	 * 		Listener to add.
+	 */
+	void addResourceAndroidClassListener(ResourceAndroidClassListener listener);
+
+	/**
+	 * @param listener
+	 * 		Listener to remove.
+	 */
+	void removeResourceAndroidClassListener(ResourceAndroidClassListener listener);
+
+	/**
+	 * @param listener
+	 * 		Listener to add.
+	 */
+	void addResourceFileListener(ResourceFileListener listener);
+
+	/**
+	 * @param listener
+	 * 		Listener to remove.
+	 */
+	void removeResourceFileListener(ResourceFileListener listener);
+
+	/**
 	 * @return {@code true} when this resource represents an internally managed resource within a {@link Workspace}.
 	 * These resources are not explicitly created by users and thus should not be visible to them. However, they will
 	 * supplement workspace capabilities as any other supporting resource.
 	 */
 	default boolean isInternal() {
 		return false;
-	}
-
-	/**
-	 * Called by containing {@link Workspace#close()}.
-	 */
-	@Override
-	default void close() {
-		// TODO: Clear listeners
 	}
 }

@@ -3,4 +3,5 @@ apply plugin: 'java-library'
 dependencies {
     api asm
     api cdi_api
+    api logging_impl
 }
