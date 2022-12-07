@@ -89,6 +89,11 @@ public abstract class BasicMember implements ClassMember {
 	}
 
 	@Override
+	public void removeProperty(String key) {
+		properties.removeProperty(key);
+	}
+
+	@Override
 	public Map<String, Property<?>> getProperties() {
 		return properties.getProperties();
 	}

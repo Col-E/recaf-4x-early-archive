@@ -36,6 +36,12 @@ public class BasicPropertyContainer implements PropertyContainer {
 		properties.put(property.key(), property);
 	}
 
+	@Override
+	public void removeProperty(String key) {
+		if (properties != null)
+			properties.remove(key);
+	}
+
 	@Nonnull
 	public Map<String, Property<?>> getProperties() {
 		if (properties == null)

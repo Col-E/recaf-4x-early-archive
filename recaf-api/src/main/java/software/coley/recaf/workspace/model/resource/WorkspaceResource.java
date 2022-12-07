@@ -1,6 +1,7 @@
 package software.coley.recaf.workspace.model.resource;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.workspace.model.Workspace;
@@ -10,6 +11,7 @@ import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.stream.Stream;
 
 import static java.util.stream.Stream.concat;
@@ -24,9 +26,8 @@ public interface WorkspaceResource extends Closing {
 	/**
 	 * Contains the classes within the resource.
 	 * <br>
-	 * For JAR files, these are the standard classes you'd expect.
-	 * If the JAR has version-specific classes, those will be in versioned bundles
-	 * accessible via {@link #getJvmClassBundles()}.
+	 * For JAR files, copies of these classes can also be provided for specific JVM versions, which are available
+	 * via {@link #getVersionedJvmClassBundles()}.
 	 * <br>
 	 * For Android files (APK) this will always be empty.
 	 * Android APK's classes reside in embedded dex files, which are accessible via {@link #getAndroidClassBundles()}.
@@ -34,29 +35,16 @@ public interface WorkspaceResource extends Closing {
 	 * @return Immediate classes within the resource.
 	 */
 	@Nonnull
-	JvmClassBundle getPrimaryClassBundle();
+	JvmClassBundle getJvmClassBundle();
 
 	/**
-	 * @return Immediate files within the resource.
-	 */
-	@Nonnull
-	FileBundle getPrimaryFileBundle();
-
-	/**
-	 * Contains additional class bundles.
-	 * <br>
-	 * For JAR files:
-	 * <ul>
-	 *     <li>If there is another JAR within the JAR containing classes,
-	 *     the inner JAR becomes a bundle with its classes available here.</li>
-	 *     <li>If the JAR contains versioned content, each version scope
-	 *     becomes a bundle with its classes available here</li>
-	 * </ul>
+	 * Contains additional class bundles for versioned classes.
+	 * These exist in multi-release JAR files <i>(New feature to Java 9+)</i>.
 	 *
-	 * @return Map of JVM class bundles.
+	 * @return Map of versions, to JVM class bundles.
 	 */
 	@Nonnull
-	Map<String, JvmClassBundle> getJvmClassBundles();
+	NavigableMap<Integer, JvmClassBundle> getVersionedJvmClassBundles();
 
 	/**
 	 * Contains Android class bundles.
@@ -72,49 +60,95 @@ public interface WorkspaceResource extends Closing {
 	// TODO: Specific Android resource bundle for 'resources.arsc'?
 
 	/**
-	 * Contains file bundles.
-	 * <br>
-	 * For JAR/ZIP files:
-	 * <ul>
-	 *      <li>If there is another JAR/ZIP within the JAR/ZIP containing files,
-	 * 	     the inner JAR/ZIP becomes a bundle with its files available here.</li>
-	 * </ul>
-	 *
-	 * @return Map of file bundles.
+	 * @return Immediate files within the resource.
 	 */
 	@Nonnull
-	Map<String, FileBundle> getFileBundles();
+	FileBundle getFileBundle();
 
 	/**
-	 * @return Stream of all JVM class bundles in the resource.
+	 * Suppose you have a Spring boot JAR that has a structure like the following:
+	 * <ul>
+	 *     <li>WEB-INF/lib-provided/BundledLibrary.jar</li>
+	 *     <li>com.example.Launcher.class</li>
+	 * </ul>
+	 * <p>
+	 * If you open the boot JAR in Recaf you would probably want to be able to inspect the contents of
+	 * {@code BundledLibrary.jar}. So for that sort of case we extract those containers into their own resources.
+	 *
+	 * @return Map of container files <i>(JAR/ZIP/WAR/etc)</i> represented as their own workspace resources.
+	 */
+	@Nonnull
+	Map<String, WorkspaceResource> getEmbeddedResources();
+
+	/**
+	 * @return Stream of all immediate JVM class bundles in the resource.
 	 */
 	default Stream<JvmClassBundle> jvmClassBundleStream() {
-		return concat(of(getPrimaryClassBundle()), getJvmClassBundles().values().stream());
+		return of(getJvmClassBundle());
 	}
 
 	/**
-	 * @return Stream of all Android class bundles in the resource.
+	 * @return Stream of all JVM class bundles in the resource, and in any embedded resources
+	 */
+	default Stream<JvmClassBundle> jvmClassBundleStreamRecursive() {
+		return concat(of(getJvmClassBundle()), getEmbeddedResources().values().stream()
+				.flatMap(WorkspaceResource::jvmClassBundleStream));
+	}
+
+	/**
+	 * @return Stream of all immediate Android class bundles in the resource.
 	 */
 	default Stream<AndroidClassBundle> androidClassBundleStream() {
 		return getAndroidClassBundles().values().stream();
 	}
 
 	/**
-	 * @return Stream of all file bundles in the resource.
+	 * @return Stream of all Android class bundles in the resource, and in any embedded resources.
 	 */
-	default Stream<FileBundle> fileBundleStream() {
-		return concat(of(getPrimaryFileBundle()), getFileBundles().values().stream());
+	default Stream<AndroidClassBundle> androidClassBundleStreamRecursive() {
+		return concat(getAndroidClassBundles().values().stream(), getEmbeddedResources().values().stream()
+				.flatMap(WorkspaceResource::androidClassBundleStreamRecursive));
 	}
 
 	/**
-	 * @return Stream of all bundles in the resource.
+	 * @return Stream of all immediate file bundles in the resource.
+	 */
+	default Stream<FileBundle> fileBundleStream() {
+		return of(getFileBundle());
+	}
+
+	/**
+	 * @return Stream of all file bundles in the resource, and in any embedded resources.
+	 */
+	default Stream<FileBundle> fileBundleStreamRecursive() {
+		return concat(of(getFileBundle()), getEmbeddedResources().values().stream()
+				.flatMap(WorkspaceResource::fileBundleStreamRecursive));
+	}
+
+	/**
+	 * @return Stream of all immediate bundles in the resource.
 	 */
 	@SuppressWarnings("unchecked")
 	default <I extends Info> Stream<Bundle<I>> bundleStream() {
 		// Cast to object is a hack to allow generic usage of this method with <Info>.
 		// Using <? extends Info> prevents <Info> usage.
 		return (Stream<Bundle<I>>) (Object)
-				concat(concat(jvmClassBundleStream(), androidClassBundleStream()), fileBundleStream());
+				concat(concat(jvmClassBundleStream(),
+								androidClassBundleStream()),
+						fileBundleStream());
+	}
+
+	/**
+	 * @return Stream of all bundles in the resource, and in any embedded resources.
+	 */
+	@SuppressWarnings("unchecked")
+	default <I extends Info> Stream<Bundle<I>> bundleStreamRecursive() {
+		// Cast to object is a hack to allow generic usage of this method with <Info>.
+		// Using <? extends Info> prevents <Info> usage.
+		return (Stream<Bundle<I>>) (Object)
+				concat(concat(jvmClassBundleStreamRecursive(),
+								androidClassBundleStreamRecursive()),
+						fileBundleStreamRecursive());
 	}
 
 	/**
@@ -178,6 +212,20 @@ public interface WorkspaceResource extends Closing {
 	 * 		Listener to remove.
 	 */
 	void removeResourceFileListener(ResourceFileListener listener);
+
+	/**
+	 * @return Containing resource of this one if this represents a <i>"JAR in JAR"</i> kind of situation.
+	 * May be {@code null} for a root-resource.
+	 */
+	@Nullable
+	WorkspaceResource getContainingResource();
+
+	/**
+	 * @return {@code true} when there is another resource that contains this one.
+	 */
+	default boolean isEmbeddedResource() {
+		return getContainingResource() != null;
+	}
 
 	/**
 	 * @return {@code true} when this resource represents an internally managed resource within a {@link Workspace}.

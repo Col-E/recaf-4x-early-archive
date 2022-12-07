@@ -8,18 +8,16 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 
-/**
- * Builder for {@link WorkspaceResource}.
- *
- * @author Matt Coley
- */
 public class WorkspaceResourceBuilder {
-	private JvmClassBundle primaryJvmClassBundle;
-	private FileBundle primaryFileBundle;
-	private Map<String, JvmClassBundle> jvmClassBundles = Collections.emptyMap();
+	private JvmClassBundle jvmClassBundle;
+	private NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles = new TreeMap<>();
 	private Map<String, AndroidClassBundle> androidClassBundles = Collections.emptyMap();
-	private Map<String, FileBundle> fileBundles = Collections.emptyMap();
+	private FileBundle fileBundle;
+	private Map<String, WorkspaceResource> embeddedResources = Collections.emptyMap();
+	private WorkspaceResource containingResource;
 	private Path filePath;
 	private URI uri;
 
@@ -39,30 +37,26 @@ public class WorkspaceResourceBuilder {
 	 * 		Primary files.
 	 */
 	public WorkspaceResourceBuilder(JvmClassBundle classes, FileBundle files) {
-		withPrimaryJvmClassBundle(classes);
-		withPrimaryFileBundle(files);
+		withJvmClassBundle(classes);
+		withFileBundle(files);
 	}
 
 	private WorkspaceResourceBuilder(WorkspaceResourceBuilder other) {
-		withPrimaryJvmClassBundle(other.getPrimaryJvmClassBundle());
-		withPrimaryFileBundle(other.getPrimaryFileBundle());
-		withJvmClassBundles(other.getJvmClassBundles());
+		withJvmClassBundle(other.getJvmClassBundle());
 		withAndroidClassBundles(other.getAndroidClassBundles());
-		withFileBundles(other.getFileBundles());
+		withVersionedJvmClassBundles(other.getVersionedJvmClassBundles());
+		withFileBundle(other.getFileBundle());
+		withEmbeddedResources(other.getEmbeddedResources());
+		withContainingResource(other.getContainingResource());
 	}
 
-	public WorkspaceResourceBuilder withPrimaryJvmClassBundle(JvmClassBundle primaryJvmClassBundle) {
-		this.primaryJvmClassBundle = primaryJvmClassBundle;
+	public WorkspaceResourceBuilder withJvmClassBundle(JvmClassBundle primaryJvmClassBundle) {
+		this.jvmClassBundle = primaryJvmClassBundle;
 		return this;
 	}
 
-	public WorkspaceResourceBuilder withPrimaryFileBundle(FileBundle primaryFileBundle) {
-		this.primaryFileBundle = primaryFileBundle;
-		return this;
-	}
-
-	public WorkspaceResourceBuilder withJvmClassBundles(Map<String, JvmClassBundle> jvmClassBundles) {
-		this.jvmClassBundles = jvmClassBundles;
+	public WorkspaceResourceBuilder withVersionedJvmClassBundles(NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles) {
+		this.versionedJvmClassBundles = versionedJvmClassBundles;
 		return this;
 	}
 
@@ -71,8 +65,18 @@ public class WorkspaceResourceBuilder {
 		return this;
 	}
 
-	public WorkspaceResourceBuilder withFileBundles(Map<String, FileBundle> fileBundles) {
-		this.fileBundles = fileBundles;
+	public WorkspaceResourceBuilder withFileBundle(FileBundle primaryFileBundle) {
+		this.fileBundle = primaryFileBundle;
+		return this;
+	}
+
+	public WorkspaceResourceBuilder withEmbeddedResources(Map<String, WorkspaceResource> embeddedResources) {
+		this.embeddedResources = embeddedResources;
+		return this;
+	}
+
+	public WorkspaceResourceBuilder withContainingResource(WorkspaceResource containingResource) {
+		this.containingResource = containingResource;
 		return this;
 	}
 
@@ -96,24 +100,28 @@ public class WorkspaceResourceBuilder {
 		};
 	}
 
-	public JvmClassBundle getPrimaryJvmClassBundle() {
-		return primaryJvmClassBundle;
+	public JvmClassBundle getJvmClassBundle() {
+		return jvmClassBundle;
 	}
 
-	public FileBundle getPrimaryFileBundle() {
-		return primaryFileBundle;
-	}
-
-	public Map<String, JvmClassBundle> getJvmClassBundles() {
-		return jvmClassBundles;
+	public NavigableMap<Integer, JvmClassBundle> getVersionedJvmClassBundles() {
+		return versionedJvmClassBundles;
 	}
 
 	public Map<String, AndroidClassBundle> getAndroidClassBundles() {
 		return androidClassBundles;
 	}
 
-	public Map<String, FileBundle> getFileBundles() {
-		return fileBundles;
+	public FileBundle getFileBundle() {
+		return fileBundle;
+	}
+
+	public Map<String, WorkspaceResource> getEmbeddedResources() {
+		return embeddedResources;
+	}
+
+	public WorkspaceResource getContainingResource() {
+		return containingResource;
 	}
 
 	public Path getFilePath() {
@@ -124,6 +132,10 @@ public class WorkspaceResourceBuilder {
 		return uri;
 	}
 
+	/**
+	 * @return New resource from builder.
+	 * Implementation type overridden when {@link #withFilePath(Path)} or {@link #withUri(URI)} are used.
+	 */
 	public WorkspaceResource build() {
 		return new BasicWorkspaceResource(this);
 	}

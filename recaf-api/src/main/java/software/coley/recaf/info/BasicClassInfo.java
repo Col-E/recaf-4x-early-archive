@@ -19,7 +19,7 @@ import java.util.Map;
  * @see BasicAndroidClassInfo
  */
 public abstract class BasicClassInfo implements ClassInfo {
-	private final PropertyContainer propertyContainer;
+	private final PropertyContainer properties;
 	private final String name;
 	private final String superName;
 	private final List<String> interfaces;
@@ -58,7 +58,7 @@ public abstract class BasicClassInfo implements ClassInfo {
 							 List<AnnotationInfo> annotations, List<TypeAnnotationInfo> typeAnnotations,
 							 String outerClassName, String outerMethodName, String outerMethodDescriptor,
 							 List<InnerClassInfo> innerClasses, List<FieldMember> fields, List<MethodMember> methods,
-							 PropertyContainer propertyContainer) {
+							 PropertyContainer properties) {
 		this.name = name;
 		this.superName = superName;
 		this.interfaces = interfaces;
@@ -73,7 +73,7 @@ public abstract class BasicClassInfo implements ClassInfo {
 		this.innerClasses = innerClasses;
 		this.fields = fields;
 		this.methods = methods;
-		this.propertyContainer = propertyContainer;
+		this.properties = properties;
 	}
 
 	@Override
@@ -153,11 +153,16 @@ public abstract class BasicClassInfo implements ClassInfo {
 
 	@Override
 	public <V> void setProperty(Property<V> property) {
-		propertyContainer.setProperty(property);
+		properties.setProperty(property);
+	}
+
+	@Override
+	public void removeProperty(String key) {
+		properties.removeProperty(key);
 	}
 
 	@Override
 	public Map<String, Property<?>> getProperties() {
-		return propertyContainer.getProperties();
+		return properties.getProperties();
 	}
 }

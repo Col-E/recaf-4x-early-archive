@@ -25,46 +25,52 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 	private final List<ResourceJvmClassListener> jvmClassListeners = new ArrayList<>();
 	private final List<ResourceAndroidClassListener> androidClassListeners = new ArrayList<>();
 	private final List<ResourceFileListener> fileListeners = new ArrayList<>();
-	private final JvmClassBundle primaryJvmClassBundle;
-	private final FileBundle primaryFileBundle;
-	private final Map<String, JvmClassBundle> jvmClassBundles;
+	private final JvmClassBundle jvmClassBundle;
+	private final NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles;
 	private final Map<String, AndroidClassBundle> androidClassBundles;
-	private final Map<String, FileBundle> fileBundles;
+	private final FileBundle fileBundle;
+	private final Map<String, WorkspaceResource> embeddedResources;
+	private final WorkspaceResource containingResource;
 
 	/**
 	 * @param builder
-	 * 		Builder to pull info from
+	 * 		Builder to pull information from.
 	 */
 	public BasicWorkspaceResource(WorkspaceResourceBuilder builder) {
-		this(builder.getPrimaryJvmClassBundle(),
-				builder.getPrimaryFileBundle(),
-				builder.getJvmClassBundles(),
+		this(builder.getJvmClassBundle(),
+				builder.getFileBundle(),
+				builder.getVersionedJvmClassBundles(),
 				builder.getAndroidClassBundles(),
-				builder.getFileBundles());
+				builder.getEmbeddedResources(),
+				builder.getContainingResource());
 	}
 
 	/**
-	 * @param primaryJvmClassBundle
+	 * @param jvmClassBundle
 	 * 		Immediate classes.
-	 * @param primaryFileBundle
+	 * @param fileBundle
 	 * 		Immediate files.
-	 * @param jvmClassBundles
-	 * 		Additional class bundles. May be {@code null} to ignore content.
+	 * @param versionedJvmClassBundles
+	 * 		Version specific classes.
 	 * @param androidClassBundles
-	 * 		Android bundles. May be {@code null} to ignore content.
-	 * @param fileBundles
-	 * 		Additional file bundles. May be {@code null} to ignore content.
+	 * 		Android bundles.
+	 * @param embeddedResources
+	 * 		Embedded resources <i>(like JAR in JAR)</i>
+	 * @param containingResource
+	 * 		Parent resource <i>(If we are the JAR within a JAR)</i>.
 	 */
-	public BasicWorkspaceResource(JvmClassBundle primaryJvmClassBundle,
-								  FileBundle primaryFileBundle,
-								  Map<String, JvmClassBundle> jvmClassBundles,
+	public BasicWorkspaceResource(JvmClassBundle jvmClassBundle,
+								  FileBundle fileBundle,
+								  NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles,
 								  Map<String, AndroidClassBundle> androidClassBundles,
-								  Map<String, FileBundle> fileBundles) {
-		this.primaryJvmClassBundle = primaryJvmClassBundle;
-		this.primaryFileBundle = primaryFileBundle;
-		this.jvmClassBundles = jvmClassBundles;
+								  Map<String, WorkspaceResource> embeddedResources,
+								  WorkspaceResource containingResource) {
+		this.jvmClassBundle = jvmClassBundle;
+		this.fileBundle = fileBundle;
+		this.versionedJvmClassBundles = versionedJvmClassBundles;
 		this.androidClassBundles = androidClassBundles;
-		this.fileBundles = fileBundles;
+		this.embeddedResources = embeddedResources;
+		this.containingResource = containingResource;
 		setupListenerDelegation();
 		linkContentsToResource();
 	}
@@ -160,19 +166,13 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 	}
 
 	@Override
-	public JvmClassBundle getPrimaryClassBundle() {
-		return primaryJvmClassBundle;
+	public JvmClassBundle getJvmClassBundle() {
+		return jvmClassBundle;
 	}
 
 	@Override
-	public FileBundle getPrimaryFileBundle() {
-		return primaryFileBundle;
-	}
-
-	@Override
-	public Map<String, JvmClassBundle> getJvmClassBundles() {
-		if (jvmClassBundles == null) return Collections.emptyMap();
-		return jvmClassBundles;
+	public NavigableMap<Integer, JvmClassBundle> getVersionedJvmClassBundles() {
+		return versionedJvmClassBundles;
 	}
 
 	@Override
@@ -182,9 +182,13 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 	}
 
 	@Override
-	public Map<String, FileBundle> getFileBundles() {
-		if (fileBundles == null) return Collections.emptyMap();
-		return fileBundles;
+	public FileBundle getFileBundle() {
+		return fileBundle;
+	}
+
+	@Override
+	public Map<String, WorkspaceResource> getEmbeddedResources() {
+		return embeddedResources;
 	}
 
 	@Override
@@ -217,6 +221,11 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 		fileListeners.remove(listener);
 	}
 
+	@Override
+	public WorkspaceResource getContainingResource() {
+		return containingResource;
+	}
+
 	/**
 	 * Called by containing {@link Workspace#close()}.
 	 */
@@ -226,6 +235,9 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 		jvmClassListeners.clear();
 		androidClassListeners.clear();
 		fileListeners.clear();
+		// Close embedded resources
+		embeddedResources.values().forEach(WorkspaceResource::close);
+		// Close all bundles
 		bundleStream().forEach(Closing::close);
 	}
 
@@ -236,20 +248,28 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 
 		BasicWorkspaceResource resource = (BasicWorkspaceResource) o;
 
-		if (!primaryJvmClassBundle.equals(resource.primaryJvmClassBundle)) return false;
-		if (!primaryFileBundle.equals(resource.primaryFileBundle)) return false;
-		if (!Objects.equals(jvmClassBundles, resource.jvmClassBundles)) return false;
-		if (!Objects.equals(androidClassBundles, resource.androidClassBundles)) return false;
-		return Objects.equals(fileBundles, resource.fileBundles);
+		if (!jvmClassListeners.equals(resource.jvmClassListeners)) return false;
+		if (!androidClassListeners.equals(resource.androidClassListeners)) return false;
+		if (!fileListeners.equals(resource.fileListeners)) return false;
+		if (!jvmClassBundle.equals(resource.jvmClassBundle)) return false;
+		if (!versionedJvmClassBundles.equals(resource.versionedJvmClassBundles)) return false;
+		if (!androidClassBundles.equals(resource.androidClassBundles)) return false;
+		if (!fileBundle.equals(resource.fileBundle)) return false;
+		if (!embeddedResources.equals(resource.embeddedResources)) return false;
+		return Objects.equals(containingResource, resource.containingResource);
 	}
 
 	@Override
 	public int hashCode() {
-		int result = primaryJvmClassBundle.hashCode();
-		result = 31 * result + primaryFileBundle.hashCode();
-		result = 31 * result + (jvmClassBundles != null ? jvmClassBundles.hashCode() : 0);
-		result = 31 * result + (androidClassBundles != null ? androidClassBundles.hashCode() : 0);
-		result = 31 * result + (fileBundles != null ? fileBundles.hashCode() : 0);
+		int result = jvmClassListeners.hashCode();
+		result = 31 * result + androidClassListeners.hashCode();
+		result = 31 * result + fileListeners.hashCode();
+		result = 31 * result + jvmClassBundle.hashCode();
+		result = 31 * result + versionedJvmClassBundles.hashCode();
+		result = 31 * result + androidClassBundles.hashCode();
+		result = 31 * result + fileBundle.hashCode();
+		result = 31 * result + embeddedResources.hashCode();
+		result = 31 * result + (containingResource != null ? containingResource.hashCode() : 0);
 		return result;
 	}
 }
