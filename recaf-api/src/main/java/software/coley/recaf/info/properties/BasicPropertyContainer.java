@@ -12,7 +12,7 @@ import java.util.Map;
  * @author Matt Coley
  */
 public class BasicPropertyContainer implements PropertyContainer {
-	private Map<String, Property<?>> properties;
+	private Map<String, Property<?>> properties = new HashMap<>();
 
 	/**
 	 * Container with empty map.
@@ -26,7 +26,7 @@ public class BasicPropertyContainer implements PropertyContainer {
 	 * 		Pre-defined property map.
 	 */
 	public BasicPropertyContainer(Map<String, Property<?>> properties) {
-		this.properties = properties;
+		this.properties.putAll(properties);
 	}
 
 	@Override
@@ -48,5 +48,25 @@ public class BasicPropertyContainer implements PropertyContainer {
 			return Collections.emptyMap();
 		// Disallow modification
 		return Collections.unmodifiableMap(properties);
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		BasicPropertyContainer other = (BasicPropertyContainer) o;
+
+		return properties.equals(other.properties);
+	}
+
+	@Override
+	public int hashCode() {
+		return properties.hashCode();
+	}
+
+	@Override
+	public String toString() {
+		return "BasicPropertyContainer[" + properties.size() + " items]";
 	}
 }

@@ -7,6 +7,8 @@ import java.util.Objects;
  *
  * @param <V>
  * 		Value type.
+ *
+ * @author Matt Coley
  */
 public class BasicProperty<V> implements Property<V> {
 	private final String key;

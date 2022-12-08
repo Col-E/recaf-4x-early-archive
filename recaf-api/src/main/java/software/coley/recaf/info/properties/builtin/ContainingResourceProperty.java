@@ -49,4 +49,10 @@ public class ContainingResourceProperty extends BasicProperty<WorkspaceResource>
 	public static WorkspaceResource get(PropertyContainer container) {
 		return container.getPropertyValueOrNull(KEY);
 	}
+
+	@Override
+	public boolean persistent() {
+		// When replacing an info object in a resource we want the new instance to copy this property
+		return true;
+	}
 }

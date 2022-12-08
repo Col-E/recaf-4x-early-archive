@@ -15,4 +15,9 @@ public class BasicAndroidClassInfo extends BasicClassInfo implements AndroidClas
 	public BasicAndroidClassInfo(AndroidClassInfoBuilder builder) {
 		super(builder);
 	}
+
+	@Override
+	public String toString() {
+		return "Android class: " + getName();
+	}
 }

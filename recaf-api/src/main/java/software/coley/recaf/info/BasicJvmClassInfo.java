@@ -2,6 +2,8 @@ package software.coley.recaf.info;
 
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 
+import java.util.Arrays;
+
 /**
  * Basic JVM class info implementation.
  *
@@ -29,5 +31,30 @@ public class BasicJvmClassInfo extends BasicClassInfo implements JvmClassInfo {
 	@Override
 	public int getVersion() {
 		return version;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		if (!super.equals(o)) return false;
+
+		BasicJvmClassInfo that = (BasicJvmClassInfo) o;
+
+		if (version != that.version) return false;
+		return Arrays.equals(bytecode, that.bytecode);
+	}
+
+	@Override
+	public int hashCode() {
+		int result = super.hashCode();
+		result = 31 * result + Arrays.hashCode(bytecode);
+		result = 31 * result + version;
+		return result;
+	}
+
+	@Override
+	public String toString() {
+		return "JVM class: " + getName();
 	}
 }

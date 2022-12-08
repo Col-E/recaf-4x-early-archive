@@ -6,4 +6,8 @@ package software.coley.recaf.info;
  * @author Matt Coley
  */
 public interface FileInfo extends Info {
+	/**
+	 * @return Raw bytes of file content.
+	 */
+	byte[] getRawContent();
 }

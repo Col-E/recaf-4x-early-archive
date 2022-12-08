@@ -13,6 +13,7 @@ public class BasicInnerClassInfo implements InnerClassInfo {
 	private final String outerClassName;
 	private final String innerName;
 	private final int access;
+	private String simpleName;
 
 	/**
 	 * @param getOuterDeclaringClassName
@@ -61,6 +62,13 @@ public class BasicInnerClassInfo implements InnerClassInfo {
 	}
 
 	@Override
+	public String getSimpleName() {
+		// Cache simple name computation
+		if (simpleName == null) simpleName = InnerClassInfo.super.getSimpleName();
+		return simpleName;
+	}
+
+	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
@@ -80,5 +88,10 @@ public class BasicInnerClassInfo implements InnerClassInfo {
 		result = 31 * result + (innerName != null ? innerName.hashCode() : 0);
 		result = 31 * result + access;
 		return result;
+	}
+
+	@Override
+	public String toString() {
+		return "Inner class: " + getSimpleName();
 	}
 }

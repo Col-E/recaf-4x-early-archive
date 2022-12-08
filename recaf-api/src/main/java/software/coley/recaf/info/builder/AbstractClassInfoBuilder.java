@@ -60,7 +60,7 @@ public abstract class AbstractClassInfoBuilder<B extends AbstractClassInfoBuilde
 		withInnerClasses(classInfo.getInnerClasses());
 		withFields(classInfo.getFields());
 		withMethods(classInfo.getMethods());
-		withPropertyContainer(new BasicPropertyContainer(classInfo.getProperties()));
+		withPropertyContainer(new BasicPropertyContainer(classInfo.getPersistentProperties()));
 	}
 
 	@SuppressWarnings("unchecked")

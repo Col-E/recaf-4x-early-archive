@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Outline of a type with additional properties able to be assigned.
@@ -72,4 +73,13 @@ public interface PropertyContainer {
 	 */
 	@Nonnull
 	Map<String, Property<?>> getProperties();
+
+	/**
+	 * @return Properties, but only those that are {@link Property#persistent()}.
+	 */
+	default Map<String, Property<?>> getPersistentProperties() {
+		return getProperties().entrySet().stream()
+				.filter((e) -> e.getValue().persistent())
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+	}
 }

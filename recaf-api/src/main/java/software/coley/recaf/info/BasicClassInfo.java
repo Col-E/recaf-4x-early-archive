@@ -10,6 +10,7 @@ import software.coley.recaf.info.properties.PropertyContainer;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Basic implementation of class info.
@@ -164,5 +165,49 @@ public abstract class BasicClassInfo implements ClassInfo {
 	@Override
 	public Map<String, Property<?>> getProperties() {
 		return properties.getProperties();
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		BasicClassInfo other = (BasicClassInfo) o;
+
+		if (access != other.access) return false;
+		if (!properties.equals(other.properties)) return false;
+		if (!name.equals(other.name)) return false;
+		if (!Objects.equals(superName, other.superName)) return false;
+		if (!interfaces.equals(other.interfaces)) return false;
+		if (!Objects.equals(signature, other.signature)) return false;
+		if (!Objects.equals(sourceFileName, other.sourceFileName)) return false;
+		if (!annotations.equals(other.annotations)) return false;
+		if (!typeAnnotations.equals(other.typeAnnotations)) return false;
+		if (!Objects.equals(outerClassName, other.outerClassName)) return false;
+		if (!Objects.equals(outerMethodName, other.outerMethodName)) return false;
+		if (!Objects.equals(outerMethodDescriptor, other.outerMethodDescriptor)) return false;
+		if (!innerClasses.equals(other.innerClasses)) return false;
+		if (!fields.equals(other.fields)) return false;
+		return methods.equals(other.methods);
+	}
+
+	@Override
+	public int hashCode() {
+		int result = properties.hashCode();
+		result = 31 * result + name.hashCode();
+		result = 31 * result + (superName != null ? superName.hashCode() : 0);
+		result = 31 * result + interfaces.hashCode();
+		result = 31 * result + access;
+		result = 31 * result + (signature != null ? signature.hashCode() : 0);
+		result = 31 * result + (sourceFileName != null ? sourceFileName.hashCode() : 0);
+		result = 31 * result + annotations.hashCode();
+		result = 31 * result + typeAnnotations.hashCode();
+		result = 31 * result + (outerClassName != null ? outerClassName.hashCode() : 0);
+		result = 31 * result + (outerMethodName != null ? outerMethodName.hashCode() : 0);
+		result = 31 * result + (outerMethodDescriptor != null ? outerMethodDescriptor.hashCode() : 0);
+		result = 31 * result + innerClasses.hashCode();
+		result = 31 * result + fields.hashCode();
+		result = 31 * result + methods.hashCode();
+		return result;
 	}
 }
