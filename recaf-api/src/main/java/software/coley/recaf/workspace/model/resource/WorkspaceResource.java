@@ -58,6 +58,7 @@ public interface WorkspaceResource extends Closing {
 	Map<String, AndroidClassBundle> getAndroidClassBundles();
 
 	// TODO: Specific Android resource bundle for 'resources.arsc'?
+	//       - Or make custom FileInfo?
 
 	/**
 	 * @return Immediate files within the resource.

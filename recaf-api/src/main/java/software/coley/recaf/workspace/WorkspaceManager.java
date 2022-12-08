@@ -2,6 +2,9 @@ package software.coley.recaf.workspace;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.recaf.workspace.io.ResourceImporter;
+import software.coley.recaf.workspace.io.WorkspaceExportOptions;
+import software.coley.recaf.workspace.io.WorkspaceExporter;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -10,11 +13,27 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Manages the current workspace and creation of new ones.
+ * Service outline for managing workspace importing/exporting and the currently open workspace.
  *
  * @author Matt Coley
  */
 public interface WorkspaceManager {
+	/**
+	 * @return Tool for creating and importing {@link WorkspaceResource} instances
+	 * from a variety of input content types.
+	 */
+	@Nonnull
+	ResourceImporter getResourceImporter();
+
+	/**
+	 * @param options
+	 * 		Exporting options, includes details on where to export, how to repackage content, etc.
+	 *
+	 * @return A new exporter configured to match the options.
+	 */
+	@Nonnull
+	WorkspaceExporter createExporter(WorkspaceExportOptions options);
+
 	/**
 	 * @return The current active workspace.
 	 */

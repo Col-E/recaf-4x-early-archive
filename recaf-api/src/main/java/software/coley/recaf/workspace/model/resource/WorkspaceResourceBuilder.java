@@ -4,7 +4,9 @@ import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
@@ -81,11 +83,24 @@ public class WorkspaceResourceBuilder {
 	}
 
 	public WorkspaceResourceBuilder withFilePath(Path path) {
+		// If the path is a sym-link, follow it and use the target path
+		if (Files.isSymbolicLink(path)) {
+			try {
+				path = Files.readSymbolicLink(path);
+			} catch (IOException ex) {
+				throw new IllegalStateException("Could not follow symbolic link from path: " + path);
+			}
+		}
 		this.filePath = path;
 		return new WorkspaceResourceBuilder(this) {
 			@Override
 			public WorkspaceResource build() {
-				return new BasicWorkspaceFileResource(this);
+				if (Files.isRegularFile(filePath)) {
+					return new BasicWorkspaceFileResource(this);
+				} else if (Files.isDirectory(filePath)) {
+					return new BasicWorkspaceDirectoryResource(this);
+				}
+				throw new IllegalStateException("Path is not regular file or directory: " + filePath);
 			}
 		};
 	}

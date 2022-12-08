@@ -69,8 +69,4 @@ public interface Bundle<I extends Info> extends Map<String, I>, Iterable<I>, Clo
 	 * 		Listener to remove.
 	 */
 	void removeBundleListener(BundleListener<I> listener);
-
-	// TODO: Copy from 'ResourceItemMap'
-	//  - Use custom listeners here
-	//  - Resource wraps forwards events in here, via its own listeners
 }
