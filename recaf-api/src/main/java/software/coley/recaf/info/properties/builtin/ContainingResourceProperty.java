@@ -52,7 +52,6 @@ public class ContainingResourceProperty extends BasicProperty<WorkspaceResource>
 
 	@Override
 	public boolean persistent() {
-		// When replacing an info object in a resource we want the new instance to copy this property
 		return true;
 	}
 }

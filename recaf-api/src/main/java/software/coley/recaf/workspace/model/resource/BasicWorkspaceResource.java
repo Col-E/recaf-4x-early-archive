@@ -5,7 +5,6 @@ import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.JvmClassInfo;
-import software.coley.recaf.info.properties.PropertyContainer;
 import software.coley.recaf.info.properties.builtin.ContainingResourceProperty;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
@@ -30,7 +29,7 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 	private final Map<String, AndroidClassBundle> androidClassBundles;
 	private final FileBundle fileBundle;
 	private final Map<String, WorkspaceResource> embeddedResources;
-	private final WorkspaceResource containingResource;
+	private WorkspaceResource containingResource;
 
 	/**
 	 * @param builder
@@ -73,6 +72,7 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 		this.containingResource = containingResource;
 		setupListenerDelegation();
 		linkContentsToResource();
+		linkToEmbedded();
 	}
 
 	/**
@@ -138,8 +138,7 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 		// Link all existing items in all contained bundles.
 		bundleStream()
 				.flatMap(bundle -> bundle.values().stream())
-				.filter(info -> info instanceof PropertyContainer)
-				.forEach(info -> ContainingResourceProperty.set((PropertyContainer) info, this));
+				.forEach(info -> ContainingResourceProperty.set(info, this));
 
 		// Register listener to ensure all resources on this workspace have the built-in property
 		// assigned for quick lookup of info-to-resource.
@@ -147,14 +146,12 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 		BundleListener<Info> bundleListener = new BundleListener<>() {
 			@Override
 			public void onNewItem(String key, Info info) {
-				if (info instanceof PropertyContainer)
-					ContainingResourceProperty.set((PropertyContainer) info, resource);
+				ContainingResourceProperty.set(info, resource);
 			}
 
 			@Override
 			public void onUpdateItem(String key, Info oldInfo, Info newInfo) {
-				if (newInfo instanceof PropertyContainer)
-					ContainingResourceProperty.set((PropertyContainer) newInfo, resource);
+				ContainingResourceProperty.set(newInfo, resource);
 			}
 
 			@Override
@@ -163,6 +160,13 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 			}
 		};
 		bundleStream().forEach(bundle -> bundle.addBundleListener(bundleListener));
+	}
+
+	/**
+	 * Link all the embedded resources to the current instance as their container.
+	 */
+	private void linkToEmbedded() {
+		embeddedResources.values().forEach(resource -> resource.setContainingResource(this));
 	}
 
 	@Override
@@ -189,6 +193,16 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 	@Override
 	public Map<String, WorkspaceResource> getEmbeddedResources() {
 		return embeddedResources;
+	}
+
+	@Override
+	public WorkspaceResource getContainingResource() {
+		return containingResource;
+	}
+
+	@Override
+	public void setContainingResource(WorkspaceResource containingResource) {
+		this.containingResource = containingResource;
 	}
 
 	@Override
@@ -219,11 +233,6 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 	@Override
 	public void removeResourceFileListener(ResourceFileListener listener) {
 		fileListeners.remove(listener);
-	}
-
-	@Override
-	public WorkspaceResource getContainingResource() {
-		return containingResource;
 	}
 
 	/**

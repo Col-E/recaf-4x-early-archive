@@ -1,6 +1,11 @@
 package software.coley.recaf.info;
 
+import software.coley.recaf.info.builder.FileInfoBuilder;
+import software.coley.recaf.info.properties.Property;
+import software.coley.recaf.info.properties.PropertyContainer;
+
 import java.util.Arrays;
+import java.util.Map;
 
 /**
  * Basic implementation of file info.
@@ -8,18 +13,28 @@ import java.util.Arrays;
  * @author Matt Coley
  */
 public class BasicFileInfo implements FileInfo {
+	private final PropertyContainer properties;
 	private final String name;
 	private final byte[] rawContent;
+
+	public BasicFileInfo(FileInfoBuilder<?> builder) {
+		this(builder.getName(),
+				builder.getRawContent(),
+				builder.getProperties());
+	}
 
 	/**
 	 * @param name
 	 * 		File name/path.
 	 * @param rawContent
 	 * 		Raw contents of file.
+	 * @param properties
+	 * 		Assorted properties.
 	 */
-	public BasicFileInfo(String name, byte[] rawContent) {
+	public BasicFileInfo(String name, byte[] rawContent, PropertyContainer properties) {
 		this.name = name;
 		this.rawContent = rawContent;
+		this.properties = properties;
 	}
 
 	@Override
@@ -48,5 +63,20 @@ public class BasicFileInfo implements FileInfo {
 		int result = name.hashCode();
 		result = 31 * result + Arrays.hashCode(rawContent);
 		return result;
+	}
+
+	@Override
+	public <V> void setProperty(Property<V> property) {
+		properties.setProperty(property);
+	}
+
+	@Override
+	public void removeProperty(String key) {
+		properties.removeProperty(key);
+	}
+
+	@Override
+	public Map<String, Property<?>> getProperties() {
+		return properties.getProperties();
 	}
 }

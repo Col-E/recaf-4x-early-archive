@@ -1,5 +1,6 @@
 def asmVersion = '9.4'
 def junitVersion = '5.9.1'
+def lljzipVersion = '1.1.8'
 
 project.ext {
     asm = "org.ow2.asm:asm:$asmVersion"
@@ -10,6 +11,8 @@ project.ext {
 
     cdi_api = 'jakarta.enterprise:jakarta.enterprise.cdi-api:4.0.1'
     cdi_impl = 'org.jboss.weld.se:weld-se-core:5.1.0.Final'
+
+    llzip = "com.github.Col-E:LL-Java-Zip:$lljzipVersion"
 
     logging_impl = 'ch.qos.logback:logback-classic:1.2.10' // newer releases break in jar releases
 

@@ -1,5 +1,7 @@
 package software.coley.recaf.workspace.model.resource;
 
+import software.coley.recaf.info.FileInfo;
+
 import java.net.URI;
 
 /**
@@ -9,6 +11,7 @@ import java.net.URI;
  */
 public class BasicWorkspaceUriResource extends BasicWorkspaceResource implements WorkspaceUriResource {
 	private final URI uri;
+	private final FileInfo fileInfo;
 
 	/**
 	 * @param builder
@@ -17,6 +20,12 @@ public class BasicWorkspaceUriResource extends BasicWorkspaceResource implements
 	public BasicWorkspaceUriResource(WorkspaceResourceBuilder builder) {
 		super(builder);
 		this.uri = builder.getUri();
+		this.fileInfo = builder.getFileInfo();
+	}
+
+	@Override
+	public FileInfo getFileInfo() {
+		return fileInfo;
 	}
 
 	@Override

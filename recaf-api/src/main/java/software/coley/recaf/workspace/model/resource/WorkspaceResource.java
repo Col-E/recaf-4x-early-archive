@@ -82,6 +82,26 @@ public interface WorkspaceResource extends Closing {
 	Map<String, WorkspaceResource> getEmbeddedResources();
 
 	/**
+	 * @return Containing resource of this one if this represents a <i>"JAR in JAR"</i> kind of situation.
+	 * May be {@code null} for a root-resource.
+	 */
+	@Nullable
+	WorkspaceResource getContainingResource();
+
+	/**
+	 * @param resource
+	 * 		Containing resource to assign.
+	 */
+	void setContainingResource(WorkspaceResource resource);
+
+	/**
+	 * @return {@code true} when there is another resource that contains this one.
+	 */
+	default boolean isEmbeddedResource() {
+		return getContainingResource() != null;
+	}
+
+	/**
 	 * @return Stream of all immediate JVM class bundles in the resource.
 	 */
 	default Stream<JvmClassBundle> jvmClassBundleStream() {
@@ -213,20 +233,6 @@ public interface WorkspaceResource extends Closing {
 	 * 		Listener to remove.
 	 */
 	void removeResourceFileListener(ResourceFileListener listener);
-
-	/**
-	 * @return Containing resource of this one if this represents a <i>"JAR in JAR"</i> kind of situation.
-	 * May be {@code null} for a root-resource.
-	 */
-	@Nullable
-	WorkspaceResource getContainingResource();
-
-	/**
-	 * @return {@code true} when there is another resource that contains this one.
-	 */
-	default boolean isEmbeddedResource() {
-		return getContainingResource() != null;
-	}
 
 	/**
 	 * @return {@code true} when this resource represents an internally managed resource within a {@link Workspace}.

@@ -1,8 +1,8 @@
 package software.coley.recaf.workspace.model.resource;
 
-import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
-import software.coley.recaf.workspace.model.bundle.FileBundle;
-import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.util.ShortcutUtil;
+import software.coley.recaf.workspace.model.bundle.*;
 
 import java.io.IOException;
 import java.net.URI;
@@ -14,12 +14,13 @@ import java.util.NavigableMap;
 import java.util.TreeMap;
 
 public class WorkspaceResourceBuilder {
-	private JvmClassBundle jvmClassBundle;
+	private JvmClassBundle jvmClassBundle = new BasicJvmClassBundle();
 	private NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles = new TreeMap<>();
 	private Map<String, AndroidClassBundle> androidClassBundles = Collections.emptyMap();
-	private FileBundle fileBundle;
+	private FileBundle fileBundle = new BasicFileBundle();
 	private Map<String, WorkspaceResource> embeddedResources = Collections.emptyMap();
 	private WorkspaceResource containingResource;
+	private FileInfo fileInfo;
 	private Path filePath;
 	private URI uri;
 
@@ -50,6 +51,7 @@ public class WorkspaceResourceBuilder {
 		withFileBundle(other.getFileBundle());
 		withEmbeddedResources(other.getEmbeddedResources());
 		withContainingResource(other.getContainingResource());
+		withFileInfo(other.getFileInfo());
 	}
 
 	public WorkspaceResourceBuilder withJvmClassBundle(JvmClassBundle primaryJvmClassBundle) {
@@ -83,13 +85,11 @@ public class WorkspaceResourceBuilder {
 	}
 
 	public WorkspaceResourceBuilder withFilePath(Path path) {
-		// If the path is a sym-link, follow it and use the target path
-		if (Files.isSymbolicLink(path)) {
-			try {
-				path = Files.readSymbolicLink(path);
-			} catch (IOException ex) {
-				throw new IllegalStateException("Could not follow symbolic link from path: " + path);
-			}
+		// If the path is a sym-link or windows shortcut, follow it and use the target path.
+		try {
+			path = ShortcutUtil.follow(path);
+		} catch (IOException ex) {
+			throw new IllegalStateException("Could not follow symbolic link from path: " + path, ex);
 		}
 		this.filePath = path;
 		return new WorkspaceResourceBuilder(this) {
@@ -115,6 +115,11 @@ public class WorkspaceResourceBuilder {
 		};
 	}
 
+	public WorkspaceResourceBuilder withFileInfo(FileInfo fileInfo) {
+		this.fileInfo = fileInfo;
+		return this;
+	}
+
 	public JvmClassBundle getJvmClassBundle() {
 		return jvmClassBundle;
 	}
@@ -137,6 +142,10 @@ public class WorkspaceResourceBuilder {
 
 	public WorkspaceResource getContainingResource() {
 		return containingResource;
+	}
+
+	public FileInfo getFileInfo() {
+		return fileInfo;
 	}
 
 	public Path getFilePath() {

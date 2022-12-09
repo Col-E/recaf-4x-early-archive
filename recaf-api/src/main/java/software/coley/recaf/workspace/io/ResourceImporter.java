@@ -1,14 +1,15 @@
 package software.coley.recaf.workspace.io;
 
 import com.sun.tools.attach.VirtualMachineDescriptor;
+import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceRemoteVmResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceUriResource;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 
@@ -19,36 +20,73 @@ import java.nio.file.Path;
  */
 public interface ResourceImporter {
 	/**
-	 * @param file File to import from.
+	 * @param file
+	 * 		File to import from.
+	 *
 	 * @return Workspace resource representing the file.
+	 *
+	 * @throws IOException
+	 * 		When the content at the file path cannot be read from.
 	 */
-	default WorkspaceFileResource importResource(File file) {
-		return importResource(file);
-	}
-	/**
-	 * @param path File path to import from.
-	 * @return Workspace resource representing the file.
-	 */
-	WorkspaceFileResource importResource(Path path);
-
-	/**
-	 * @param url URL to content to import from.
-	 * @return Workspace resource representing the remote content.
-	 * @throws URISyntaxException When the URL cannot be converted to a URI.
-	 */
-	default WorkspaceUriResource importResource(URL url) throws URISyntaxException {
-		return importResource(url.toURI());
+	default WorkspaceFileResource importResource(File file) throws IOException {
+		return importResource(file.toPath());
 	}
 
 	/**
-	 * @param uri URI to content to import from.
-	 * @return Workspace resource representing the remote content.
+	 * @param source
+	 * 		Some generic content source.
+	 *
+	 * @return Workspace resource representing the content.
+	 *
+	 * @throws IOException
+	 * 		When the content cannot be read from.
 	 */
-	WorkspaceUriResource importResource(URI uri);
+	WorkspaceResource importResource(ByteSource source) throws IOException;
 
 	/**
-	 * @param virtualMachineDescriptor Descriptor of the remote JVM to attach to.
+	 * @param path
+	 * 		File path to import from.
+	 *
+	 * @return Workspace resource representing the file.
+	 *
+	 * @throws IOException
+	 * 		When the content at the file path cannot be read from.
+	 */
+	WorkspaceFileResource importResource(Path path) throws IOException;
+
+	/**
+	 * @param url
+	 * 		URL to content to import from.
+	 *
+	 * @return Workspace resource representing the remote content.
+	 *
+	 * @throws IOException
+	 * 		When content from the URL cannot be accessed.
+	 */
+	WorkspaceUriResource importResource(URL url) throws IOException;
+
+	/**
+	 * @param uri
+	 * 		URI to content to import from.
+	 *
+	 * @return Workspace resource representing the remote content.
+	 *
+	 * @throws IOException
+	 * 		When reading from the URI fails either due to a malformed URI,
+	 * 		or the content being inaccessible.
+	 */
+	default WorkspaceUriResource importResource(URI uri) throws IOException {
+		return importResource(uri.toURL());
+	}
+
+	/**
+	 * @param virtualMachineDescriptor
+	 * 		Descriptor of the remote JVM to attach to.
+	 *
 	 * @return Workspace resource representing the remote JVM.
+	 *
+	 * @throws IOException
+	 * 		When a connection to the remote JVM cannot be made.
 	 */
-	WorkspaceRemoteVmResource importResource(VirtualMachineDescriptor virtualMachineDescriptor);
+	WorkspaceRemoteVmResource importResource(VirtualMachineDescriptor virtualMachineDescriptor) throws IOException;
 }

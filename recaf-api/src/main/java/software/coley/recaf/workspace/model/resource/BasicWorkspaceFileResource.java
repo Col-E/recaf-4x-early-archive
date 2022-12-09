@@ -20,7 +20,7 @@ public class BasicWorkspaceFileResource extends BasicWorkspaceResource implement
 	public BasicWorkspaceFileResource(WorkspaceResourceBuilder builder) {
 		super(builder);
 		this.filePath = builder.getFilePath();
-		this.fileInfo = null; // TODO: Parse data from file path, throw IOException on failure
+		this.fileInfo = builder.getFileInfo();
 	}
 
 	@Override

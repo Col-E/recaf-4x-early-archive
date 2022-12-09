@@ -64,6 +64,16 @@ public abstract class AbstractClassInfoBuilder<B extends AbstractClassInfoBuilde
 	}
 
 	@SuppressWarnings("unchecked")
+	public static <B extends AbstractClassInfoBuilder<?>> B forClass(ClassInfo info) {
+		if (info.isJvmClass()) {
+			return (B) new JvmClassInfoBuilder(info.asJvmClass());
+		} else if (info.isAndroidClass()) {
+			return (B) new AndroidClassInfoBuilder(info.asAndroidClass());
+		}
+		throw new IllegalStateException("Unsupported class info type: " + info);
+	}
+
+	@SuppressWarnings("unchecked")
 	public B withName(String name) {
 		this.name = name;
 		return (B) this;

@@ -3,9 +3,9 @@ package software.coley.recaf.info;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.annotation.Annotated;
+import software.coley.recaf.info.builder.AbstractClassInfoBuilder;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
-import software.coley.recaf.info.properties.PropertyContainer;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -20,7 +20,7 @@ import java.util.stream.Stream;
  * @see JvmClassInfo For JVM classes.
  * @see AndroidClassInfo For Android classes.
  */
-public interface ClassInfo extends Info, Annotated, Accessed, PropertyContainer {
+public interface ClassInfo extends Info, Annotated, Accessed {
 	/**
 	 * @return Name of the source file the class was compiled from.
 	 * May be {@code null} when there is no debug data attached to the class.
@@ -209,6 +209,23 @@ public interface ClassInfo extends Info, Annotated, Accessed, PropertyContainer 
 	}
 
 	/**
+	 * @return New builder wrapping this class information.
+	 */
+	default AbstractClassInfoBuilder<?> toBuilder() {
+		return AbstractClassInfoBuilder.forClass(this);
+	}
+
+	@Override
+	default ClassInfo asClass() {
+		return this;
+	}
+
+	@Override
+	default FileInfo asFile() {
+		throw new IllegalStateException("Class cannot be cast to generic file");
+	}
+
+	/**
 	 * @return Self cast to JVM class.
 	 */
 	@Nonnull
@@ -219,6 +236,16 @@ public interface ClassInfo extends Info, Annotated, Accessed, PropertyContainer 
 	 */
 	@Nonnull
 	AndroidClassInfo asAndroidClass();
+
+	@Override
+	default boolean isClass() {
+		return true;
+	}
+
+	@Override
+	default boolean isFile() {
+		return false;
+	}
 
 	/**
 	 * @return {@code true} if self is a JVM class.
