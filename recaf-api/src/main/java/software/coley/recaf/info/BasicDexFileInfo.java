@@ -1,6 +1,6 @@
 package software.coley.recaf.info;
 
-import software.coley.recaf.info.builder.FileInfoBuilder;
+import software.coley.recaf.info.builder.DexFileInfoBuilder;
 
 /**
  * Basic implementation of an Android DEX file info.
@@ -12,7 +12,7 @@ public class BasicDexFileInfo extends BasicFileInfo implements DexFileInfo {
 	 * @param builder
 	 * 		Builder to pull information from.
 	 */
-	public BasicDexFileInfo(FileInfoBuilder<?> builder) {
+	public BasicDexFileInfo(DexFileInfoBuilder builder) {
 		super(builder);
 	}
 }

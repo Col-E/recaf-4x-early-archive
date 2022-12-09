@@ -9,10 +9,13 @@ import software.coley.llzip.ZipIO;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.builder.FileInfoBuilder;
-import software.coley.recaf.info.properties.builtin.OriginalPathProperty;
+import software.coley.recaf.info.properties.builtin.PathOriginalNameProperty;
+import software.coley.recaf.info.properties.builtin.PathPrefixProperty;
+import software.coley.recaf.info.properties.builtin.PathSuffixProperty;
+import software.coley.recaf.info.properties.builtin.ZipCompressionProperty;
+import software.coley.recaf.util.DexIOUtil;
 import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.ModulesIOUtil;
-import software.coley.recaf.util.NumberUtil;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
 import software.coley.recaf.util.io.LocalFileHeaderSource;
@@ -126,17 +129,24 @@ public class BasicResourceImporter implements ResourceImporter {
 			if (entryName.contains("//") || entryName.contains("../"))
 				return;
 
+			// Read the value of the entry to figure out how to handle adding it to the resource builder.
 			Info info = infoImporter.readInfo(entryName, headerSource);
+
+			// Record common entry attributes
+			ZipCompressionProperty.set(info, header.getCompressionMethod());
+			// TODO: Additional ZIP properties
+
+			// Handle the value
 			if (info.isClass()) {
 				// Must be a JVM class since Android classes do not exist in single-file form.
 				JvmClassInfo classInfo = info.asClass().asJvmClass();
 				String className = classInfo.getName();
 
 				// First we must handle edge cases. Up first, we'll look at multi-release jar prefixes.
-				if (entryName.startsWith(JvmClassInfo.MULTI_RELEASE_PREFIX) &&
-						!className.startsWith(JvmClassInfo.MULTI_RELEASE_PREFIX)) {
+				if (entryName.startsWith(JarFileInfo.MULTI_RELEASE_PREFIX) &&
+						!className.startsWith(JarFileInfo.MULTI_RELEASE_PREFIX)) {
 					// Extract version from '<prefix>/version/<class-name>' pattern
-					int startOffset = JvmClassInfo.MULTI_RELEASE_PREFIX.length();
+					int startOffset = JarFileInfo.MULTI_RELEASE_PREFIX.length();
 					String versionName = entryName.substring(startOffset, entryName.indexOf('/', startOffset));
 					try {
 						// Put it into the correct versioned class bundle.
@@ -149,7 +159,7 @@ public class BasicResourceImporter implements ResourceImporter {
 						// Version is invalid, record it as a file instead.
 						logger.warn("Class ZIP entry seemed to be for multi-release jar, " +
 								"but version is non-numeric value: " + versionName);
-						
+
 						// Warn if there is also a duplicate file with the path.
 						if (files.containsKey(entryName)) {
 							logger.warn("Multiple duplicate entries in zip for class '{}', " +
@@ -189,31 +199,40 @@ public class BasicResourceImporter implements ResourceImporter {
 							.build());
 				}
 
-				// Record the class, adding a prefix/original-name property if the entry name in the ZIP
-				// does not align with the class's name.
-				String expectedEntryName = className + ".class";
-				if (entryName.equals(expectedEntryName)) {
-					// Entry matches class name.
-				} else if (entryName.endsWith(expectedEntryName)) {
-					// Entry has a prefix before the class name.
-					String prefix = entryName.substring(0, entryName.length() - expectedEntryName.length());
-					// Record prefix as property.
-					OriginalPathProperty.setPrefix(classInfo, prefix);
-					logger.debug("Class ZIP entry has prefix: '{}' for '{}'", prefix, className);
+				// Record the class name, including path suffix/prefix.
+				// If the name is totally different, record the original path name.
+				int index = entryName.indexOf(className);
+				if (index >= 0) {
+					// Class name is within the entry name.
+					// Record the prefix before the class name, and suffix after it (extension).
+					if (index > 0) {
+						String prefix = entryName.substring(0, index);
+						PathPrefixProperty.set(classInfo, prefix);
+					}
+					int suffixIndex = index + className.length();
+					if (suffixIndex < entryName.length()) {
+						String suffix = entryName.substring(suffixIndex);
+						PathSuffixProperty.set(classInfo, suffix);
+					}
 				} else {
-					// Entry has different name than class, and is not just a prefix.
-					// Record entry name as property.
-					OriginalPathProperty.setOriginalName(classInfo, entryName);
-					logger.debug("Class ZIP entry does not match file path: '{}' vs '{}'", entryName, className);
+					// Class name doesn't match entry name.
+					PathOriginalNameProperty.set(classInfo, entryName);
 				}
+
 				classes.initialPut(classInfo);
 			} else if (info.isFile()) {
 				FileInfo fileInfo = info.asFile();
 
-				// Check for special file case
+				// Check for special file cases (Currently just DEX)
 				if (fileInfo instanceof DexFileInfo) {
-					// TODO: --> android dex bundle
-					return;
+					try {
+						AndroidClassBundle dexBundle = DexIOUtil.read(headerSource);
+						androidClassBundles.put(entryName, dexBundle);
+						return;
+					} catch (IOException ex) {
+						logger.error("Failed to read embedded DEX '{}' in containing archive '{}'",
+								entryName, zipInfo.getName(), ex);
+					}
 				}
 
 				// Check for container file cases (Any ZIP type, JAR/WAR/etc)
@@ -225,7 +244,7 @@ public class BasicResourceImporter implements ResourceImporter {
 								fileInfo.asZipFile(), headerSource);
 						embeddedResources.put(entryName, embeddedResource);
 					} catch (IOException ex) {
-						logger.error("Failed to read embedded ZIP '{}' in containing archive '{}",
+						logger.error("Failed to read embedded ZIP '{}' in containing archive '{}'",
 								entryName, zipInfo.getName(), ex);
 					}
 					return;
@@ -280,7 +299,7 @@ public class BasicResourceImporter implements ResourceImporter {
 					}
 
 					// Record the original prefix '/<module-name>/' for the input
-					OriginalPathProperty.setPrefix(info, "/" + moduleEntry.getModuleName() + "/");
+					PathPrefixProperty.set(info, "/" + moduleEntry.getModuleName() + "/");
 				});
 
 		return builder

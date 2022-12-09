@@ -1,6 +1,6 @@
 package software.coley.recaf.info;
 
-import software.coley.recaf.info.builder.FileInfoBuilder;
+import software.coley.recaf.info.builder.JModFileInfoBuilder;
 
 /**
  * Basic implementation of JMod file info.
@@ -12,7 +12,7 @@ public class BasicJModFileInfo extends BasicZipFileInfo implements JModFileInfo 
 	 * @param builder
 	 * 		Builder to pull information from.
 	 */
-	public BasicJModFileInfo(FileInfoBuilder<?> builder) {
+	public BasicJModFileInfo(JModFileInfoBuilder builder) {
 		super(builder);
 	}
 }

@@ -1,7 +1,6 @@
 package software.coley.recaf.info.builder;
 
-import software.coley.recaf.info.BasicFileInfo;
-import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.info.*;
 import software.coley.recaf.info.properties.BasicPropertyContainer;
 import software.coley.recaf.info.properties.PropertyContainer;
 
@@ -12,6 +11,7 @@ import software.coley.recaf.info.properties.PropertyContainer;
  * 		Self type. Exists so implementations don't get stunted in their chaining.
  *
  * @author Matt Coley
+ * @see ZipFileInfoBuilder
  */
 public class FileInfoBuilder<B extends FileInfoBuilder<?>> {
 	private PropertyContainer properties = new BasicPropertyContainer();
@@ -29,11 +29,33 @@ public class FileInfoBuilder<B extends FileInfoBuilder<?>> {
 		withProperties(new BasicPropertyContainer(fileInfo.getProperties()));
 	}
 
+	protected FileInfoBuilder(FileInfoBuilder<?> other) {
+		withName(other.getName());
+		withRawContent(other.getRawContent());
+		withProperties(other.getProperties());
+	}
+
 	@SuppressWarnings("unchecked")
 	public static <B extends FileInfoBuilder<?>> B forFile(FileInfo info) {
-		FileInfoBuilder<FileInfoBuilder<?>> builder = new FileInfoBuilder<>(info);
-		// If in the future if different file-info impls have additional values, do something like this:
-		//    if (info.isZipFile()) builder.forZip().withZipProperty1(info.getZipProperty1())
+		FileInfoBuilder<?> builder;
+		if (info.isZipFile()) {
+			// Handle different container types
+			if (info instanceof JarFileInfo) {
+				builder = new JarFileInfoBuilder((JarFileInfo) info);
+			} else if (info instanceof JModFileInfo) {
+				builder = new JModFileInfoBuilder((JModFileInfo) info);
+			} else if (info instanceof WarFileInfo) {
+				builder = new WarFileInfoBuilder((WarFileInfo) info);
+			} else {
+				builder = new ZipFileInfoBuilder(info.asZipFile());
+			}
+		} else if (info instanceof DexFileInfo) {
+			builder = new DexFileInfoBuilder((DexFileInfo)info);
+		} else if (info instanceof ModulesFileInfo) {
+			builder = new ModulesFileInfoBuilder((ModulesFileInfo)info);
+		} else {
+			builder = new FileInfoBuilder<>(info);
+		}
 		return (B) builder;
 	}
 
@@ -68,6 +90,6 @@ public class FileInfoBuilder<B extends FileInfoBuilder<?>> {
 	}
 
 	public BasicFileInfo build() {
-		return new BasicFileInfo(name, rawContent, properties);
+		return new BasicFileInfo(this);
 	}
 }

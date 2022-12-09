@@ -2,6 +2,7 @@ apply plugin: 'java-library'
 
 dependencies {
     api asm
+    api dexlib
     api cdi_api
     api llzip
     api logging_impl

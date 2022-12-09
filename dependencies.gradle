@@ -1,4 +1,5 @@
 def asmVersion = '9.4'
+def dexVersion = '2.5.2'
 def junitVersion = '5.9.1'
 def lljzipVersion = '1.1.8'
 
@@ -8,6 +9,9 @@ project.ext {
     asm_commons = "org.ow2.asm:asm-commons:$asmVersion"
     asm_tree = "org.ow2.asm:asm-tree:$asmVersion"
     asm_util = "org.ow2.asm:asm-util:$asmVersion"
+
+    baksmali = "org.smali:baksmali:$dexVersion"
+    dexlib = "org.smali:dexlib2:$dexVersion"
 
     cdi_api = 'jakarta.enterprise:jakarta.enterprise.cdi-api:4.0.1'
     cdi_impl = 'org.jboss.weld.se:weld-se-core:5.1.0.Final'

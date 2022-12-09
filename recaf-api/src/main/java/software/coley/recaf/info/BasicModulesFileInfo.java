@@ -1,6 +1,6 @@
 package software.coley.recaf.info;
 
-import software.coley.recaf.info.builder.FileInfoBuilder;
+import software.coley.recaf.info.builder.ModulesFileInfoBuilder;
 
 /**
  * Basic implementation of Modules file info.
@@ -12,7 +12,7 @@ public class BasicModulesFileInfo extends BasicFileInfo implements ModulesFileIn
 	 * @param builder
 	 * 		Builder to pull information from.
 	 */
-	public BasicModulesFileInfo(FileInfoBuilder<?> builder) {
+	public BasicModulesFileInfo(ModulesFileInfoBuilder builder) {
 		super(builder);
 	}
 }
