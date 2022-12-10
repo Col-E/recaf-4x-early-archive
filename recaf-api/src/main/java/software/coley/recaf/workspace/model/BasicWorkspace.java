@@ -1,6 +1,7 @@
 package software.coley.recaf.workspace.model;
 
 import software.coley.recaf.workspace.WorkspaceModificationListener;
+import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayList;
@@ -32,8 +33,7 @@ public class BasicWorkspace implements Workspace {
 	public BasicWorkspace(WorkspaceResource primary, Collection<WorkspaceResource> supporting) {
 		this.primary = primary;
 		this.supporting.addAll(supporting);
-		// TODO: Add internal supporting resources
-		//  - runtime resource
+		this.supporting.add(RuntimeWorkspaceResource.getInstance());
 	}
 
 	@Override
