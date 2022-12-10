@@ -259,6 +259,21 @@ public class BasicResourceImporter implements ResourceImporter {
 					return;
 				}
 
+				// Check for other edge case types containing embedded content.
+				if (fileInfo instanceof ModulesFileInfo) {
+					try {
+						WorkspaceResourceBuilder embeddedResourceBuilder = new WorkspaceResourceBuilder()
+								.withFileInfo(fileInfo);
+						WorkspaceFileResource embeddedResource =
+								(WorkspaceFileResource) handleModules(embeddedResourceBuilder, (ModulesFileInfo) fileInfo);
+						embeddedResources.put(entryName, embeddedResource);
+					} catch (IOException ex) {
+						logger.error("Failed to read embedded ZIP '{}' in containing archive '{}'",
+								entryName, zipInfo.getName(), ex);
+					}
+					return;
+				}
+
 				// Warn if there are duplicate file entries.
 				// Same cases for why this may occur are described above when handling classes.
 				// The JVM will always use the last item for duplicate entries anyways.

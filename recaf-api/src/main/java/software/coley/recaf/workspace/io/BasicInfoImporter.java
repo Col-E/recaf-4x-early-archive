@@ -6,6 +6,8 @@ import me.coley.cafedude.classfile.VersionConstants;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.builder.*;
 import software.coley.recaf.util.ByteHeaderUtil;
@@ -21,6 +23,7 @@ import java.io.IOException;
  */
 @ApplicationScoped
 public class BasicInfoImporter implements InfoImporter {
+	private static final Logger logger = Logging.get(BasicInfoImporter.class);
 	private final ClassPatcher classPatcher;
 
 	@Inject
@@ -36,8 +39,20 @@ public class BasicInfoImporter implements InfoImporter {
 		if (matchesClass(data)) {
 			try {
 				// Patch if not compatible with ASM
-				if (!isAsmCompliantClass(data))
-					data = classPatcher.patch(name, data);
+				if (!isAsmCompliantClass(data)) {
+					byte[] patched = classPatcher.patch(name, data);
+
+					// Ensure the patch was successful
+					if (!isAsmCompliantClass(patched)) {
+						logger.error("CafeDude patching output is still non-compliant with ASM for file: {}", name);
+						return new FileInfoBuilder<>()
+								.withRawContent(data)
+								.withName(name)
+								.build();
+					} else {
+						logger.debug("CafeDude patched class: {}", name);
+					}
+				}
 
 				// Yield class
 				return new JvmClassInfoBuilder(new ClassReader(data)).build();
@@ -49,13 +64,13 @@ public class BasicInfoImporter implements InfoImporter {
 		// Check for ZIP containers (For ZIP/JAR/JMod/WAR)
 		if (ByteHeaderUtil.match(data, ByteHeaderUtil.ZIP)) {
 			ZipFileInfoBuilder builder = new ZipFileInfoBuilder()
-					.withRawContent(data);
+					.withRawContent(data)
+					.withName(name);
 
 			// Handle by file name if known, otherwise treat as regular ZIP.
 			if (name == null) return builder.build();
 
 			// Record name, handle extension to determine info-type
-			builder.withName(name);
 			String extension = IOUtil.getExtension(name);
 			if (extension == null) return builder.build();
 			switch (extension.toUpperCase()) {
