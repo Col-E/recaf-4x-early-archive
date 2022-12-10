@@ -2,8 +2,14 @@ apply plugin: 'java-library'
 
 dependencies {
     api asm
+    api asm_analysis
+    api asm_commons
+    api asm_tree
+    api asm_util
     api dexlib
+    api cafedude
     api cdi_api
+    api hppc
     api llzip
     api logging_impl
 }
