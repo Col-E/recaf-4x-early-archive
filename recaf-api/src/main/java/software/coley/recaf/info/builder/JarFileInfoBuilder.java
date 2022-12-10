@@ -11,12 +11,12 @@ public class JarFileInfoBuilder extends ZipFileInfoBuilder {
 		super(jarInfo);
 	}
 
-	public JarFileInfoBuilder(FileInfoBuilder<?> other) {
+	public JarFileInfoBuilder(ZipFileInfoBuilder other) {
 		super(other);
 	}
 
 	@Override
-	public BasicFileInfo build() {
+	public BasicJarFileInfo build() {
 		return new BasicJarFileInfo(this);
 	}
 }

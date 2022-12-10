@@ -1,6 +1,7 @@
 package software.coley.recaf.info;
 
 import software.coley.recaf.info.builder.FileInfoBuilder;
+import software.coley.recaf.info.builder.ZipFileInfoBuilder;
 
 /**
  * Basic implementation of an Android APK file info.
@@ -12,7 +13,7 @@ public class BasicApkFileInfo extends BasicZipFileInfo implements ApkFileInfo {
 	 * @param builder
 	 * 		Builder to pull information from.
 	 */
-	public BasicApkFileInfo(FileInfoBuilder<?> builder) {
+	public BasicApkFileInfo(ZipFileInfoBuilder builder) {
 		super(builder);
 	}
 }

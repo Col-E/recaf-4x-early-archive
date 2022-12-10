@@ -1,12 +1,8 @@
 package software.coley.recaf.workspace.model.resource;
 
 import software.coley.recaf.info.FileInfo;
-import software.coley.recaf.util.ShortcutUtil;
 import software.coley.recaf.workspace.model.bundle.*;
 
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
@@ -18,11 +14,8 @@ public class WorkspaceResourceBuilder {
 	private NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles = new TreeMap<>();
 	private Map<String, AndroidClassBundle> androidClassBundles = Collections.emptyMap();
 	private FileBundle fileBundle = new BasicFileBundle();
-	private Map<String, WorkspaceResource> embeddedResources = Collections.emptyMap();
+	private Map<String, WorkspaceFileResource> embeddedResources = Collections.emptyMap();
 	private WorkspaceResource containingResource;
-	private FileInfo fileInfo;
-	private Path filePath;
-	private URI uri;
 
 	/**
 	 * Empty builder.
@@ -44,14 +37,13 @@ public class WorkspaceResourceBuilder {
 		withFileBundle(files);
 	}
 
-	private WorkspaceResourceBuilder(WorkspaceResourceBuilder other) {
+	protected WorkspaceResourceBuilder(WorkspaceResourceBuilder other) {
 		withJvmClassBundle(other.getJvmClassBundle());
 		withAndroidClassBundles(other.getAndroidClassBundles());
 		withVersionedJvmClassBundles(other.getVersionedJvmClassBundles());
 		withFileBundle(other.getFileBundle());
 		withEmbeddedResources(other.getEmbeddedResources());
 		withContainingResource(other.getContainingResource());
-		withFileInfo(other.getFileInfo());
 	}
 
 	public WorkspaceResourceBuilder withJvmClassBundle(JvmClassBundle primaryJvmClassBundle) {
@@ -74,7 +66,7 @@ public class WorkspaceResourceBuilder {
 		return this;
 	}
 
-	public WorkspaceResourceBuilder withEmbeddedResources(Map<String, WorkspaceResource> embeddedResources) {
+	public WorkspaceResourceBuilder withEmbeddedResources(Map<String, WorkspaceFileResource> embeddedResources) {
 		this.embeddedResources = embeddedResources;
 		return this;
 	}
@@ -84,40 +76,14 @@ public class WorkspaceResourceBuilder {
 		return this;
 	}
 
-	public WorkspaceResourceBuilder withFilePath(Path path) {
-		// If the path is a sym-link or windows shortcut, follow it and use the target path.
-		try {
-			path = ShortcutUtil.follow(path);
-		} catch (IOException ex) {
-			throw new IllegalStateException("Could not follow symbolic link from path: " + path, ex);
-		}
-		this.filePath = path;
-		return new WorkspaceResourceBuilder(this) {
-			@Override
-			public WorkspaceResource build() {
-				if (Files.isRegularFile(filePath)) {
-					return new BasicWorkspaceFileResource(this);
-				} else if (Files.isDirectory(filePath)) {
-					return new BasicWorkspaceDirectoryResource(this);
-				}
-				throw new IllegalStateException("Path is not regular file or directory: " + filePath);
-			}
-		};
+	public WorkspaceFileResourceBuilder withFileInfo(FileInfo fileInfo) {
+		return new WorkspaceFileResourceBuilder(this)
+				.withFileInfo(fileInfo);
 	}
 
-	public WorkspaceResourceBuilder withUri(URI uri) {
-		this.uri = uri;
-		return new WorkspaceResourceBuilder(this) {
-			@Override
-			public WorkspaceResource build() {
-				return new BasicWorkspaceUriResource(this);
-			}
-		};
-	}
-
-	public WorkspaceResourceBuilder withFileInfo(FileInfo fileInfo) {
-		this.fileInfo = fileInfo;
-		return this;
+	public WorkspaceDirectoryResourceBuilder withDirectoryPath(Path directoryPath) {
+		return new WorkspaceDirectoryResourceBuilder(this)
+				.withDirectoryPath(directoryPath);
 	}
 
 	public JvmClassBundle getJvmClassBundle() {
@@ -136,7 +102,7 @@ public class WorkspaceResourceBuilder {
 		return fileBundle;
 	}
 
-	public Map<String, WorkspaceResource> getEmbeddedResources() {
+	public Map<String, WorkspaceFileResource> getEmbeddedResources() {
 		return embeddedResources;
 	}
 
@@ -144,21 +110,8 @@ public class WorkspaceResourceBuilder {
 		return containingResource;
 	}
 
-	public FileInfo getFileInfo() {
-		return fileInfo;
-	}
-
-	public Path getFilePath() {
-		return filePath;
-	}
-
-	public URI getUri() {
-		return uri;
-	}
-
 	/**
 	 * @return New resource from builder.
-	 * Implementation type overridden when {@link #withFilePath(Path)} or {@link #withUri(URI)} are used.
 	 */
 	public WorkspaceResource build() {
 		return new BasicWorkspaceResource(this);

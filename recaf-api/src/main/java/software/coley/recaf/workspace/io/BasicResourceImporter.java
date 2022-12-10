@@ -109,13 +109,14 @@ public class BasicResourceImporter implements ResourceImporter {
 				.build();
 	}
 
-	private WorkspaceResource handleZip(WorkspaceResourceBuilder builder, ZipFileInfo zipInfo, ByteSource source) throws IOException {
+	private WorkspaceFileResource handleZip(WorkspaceResourceBuilder builder, ZipFileInfo zipInfo, ByteSource source) throws IOException {
 		logger.info("Reading input from ZIP container '{}'", zipInfo.getName());
+		builder.withFileInfo(zipInfo);
 		BasicJvmClassBundle classes = new BasicJvmClassBundle();
 		BasicFileBundle files = new BasicFileBundle();
 		Map<String, AndroidClassBundle> androidClassBundles = new HashMap<>();
 		NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles = new TreeMap<>();
-		Map<String, WorkspaceResource> embeddedResources = new HashMap<>();
+		Map<String, WorkspaceFileResource> embeddedResources = new HashMap<>();
 
 		// Read ZIP entries
 		ZipArchive archive = ZipIO.readJvm(source.readAll());
@@ -240,7 +241,7 @@ public class BasicResourceImporter implements ResourceImporter {
 					try {
 						WorkspaceResourceBuilder embeddedResourceBuilder = new WorkspaceResourceBuilder()
 								.withFileInfo(fileInfo);
-						WorkspaceResource embeddedResource = handleZip(embeddedResourceBuilder,
+						WorkspaceFileResource embeddedResource = handleZip(embeddedResourceBuilder,
 								fileInfo.asZipFile(), headerSource);
 						embeddedResources.put(entryName, embeddedResource);
 					} catch (IOException ex) {
@@ -269,6 +270,7 @@ public class BasicResourceImporter implements ResourceImporter {
 				.withVersionedJvmClassBundles(versionedJvmClassBundles)
 				.withFileBundle(files)
 				.withEmbeddedResources(embeddedResources)
+				.withFileInfo(zipInfo)
 				.build();
 	}
 
@@ -315,34 +317,24 @@ public class BasicResourceImporter implements ResourceImporter {
 
 	@Override
 	public WorkspaceFileResource importResource(Path path) throws IOException {
-		// Initialize builder with file path
-		WorkspaceResourceBuilder builder = new WorkspaceResourceBuilder().withFilePath(path);
-
 		// Load name/data from path, parse into resource.
 		String absolutePath = path.toAbsolutePath().toString();
 		ByteSource byteSource = ByteSources.forPath(path);
-		return (WorkspaceFileResource) handle(builder, absolutePath, byteSource);
+		return (WorkspaceFileResource) handle(new WorkspaceResourceBuilder(), absolutePath, byteSource);
 	}
 
 	@Override
-	public WorkspaceUriResource importResource(URL url) throws IOException {
-		try {
-			// Initialize builder with URL
-			WorkspaceResourceBuilder builder = new WorkspaceResourceBuilder().withUri(url.toURI());
-
-			// Extract name from URL
-			String path = url.getFile();
-			if (path.isEmpty()) {
-				path = url.toString();
-			}
-
-			// Load content, parse into resource.
-			byte[] bytes = IOUtil.toByteArray(url.openStream());
-			ByteSource byteSource = ByteSources.wrap(bytes);
-			return (WorkspaceUriResource) handle(builder, path, byteSource);
-		} catch (URISyntaxException ex) {
-			throw new IOException("Unsupported URL scheme: " + url);
+	public WorkspaceFileResource importResource(URL url) throws IOException {
+		// Extract name from URL
+		String path = url.getFile();
+		if (path.isEmpty()) {
+			path = url.toString();
 		}
+
+		// Load content, parse into resource.
+		byte[] bytes = IOUtil.toByteArray(url.openStream());
+		ByteSource byteSource = ByteSources.wrap(bytes);
+		return (WorkspaceFileResource) handle(new WorkspaceResourceBuilder(), path, byteSource);
 	}
 
 	@Override

@@ -10,26 +10,19 @@ import java.nio.file.Path;
  * @author Matt Coley
  */
 public class BasicWorkspaceFileResource extends BasicWorkspaceResource implements WorkspaceFileResource {
-	private final Path filePath;
 	private final FileInfo fileInfo;
 
 	/**
 	 * @param builder
 	 * 		Builder to pull info from.
 	 */
-	public BasicWorkspaceFileResource(WorkspaceResourceBuilder builder) {
+	public BasicWorkspaceFileResource(WorkspaceFileResourceBuilder builder) {
 		super(builder);
-		this.filePath = builder.getFilePath();
 		this.fileInfo = builder.getFileInfo();
 	}
 
 	@Override
 	public FileInfo getFileInfo() {
 		return fileInfo;
-	}
-
-	@Override
-	public Path getFilePath() {
-		return filePath;
 	}
 }

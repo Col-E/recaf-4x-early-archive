@@ -5,7 +5,6 @@ import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceRemoteVmResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
-import software.coley.recaf.workspace.model.resource.WorkspaceUriResource;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,7 +62,7 @@ public interface ResourceImporter {
 	 * @throws IOException
 	 * 		When content from the URL cannot be accessed.
 	 */
-	WorkspaceUriResource importResource(URL url) throws IOException;
+	WorkspaceFileResource importResource(URL url) throws IOException;
 
 	/**
 	 * @param uri
@@ -75,7 +74,7 @@ public interface ResourceImporter {
 	 * 		When reading from the URI fails either due to a malformed URI,
 	 * 		or the content being inaccessible.
 	 */
-	default WorkspaceUriResource importResource(URI uri) throws IOException {
+	default WorkspaceFileResource importResource(URI uri) throws IOException {
 		return importResource(uri.toURL());
 	}
 

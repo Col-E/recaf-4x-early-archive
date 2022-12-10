@@ -79,7 +79,7 @@ public interface WorkspaceResource extends Closing {
 	 * @return Map of container files <i>(JAR/ZIP/WAR/etc)</i> represented as their own workspace resources.
 	 */
 	@Nonnull
-	Map<String, WorkspaceResource> getEmbeddedResources();
+	Map<String, WorkspaceFileResource> getEmbeddedResources();
 
 	/**
 	 * @return Containing resource of this one if this represents a <i>"JAR in JAR"</i> kind of situation.

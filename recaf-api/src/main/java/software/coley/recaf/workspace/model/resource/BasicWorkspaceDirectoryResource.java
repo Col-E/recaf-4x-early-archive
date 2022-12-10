@@ -14,9 +14,9 @@ public class BasicWorkspaceDirectoryResource extends BasicWorkspaceResource impl
 	 * @param builder
 	 * 		Builder to pull info from.
 	 */
-	public BasicWorkspaceDirectoryResource(WorkspaceResourceBuilder builder) {
+	public BasicWorkspaceDirectoryResource(WorkspaceDirectoryResourceBuilder builder) {
 		super(builder);
-		this.directoryPath = builder.getFilePath();
+		this.directoryPath = builder.getDirectoryPath();
 	}
 
 	@Override

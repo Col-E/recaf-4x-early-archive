@@ -60,6 +60,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 	 *
 	 * @return Builder.
 	 */
+	@SuppressWarnings("deprecation")
 	public JvmClassInfoBuilder adaptFrom(ClassReader reader) {
 		reader.accept(new ClassBuilderAppender(), 0);
 		return withBytecode(reader.b);

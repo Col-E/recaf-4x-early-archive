@@ -28,7 +28,7 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 	private final NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles;
 	private final Map<String, AndroidClassBundle> androidClassBundles;
 	private final FileBundle fileBundle;
-	private final Map<String, WorkspaceResource> embeddedResources;
+	private final Map<String, WorkspaceFileResource> embeddedResources;
 	private WorkspaceResource containingResource;
 
 	/**
@@ -62,7 +62,7 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 								  FileBundle fileBundle,
 								  NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles,
 								  Map<String, AndroidClassBundle> androidClassBundles,
-								  Map<String, WorkspaceResource> embeddedResources,
+								  Map<String, WorkspaceFileResource> embeddedResources,
 								  WorkspaceResource containingResource) {
 		this.jvmClassBundle = jvmClassBundle;
 		this.fileBundle = fileBundle;
@@ -191,7 +191,7 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 	}
 
 	@Override
-	public Map<String, WorkspaceResource> getEmbeddedResources() {
+	public Map<String, WorkspaceFileResource> getEmbeddedResources() {
 		return embeddedResources;
 	}
 
