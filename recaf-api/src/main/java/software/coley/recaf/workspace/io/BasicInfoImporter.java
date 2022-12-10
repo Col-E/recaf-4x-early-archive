@@ -1,8 +1,18 @@
 package software.coley.recaf.workspace.io;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import me.coley.cafedude.classfile.VersionConstants;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
 import software.coley.recaf.info.Info;
+import software.coley.recaf.info.builder.*;
+import software.coley.recaf.util.ByteHeaderUtil;
+import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.io.ByteSource;
+
+import java.io.IOException;
 
 /**
  * Basic implementation of the info importer.
@@ -11,21 +21,134 @@ import software.coley.recaf.util.io.ByteSource;
  */
 @ApplicationScoped
 public class BasicInfoImporter implements InfoImporter {
-	@Override
-	public Info readInfo(String name, ByteSource source) {
-		// TODO: Everything
-		//  - class (jvm only) [inject patcher service, allow users to add their own, use to fix illegal class files]
-		//  - file
-		//     - zip (use name extension if available, otherwise assume plain ZIP)
-		//       - jar
-		//       - jmod
-		//       - war
-		//       - regular zip
-		//     - regular file
+	private final ClassPatcher classPatcher;
 
-		// TODO: Record properties?
-		//  - content-type (for quick recognition of media and other common file types)
-		//      - best to do header matching once instead of each time on request
-		return null;
+	@Inject
+	public BasicInfoImporter(ClassPatcher classPatcher) {
+		this.classPatcher = classPatcher;
+	}
+
+	@Override
+	public Info readInfo(String name, ByteSource source) throws IOException {
+		byte[] data = source.readAll();
+
+		// Check for Java classes
+		if (matchesClass(data)) {
+			try {
+				// Patch if not compatible with ASM
+				if (!isAsmCompliantClass(data))
+					data = classPatcher.patch(name, data);
+
+				// Yield class
+				return new JvmClassInfoBuilder(new ClassReader(data)).build();
+			} catch (Throwable t) {
+				throw new IOException("Unhandled exception when reading class: " + name, t);
+			}
+		}
+
+		// Check for ZIP containers (For ZIP/JAR/JMod/WAR)
+		if (ByteHeaderUtil.match(data, ByteHeaderUtil.ZIP)) {
+			ZipFileInfoBuilder builder = new ZipFileInfoBuilder()
+					.withRawContent(data);
+
+			// Handle by file name if known, otherwise treat as regular ZIP.
+			if (name == null) return builder.build();
+
+			// Record name, handle extension to determine info-type
+			builder.withName(name);
+			String extension = IOUtil.getExtension(name);
+			if (extension == null) return builder.build();
+			switch (extension.toUpperCase()) {
+				case "JAR":
+					return builder.asJar().build();
+				case "APK":
+					return builder.asApk().build();
+				case "WAR":
+					return builder.asWar().build();
+				case "JMOD":
+					return builder.asJMod().build();
+				case "ZIP":
+				default:
+					return builder.build();
+			}
+		}
+
+		// Not a ZIP container, start comparing against other known file types.
+		if (ByteHeaderUtil.match(data, ByteHeaderUtil.DEX)) {
+			return new DexFileInfoBuilder()
+					.withRawContent(data)
+					.withName(name)
+					.build();
+		} else if (ByteHeaderUtil.match(data, ByteHeaderUtil.MODULES)) {
+			return new ModulesFileInfoBuilder()
+					.withRawContent(data)
+					.withName(name)
+					.build();
+		}
+
+		// TODO: Record content-type (for quick recognition of media and other common file types)
+		//  - Don't need a million info-types for every possible content-type, just the edge cases
+		//    that need to be handled by the Recaf API.
+		//  - Everything else can be stored as a property.
+
+		// No special case known for file, treat as generic file
+		return new FileInfoBuilder<>()
+				.withRawContent(data)
+				.withName(name)
+				.build();
+	}
+
+	/**
+	 * Check if the byte array is prefixed by the class file magic header.
+	 *
+	 * @param content
+	 * 		File content.
+	 *
+	 * @return If the content seems to be a class at a first glance.
+	 */
+	private static boolean matchesClass(byte[] content) {
+		// Null and size check
+		// The smallest valid class possible that is verifiable is 37 bytes AFAIK, but we'll be generous here.
+		if (content == null || content.length <= 16)
+			return false;
+
+		// We want to make sure the 'magic' is correct.
+		if (!ByteHeaderUtil.match(content, ByteHeaderUtil.CLASS))
+			return false;
+
+		// 'dylib' files can also have CAFEBABE as a magic header... Gee, thanks Apple :/
+		// Because of this we'll employ some more sanity checks.
+		// Version number must be non-zero
+		int version = ((content[6] & 0xFF) << 8) + (content[7] & 0xFF);
+		if (version < VersionConstants.JAVA1)
+			return false;
+
+		// Must include some constant pool entries.
+		// The smallest number includes:
+		//  - utf8  - name of current class
+		//  - class - wrapper of prior
+		//  - utf8  - name of object class
+		//  - class - wrapper of prior`
+		int cpSize = ((content[8] & 0xFF) << 8) + (content[9] & 0xFF);
+		return cpSize >= 4;
+	}
+
+	/**
+	 * Check if the class can be parsed by ASM.
+	 *
+	 * @param content
+	 * 		The class file content.
+	 *
+	 * @return {@code true} if ASM can parse the class.
+	 */
+	private static boolean isAsmCompliantClass(byte[] content) {
+		try {
+			ClassVisitor visitor = new ClassWriter(0);
+			ClassReader reader = new ClassReader(content);
+			reader.accept(visitor, 0);
+			return true;
+		} catch (Exception ex) {
+			return false;
+		}
 	}
 }

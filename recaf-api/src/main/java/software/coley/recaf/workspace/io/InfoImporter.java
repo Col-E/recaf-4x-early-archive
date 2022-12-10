@@ -4,6 +4,8 @@ import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.util.io.ByteSource;
 
+import java.io.IOException;
+
 /**
  * Service outline for creating various {@link Info} types from a basic name, {@link ByteSource} pair.
  *
@@ -17,7 +19,10 @@ public interface InfoImporter {
 	 * 		Source of content to read data from.
 	 *
 	 * @return Info instance.
+	 *
+	 * @throws IOException
+	 * 		When the content cannot be read.
 	 */
 	@Nonnull
-	Info readInfo(String name, ByteSource source);
+	Info readInfo(String name, ByteSource source) throws IOException;
 }

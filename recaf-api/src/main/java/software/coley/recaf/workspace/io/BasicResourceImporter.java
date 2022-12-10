@@ -23,10 +23,12 @@ import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
-import software.coley.recaf.workspace.model.resource.*;
+import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
+import software.coley.recaf.workspace.model.resource.WorkspaceRemoteVmResource;
+import software.coley.recaf.workspace.model.resource.WorkspaceResource;
+import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -131,7 +133,13 @@ public class BasicResourceImporter implements ResourceImporter {
 				return;
 
 			// Read the value of the entry to figure out how to handle adding it to the resource builder.
-			Info info = infoImporter.readInfo(entryName, headerSource);
+			Info info;
+			try {
+				info = infoImporter.readInfo(entryName, headerSource);
+			} catch (IOException ex) {
+				logger.error("IO error reading ZIP entry '{}' - skipping", entryName);
+				return;
+			}
 
 			// Record common entry attributes
 			ZipCompressionProperty.set(info, header.getCompressionMethod());
@@ -288,8 +296,13 @@ public class BasicResourceImporter implements ResourceImporter {
 					//  - entry extracts these values
 					ModulesIOUtil.Entry moduleEntry = entry.getElement();
 					ByteSource moduleFileSource = entry.getByteSource();
-					Info info = infoImporter.readInfo(moduleEntry.getFileName(), moduleFileSource);
-
+					Info info;
+					try {
+						info = infoImporter.readInfo(moduleEntry.getFileName(), moduleFileSource);
+					} catch (IOException ex) {
+						logger.error("IO error reading modules entry '{}' - skipping", moduleEntry.getOriginalPath());
+						return;
+					}
 					// Add to appropriate bundle.
 					// Modules file only has two expected kinds of content, classes and generic files.
 					if (info.isClass()) {
