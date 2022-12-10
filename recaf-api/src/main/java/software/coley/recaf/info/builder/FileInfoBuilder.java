@@ -12,6 +12,8 @@ import software.coley.recaf.info.properties.PropertyContainer;
  *
  * @author Matt Coley
  * @see ZipFileInfoBuilder
+ * @see DexFileInfoBuilder
+ * @see ModulesFileInfoBuilder
  */
 public class FileInfoBuilder<B extends FileInfoBuilder<?>> {
 	private PropertyContainer properties = new BasicPropertyContainer();
@@ -50,9 +52,9 @@ public class FileInfoBuilder<B extends FileInfoBuilder<?>> {
 				builder = new ZipFileInfoBuilder(info.asZipFile());
 			}
 		} else if (info instanceof DexFileInfo) {
-			builder = new DexFileInfoBuilder((DexFileInfo)info);
+			builder = new DexFileInfoBuilder((DexFileInfo) info);
 		} else if (info instanceof ModulesFileInfo) {
-			builder = new ModulesFileInfoBuilder((ModulesFileInfo)info);
+			builder = new ModulesFileInfoBuilder((ModulesFileInfo) info);
 		} else {
 			builder = new FileInfoBuilder<>(info);
 		}
