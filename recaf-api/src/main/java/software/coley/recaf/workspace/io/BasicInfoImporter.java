@@ -51,6 +51,8 @@ public class BasicInfoImporter implements InfoImporter {
 								.build();
 					} else {
 						logger.debug("CafeDude patched class: {}", name);
+						return new JvmClassInfoBuilder(new ClassReader(patched))
+								.build();
 					}
 				}
 
@@ -162,7 +164,7 @@ public class BasicInfoImporter implements InfoImporter {
 			ClassReader reader = new ClassReader(content);
 			reader.accept(visitor, 0);
 			return true;
-		} catch (Exception ex) {
+		} catch (Throwable t) {
 			return false;
 		}
 	}

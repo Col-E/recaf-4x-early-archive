@@ -63,6 +63,7 @@ subprojects {
     dependencies {
         testImplementation junit_api
         testImplementation junit_params
+        testImplementation mockito
         testRuntimeOnly junit_engine
     }
 

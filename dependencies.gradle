@@ -28,4 +28,6 @@ project.ext {
     junit_api = "org.junit.jupiter:junit-jupiter-api:$junitVersion"
     junit_engine = "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
     junit_params = "org.junit.jupiter:junit-jupiter-params:$junitVersion"
+
+    mockito = 'org.mockito:mockito-core:4.9.0'
 }
