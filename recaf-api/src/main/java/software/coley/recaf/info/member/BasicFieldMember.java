@@ -40,7 +40,7 @@ public class BasicFieldMember extends BasicMember implements FieldMember {
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
-		if (o == null || !o.getClass().isAssignableFrom(FieldMember.class)) return false;
+		if (o == null || !FieldMember.class.isAssignableFrom(o.getClass())) return false;
 
 		FieldMember field = (FieldMember) o;
 

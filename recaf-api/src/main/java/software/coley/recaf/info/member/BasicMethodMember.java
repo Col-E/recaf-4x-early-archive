@@ -1,5 +1,7 @@
 package software.coley.recaf.info.member;
 
+import jakarta.annotation.Nonnull;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -23,7 +25,7 @@ public class BasicMethodMember extends BasicMember implements MethodMember {
 	 * @param exceptions
 	 * 		Method's thrown excpetions.
 	 */
-	public BasicMethodMember(String name, String desc, String signature, int access, List<String> exceptions) {
+	public BasicMethodMember(String name, String desc, String signature, int access, @Nonnull List<String> exceptions) {
 		super(name, desc, signature, access);
 		this.exceptions = exceptions;
 	}
@@ -41,7 +43,7 @@ public class BasicMethodMember extends BasicMember implements MethodMember {
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
-		if (o == null || !o.getClass().isAssignableFrom(MethodMember.class)) return false;
+		if (o == null || !MethodMember.class.isAssignableFrom(o.getClass())) return false;
 
 		MethodMember method = (MethodMember) o;
 
