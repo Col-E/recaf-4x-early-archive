@@ -1,5 +1,8 @@
 package software.coley.recaf.info;
 
+import software.coley.recaf.info.builder.AndroidClassInfoBuilder;
+import software.coley.recaf.info.builder.JvmClassInfoBuilder;
+
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -47,5 +50,10 @@ public interface AndroidClassInfo extends ClassInfo {
 	@Override
 	default boolean isAndroidClass() {
 		return true;
+	}
+
+	@Override
+	default AndroidClassInfoBuilder toBuilder() {
+		return new AndroidClassInfoBuilder(this);
 	}
 }

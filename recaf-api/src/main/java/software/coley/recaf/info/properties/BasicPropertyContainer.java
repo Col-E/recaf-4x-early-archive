@@ -18,7 +18,7 @@ public class BasicPropertyContainer implements PropertyContainer {
 	 * Container with empty map.
 	 */
 	public BasicPropertyContainer() {
-		this(null);
+		this(Collections.emptyMap());
 	}
 
 	/**

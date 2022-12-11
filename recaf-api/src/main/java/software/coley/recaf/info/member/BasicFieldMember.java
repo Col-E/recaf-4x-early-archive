@@ -33,6 +33,11 @@ public class BasicFieldMember extends BasicMember implements FieldMember {
 	}
 
 	@Override
+	public String toString() {
+		return "Field: " + getDescriptor() + " " + getName();
+	}
+
+	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || !o.getClass().isAssignableFrom(FieldMember.class)) return false;

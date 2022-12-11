@@ -1,5 +1,6 @@
 package software.coley.recaf.info.member;
 
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.annotation.TypeAnnotationInfo;
 import software.coley.recaf.info.properties.BasicPropertyContainer;
@@ -23,6 +24,7 @@ public abstract class BasicMember implements ClassMember {
 	private final String desc;
 	private final String signature;
 	private final int access;
+	private ClassInfo declaringClass;
 
 	protected BasicMember(String name, String desc, String signature, int access) {
 		this.name = name;
@@ -51,6 +53,21 @@ public abstract class BasicMember implements ClassMember {
 	 */
 	public void addTypeAnnotation(TypeAnnotationInfo typeAnnotation) {
 		typeAnnotations.add(typeAnnotation);
+	}
+
+	/**
+	 * For internal use when populating the model.
+	 *
+	 * @param declaringClass
+	 * 		Declaring class to assign.
+	 */
+	public void setDeclaringClass(ClassInfo declaringClass) {
+		this.declaringClass = declaringClass;
+	}
+
+	@Override
+	public ClassInfo getDeclaringClass() {
+		return declaringClass;
 	}
 
 	@Override

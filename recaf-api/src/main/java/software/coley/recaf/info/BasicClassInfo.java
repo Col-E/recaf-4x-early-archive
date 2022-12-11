@@ -1,16 +1,21 @@
 package software.coley.recaf.info;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.annotation.TypeAnnotationInfo;
 import software.coley.recaf.info.builder.AbstractClassInfoBuilder;
+import software.coley.recaf.info.member.BasicFieldMember;
+import software.coley.recaf.info.member.BasicMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.info.properties.Property;
 import software.coley.recaf.info.properties.PropertyContainer;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * Basic implementation of class info.
@@ -35,6 +40,7 @@ public abstract class BasicClassInfo implements ClassInfo {
 	private final List<InnerClassInfo> innerClasses;
 	private final List<FieldMember> fields;
 	private final List<MethodMember> methods;
+	private List<String> breadcrumbs;
 
 	protected BasicClassInfo(AbstractClassInfoBuilder<?> builder) {
 		this(builder.getName(),
@@ -54,12 +60,15 @@ public abstract class BasicClassInfo implements ClassInfo {
 				builder.getPropertyContainer());
 	}
 
-	protected BasicClassInfo(String name, String superName, List<String> interfaces, int access,
+	protected BasicClassInfo(@Nonnull String name, String superName, @Nonnull List<String> interfaces, int access,
 							 String signature, String sourceFileName,
-							 List<AnnotationInfo> annotations, List<TypeAnnotationInfo> typeAnnotations,
-							 String outerClassName, String outerMethodName, String outerMethodDescriptor,
-							 List<InnerClassInfo> innerClasses, List<FieldMember> fields, List<MethodMember> methods,
-							 PropertyContainer properties) {
+							 @Nonnull List<AnnotationInfo> annotations,
+							 @Nonnull List<TypeAnnotationInfo> typeAnnotations,
+							 String outerClassName, String outerMethodName,
+							 String outerMethodDescriptor,
+							 @Nonnull List<InnerClassInfo> innerClasses,
+							 @Nonnull List<FieldMember> fields, @Nonnull List<MethodMember> methods,
+							 @Nonnull PropertyContainer properties) {
 		this.name = name;
 		this.superName = superName;
 		this.interfaces = interfaces;
@@ -75,6 +84,11 @@ public abstract class BasicClassInfo implements ClassInfo {
 		this.fields = fields;
 		this.methods = methods;
 		this.properties = properties;
+		// Link fields/methods to self
+		Stream.concat(fields.stream(), methods.stream())
+				.filter(member -> member instanceof BasicMember)
+				.map(member -> (BasicMember) member)
+				.forEach(member -> member.setDeclaringClass(this));
 	}
 
 	@Override
@@ -134,7 +148,25 @@ public abstract class BasicClassInfo implements ClassInfo {
 
 	@Override
 	public List<String> getOuterClassBreadcrumbs() {
-		return null;
+		if (breadcrumbs == null) {
+			int maxOuterDepth = 10;
+			breadcrumbs = new ArrayList<>();
+			String currentOuter = getOuterClassName();
+			int counter = 0;
+			while (currentOuter != null) {
+				if (++counter > maxOuterDepth) {
+					breadcrumbs.clear(); // assuming some obfuscator is at work, so breadcrumbs might be invalid.
+					break;
+				}
+				breadcrumbs.add(0, currentOuter);
+				String targetOuter = currentOuter;
+				currentOuter = innerClasses.stream()
+						.filter(i -> i.getInnerClassName().equals(targetOuter))
+						.map(InnerClassInfo::getOuterClassName)
+						.findFirst().orElse(null);
+			}
+		}
+		return breadcrumbs;
 	}
 
 	@Override

@@ -3,6 +3,7 @@ package software.coley.recaf.info.annotation;
 import org.objectweb.asm.TypePath;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -11,7 +12,7 @@ import java.util.Map;
  * @author Matt Coley
  */
 public class BasicAnnotationInfo implements AnnotationInfo {
-	private final Map<String, AnnotationElement> elements = new HashMap<>();
+	private final Map<String, AnnotationElement> elements = new LinkedHashMap<>(); // preserve order on iter
 	private final boolean visible;
 	private final String descriptor;
 

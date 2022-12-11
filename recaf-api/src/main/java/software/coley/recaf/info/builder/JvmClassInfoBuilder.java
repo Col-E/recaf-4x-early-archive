@@ -149,7 +149,26 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		@Override
 		public void visitInnerClass(String name, String outerName, String innerName, int access) {
 			super.visitInnerClass(name, outerName, innerName, access);
-			innerClasses.add(new BasicInnerClassInfo(getName(), name, outerName, innerName, access));
+
+			// Get the name of the class being visited
+			String currentClassName = getName();
+
+			// Add the inner data
+			innerClasses.add(new BasicInnerClassInfo(currentClassName, name, outerName, innerName, access));
+
+			// If the local 'name' is the current class name, then we are visiting an inner class entry
+			// that most likely is a representation of the current class. If this entry has data about
+			// the outer class, we want to grab it.
+			if (name.equals(currentClassName)) {
+				// Only need to do this once, and some entries may not have data.
+				// Because they can be in any order we need to protect against re-assigning null.
+				if (getOuterClassName() == null  &&
+						outerName != null &&
+						currentClassName.startsWith(outerName)) {
+					withOuterClassName(outerName);
+				}
+			}
+
 		}
 
 		@Override
@@ -217,7 +236,8 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		public MethodBuilderAppender(int access, String name, String descriptor,
 									 String signature, String[] exceptions) {
 			super(getAsmVersion());
-			methodMember = new BasicMethodMember(name, descriptor, signature, access, Arrays.asList(exceptions));
+			List<String> exceptionList = exceptions == null ? Collections.emptyList() : Arrays.asList(exceptions);
+			methodMember = new BasicMethodMember(name, descriptor, signature, access, exceptionList);
 		}
 
 		@Override

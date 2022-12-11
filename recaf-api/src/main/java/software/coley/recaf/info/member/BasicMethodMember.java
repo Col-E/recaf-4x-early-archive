@@ -34,6 +34,11 @@ public class BasicMethodMember extends BasicMember implements MethodMember {
 	}
 
 	@Override
+	public String toString() {
+		return "Method: " + getName() + getDescriptor();
+	}
+
+	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || !o.getClass().isAssignableFrom(MethodMember.class)) return false;

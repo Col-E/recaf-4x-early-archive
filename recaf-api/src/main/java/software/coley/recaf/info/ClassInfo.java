@@ -149,6 +149,36 @@ public interface ClassInfo extends Info, Annotated, Accessed {
 	}
 
 	/**
+	 * @param name
+	 * 		Field name.
+	 * @param descriptor
+	 * 		Field descriptor.
+	 *
+	 * @return Field matching definition, or {@code null} if none were found.
+	 */
+	@Nullable
+	default FieldMember getDeclaredField(String name, String descriptor) {
+		return fieldStream()
+				.filter(f -> f.getName().equals(name) && f.getDescriptor().equals(descriptor))
+				.findFirst().orElse(null);
+	}
+
+	/**
+	 * @param name
+	 * 		Method name.
+	 * @param descriptor
+	 * 		Method descriptor.
+	 *
+	 * @return Method matching definition, or {@code null} if none were found.
+	 */
+	@Nullable
+	default MethodMember getDeclaredMethod(String name, String descriptor) {
+		return methodStream()
+				.filter(m -> m.getName().equals(name) && m.getDescriptor().equals(descriptor))
+				.findFirst().orElse(null);
+	}
+
+	/**
 	 * @param action
 	 * 		Action to run if this is a JVM class.
 	 */

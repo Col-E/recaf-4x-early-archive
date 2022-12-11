@@ -1,6 +1,8 @@
 package software.coley.recaf.info;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.info.builder.AbstractClassInfoBuilder;
+import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -11,7 +13,6 @@ import java.util.function.Predicate;
  * @author Matt Coley
  */
 public interface JvmClassInfo extends ClassInfo {
-
 	/**
 	 * Denotes the base version offset.
 	 * <ul>
@@ -72,5 +73,10 @@ public interface JvmClassInfo extends ClassInfo {
 	@Override
 	default boolean isAndroidClass() {
 		return false;
+	}
+
+	@Override
+	default JvmClassInfoBuilder toBuilder() {
+		return new JvmClassInfoBuilder(this);
 	}
 }

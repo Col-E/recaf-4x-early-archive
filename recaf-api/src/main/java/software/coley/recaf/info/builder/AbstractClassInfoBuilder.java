@@ -87,7 +87,10 @@ public abstract class AbstractClassInfoBuilder<B extends AbstractClassInfoBuilde
 
 	@SuppressWarnings("unchecked")
 	public B withInterfaces(List<String> interfaces) {
-		this.interfaces = interfaces;
+		if (interfaces == null)
+			this.interfaces = Collections.emptyList();
+		else
+			this.interfaces = interfaces;
 		return (B) this;
 	}
 
@@ -111,13 +114,19 @@ public abstract class AbstractClassInfoBuilder<B extends AbstractClassInfoBuilde
 
 	@SuppressWarnings("unchecked")
 	public B withAnnotations(List<AnnotationInfo> annotations) {
-		this.annotations = annotations;
+		if (annotations == null)
+			this.annotations = Collections.emptyList();
+		else
+			this.annotations = annotations;
 		return (B) this;
 	}
 
 	@SuppressWarnings("unchecked")
 	public B withTypeAnnotations(List<TypeAnnotationInfo> typeAnnotations) {
-		this.typeAnnotations = typeAnnotations;
+		if (typeAnnotations == null)
+			this.typeAnnotations = Collections.emptyList();
+		else
+			this.typeAnnotations = typeAnnotations;
 		return (B) this;
 	}
 
@@ -141,25 +150,37 @@ public abstract class AbstractClassInfoBuilder<B extends AbstractClassInfoBuilde
 
 	@SuppressWarnings("unchecked")
 	public B withInnerClasses(List<InnerClassInfo> innerClasses) {
-		this.innerClasses = innerClasses;
+		if (innerClasses == null)
+			this.innerClasses = Collections.emptyList();
+		else
+			this.innerClasses = innerClasses;
 		return (B) this;
 	}
 
 	@SuppressWarnings("unchecked")
 	public B withFields(List<FieldMember> fields) {
-		this.fields = fields;
+		if (fields == null)
+			this.fields = Collections.emptyList();
+		else
+			this.fields = fields;
 		return (B) this;
 	}
 
 	@SuppressWarnings("unchecked")
 	public B withMethods(List<MethodMember> methods) {
-		this.methods = methods;
+		if (methods == null)
+			this.methods = Collections.emptyList();
+		else
+			this.methods = methods;
 		return (B) this;
 	}
 
 	@SuppressWarnings("unchecked")
 	public B withPropertyContainer(PropertyContainer propertyContainer) {
-		this.propertyContainer = propertyContainer;
+		if (propertyContainer == null)
+			this.propertyContainer = new BasicPropertyContainer();
+		else
+			this.propertyContainer = propertyContainer;
 		return (B) this;
 	}
 
