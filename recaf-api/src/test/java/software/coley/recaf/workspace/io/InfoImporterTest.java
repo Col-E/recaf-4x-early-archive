@@ -7,19 +7,16 @@ import static org.mockito.Mockito.*;
 
 import software.coley.recaf.info.*;
 import software.coley.recaf.test.TestClassUtils;
-import software.coley.recaf.util.UncheckedConsumer;
+import software.coley.recaf.util.ZipCreationUtils;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -90,11 +87,7 @@ class InfoImporterTest {
 	@Test
 	void testImportZip() throws IOException {
 		// Create virtual ZIP with single 'Hello.txt'
-		byte[] zipFileBytes = createZip(zos -> {
-			zos.putNextEntry(new ZipEntry("Hello.txt"));
-			zos.write("Hello world".getBytes(StandardCharsets.UTF_8));
-			zos.closeEntry();
-		});
+		byte[] zipFileBytes = ZipCreationUtils.createSingleEntryZip("Hello.txt", "Hello world".getBytes(StandardCharsets.UTF_8));
 		ByteSource zipSource = ByteSources.wrap(zipFileBytes);
 
 		// We don't know the file name, so we can only assume it is a ZIP
@@ -114,13 +107,5 @@ class InfoImporterTest {
 		assertTrue(read instanceof JModFileInfo);
 		read = importer.readInfo("data.apk", zipSource);
 		assertTrue(read instanceof ApkFileInfo);
-	}
-
-	private static byte[] createZip(UncheckedConsumer<ZipOutputStream> consumer) throws IOException {
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		try (ZipOutputStream zos = new ZipOutputStream(baos)) {
-			consumer.accept(zos);
-		}
-		return baos.toByteArray();
 	}
 }

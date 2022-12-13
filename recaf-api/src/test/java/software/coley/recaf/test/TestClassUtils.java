@@ -1,13 +1,14 @@
 package software.coley.recaf.test;
 
 import org.objectweb.asm.ClassReader;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 
 import java.io.IOException;
 
 /**
- * Various test utils for {@link Class} and {@link software.coley.recaf.info.ClassInfo} usage.
+ * Various test utils for {@link Class} and {@link ClassInfo} usage.
  */
 public class TestClassUtils {
 	/**
