@@ -6,10 +6,9 @@ import software.coley.recaf.analytics.logging.Logging;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -106,6 +105,17 @@ public class ZipCreationUtils {
 	 */
 	public static class ZipBuilder {
 		private final List<Entry> entries = new ArrayList<>();
+		private boolean createDirectories;
+
+		/**
+		 * Enables creation of directory entries.
+		 *
+		 * @return Builder.
+		 */
+		public ZipBuilder createDirectories() {
+			createDirectories = true;
+			return this;
+		}
 
 		/**
 		 * @param name
@@ -116,7 +126,21 @@ public class ZipCreationUtils {
 		 * @return Builder.
 		 */
 		public ZipBuilder add(String name, byte[] content) {
-			entries.add(new Entry(name, content));
+			return add(name, content, true);
+		}
+
+		/**
+		 * @param name
+		 * 		Entry name.
+		 * @param content
+		 * 		Entry contents.
+		 * @param compression
+		 * 		Compression flag.
+		 *
+		 * @return Builder.
+		 */
+		public ZipBuilder add(String name, byte[] content, boolean compression) {
+			entries.add(new Entry(name, content, compression));
 			return this;
 		}
 
@@ -128,10 +152,49 @@ public class ZipCreationUtils {
 		 */
 		public byte[] bytes() throws IOException {
 			return createZip(zos -> {
+				Set<String> dirsVisited = new HashSet<>();
+				CRC32 crc = new CRC32();
 				for (Entry entry : entries) {
-					zos.putNextEntry(new ZipEntry(entry.name));
-					zos.write(entry.content);
+					String key = entry.name;
+					byte[] content = entry.content;
+
+					// Write directories for upcoming entries if necessary
+					// - Ugly, but does the job.
+					if (createDirectories && key.contains("/")) {
+						// Record directories
+						String parent = key;
+						List<String> toAdd = new ArrayList<>();
+						do {
+							parent = parent.substring(0, parent.lastIndexOf('/'));
+							if (dirsVisited.add(parent)) {
+								toAdd.add(0, parent + '/');
+							} else break;
+						} while (parent.contains("/"));
+						// Put directories in order of depth
+						for (String dir : toAdd) {
+							zos.putNextEntry(new JarEntry(dir));
+							zos.closeEntry();
+						}
+					}
+
+					// Update CRC
+					crc.reset();
+					crc.update(content, 0, content.length);
+
+					// Write ZIP entry
+					int level = entry.compression ? ZipEntry.DEFLATED : ZipEntry.STORED;
+					ZipEntry zipEntry = new ZipEntry(key);
+					zipEntry.setMethod(level);
+					zipEntry.setCrc(crc.getValue());
+					if (!entry.compression) {
+						zipEntry.setSize(content.length);
+						zipEntry.setCompressedSize(content.length);
+					}
+					zos.putNextEntry(zipEntry);
+					zos.write(content);
 					zos.closeEntry();
+
+					// Reset to allow name hacks
 					resetNames(zos);
 				}
 			});
@@ -140,10 +203,13 @@ public class ZipCreationUtils {
 		private static class Entry {
 			private final String name;
 			private final byte[] content;
+			private final boolean compression;
 
-			private Entry(String name, byte[] content) {
+			private Entry(String name, byte[] content, boolean compression) {
 				this.name = name;
 				this.content = content;
+				this.compression = compression;
+				;
 			}
 		}
 	}

@@ -42,6 +42,21 @@ public class ZipCompressionProperty extends BasicProperty<Integer> {
 	/**
 	 * @param info
 	 * 		Info instance.
+	 * @param fallback
+	 * 		Fallback compression type if there is no recorded type for the info instance.
+	 *
+	 * @return Compression type. See {@link ZipCompressions} for values.
+	 * {@code fallback} when no property value is assigned.
+	 */
+	public static int getOr(Info info, int fallback) {
+		Integer value = get(info);
+		if (value == null) return fallback;
+		return value;
+	}
+
+	/**
+	 * @param info
+	 * 		Info instance.
 	 * @param value
 	 * 		Compression type. See {@link ZipCompressions} for values.
 	 */
