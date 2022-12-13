@@ -187,6 +187,19 @@ public class BasicResourceImporter implements ResourceImporter {
 							throw new NumberFormatException("Version name is null");
 						versionName = entryName.substring(startOffset, slashIndex);
 
+						// Only add if the names match
+						int pathStart = slashIndex + 1;
+						int pathEnd = entryName.length() - ".class".length();
+						if (pathEnd > pathStart) {
+							String pathName = entryName.substring(pathStart, pathEnd);
+							if (!pathName.equals(className))
+								throw new IllegalArgumentException("Class in multi-release directory" +
+										" does not match it's declared class name: " + entryName);
+						} else {
+							throw new IllegalArgumentException("Class in multi-release directory " +
+									"does not end in '.class'");
+						}
+
 						// Put it into the correct versioned class bundle.
 						int version = Integer.parseInt(versionName);
 						BasicJvmClassBundle bundle = (BasicJvmClassBundle) versionedJvmClassBundles
@@ -199,7 +212,6 @@ public class BasicResourceImporter implements ResourceImporter {
 						} else {
 							bundle.initialPut(classInfo);
 						}
-						return;
 					} catch (NumberFormatException ex) {
 						// Version is invalid, record it as a file instead.
 						logger.warn("Class ZIP entry seemed to be for multi-release jar, " +
@@ -211,7 +223,19 @@ public class BasicResourceImporter implements ResourceImporter {
 								.withName(entryName)
 								.withRawContent(classInfo.getBytecode())
 								.build());
+					} catch (IllegalArgumentException ex) {
+						// Class name doesn't match what is declared locally in the versioned folder.
+						logger.warn("Class ZIP entry seemed to be for multi-release jar, " +
+								"but the name doesn't align with the declared type: " + entryName);
+
+						// Override the prior value.
+						// The JVM always selects the last option if there are duplicates.
+						files.initialPut(new FileInfoBuilder<>()
+								.withName(entryName)
+								.withRawContent(classInfo.getBytecode())
+								.build());
 					}
+					return;
 				}
 
 				// Handle duplicate classes

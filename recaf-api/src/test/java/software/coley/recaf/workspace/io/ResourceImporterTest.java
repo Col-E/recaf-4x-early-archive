@@ -121,6 +121,34 @@ class ResourceImporterTest {
 	}
 
 	@Test
+	void testImportVersionedClassOnlyWhenNameMatches() throws IOException {
+		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
+		byte[] helloWorldBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();
+
+		// Create JAR with 'HelloWorld' declared twice.
+		// Once correctly as a Java 9 versioned class.
+		// Once incorrectly as a Java 10 versioned class. This one will be added as a file instead.
+		String validName = JarFileInfo.MULTI_RELEASE_PREFIX + "9/" + helloWorldPath + ".class";
+		String invalidName = JarFileInfo.MULTI_RELEASE_PREFIX + "10/Bogus.class";
+		Map<String, byte[]> map = new LinkedHashMap<>();
+		map.put(validName, helloWorldBytes);
+		map.put(invalidName, helloWorldBytes);
+		byte[] zipBytes = ZipCreationUtils.createZip(map);
+		ByteSource zipSource = ByteSources.wrap(zipBytes);
+		WorkspaceResource resource = importer.importResource(zipSource);
+
+		// 1 in the JVM bundle, 3 in each version bundle
+		assertEquals(0, resource.getJvmClassBundle().size());
+		assertEquals(1, resource.getVersionedJvmClassBundles().size());
+		assertEquals(0, resource.getAndroidClassBundles().size());
+		assertEquals(1, resource.getFileBundle().size());
+		assertEquals(0, resource.getEmbeddedResources().size());
+
+		// Validate the added file is the invalid path item
+		assertEquals(invalidName, resource.getFileBundle().iterator().next().getName());
+	}
+
+	@Test
 	void testSupportClassFakeDirectory() throws IOException {
 		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
 		byte[] helloWorldBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();
@@ -221,7 +249,6 @@ class ResourceImporterTest {
 		assertArrayEquals(bytes, resource.getFileBundle().iterator().next().getRawContent());
 	}
 
-
 	@Test
 	void testDeduplicateClasses() throws IOException {
 		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
@@ -260,7 +287,6 @@ class ResourceImporterTest {
 			assertNotNull(fileInfo2, "Deduplication did not copy wrong path class to files bundle: software/coley/B.class");
 		}
 	}
-
 
 	@Test
 	void testDeduplicateVersionedClasses() throws IOException {
