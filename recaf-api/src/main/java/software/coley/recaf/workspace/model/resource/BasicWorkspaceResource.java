@@ -255,30 +255,23 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 
-		BasicWorkspaceResource resource = (BasicWorkspaceResource) o;
-
-		if (!jvmClassListeners.equals(resource.jvmClassListeners)) return false;
-		if (!androidClassListeners.equals(resource.androidClassListeners)) return false;
-		if (!fileListeners.equals(resource.fileListeners)) return false;
-		if (!jvmClassBundle.equals(resource.jvmClassBundle)) return false;
-		if (!versionedJvmClassBundles.equals(resource.versionedJvmClassBundles)) return false;
-		if (!androidClassBundles.equals(resource.androidClassBundles)) return false;
-		if (!fileBundle.equals(resource.fileBundle)) return false;
-		if (!embeddedResources.equals(resource.embeddedResources)) return false;
-		return Objects.equals(containingResource, resource.containingResource);
+		// NOTE: Do NOT check the containing resource (we want to prevent cycles)
+		WorkspaceResource other = (WorkspaceResource) o;
+		if (!jvmClassBundle.equals(other.getJvmClassBundle())) return false;
+		if (!versionedJvmClassBundles.equals(other.getVersionedJvmClassBundles())) return false;
+		if (!androidClassBundles.equals(other.getAndroidClassBundles())) return false;
+		if (!fileBundle.equals(other.getFileBundle())) return false;
+		return embeddedResources.equals(other.getEmbeddedResources());
 	}
 
 	@Override
 	public int hashCode() {
-		int result = jvmClassListeners.hashCode();
-		result = 31 * result + androidClassListeners.hashCode();
-		result = 31 * result + fileListeners.hashCode();
-		result = 31 * result + jvmClassBundle.hashCode();
+		// NOTE: Do NOT consider the containing resource (we want to prevent cycles)
+		int result =  jvmClassBundle.hashCode();
 		result = 31 * result + versionedJvmClassBundles.hashCode();
 		result = 31 * result + androidClassBundles.hashCode();
 		result = 31 * result + fileBundle.hashCode();
 		result = 31 * result + embeddedResources.hashCode();
-		result = 31 * result + (containingResource != null ? containingResource.hashCode() : 0);
 		return result;
 	}
 }

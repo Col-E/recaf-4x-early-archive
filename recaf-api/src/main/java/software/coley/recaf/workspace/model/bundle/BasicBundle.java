@@ -246,4 +246,22 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 		listeners.clear();
 		clear();
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		BasicBundle<?> other = (BasicBundle<?>) o;
+
+		if (!history.equals(other.history)) return false;
+		return backing.equals(other.backing);
+	}
+
+	@Override
+	public int hashCode() {
+		int result = history.hashCode();
+		result = 31 * result + backing.hashCode();
+		return result;
+	}
 }

@@ -90,7 +90,7 @@ public class BasicResourceImporter implements ResourceImporter {
 
 		// Must be some non-class type of file.
 		FileInfo readInfoAsFile = readInfo.asFile();
-		builder.withFileInfo(readInfoAsFile);
+		builder = builder.withFileInfo(readInfoAsFile);
 
 		// Check for general ZIP container format (ZIP/JAR/WAR/APK/JMod)
 		if (readInfoAsFile.isZipFile()) {

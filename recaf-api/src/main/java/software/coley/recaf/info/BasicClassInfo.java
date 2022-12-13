@@ -206,8 +206,9 @@ public abstract class BasicClassInfo implements ClassInfo {
 
 		BasicClassInfo other = (BasicClassInfo) o;
 
+		// NOTE: Do NOT consider the properties since contents of the map can point back to this instance
+		//       or our containing resource, causing a cycle.
 		if (access != other.access) return false;
-		if (!properties.equals(other.properties)) return false;
 		if (!name.equals(other.name)) return false;
 		if (!Objects.equals(superName, other.superName)) return false;
 		if (!interfaces.equals(other.interfaces)) return false;
@@ -225,8 +226,9 @@ public abstract class BasicClassInfo implements ClassInfo {
 
 	@Override
 	public int hashCode() {
-		int result = properties.hashCode();
-		result = 31 * result + name.hashCode();
+		// NOTE: Do NOT consider the properties since contents of the map can point back to this instance
+		//       or our containing resource, causing a cycle.
+		int result =  name.hashCode();
 		result = 31 * result + (superName != null ? superName.hashCode() : 0);
 		result = 31 * result + interfaces.hashCode();
 		result = 31 * result + access;

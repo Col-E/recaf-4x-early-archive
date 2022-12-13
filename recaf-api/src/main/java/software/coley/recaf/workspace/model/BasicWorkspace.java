@@ -20,15 +20,18 @@ public class BasicWorkspace implements Workspace {
 	private final List<WorkspaceResource> supporting = new ArrayList<>();
 
 	/**
-	 * @param primary Primary resource.
+	 * @param primary
+	 * 		Primary resource.
 	 */
 	public BasicWorkspace(WorkspaceResource primary) {
 		this(primary, Collections.emptyList());
 	}
 
 	/**
-	 * @param primary Primary resource.
-	 * @param supporting Provided supporting resources.
+	 * @param primary
+	 * 		Primary resource.
+	 * @param supporting
+	 * 		Provided supporting resources.
 	 */
 	public BasicWorkspace(WorkspaceResource primary, Collection<WorkspaceResource> supporting) {
 		this.primary = primary;
@@ -59,5 +62,31 @@ public class BasicWorkspace implements Workspace {
 	@Override
 	public void removeWorkspaceModificationListener(WorkspaceModificationListener listener) {
 		modificationListeners.remove(listener);
+	}
+
+	@Override
+	public String toString() {
+		return "BasicWorkspace{" +
+				"primary=" + primary +
+				", supporting=" + supporting +
+				'}';
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		Workspace other = (Workspace) o;
+
+		if (!primary.equals(other.getPrimaryResource())) return false;
+		return supporting.equals(other.getSupportingResources());
+	}
+
+	@Override
+	public int hashCode() {
+		int result = primary.hashCode();
+		result = 31 * result + supporting.hashCode();
+		return result;
 	}
 }
