@@ -32,7 +32,9 @@ public interface WorkspaceManager {
 	 * @return A new exporter configured to match the options.
 	 */
 	@Nonnull
-	WorkspaceExporter createExporter(WorkspaceExportOptions options);
+	default WorkspaceExporter createExporter(WorkspaceExportOptions options) {
+		return options.create();
+	}
 
 	/**
 	 * @return The current active workspace.
