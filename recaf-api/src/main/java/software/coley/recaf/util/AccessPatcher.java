@@ -35,7 +35,8 @@ public class AccessPatcher {
 			logger.debug("Patching package reflection restrictions");
 			patchReflectionFilters();
 		} catch (Throwable t) {
-			logger.error("Failed access patching on Java " + SystemInformation.getJvmInfo(), t);
+			logger.error("Failed access patching on Java " + SystemInformation.JAVA_VERSION +
+					"(" + SystemInformation.JAVA_VM_VENDOR + ")", t);
 		}
 	}
 
