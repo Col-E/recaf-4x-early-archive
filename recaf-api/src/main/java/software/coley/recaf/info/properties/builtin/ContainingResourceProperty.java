@@ -28,7 +28,7 @@ public class ContainingResourceProperty extends BasicProperty<WorkspaceResource>
 	 * 		Resource to associate with.
 	 */
 	public static void set(PropertyContainer container, WorkspaceResource resource) {
-		container.setProperty(KEY, new ContainingResourceProperty(resource));
+		container.setProperty(new ContainingResourceProperty(resource));
 	}
 
 	/**

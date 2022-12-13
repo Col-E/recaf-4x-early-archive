@@ -20,7 +20,7 @@ public interface PropertyContainer {
 	 * @param <V>
 	 * 		Property value type.
 	 */
-	default <V> void setProperty(String key, V value) {
+	default <V> void setPropertyValue(String key, V value) {
 		setProperty(new BasicProperty<>(key, value));
 	}
 

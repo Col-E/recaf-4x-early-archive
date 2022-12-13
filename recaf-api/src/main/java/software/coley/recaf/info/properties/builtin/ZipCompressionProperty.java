@@ -46,7 +46,7 @@ public class ZipCompressionProperty extends BasicProperty<Integer> {
 	 * 		Compression type. See {@link ZipCompressions} for values.
 	 */
 	public static void set(Info info, int value) {
-		info.setProperty(KEY, new ZipCompressionProperty(value));
+		info.setProperty(new ZipCompressionProperty(value));
 	}
 
 	@Override

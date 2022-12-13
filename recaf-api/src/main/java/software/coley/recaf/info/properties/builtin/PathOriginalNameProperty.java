@@ -1,5 +1,7 @@
 package software.coley.recaf.info.properties.builtin;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.properties.BasicProperty;
@@ -28,6 +30,7 @@ public class PathOriginalNameProperty extends BasicProperty<String> {
 	 *
 	 * @return Original name of the info if set, otherwise the existing info name.
 	 */
+	@Nonnull
 	public static String map(Info info) {
 		String name = info.getName();
 		String original = info.getPropertyValueOrNull(KEY);
@@ -39,11 +42,22 @@ public class PathOriginalNameProperty extends BasicProperty<String> {
 	/**
 	 * @param info
 	 * 		Info instance.
+	 *
+	 * @return Prefix associated with instance.
+	 */
+	@Nullable
+	public static String get(Info info) {
+		return info.getPropertyValueOrNull(KEY);
+	}
+
+	/**
+	 * @param info
+	 * 		Info instance.
 	 * @param original
 	 * 		Original name to associate with the item.
 	 */
 	public static void set(Info info, String original) {
-		info.setProperty(KEY, new PathOriginalNameProperty(original));
+		info.setProperty(new PathOriginalNameProperty(original));
 	}
 
 	@Override

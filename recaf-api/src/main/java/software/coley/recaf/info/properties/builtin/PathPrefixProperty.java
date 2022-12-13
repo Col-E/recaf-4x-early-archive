@@ -1,5 +1,7 @@
 package software.coley.recaf.info.properties.builtin;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.properties.BasicProperty;
@@ -33,12 +35,24 @@ public class PathPrefixProperty extends BasicProperty<String> {
 	 *
 	 * @return Name of the info, with the suffix applied if any exist.
 	 */
+	@Nonnull
 	public static String map(Info info) {
 		String name = info.getName();
-		String prefix = info.getPropertyValueOrNull(KEY);
+		String prefix = get(info);
 		if (prefix != null)
 			return prefix + name;
 		return name;
+	}
+
+	/**
+	 * @param info
+	 * 		Info instance.
+	 *
+	 * @return Prefix associated with instance.
+	 */
+	@Nullable
+	public static String get(Info info) {
+		return info.getPropertyValueOrNull(KEY);
 	}
 
 	/**
@@ -48,7 +62,7 @@ public class PathPrefixProperty extends BasicProperty<String> {
 	 * 		Suffix to associate with the item.
 	 */
 	public static void set(Info info, String prefix) {
-		info.setProperty(KEY, new PathPrefixProperty(prefix));
+		info.setProperty(new PathPrefixProperty(prefix));
 	}
 
 	@Override
