@@ -1,11 +1,14 @@
 package software.coley.recaf.util;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.zip.CRC32;
@@ -104,6 +107,7 @@ public class ZipCreationUtils {
 	 * Helper to create zip files.
 	 */
 	public static class ZipBuilder {
+		private static final int MAX_DIR_DEPTH = 64;
 		private final List<Entry> entries = new ArrayList<>();
 		private boolean createDirectories;
 
@@ -140,7 +144,17 @@ public class ZipCreationUtils {
 		 * @return Builder.
 		 */
 		public ZipBuilder add(String name, byte[] content, boolean compression) {
-			entries.add(new Entry(name, content, compression));
+			return add(new Entry(name, content, compression, null, null, -1, -1, -1));
+		}
+
+		/**
+		 * @param entry
+		 * 		Entry to add.
+		 *
+		 * @return Builder.
+		 */
+		private ZipBuilder add(Entry entry) {
+			entries.add(entry);
 			return this;
 		}
 
@@ -165,6 +179,11 @@ public class ZipCreationUtils {
 						String parent = key;
 						List<String> toAdd = new ArrayList<>();
 						do {
+							// Abort if the max-dir depth is reached.
+							if (toAdd.size() > MAX_DIR_DEPTH) {
+								toAdd.clear();
+								break;
+							}
 							parent = parent.substring(0, parent.lastIndexOf('/'));
 							if (dirsVisited.add(parent)) {
 								toAdd.add(0, parent + '/');
@@ -190,6 +209,12 @@ public class ZipCreationUtils {
 						zipEntry.setSize(content.length);
 						zipEntry.setCompressedSize(content.length);
 					}
+					if (entry.comment != null) zipEntry.setComment(entry.comment);
+					if (entry.extra != null) zipEntry.setExtra(entry.extra);
+					if (entry.creationTime >= 0L) zipEntry.setCreationTime(FileTime.fromMillis(entry.creationTime));
+					if (entry.modifyTime >= 0L) zipEntry.setLastModifiedTime(FileTime.fromMillis(entry.modifyTime));
+					if (entry.accessTime >= 0L) zipEntry.setLastAccessTime(FileTime.fromMillis(entry.accessTime));
+
 					zos.putNextEntry(zipEntry);
 					zos.write(content);
 					zos.closeEntry();
@@ -200,16 +225,33 @@ public class ZipCreationUtils {
 			});
 		}
 
-		private static class Entry {
+		public static class Entry {
 			private final String name;
 			private final byte[] content;
 			private final boolean compression;
+			private final String comment;
+			private final byte[] extra;
+			private final long creationTime;
+			private final long modifyTime;
+			private final long accessTime;
 
-			private Entry(String name, byte[] content, boolean compression) {
+			private Entry(@Nonnull String name,
+						  @Nonnull byte[] content,
+						  boolean compression,
+						  @Nullable String comment,
+						  @Nullable byte[] extra,
+						  long creationTime,
+						  long modifyTime,
+						  long accessTime
+			) {
 				this.name = name;
 				this.content = content;
 				this.compression = compression;
-				;
+				this.comment = comment;
+				this.extra = extra;
+				this.creationTime = creationTime;
+				this.modifyTime = modifyTime;
+				this.accessTime = accessTime;
 			}
 		}
 	}
