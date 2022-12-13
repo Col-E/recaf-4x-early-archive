@@ -190,6 +190,48 @@ public class StringUtil {
 	}
 
 	/**
+	 * @param a
+	 * 		Some string.
+	 * @param b
+	 * 		Another.
+	 *
+	 * @return The common prefix between the two strings.
+	 */
+	public static String getCommonPrefix(String a, String b) {
+		int len = Math.min(a.length(), b.length());
+		for (int i = 0; i < len; i++) {
+			if (a.charAt(i) != b.charAt(i)) {
+				return a.substring(0, i);
+			}
+		}
+		return a.substring(0, len);
+	}
+
+	/**
+	 * @param left
+	 * 		Some string with the ending to focus on.
+	 * @param right
+	 * 		Some string with the beginning to focus on.
+	 *
+	 * @return The common text between the two.
+	 */
+	public static String getIntersection(String left, String right) {
+		int aLength = left.length();
+		int len = Math.min(aLength, right.length());
+		String match = "";
+		StringBuilder sba = new StringBuilder();
+		StringBuilder sbb = new StringBuilder();
+		for (int i = 0; i < len; i++) {
+			String aa = sba.insert(0, left.charAt(aLength - i - 1)).toString();
+			String bb = sbb.append(right.charAt(i)).toString();
+			if (aa.equals(bb)) {
+				match = bb;
+			}
+		}
+		return match;
+	}
+
+	/**
 	 * @param len
 	 * 		Target string length.
 	 * @param pattern

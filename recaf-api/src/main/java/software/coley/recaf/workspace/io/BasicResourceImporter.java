@@ -16,6 +16,7 @@ import software.coley.recaf.info.properties.builtin.ZipCompressionProperty;
 import software.coley.recaf.util.DexIOUtil;
 import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.ModulesIOUtil;
+import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
 import software.coley.recaf.util.io.LocalFileHeaderSource;
@@ -32,10 +33,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * Basic implementation of the resource importer.
@@ -151,61 +149,10 @@ public class BasicResourceImporter implements ResourceImporter {
 				JvmClassInfo classInfo = info.asClass().asJvmClass();
 				String className = classInfo.getName();
 
-				// First we must handle edge cases. Up first, we'll look at multi-release jar prefixes.
-				if (entryName.startsWith(JarFileInfo.MULTI_RELEASE_PREFIX) &&
-						!className.startsWith(JarFileInfo.MULTI_RELEASE_PREFIX)) {
-					// Extract version from '<prefix>/version/<class-name>' pattern
-					int startOffset = JarFileInfo.MULTI_RELEASE_PREFIX.length();
-					String versionName = entryName.substring(startOffset, entryName.indexOf('/', startOffset));
-					try {
-						// Put it into the correct versioned class bundle.
-						int version = Integer.parseInt(versionName);
-						BasicJvmClassBundle bundle = (BasicJvmClassBundle) versionedJvmClassBundles
-								.computeIfAbsent(version, v -> new BasicJvmClassBundle());
-						bundle.initialPut(classInfo);
-						return;
-					} catch (NumberFormatException ex) {
-						// Version is invalid, record it as a file instead.
-						logger.warn("Class ZIP entry seemed to be for multi-release jar, " +
-								"but version is non-numeric value: " + versionName);
-
-						// Warn if there is also a duplicate file with the path.
-						if (files.containsKey(entryName)) {
-							logger.warn("Multiple duplicate entries in zip for class '{}', " +
-									"dropping older entry", className);
-						}
-
-						// Override the prior value.
-						// The JVM always selects the last option if there are duplicates.
-						files.initialPut(new FileInfoBuilder<>()
-								.withName(entryName)
-								.withRawContent(classInfo.getBytecode())
-								.build());
-					}
-				}
-
-				// Handle duplicate classes by placing duplicates into the file bundle,
-				// where their paths should be recognized as being unique.
-				if (classes.containsKey(className)) {
-					// Warn that there are multiple classes by the given name.
-					// This won't occur for legit JAR files using multi-version release.
-					// So the likely cases are:
-					//  - ZIP is intentionally tampered with to include multiple entries by the same name
-					//  - There is another legit case we do not account for in prior logic
-					logger.warn("Class ZIP entry already recorded '{}' - Saving duplicate as file instead", className);
-
-					// Warn if there is also a duplicate file with the path.
-					if (files.containsKey(entryName)) {
-						logger.warn("Multiple duplicate entries in zip for class '{}'," +
-								" dropping older entry", className);
-					}
-
-					// Override the prior value.
-					// The JVM always selects the last option if there are duplicates.
-					files.initialPut(new FileInfoBuilder<>()
-							.withName(entryName)
-							.withRawContent(classInfo.getBytecode())
-							.build());
+				// JVM edge case allows trailing '/' for class entries in JARs.
+				// We're going to normalize that away.
+				if (entryName.endsWith(".class/")) {
+					entryName = entryName.replace(".class/", ".class");
 				}
 
 				// Record the class name, including path suffix/prefix.
@@ -228,7 +175,52 @@ public class BasicResourceImporter implements ResourceImporter {
 					PathOriginalNameProperty.set(classInfo, entryName);
 				}
 
-				classes.initialPut(classInfo);
+				// First we must handle edge cases. Up first, we'll look at multi-release jar prefixes.
+				if (entryName.startsWith(JarFileInfo.MULTI_RELEASE_PREFIX) &&
+						!className.startsWith(JarFileInfo.MULTI_RELEASE_PREFIX)) {
+					String versionName = "<null>";
+					try {
+						// Extract version from '<prefix>/version/<class-name>' pattern
+						int startOffset = JarFileInfo.MULTI_RELEASE_PREFIX.length();
+						int slashIndex = entryName.indexOf('/', startOffset);
+						if (slashIndex < 0)
+							throw new NumberFormatException("Version name is null");
+						versionName = entryName.substring(startOffset, slashIndex);
+
+						// Put it into the correct versioned class bundle.
+						int version = Integer.parseInt(versionName);
+						BasicJvmClassBundle bundle = (BasicJvmClassBundle) versionedJvmClassBundles
+								.computeIfAbsent(version, v -> new BasicJvmClassBundle());
+
+						// Handle duplicate classes
+						JvmClassInfo existingClass = bundle.get(className);
+						if (existingClass != null) {
+							deduplicateClass(existingClass, classInfo, bundle, files);
+						} else {
+							bundle.initialPut(classInfo);
+						}
+						return;
+					} catch (NumberFormatException ex) {
+						// Version is invalid, record it as a file instead.
+						logger.warn("Class ZIP entry seemed to be for multi-release jar, " +
+								"but version is non-numeric value: " + versionName);
+
+						// Override the prior value.
+						// The JVM always selects the last option if there are duplicates.
+						files.initialPut(new FileInfoBuilder<>()
+								.withName(entryName)
+								.withRawContent(classInfo.getBytecode())
+								.build());
+					}
+				}
+
+				// Handle duplicate classes
+				JvmClassInfo existingClass = classes.get(className);
+				if (existingClass != null) {
+					deduplicateClass(existingClass, classInfo, classes, files);
+				} else {
+					classes.initialPut(classInfo);
+				}
 			} else if (info.isFile()) {
 				FileInfo fileInfo = info.asFile();
 
@@ -295,6 +287,115 @@ public class BasicResourceImporter implements ResourceImporter {
 				.withEmbeddedResources(embeddedResources)
 				.withFileInfo(zipInfo)
 				.build();
+	}
+
+	/**
+	 * Should <i>ONLY</i> be called if there is an existing duplicate/conflict in the given JVM class bundle.
+	 *
+	 * @param existingClass
+	 * 		Prior class entry in the class bundle.
+	 * @param currentClass
+	 * 		New entry to de-duplicate.
+	 * @param classes
+	 * 		Target class bundle.
+	 * @param files
+	 * 		Target file bundle for fallback item placement.
+	 */
+	private void deduplicateClass(JvmClassInfo existingClass, JvmClassInfo currentClass,
+								  BasicJvmClassBundle classes, BasicFileBundle files) {
+		String className = currentClass.getName();
+		String existingPrefix = PathPrefixProperty.get(existingClass);
+		String existingSuffix = PathSuffixProperty.get(existingClass);
+		String existingOriginal = PathOriginalNameProperty.get(existingClass);
+		String currentPrefix = PathPrefixProperty.get(currentClass);
+		String currentSuffix = PathSuffixProperty.get(currentClass);
+		String currentOriginal = PathOriginalNameProperty.get(currentClass);
+
+		// The target names to use should we want to store the items as files
+		String existingName = existingOriginal != null ? existingOriginal :
+				(existingPrefix != null ? existingPrefix : "") + className +
+						(existingSuffix != null ? existingSuffix : "");
+		String currentName = currentOriginal != null ? currentOriginal :
+				(currentPrefix != null ? currentPrefix : "") + className +
+						(currentSuffix != null ? currentSuffix : "");
+
+		// Check for literal duplicate ZIP entries.
+		if (existingName.equals(currentName)) {
+			// The new name is an exact match, but occurs later in the file.
+			// Since the JVM prefers the last entry of a set of duplicates we will drop the prior value.
+			logger.warn("Dropping prior class duplicate, matched exact file path: {}", className);
+			classes.initialPut(currentClass);
+			return;
+		}
+
+		// Ok, so the path names aren't the same.
+		// We'll want to normalize the paths and compare them. Whichever is best fit to be the JVM class will be kept
+		// in the classes bundle. The worse fit goes to the files bundle. If we aren't sure then the newest entry
+		// lands in the JVM bundle.
+
+		// Normalize prefix/suffix
+		if (Objects.equals(existingPrefix, currentPrefix)) {
+			existingPrefix = null;
+			currentPrefix = null;
+		}
+		if (Objects.equals(existingSuffix, currentSuffix)) {
+			existingSuffix = null;
+			currentSuffix = null;
+		}
+
+		// Names to use for comparison purposes
+		String cmpExistingName = existingOriginal != null ? existingOriginal :
+				(existingPrefix != null ? existingPrefix : "") + className +
+						(existingSuffix != null ? existingSuffix : "");
+		String cmpCurrentName = currentOriginal != null ? currentOriginal :
+				(currentPrefix != null ? currentPrefix : "") + className +
+						(currentSuffix != null ? currentSuffix : "");
+
+		// Try and get class names via the file paths and determine which is the best fit to the real class name.
+		String commonPrefix = StringUtil.getCommonPrefix(cmpExistingName, cmpCurrentName);
+		if (commonPrefix.startsWith(JarFileInfo.MULTI_RELEASE_PREFIX)) {
+			// Class names start at the '<prefix>/<version>/'
+			int i = commonPrefix.indexOf('/', JarFileInfo.MULTI_RELEASE_PREFIX.length()) + 1;
+			cmpExistingName = cmpExistingName.substring(i);
+			cmpCurrentName = cmpCurrentName.substring(i);
+		} else if (!commonPrefix.isEmpty()) {
+			// Class names should start at the common prefix minus the intersection of the class name
+			String intersection = StringUtil.getIntersection(commonPrefix, className);
+			cmpExistingName = intersection + cmpExistingName.substring(commonPrefix.length());
+			cmpCurrentName = intersection + cmpCurrentName.substring(commonPrefix.length());
+		}
+
+		// Best fit checking
+		if (cmpExistingName.equals(className + ".class")) {
+			// The existing class entry name IS the class name. Thus, the other (current) one does not match.
+			// We will add the current one as a file instead, and keep the prior as a class.
+			logger.warn("Duplicate class '{}' found. The prior entry better aligns to class name so the new one " +
+					"will be tracked as a file instead: {}", className, currentName);
+			files.initialPut(new FileInfoBuilder<>()
+					.withName(currentName)
+					.withRawContent(currentClass.getBytecode())
+					.build());
+		} else if (cmpCurrentName.equals(className + ".class")) {
+			// The current class entry name IS the class name. Thus, the other (prior) one does not match.
+			// We will add the prior one as a file, and record this new one as a class
+			logger.warn("Duplicate class '{}' found. The new entry better aligns to class name so the prior one " +
+					"will be tracked as a file instead: {}", className, existingName);
+			files.initialPut(new FileInfoBuilder<>()
+					.withName(existingName)
+					.withRawContent(existingClass.getBytecode())
+					.build());
+			classes.initialPut(currentClass);
+		} else {
+			// Neither of them really follow the class name accurately. We'll just record the last one as the JVM class
+			// because that more accurately follows JVM behavior.
+			logger.warn("Duplicate class '{}' found. Neither entry match their class names," +
+					" tracking the newer item as the JVM class and retargeting the old item as a file: {}", className, existingName);
+			files.initialPut(new FileInfoBuilder<>()
+					.withName(existingName)
+					.withRawContent(existingClass.getBytecode())
+					.build());
+			classes.initialPut(currentClass);
+		}
 	}
 
 	private WorkspaceResource handleModules(WorkspaceResourceBuilder builder, ModulesFileInfo moduleInfo) throws IOException {

@@ -3,6 +3,7 @@ package software.coley.recaf.workspace.io;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.info.JarFileInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.HelloWorld;
@@ -10,6 +11,7 @@ import software.coley.recaf.util.AccessPatcher;
 import software.coley.recaf.util.ZipCreationUtils;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
+import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
@@ -17,7 +19,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -85,6 +91,217 @@ class ResourceImporterTest {
 	}
 
 	@Test
+	void testImportMultiReleaseVersionedClasses() throws IOException {
+		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
+		byte[] helloWorldBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();
+
+		// Create JAR with 'HelloWorld' declared multiple times in different multi-release directories.
+		// None should overlap.
+		Map<String, byte[]> map = new LinkedHashMap<>();
+		map.put(helloWorldPath + ".class", helloWorldBytes);
+		map.put(JarFileInfo.MULTI_RELEASE_PREFIX + "9/" + helloWorldPath + ".class", helloWorldBytes);
+		map.put(JarFileInfo.MULTI_RELEASE_PREFIX + "10/" + helloWorldPath + ".class", helloWorldBytes);
+		map.put(JarFileInfo.MULTI_RELEASE_PREFIX + "11/" + helloWorldPath + ".class", helloWorldBytes);
+		byte[] zipBytes = ZipCreationUtils.createZip(map);
+		ByteSource zipSource = ByteSources.wrap(zipBytes);
+		WorkspaceResource resource = importer.importResource(zipSource);
+
+		// 1 in the JVM bundle, 3 in each version bundle
+		assertEquals(1, resource.getJvmClassBundle().size());
+		assertEquals(3, resource.getVersionedJvmClassBundles().size());
+		assertEquals(0, resource.getAndroidClassBundles().size());
+		assertEquals(0, resource.getFileBundle().size());
+		assertEquals(0, resource.getEmbeddedResources().size());
+
+		// Validate class bundle content
+		assertArrayEquals(helloWorldBytes, resource.getJvmClassBundle().iterator().next().getBytecode());
+		for (JvmClassBundle versioned : resource.getVersionedJvmClassBundles().values()) {
+			assertArrayEquals(helloWorldBytes, versioned.iterator().next().getBytecode());
+		}
+	}
+
+	@Test
+	void testSupportClassFakeDirectory() throws IOException {
+		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
+		byte[] helloWorldBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();
+
+		// Create JAR with 'HelloWorld' declared but the class file has a trailing '/' in the entry name.
+		Map<String, byte[]> map = new LinkedHashMap<>();
+		map.put(helloWorldPath + ".class/", helloWorldBytes);
+		byte[] zipBytes = ZipCreationUtils.createZip(map);
+		ByteSource zipSource = ByteSources.wrap(zipBytes);
+		WorkspaceResource resource = importer.importResource(zipSource);
+
+		// 1 in the JVM bundle, 3 in each version bundle
+		assertEquals(1, resource.getJvmClassBundle().size());
+		assertEquals(0, resource.getVersionedJvmClassBundles().size());
+		assertEquals(0, resource.getAndroidClassBundles().size());
+		assertEquals(0, resource.getFileBundle().size());
+		assertEquals(0, resource.getEmbeddedResources().size());
+
+		// Validate JVM class bundle content
+		assertArrayEquals(helloWorldBytes, resource.getJvmClassBundle().iterator().next().getBytecode());
+	}
+
+	@Test
+	void testAlwaysUseLastClassEntry() throws IOException {
+		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
+		byte[] helloWorldBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();
+		byte[] emptyBytes = new byte[0];
+
+		// Create JAR with duplicate entries, with the last entry by the same name containing real data.
+		// The first is a red herring and should be ignored, as the JVM does when it encounters repeats.
+		byte[] zipBytes = ZipCreationUtils.builder()
+				.add(helloWorldPath + ".class", emptyBytes)
+				.add(helloWorldPath + ".class", helloWorldBytes)
+				.bytes();
+		ByteSource zipSource = ByteSources.wrap(zipBytes);
+		WorkspaceResource resource = importer.importResource(zipSource);
+
+		// Should only have the one JVM class, the duplicate gets added as a file.
+		assertEquals(1, resource.getJvmClassBundle().size());
+		assertEquals(0, resource.getVersionedJvmClassBundles().size());
+		assertEquals(0, resource.getAndroidClassBundles().size());
+		assertEquals(1, resource.getFileBundle().size());
+		assertEquals(0, resource.getEmbeddedResources().size());
+
+		// Validate the version chosen is the last one
+		assertArrayEquals(helloWorldBytes, resource.getJvmClassBundle().iterator().next().getBytecode());
+		assertArrayEquals(emptyBytes, resource.getFileBundle().iterator().next().getRawContent());
+	}
+
+	@Test
+	void testAlwaysUseLastMultiReleaseClassEntry() throws IOException {
+		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
+		byte[] helloWorldBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();
+		byte[] emptyBytes = new byte[0];
+
+		// Create JAR with 'HelloWorld' declared as duplicate entries in multi-release directories.
+		byte[] zipBytes = ZipCreationUtils.builder()
+				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/" + helloWorldPath + ".class", emptyBytes)
+				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/" + helloWorldPath + ".class", helloWorldBytes)
+				.bytes();
+		ByteSource zipSource = ByteSources.wrap(zipBytes);
+		WorkspaceResource resource = importer.importResource(zipSource);
+
+		// Should only have the one versioned bundle, the duplicate gets added as a file.
+		assertEquals(0, resource.getJvmClassBundle().size());
+		assertEquals(1, resource.getVersionedJvmClassBundles().size());
+		assertEquals(0, resource.getAndroidClassBundles().size());
+		assertEquals(1, resource.getFileBundle().size());
+		assertEquals(0, resource.getEmbeddedResources().size());
+
+		// Validate the version chosen is the last one
+		assertArrayEquals(helloWorldBytes, resource.getVersionedJvmClassBundles().get(9).iterator().next().getBytecode());
+		assertArrayEquals(emptyBytes, resource.getFileBundle().iterator().next().getRawContent());
+	}
+
+	@Test
+	void testAlwaysUseLastFileEntry() throws IOException {
+		String path = HelloWorld.class.getName().replace(".", "/");
+		byte[] bytes = new byte[]{1, 2, 3};
+
+		// Create JAR with duplicate entries, with the last entry by the same name containing real data.
+		// The first is a red herring and should be ignored, as the JVM does when it encounters repeats.
+		byte[] zipBytes = ZipCreationUtils.builder()
+				.add(path + ".class", new byte[0])
+				.add(path + ".class", bytes)
+				.bytes();
+		ByteSource zipSource = ByteSources.wrap(zipBytes);
+		WorkspaceResource resource = importer.importResource(zipSource);
+
+		// Should only have the one file
+		assertEquals(0, resource.getJvmClassBundle().size());
+		assertEquals(0, resource.getVersionedJvmClassBundles().size());
+		assertEquals(0, resource.getAndroidClassBundles().size());
+		assertEquals(1, resource.getFileBundle().size());
+		assertEquals(0, resource.getEmbeddedResources().size());
+
+		// Validate the version chosen is the last one
+		assertArrayEquals(bytes, resource.getFileBundle().iterator().next().getRawContent());
+	}
+
+
+	@Test
+	void testDeduplicateClasses() throws IOException {
+		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
+		byte[] helloWorldBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();
+
+		// Create JAR with duplicate entries.
+		//  - case 1: Class is first, followed by 'B.class'
+		//  - case 2: Class is last, preceded by 'B.class'
+		byte[] zipClassFirst = ZipCreationUtils.builder()
+				.add(helloWorldPath + ".class", helloWorldBytes)
+				.add("software/coley/B.class", helloWorldBytes)
+				.add("B.class", helloWorldBytes)
+				.bytes();
+		byte[] zipClassLast = ZipCreationUtils.builder()
+				.add("software/coley/B.class", helloWorldBytes)
+				.add("B.class", helloWorldBytes)
+				.add(helloWorldPath + ".class", helloWorldBytes)
+				.bytes();
+
+		// Both cases should have the same outcome
+		for (byte[] zipBytes : Arrays.asList(zipClassFirst, zipClassLast)) {
+			ByteSource zipSource = ByteSources.wrap(zipBytes);
+			WorkspaceResource resource = importer.importResource(zipSource);
+
+			// Should only have the one JVM class, the duplicate gets added as a fileInfo.
+			assertEquals(1, resource.getJvmClassBundle().size());
+			assertEquals(0, resource.getVersionedJvmClassBundles().size());
+			assertEquals(0, resource.getAndroidClassBundles().size());
+			assertEquals(2, resource.getFileBundle().size());
+			assertEquals(0, resource.getEmbeddedResources().size());
+
+			// Validate the contents of the file bundle.
+			FileInfo fileInfo1 = resource.getFileBundle().get("B.class");
+			FileInfo fileInfo2 = resource.getFileBundle().get("software/coley/B.class");
+			assertNotNull(fileInfo1, "Deduplication did not copy wrong path class to files bundle: B.class");
+			assertNotNull(fileInfo2, "Deduplication did not copy wrong path class to files bundle: software/coley/B.class");
+		}
+	}
+
+
+	@Test
+	void testDeduplicateVersionedClasses() throws IOException {
+		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
+		byte[] helloWorldBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();
+
+		// Create JAR with duplicate entries.
+		//  - case 1: Class is first, followed by 'B.class'
+		//  - case 2: Class is last, preceded by 'B.class'
+		byte[] zipClassFirst = ZipCreationUtils.builder()
+				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/" + helloWorldPath + ".class", helloWorldBytes)
+				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/B.class", helloWorldBytes)
+				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/software/coley/B.class", helloWorldBytes)
+				.bytes();
+		byte[] zipClassLast = ZipCreationUtils.builder()
+				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/software/coley/B.class", helloWorldBytes)
+				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/B.class", helloWorldBytes)
+				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/" + helloWorldPath + ".class", helloWorldBytes)
+				.bytes();
+
+		// Both cases should have the same outcome
+		for (byte[] zipBytes : Arrays.asList(zipClassFirst, zipClassLast)) {
+			ByteSource zipSource = ByteSources.wrap(zipBytes);
+			WorkspaceResource resource = importer.importResource(zipSource);
+
+			// Should only have the one JVM class, the duplicate gets added as a fileInfo.
+			assertEquals(0, resource.getJvmClassBundle().size());
+			assertEquals(1, resource.getVersionedJvmClassBundles().size());
+			assertEquals(0, resource.getAndroidClassBundles().size());
+			assertEquals(2, resource.getFileBundle().size());
+			assertEquals(0, resource.getEmbeddedResources().size());
+
+			// Validate the contents of the file bundle.
+			FileInfo fileInfo1 = resource.getFileBundle().get(JarFileInfo.MULTI_RELEASE_PREFIX + "9/B.class");
+			FileInfo fileInfo2 = resource.getFileBundle().get(JarFileInfo.MULTI_RELEASE_PREFIX + "9/software/coley/B.class");
+			assertNotNull(fileInfo1, "Deduplication did not copy wrong path class to files bundle: B.class");
+			assertNotNull(fileInfo2, "Deduplication did not copy wrong path class to files bundle: software/coley/B.class");
+		}
+	}
+
+	@Test
 	void testImportZipInsideZip() throws IOException {
 		// create a ZIP holding another ZIP
 		String insideZipName = "inner.zip";
@@ -118,7 +335,7 @@ class ResourceImporterTest {
 		//  - hello.txt
 		//  - foo.zip (containing foo)
 		//  - bla/bla/bla/HelloWorld.class
-		Map<String, byte[]> map = new HashMap<>();
+		Map<String, byte[]> map = new LinkedHashMap<>();
 		map.put("hello.txt", "Hello world".getBytes(StandardCharsets.UTF_8));
 		map.put(HelloWorld.class.getName().replace(".", "/") + ".class",
 				TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode());
