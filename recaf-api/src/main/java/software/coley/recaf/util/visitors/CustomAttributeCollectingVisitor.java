@@ -5,7 +5,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import software.coley.recaf.RecafConstants;
-import software.coley.recaf.util.Multimap;
+import software.coley.recaf.util.MultiMap;
 
 import java.util.*;
 
@@ -16,8 +16,8 @@ import java.util.*;
  */
 public class CustomAttributeCollectingVisitor extends ClassVisitor {
 	private final List<Attribute> classCustomAttributes = new ArrayList<>();
-	private final Multimap<String, Attribute, List<Attribute>> fieldCustomAttributes;
-	private final Multimap<String, Attribute, List<Attribute>> methodCustomAttributes;
+	private final MultiMap<String, Attribute, List<Attribute>> fieldCustomAttributes;
+	private final MultiMap<String, Attribute, List<Attribute>> methodCustomAttributes;
 
 	/**
 	 * @param cv
@@ -26,9 +26,9 @@ public class CustomAttributeCollectingVisitor extends ClassVisitor {
 	public CustomAttributeCollectingVisitor(ClassVisitor cv) {
 		super(RecafConstants.getAsmVersion(), cv);
 		fieldCustomAttributes
-				= Multimap.from(new HashMap<>(), ArrayList::new);
+				= MultiMap.from(new HashMap<>(), ArrayList::new);
 		methodCustomAttributes
-				= Multimap.from(new HashMap<>(), ArrayList::new);
+				= MultiMap.from(new HashMap<>(), ArrayList::new);
 	}
 
 	/**
@@ -67,14 +67,14 @@ public class CustomAttributeCollectingVisitor extends ClassVisitor {
 	/**
 	 * @return Field level custom attributes. Keys are field names.
 	 */
-	public Multimap<String, Attribute, List<Attribute>> getFieldCustomAttributes() {
+	public MultiMap<String, Attribute, List<Attribute>> getFieldCustomAttributes() {
 		return fieldCustomAttributes;
 	}
 
 	/**
 	 * @return Method level custom attributes. Keys are method names.
 	 */
-	public Multimap<String, Attribute, List<Attribute>> getMethodCustomAttributes() {
+	public MultiMap<String, Attribute, List<Attribute>> getMethodCustomAttributes() {
 		return methodCustomAttributes;
 	}
 

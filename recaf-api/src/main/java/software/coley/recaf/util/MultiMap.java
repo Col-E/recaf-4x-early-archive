@@ -6,11 +6,11 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
- * Simple multimap.
+ * Simple multi-map.
  *
  * @author xDark
  */
-public final class Multimap<K, V, C extends Collection<V>> {
+public final class MultiMap<K, V, C extends Collection<V>> {
 	private final Map<K, C> backing;
 	private final Function<K, ? extends C> collectionFunction;
 
@@ -20,7 +20,7 @@ public final class Multimap<K, V, C extends Collection<V>> {
 	 * @param collectionSupplier
 	 * 		Collection supplier.
 	 */
-	private Multimap(Map<K, C> backing, Supplier<? extends C> collectionSupplier) {
+	private MultiMap(Map<K, C> backing, Supplier<? extends C> collectionSupplier) {
 		this.backing = backing;
 		this.collectionFunction = __ -> collectionSupplier.get();
 	}
@@ -192,7 +192,7 @@ public final class Multimap<K, V, C extends Collection<V>> {
 	}
 
 	/**
-	 * Creates a multimap.
+	 * Creates a multi-map.
 	 *
 	 * @param map
 	 * 		Backing map.
@@ -205,9 +205,9 @@ public final class Multimap<K, V, C extends Collection<V>> {
 	 * @param <C>
 	 * 		Collection type.
 	 *
-	 * @return New multimap.
+	 * @return New multi-map.
 	 */
-	public static <K, V, C extends Collection<V>> Multimap<K, V, C> from(Map<K, C> map, Supplier<? extends C> collectionSupplier) {
-		return new Multimap<>(map, collectionSupplier);
+	public static <K, V, C extends Collection<V>> MultiMap<K, V, C> from(Map<K, C> map, Supplier<? extends C> collectionSupplier) {
+		return new MultiMap<>(map, collectionSupplier);
 	}
 }
