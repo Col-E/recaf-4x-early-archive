@@ -2,6 +2,7 @@ package software.coley.recaf;
 
 import jakarta.enterprise.inject.se.SeContainer;
 import org.jboss.weld.environment.se.Weld;
+import software.coley.recaf.cdi.AutoRegisterWorkspaceListenersInterceptor;
 
 import java.util.function.Consumer;
 
@@ -42,6 +43,9 @@ public class Bootstrap {
 		//  - one instance for base package in Core
 		weld.addPackage(true, RecafConstants.class);
 		weld.addPackage(true, Recaf.class);
+
+		// Setup custom interceptors
+		weld.addInterceptor(AutoRegisterWorkspaceListenersInterceptor.class);
 
 		// Handle user-defined action
 		if (weldConsumer != null) {
