@@ -4,6 +4,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.workspace.io.ResourceImporter;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -17,6 +19,7 @@ import java.util.List;
  */
 @ApplicationScoped
 public class BasicWorkspaceManager implements WorkspaceManager {
+	private static final Logger logger = Logging.get(BasicWorkspaceManager.class);
 	private final List<WorkspaceCloseCondition> closeConditions = new ArrayList<>();
 	private final List<WorkspaceOpenListener> openListeners = new ArrayList<>();
 	private final List<WorkspaceCloseListener> closeListeners = new ArrayList<>();
@@ -45,12 +48,26 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 	public void setCurrentIgnoringConditions(Workspace workspace) {
 		if (current != null) {
 			current.close();
-			getWorkspaceCloseListeners().forEach(listener -> listener.onWorkspaceClosed(current));
+			for (WorkspaceCloseListener listener : new ArrayList<>(closeListeners)) {
+				try {
+					listener.onWorkspaceClosed(current);
+				} catch (Throwable t) {
+					logger.error("Exception thrown by '{}' when closing workspace",
+							listener.getClass().getName(), t);
+				}
+			}
 		}
 		current = workspace;
 		if (workspace != null) {
 			defaultModificationListeners.forEach(workspace::addWorkspaceModificationListener);
-			getWorkspaceOpenListeners().forEach(listener -> listener.onWorkspaceOpened(workspace));
+			for (WorkspaceOpenListener listener : new ArrayList<>(openListeners)) {
+				try {
+					listener.onWorkspaceOpened(workspace);
+				} catch (Throwable t) {
+					logger.error("Exception thrown by '{}' when opening workspace",
+							listener.getClass().getName(), t);
+				}
+			}
 		}
 	}
 
