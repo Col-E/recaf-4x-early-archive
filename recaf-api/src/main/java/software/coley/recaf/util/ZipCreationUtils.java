@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
-import java.util.jar.JarEntry;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -21,6 +20,7 @@ import java.util.zip.ZipOutputStream;
  * @author Matt Coley
  */
 public class ZipCreationUtils {
+	private static final byte[] EMPTY = new byte[0];
 	private static final Logger logger = Logging.get(ZipCreationUtils.class);
 
 	/**
@@ -191,21 +191,35 @@ public class ZipCreationUtils {
 						} while (parent.contains("/"));
 						// Put directories in order of depth
 						for (String dir : toAdd) {
-							zos.putNextEntry(new JarEntry(dir));
+							// Update CRC
+							crc.reset();
+							crc.update(EMPTY);
+
+							// Add the entry
+							// We use STORED for directories so that the DEFLATE header doesn't clutter the
+							// LocalFileHeader data store. Using STORE keeps it empty.
+							ZipEntry dirEntry = new ZipEntry(dir);
+							dirEntry.setSize(0);
+							dirEntry.setCompressedSize(0);
+							dirEntry.setMethod(ZipEntry.STORED);
+							dirEntry.setCrc(crc.getValue());
+							zos.putNextEntry(dirEntry);
 							zos.closeEntry();
 						}
 					}
 
 					// Update CRC
 					crc.reset();
-					crc.update(content, 0, content.length);
+					crc.update(content);
 
 					// Write ZIP entry
-					int level = entry.compression ? ZipEntry.DEFLATED : ZipEntry.STORED;
+					//  - Always use STORED for empty files to save space.
+					boolean doStore = entry.content.length == 0 || !entry.compression;
+					int level = doStore ? ZipEntry.STORED : ZipEntry.DEFLATED;
 					ZipEntry zipEntry = new ZipEntry(key);
 					zipEntry.setMethod(level);
 					zipEntry.setCrc(crc.getValue());
-					if (!entry.compression) {
+					if (doStore) {
 						zipEntry.setSize(content.length);
 						zipEntry.setCompressedSize(content.length);
 					}
