@@ -1,12 +1,14 @@
 package software.coley.recaf.workspace;
 
-import software.coley.recaf.workspace.model.resource.WorkspaceResource;
+import software.coley.recaf.cdi.AutoRegisterWorkspaceListeners;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 /**
  * Listener for receiving workspace update events.
  *
  * @author Matt Coley
+ * @see AutoRegisterWorkspaceListeners Can be used to automatically register components implementing this type.
  */
 public interface WorkspaceModificationListener {
 	/**

@@ -20,6 +20,7 @@ public class BasicWorkspace implements Workspace {
 	private final List<WorkspaceModificationListener> modificationListeners = new ArrayList<>();
 	private final WorkspaceResource primary;
 	private final List<WorkspaceResource> supporting = new ArrayList<>();
+	private final List<WorkspaceResource> internal = Collections.singletonList(RuntimeWorkspaceResource.getInstance());
 
 	/**
 	 * @param primary
@@ -38,7 +39,6 @@ public class BasicWorkspace implements Workspace {
 	public BasicWorkspace(WorkspaceResource primary, Collection<WorkspaceResource> supporting) {
 		this.primary = primary;
 		this.supporting.addAll(supporting);
-		this.supporting.add(RuntimeWorkspaceResource.getInstance());
 	}
 
 	@Override
@@ -49,6 +49,11 @@ public class BasicWorkspace implements Workspace {
 	@Override
 	public List<WorkspaceResource> getSupportingResources() {
 		return supporting;
+	}
+
+	@Override
+	public List<WorkspaceResource> getInternalSupportingResources() {
+		return internal;
 	}
 
 	@Override
