@@ -13,10 +13,7 @@ import software.coley.recaf.info.properties.builtin.PathOriginalNameProperty;
 import software.coley.recaf.info.properties.builtin.PathPrefixProperty;
 import software.coley.recaf.info.properties.builtin.PathSuffixProperty;
 import software.coley.recaf.info.properties.builtin.ZipCompressionProperty;
-import software.coley.recaf.util.DexIOUtil;
-import software.coley.recaf.util.IOUtil;
-import software.coley.recaf.util.ModulesIOUtil;
-import software.coley.recaf.util.StringUtil;
+import software.coley.recaf.util.*;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
 import software.coley.recaf.util.io.LocalFileHeaderSource;
@@ -24,15 +21,12 @@ import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
-import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
-import software.coley.recaf.workspace.model.resource.WorkspaceRemoteVmResource;
-import software.coley.recaf.workspace.model.resource.WorkspaceResource;
-import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
+import software.coley.recaf.workspace.model.resource.*;
 
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
 /**
@@ -51,7 +45,7 @@ public class BasicResourceImporter implements ResourceImporter {
 	}
 
 	/**
-	 * General read handling for any resource kind. Delegates to others when needed.
+	 * General read handling for any single-file resource kind. Delegates to others when needed.
 	 *
 	 * @param builder
 	 * 		Builder to work with.
@@ -62,8 +56,8 @@ public class BasicResourceImporter implements ResourceImporter {
 	 *
 	 * @return Read resource.
 	 */
-	private WorkspaceResource handle(WorkspaceResourceBuilder builder,
-									 String pathName, ByteSource source) throws IOException {
+	private WorkspaceResource handleSingle(WorkspaceResourceBuilder builder,
+										   String pathName, ByteSource source) throws IOException {
 		// Read input as raw info in order to determine file-type.
 		Info readInfo = infoImporter.readInfo(pathName, source);
 
@@ -124,6 +118,12 @@ public class BasicResourceImporter implements ResourceImporter {
 			LocalFileHeaderSource headerSource = new LocalFileHeaderSource(header);
 			String entryName = header.getFileNameAsString();
 
+			// Skip directories. There is no such thing as a 'directory' entry in ZIP files.
+			// The only thing we can say is that if it ends with a '/' and has no data associated with it,
+			// then it is probably a directory.
+			if (entryName.endsWith("/") && Unchecked.getOr(headerSource::isEmpty, false))
+				return;
+
 			// Skip the following cases:
 			//  - zero-length directories
 			//  - path traversal attempts
@@ -143,165 +143,9 @@ public class BasicResourceImporter implements ResourceImporter {
 			ZipCompressionProperty.set(info, header.getCompressionMethod());
 			// TODO: Additional ZIP properties
 
-			// Handle the value
-			if (info.isClass()) {
-				// Must be a JVM class since Android classes do not exist in single-file form.
-				JvmClassInfo classInfo = info.asClass().asJvmClass();
-				String className = classInfo.getName();
-
-				// JVM edge case allows trailing '/' for class entries in JARs.
-				// We're going to normalize that away.
-				if (entryName.endsWith(".class/")) {
-					entryName = entryName.replace(".class/", ".class");
-				}
-
-				// Record the class name, including path suffix/prefix.
-				// If the name is totally different, record the original path name.
-				int index = entryName.indexOf(className);
-				if (index >= 0) {
-					// Class name is within the entry name.
-					// Record the prefix before the class name, and suffix after it (extension).
-					if (index > 0) {
-						String prefix = entryName.substring(0, index);
-						PathPrefixProperty.set(classInfo, prefix);
-					}
-					int suffixIndex = index + className.length();
-					if (suffixIndex < entryName.length()) {
-						String suffix = entryName.substring(suffixIndex);
-						PathSuffixProperty.set(classInfo, suffix);
-					}
-				} else {
-					// Class name doesn't match entry name.
-					PathOriginalNameProperty.set(classInfo, entryName);
-				}
-
-				// First we must handle edge cases. Up first, we'll look at multi-release jar prefixes.
-				if (entryName.startsWith(JarFileInfo.MULTI_RELEASE_PREFIX) &&
-						!className.startsWith(JarFileInfo.MULTI_RELEASE_PREFIX)) {
-					String versionName = "<null>";
-					try {
-						// Extract version from '<prefix>/version/<class-name>' pattern
-						int startOffset = JarFileInfo.MULTI_RELEASE_PREFIX.length();
-						int slashIndex = entryName.indexOf('/', startOffset);
-						if (slashIndex < 0)
-							throw new NumberFormatException("Version name is null");
-						versionName = entryName.substring(startOffset, slashIndex);
-
-						// Only add if the names match
-						int pathStart = slashIndex + 1;
-						int pathEnd = entryName.length() - ".class".length();
-						if (pathEnd > pathStart) {
-							String pathName = entryName.substring(pathStart, pathEnd);
-							if (!pathName.equals(className))
-								throw new IllegalArgumentException("Class in multi-release directory" +
-										" does not match it's declared class name: " + entryName);
-						} else {
-							throw new IllegalArgumentException("Class in multi-release directory " +
-									"does not end in '.class'");
-						}
-
-						// Put it into the correct versioned class bundle.
-						int version = Integer.parseInt(versionName);
-						BasicJvmClassBundle bundle = (BasicJvmClassBundle) versionedJvmClassBundles
-								.computeIfAbsent(version, v -> new BasicJvmClassBundle());
-
-						// Handle duplicate classes
-						JvmClassInfo existingClass = bundle.get(className);
-						if (existingClass != null) {
-							deduplicateClass(existingClass, classInfo, bundle, files);
-						} else {
-							bundle.initialPut(classInfo);
-						}
-					} catch (NumberFormatException ex) {
-						// Version is invalid, record it as a file instead.
-						logger.warn("Class ZIP entry seemed to be for multi-release jar, " +
-								"but version is non-numeric value: " + versionName);
-
-						// Override the prior value.
-						// The JVM always selects the last option if there are duplicates.
-						files.initialPut(new FileInfoBuilder<>()
-								.withName(entryName)
-								.withRawContent(classInfo.getBytecode())
-								.build());
-					} catch (IllegalArgumentException ex) {
-						// Class name doesn't match what is declared locally in the versioned folder.
-						logger.warn("Class ZIP entry seemed to be for multi-release jar, " +
-								"but the name doesn't align with the declared type: " + entryName);
-
-						// Override the prior value.
-						// The JVM always selects the last option if there are duplicates.
-						files.initialPut(new FileInfoBuilder<>()
-								.withName(entryName)
-								.withRawContent(classInfo.getBytecode())
-								.build());
-					}
-					return;
-				}
-
-				// Handle duplicate classes
-				JvmClassInfo existingClass = classes.get(className);
-				if (existingClass != null) {
-					deduplicateClass(existingClass, classInfo, classes, files);
-				} else {
-					classes.initialPut(classInfo);
-				}
-			} else if (info.isFile()) {
-				FileInfo fileInfo = info.asFile();
-
-				// Check for special file cases (Currently just DEX)
-				if (fileInfo instanceof DexFileInfo) {
-					try {
-						AndroidClassBundle dexBundle = DexIOUtil.read(headerSource);
-						androidClassBundles.put(entryName, dexBundle);
-						return;
-					} catch (IOException ex) {
-						logger.error("Failed to read embedded DEX '{}' in containing archive '{}'",
-								entryName, zipInfo.getName(), ex);
-					}
-				}
-
-				// Check for container file cases (Any ZIP type, JAR/WAR/etc)
-				if (fileInfo.isZipFile()) {
-					try {
-						WorkspaceResourceBuilder embeddedResourceBuilder = new WorkspaceResourceBuilder()
-								.withFileInfo(fileInfo);
-						WorkspaceFileResource embeddedResource = handleZip(embeddedResourceBuilder,
-								fileInfo.asZipFile(), headerSource);
-						embeddedResources.put(entryName, embeddedResource);
-					} catch (IOException ex) {
-						logger.error("Failed to read embedded ZIP '{}' in containing archive '{}'",
-								entryName, zipInfo.getName(), ex);
-					}
-					return;
-				}
-
-				// Check for other edge case types containing embedded content.
-				if (fileInfo instanceof ModulesFileInfo) {
-					try {
-						WorkspaceResourceBuilder embeddedResourceBuilder = new WorkspaceResourceBuilder()
-								.withFileInfo(fileInfo);
-						WorkspaceFileResource embeddedResource =
-								(WorkspaceFileResource) handleModules(embeddedResourceBuilder, (ModulesFileInfo) fileInfo);
-						embeddedResources.put(entryName, embeddedResource);
-					} catch (IOException ex) {
-						logger.error("Failed to read embedded ZIP '{}' in containing archive '{}'",
-								entryName, zipInfo.getName(), ex);
-					}
-					return;
-				}
-
-				// Warn if there are duplicate file entries.
-				// Same cases for why this may occur are described above when handling classes.
-				// The JVM will always use the last item for duplicate entries anyways.
-				if (files.containsKey(entryName)) {
-					logger.warn("Multiple duplicate entries in zip for file '{}', dropping older entry", entryName);
-				}
-
-				// Store in bundle.
-				files.initialPut(fileInfo);
-			} else {
-				throw new IllegalStateException("Unknown info type: " + info);
-			}
+			// Add the info to the appropriate bundle
+			addInfo(classes, files, androidClassBundles, versionedJvmClassBundles, embeddedResources,
+					headerSource, entryName, info);
 		});
 		return builder
 				.withJvmClassBundle(classes)
@@ -311,6 +155,209 @@ public class BasicResourceImporter implements ResourceImporter {
 				.withEmbeddedResources(embeddedResources)
 				.withFileInfo(zipInfo)
 				.build();
+	}
+
+	private WorkspaceDirectoryResource handleDirectory(WorkspaceResourceBuilder builder, Path directoryPath) throws IOException {
+		logger.info("Reading input from directory '{}'", directoryPath);
+		BasicJvmClassBundle classes = new BasicJvmClassBundle();
+		BasicFileBundle files = new BasicFileBundle();
+		Map<String, AndroidClassBundle> androidClassBundles = new HashMap<>();
+		NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles = new TreeMap<>();
+		Map<String, WorkspaceFileResource> embeddedResources = new HashMap<>();
+
+		// Walk the directory
+		Files.walkFileTree(directoryPath, new SimpleFileVisitor<>() {
+			@Override
+			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+				try {
+					// Read info from file
+					ByteSource source = ByteSources.forPath(file);
+					String fileName = file.getFileName().toString();
+					Info info = infoImporter.readInfo(fileName, source);
+
+					// Add the info to the appropriate bundle
+					addInfo(classes, files, androidClassBundles, versionedJvmClassBundles, embeddedResources,
+							source, fileName, info);
+				} catch (IOException ex) {
+					logger.error("IO error reading ZIP entry '{}' - skipping", file);
+				}
+
+				return FileVisitResult.CONTINUE;
+			}
+		});
+		return builder
+				.withJvmClassBundle(classes)
+				.withAndroidClassBundles(androidClassBundles)
+				.withVersionedJvmClassBundles(versionedJvmClassBundles)
+				.withFileBundle(files)
+				.withEmbeddedResources(embeddedResources)
+				.withDirectoryPath(directoryPath)
+				.build();
+	}
+
+	private void addInfo(BasicJvmClassBundle classes,
+						 BasicFileBundle files,
+						 Map<String, AndroidClassBundle> androidClassBundles,
+						 NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles,
+						 Map<String, WorkspaceFileResource> embeddedResources,
+						 ByteSource infoSource,
+						 String pathName,
+						 Info info) {
+		if (info.isClass()) {
+			// Must be a JVM class since Android classes do not exist in single-file form.
+			JvmClassInfo classInfo = info.asClass().asJvmClass();
+			String className = classInfo.getName();
+
+			// JVM edge case allows trailing '/' for class entries in JARs.
+			// We're going to normalize that away.
+			if (pathName.endsWith(".class/")) {
+				pathName = pathName.replace(".class/", ".class");
+			}
+
+			// Record the class name, including path suffix/prefix.
+			// If the name is totally different, record the original path name.
+			int index = pathName.indexOf(className);
+			if (index >= 0) {
+				// Class name is within the entry name.
+				// Record the prefix before the class name, and suffix after it (extension).
+				if (index > 0) {
+					String prefix = pathName.substring(0, index);
+					PathPrefixProperty.set(classInfo, prefix);
+				}
+				int suffixIndex = index + className.length();
+				if (suffixIndex < pathName.length()) {
+					String suffix = pathName.substring(suffixIndex);
+					PathSuffixProperty.set(classInfo, suffix);
+				}
+			} else {
+				// Class name doesn't match entry name.
+				PathOriginalNameProperty.set(classInfo, pathName);
+			}
+
+			// First we must handle edge cases. Up first, we'll look at multi-release jar prefixes.
+			if (pathName.startsWith(JarFileInfo.MULTI_RELEASE_PREFIX) &&
+					!className.startsWith(JarFileInfo.MULTI_RELEASE_PREFIX)) {
+				String versionName = "<null>";
+				try {
+					// Extract version from '<prefix>/version/<class-name>' pattern
+					int startOffset = JarFileInfo.MULTI_RELEASE_PREFIX.length();
+					int slashIndex = pathName.indexOf('/', startOffset);
+					if (slashIndex < 0)
+						throw new NumberFormatException("Version name is null");
+					versionName = pathName.substring(startOffset, slashIndex);
+
+					// Only add if the names match
+					int classStart = slashIndex + 1;
+					int classEnd = pathName.length() - ".class".length();
+					if (classEnd > classStart) {
+						String classPath = pathName.substring(classStart, classEnd);
+						if (!classPath.equals(className))
+							throw new IllegalArgumentException("Class in multi-release directory" +
+									" does not match it's declared class name: " + classPath);
+					} else {
+						throw new IllegalArgumentException("Class in multi-release directory " +
+								"does not end in '.class'");
+					}
+
+					// Put it into the correct versioned class bundle.
+					int version = Integer.parseInt(versionName);
+					BasicJvmClassBundle bundle = (BasicJvmClassBundle) versionedJvmClassBundles
+							.computeIfAbsent(version, v -> new BasicJvmClassBundle());
+
+					// Handle duplicate classes
+					JvmClassInfo existingClass = bundle.get(className);
+					if (existingClass != null) {
+						deduplicateClass(existingClass, classInfo, bundle, files);
+					} else {
+						bundle.initialPut(classInfo);
+					}
+				} catch (NumberFormatException ex) {
+					// Version is invalid, record it as a file instead.
+					logger.warn("Class entry seemed to be for multi-release jar, " +
+							"but version is non-numeric value: " + versionName);
+
+					// Override the prior value.
+					// The JVM always selects the last option if there are duplicates.
+					files.initialPut(new FileInfoBuilder<>()
+							.withName(pathName)
+							.withRawContent(classInfo.getBytecode())
+							.build());
+				} catch (IllegalArgumentException ex) {
+					// Class name doesn't match what is declared locally in the versioned folder.
+					logger.warn("Class entry seemed to be for multi-release jar, " +
+							"but the name doesn't align with the declared type: " + pathName);
+
+					// Override the prior value.
+					// The JVM always selects the last option if there are duplicates.
+					files.initialPut(new FileInfoBuilder<>()
+							.withName(pathName)
+							.withRawContent(classInfo.getBytecode())
+							.build());
+				}
+				return;
+			}
+
+			// Handle duplicate classes
+			JvmClassInfo existingClass = classes.get(className);
+			if (existingClass != null) {
+				deduplicateClass(existingClass, classInfo, classes, files);
+			} else {
+				classes.initialPut(classInfo);
+			}
+		} else if (info.isFile()) {
+			FileInfo fileInfo = info.asFile();
+
+			// Check for special file cases (Currently just DEX)
+			if (fileInfo instanceof DexFileInfo) {
+				try {
+					AndroidClassBundle dexBundle = DexIOUtil.read(infoSource);
+					androidClassBundles.put(pathName, dexBundle);
+					return;
+				} catch (IOException ex) {
+					logger.error("Failed to read embedded DEX '{}'", pathName, ex);
+				}
+			}
+
+			// Check for container file cases (Any ZIP type, JAR/WAR/etc)
+			if (fileInfo.isZipFile()) {
+				try {
+					WorkspaceResourceBuilder embeddedResourceBuilder = new WorkspaceResourceBuilder()
+							.withFileInfo(fileInfo);
+					WorkspaceFileResource embeddedResource = handleZip(embeddedResourceBuilder,
+							fileInfo.asZipFile(), infoSource);
+					embeddedResources.put(pathName, embeddedResource);
+				} catch (IOException ex) {
+					logger.error("Failed to read embedded ZIP '{}'", pathName, ex);
+				}
+				return;
+			}
+
+			// Check for other edge case types containing embedded content.
+			if (fileInfo instanceof ModulesFileInfo) {
+				try {
+					WorkspaceResourceBuilder embeddedResourceBuilder = new WorkspaceResourceBuilder()
+							.withFileInfo(fileInfo);
+					WorkspaceFileResource embeddedResource =
+							(WorkspaceFileResource) handleModules(embeddedResourceBuilder, (ModulesFileInfo) fileInfo);
+					embeddedResources.put(pathName, embeddedResource);
+				} catch (IOException ex) {
+					logger.error("Failed to read embedded ZIP '{}'", pathName, ex);
+				}
+				return;
+			}
+
+			// Warn if there are duplicate file entries.
+			// Same cases for why this may occur are described above when handling classes.
+			// The JVM will always use the last item for duplicate entries anyways.
+			if (files.containsKey(pathName)) {
+				logger.warn("Multiple duplicate entries for file '{}', dropping older entry", pathName);
+			}
+
+			// Store in bundle.
+			files.initialPut(fileInfo);
+		} else {
+			throw new IllegalStateException("Unknown info type: " + info);
+		}
 	}
 
 	/**
@@ -465,19 +512,23 @@ public class BasicResourceImporter implements ResourceImporter {
 
 	@Override
 	public WorkspaceResource importResource(ByteSource source) throws IOException {
-		return handle(new WorkspaceResourceBuilder(), "unknown.dat", source);
+		return handleSingle(new WorkspaceResourceBuilder(), "unknown.dat", source);
 	}
 
 	@Override
-	public WorkspaceFileResource importResource(Path path) throws IOException {
+	public WorkspaceResource importResource(Path path) throws IOException {
 		// Load name/data from path, parse into resource.
 		String absolutePath = path.toAbsolutePath().toString();
-		ByteSource byteSource = ByteSources.forPath(path);
-		return (WorkspaceFileResource) handle(new WorkspaceResourceBuilder(), absolutePath, byteSource);
+		if (Files.isDirectory(path)) {
+			return handleDirectory(new WorkspaceResourceBuilder(), path);
+		} else {
+			ByteSource byteSource = ByteSources.forPath(path);
+			return handleSingle(new WorkspaceResourceBuilder(), absolutePath, byteSource);
+		}
 	}
 
 	@Override
-	public WorkspaceFileResource importResource(URL url) throws IOException {
+	public WorkspaceResource importResource(URL url) throws IOException {
 		// Extract name from URL
 		String path = url.getFile();
 		if (path.isEmpty()) {
@@ -487,7 +538,7 @@ public class BasicResourceImporter implements ResourceImporter {
 		// Load content, parse into resource.
 		byte[] bytes = IOUtil.toByteArray(url.openStream());
 		ByteSource byteSource = ByteSources.wrap(bytes);
-		return (WorkspaceFileResource) handle(new WorkspaceResourceBuilder(), path, byteSource);
+		return handleSingle(new WorkspaceResourceBuilder(), path, byteSource);
 	}
 
 	@Override

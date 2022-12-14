@@ -29,6 +29,24 @@ public class Unchecked {
 	}
 
 	/**
+	 * @param supplier
+	 * 		Supplier.
+	 * @param fallback
+	 * 		Value to return if supplier fails.
+	 * @param <T>
+	 * 		Supplier type.
+	 *
+	 * @return Supplied value, or fallback if supplier failed.
+	 */
+	public static <T> T getOr(UncheckedSupplier<T> supplier, T fallback) {
+		try {
+			return supplier.get();
+		} catch (Throwable t) {
+			return fallback;
+		}
+	}
+
+	/**
 	 * @param consumer
 	 * 		Consumer.
 	 * @param value

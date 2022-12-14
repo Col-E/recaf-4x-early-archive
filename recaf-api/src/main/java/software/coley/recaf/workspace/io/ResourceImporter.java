@@ -2,7 +2,6 @@ package software.coley.recaf.workspace.io;
 
 import com.sun.tools.attach.VirtualMachineDescriptor;
 import software.coley.recaf.util.io.ByteSource;
-import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceRemoteVmResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
@@ -19,19 +18,6 @@ import java.nio.file.Path;
  */
 public interface ResourceImporter {
 	/**
-	 * @param file
-	 * 		File to import from.
-	 *
-	 * @return Workspace resource representing the file.
-	 *
-	 * @throws IOException
-	 * 		When the content at the file path cannot be read from.
-	 */
-	default WorkspaceFileResource importResource(File file) throws IOException {
-		return importResource(file.toPath());
-	}
-
-	/**
 	 * @param source
 	 * 		Some generic content source.
 	 *
@@ -43,15 +29,28 @@ public interface ResourceImporter {
 	WorkspaceResource importResource(ByteSource source) throws IOException;
 
 	/**
-	 * @param path
-	 * 		File path to import from.
+	 * @param file
+	 * 		File/directory to import from.
 	 *
-	 * @return Workspace resource representing the file.
+	 * @return Workspace resource representing the file/directory.
 	 *
 	 * @throws IOException
 	 * 		When the content at the file path cannot be read from.
 	 */
-	WorkspaceFileResource importResource(Path path) throws IOException;
+	default WorkspaceResource importResource(File file) throws IOException {
+		return importResource(file.toPath());
+	}
+
+	/**
+	 * @param path
+	 * 		File/directory path to import from.
+	 *
+	 * @return Workspace resource representing the file/directory.
+	 *
+	 * @throws IOException
+	 * 		When the content at the file path cannot be read from.
+	 */
+	WorkspaceResource importResource(Path path) throws IOException;
 
 	/**
 	 * @param url
@@ -62,7 +61,7 @@ public interface ResourceImporter {
 	 * @throws IOException
 	 * 		When content from the URL cannot be accessed.
 	 */
-	WorkspaceFileResource importResource(URL url) throws IOException;
+	WorkspaceResource importResource(URL url) throws IOException;
 
 	/**
 	 * @param uri
@@ -74,7 +73,7 @@ public interface ResourceImporter {
 	 * 		When reading from the URI fails either due to a malformed URI,
 	 * 		or the content being inaccessible.
 	 */
-	default WorkspaceFileResource importResource(URI uri) throws IOException {
+	default WorkspaceResource importResource(URI uri) throws IOException {
 		return importResource(uri.toURL());
 	}
 

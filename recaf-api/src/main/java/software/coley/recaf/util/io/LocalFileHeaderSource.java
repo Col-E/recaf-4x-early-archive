@@ -43,6 +43,16 @@ public final class LocalFileHeaderSource implements ByteSource {
 		return ByteSources.forZip(decompress()).openStream();
 	}
 
+	/**
+	 * @return {@code true} when the data length of the content is 0.
+	 * @throws IOException
+	 */
+	public boolean isEmpty() throws IOException {
+		if (fileHeader.getCompressionMethod() == ZipCompressions.STORED)
+			return fileHeader.getFileData().length() == 0;
+		return decompress().length() == 0;
+	}
+
 	private ByteData decompress() throws IOException {
 		ByteData decompressed = this.decompressed;
 		if (decompressed == null) {

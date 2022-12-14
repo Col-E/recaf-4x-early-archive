@@ -7,7 +7,6 @@ import software.coley.recaf.info.JarFileInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.HelloWorld;
-import software.coley.recaf.util.AccessPatcher;
 import software.coley.recaf.util.ZipCreationUtils;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
@@ -19,10 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -36,7 +32,6 @@ class ResourceImporterTest {
 
 	@BeforeAll
 	static void setup() {
-		AccessPatcher.patch();
 		importer = new BasicResourceImporter(new BasicInfoImporter(new BasicClassPatcher()));
 	}
 
@@ -376,13 +371,40 @@ class ResourceImporterTest {
 		// Create workspace resources from each kind of input, all sourced from the same content.
 		// They should all be equal.
 		WorkspaceResource fromByteSource = importer.importResource(ByteSources.wrap(zipBytes));
-		WorkspaceFileResource fromFile = importer.importResource(tempFile);
-		WorkspaceFileResource fromPath = importer.importResource(tempFile.toPath());
-		WorkspaceFileResource fromUri = importer.importResource(tempFile.toURI());
-		WorkspaceFileResource fromUrl = importer.importResource(tempFile.toURI().toURL());
+		WorkspaceResource fromFile = importer.importResource(tempFile);
+		WorkspaceResource fromPath = importer.importResource(tempFile.toPath());
+		WorkspaceResource fromUri = importer.importResource(tempFile.toURI());
+		WorkspaceResource fromUrl = importer.importResource(tempFile.toURI().toURL());
 		assertEquals(fromByteSource, fromFile);
 		assertEquals(fromByteSource, fromPath);
 		assertEquals(fromByteSource, fromUri);
 		assertEquals(fromByteSource, fromUrl);
+	}
+
+	@Test
+	void testSkipDirectories() throws IOException {
+		byte[] empty = new byte[0];
+		byte[] fileBytes = "data".getBytes(StandardCharsets.UTF_8);
+		byte[] zipBytes = ZipCreationUtils.builder()
+				.add("com/", empty)
+				.add("com/example/", empty)
+				.add("com/example/application/", empty)
+				.add("com/example/application/Config.txt", fileBytes)
+				.bytes();
+		WorkspaceResource resource = importer.importResource(ByteSources.wrap(zipBytes));
+
+		// Should have just ONE file in the file bundle
+		assertEquals(0, resource.getJvmClassBundle().size());
+		assertEquals(0, resource.getVersionedJvmClassBundles().size());
+		assertEquals(0, resource.getAndroidClassBundles().size());
+		assertEquals(1, resource.getFileBundle().size());
+		assertEquals(0, resource.getEmbeddedResources().size());
+		assertNull(resource.getContainingResource());
+		assertFalse(resource.isEmbeddedResource());
+		assertFalse(resource.isInternal());
+
+		// Validate file bundle content
+		FileInfo fileInfo = resource.getFileBundle().iterator().next();
+		assertArrayEquals(fileBytes, fileInfo.getRawContent(), "Missing data compared to baseline input bytes");
 	}
 }
