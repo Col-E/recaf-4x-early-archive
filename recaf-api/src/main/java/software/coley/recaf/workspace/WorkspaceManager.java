@@ -3,6 +3,7 @@ package software.coley.recaf.workspace;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.Produces;
 import software.coley.recaf.workspace.io.ResourceImporter;
 import software.coley.recaf.workspace.io.WorkspaceExportOptions;
@@ -39,6 +40,9 @@ public interface WorkspaceManager {
 	}
 
 	/**
+	 * Exposes the current workspace directly and through CDI.
+	 * Any {@link Instance<Workspace>} in the Recaf application should point to this value.
+	 *
 	 * @return The current active workspace. May be {@code null} when no active workspace is open.
 	 */
 	@Nullable

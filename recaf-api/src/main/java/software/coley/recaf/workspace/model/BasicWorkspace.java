@@ -1,5 +1,6 @@
 package software.coley.recaf.workspace.model;
 
+import jakarta.enterprise.context.Dependent;
 import software.coley.recaf.workspace.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -14,6 +15,7 @@ import java.util.List;
  *
  * @author Matt Coley
  */
+@Dependent
 public class BasicWorkspace implements Workspace {
 	private final List<WorkspaceModificationListener> modificationListeners = new ArrayList<>();
 	private final WorkspaceResource primary;

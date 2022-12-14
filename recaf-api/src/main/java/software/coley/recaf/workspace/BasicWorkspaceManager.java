@@ -1,6 +1,8 @@
 package software.coley.recaf.workspace;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 import software.coley.recaf.workspace.io.ResourceImporter;
 import software.coley.recaf.workspace.model.Workspace;
@@ -33,6 +35,8 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 	}
 
 	@Override
+	@Produces
+	@Dependent
 	public Workspace getCurrent() {
 		return current;
 	}
