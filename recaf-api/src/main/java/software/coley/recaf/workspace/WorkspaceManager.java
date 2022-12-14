@@ -2,6 +2,8 @@ package software.coley.recaf.workspace;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.inject.Produces;
 import software.coley.recaf.workspace.io.ResourceImporter;
 import software.coley.recaf.workspace.io.WorkspaceExportOptions;
 import software.coley.recaf.workspace.io.WorkspaceExporter;
@@ -37,9 +39,11 @@ public interface WorkspaceManager {
 	}
 
 	/**
-	 * @return The current active workspace.
+	 * @return The current active workspace. May be {@code null} when no active workspace is open.
 	 */
 	@Nullable
+	@Produces
+	@Dependent
 	Workspace getCurrent();
 
 	/**
@@ -54,18 +58,12 @@ public interface WorkspaceManager {
 		if (current == null) {
 			// If there is no current workspace, then just assign it.
 			setCurrentIgnoringConditions(workspace);
-			if (workspace != null)
-				getWorkspaceOpenListeners().forEach(listener -> listener.onWorkspaceOpened(workspace));
 			return true;
 		} else if (getWorkspaceCloseConditions().stream()
 				.allMatch(condition -> condition.canClose(current))) {
 			// Otherwise, check if the conditions allow for closing the prior workspace.
 			// If so, then assign the new workspace.
-			current.close();
-			getWorkspaceCloseListeners().forEach(listener -> listener.onWorkspaceClosed(current));
 			setCurrentIgnoringConditions(workspace);
-			if (workspace != null)
-				getWorkspaceOpenListeners().forEach(listener -> listener.onWorkspaceOpened(workspace));
 			return true;
 		}
 		// Workspace closure conditions not met, assignment denied.
@@ -74,6 +72,8 @@ public interface WorkspaceManager {
 
 	/**
 	 * Effectively {@link #setCurrent(Workspace)} except any blocking conditions are bypassed.
+	 * <br>
+	 * Listeners for open/close events must be called when implementing this.
 	 *
 	 * @param workspace
 	 * 		New workspace to set as the active workspace.
@@ -157,4 +157,22 @@ public interface WorkspaceManager {
 	 * 		Listener to remove.
 	 */
 	void removeWorkspaceCloseListener(WorkspaceCloseListener listener);
+
+	/**
+	 * @return Listeners to add to any workspace passed to {@link #setCurrent(Workspace)}.
+	 */
+	@Nonnull
+	List<WorkspaceModificationListener> getDefaultWorkspaceModificationListeners();
+
+	/**
+	 * @param listener
+	 * 		Listener to add.
+	 */
+	void addDefaultWorkspaceModificationListeners(WorkspaceModificationListener listener);
+
+	/**
+	 * @param listener
+	 * 		Listener to remove.
+	 */
+	void removeDefaultWorkspaceModificationListeners(WorkspaceModificationListener listener);
 }
