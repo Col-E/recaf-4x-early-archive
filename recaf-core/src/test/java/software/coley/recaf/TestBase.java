@@ -1,6 +1,5 @@
 package software.coley.recaf;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import software.coley.recaf.workspace.WorkspaceManager;
 
@@ -14,11 +13,5 @@ public class TestBase {
 	@BeforeAll
 	public static void setupWorkspaceManager() {
 		workspaceManager = recaf.get(WorkspaceManager.class);
-	}
-
-	@AfterAll
-	public static void cleanupWorkspace() {
-		// Close any open workspace from tests
-		workspaceManager.setCurrentIgnoringConditions(null);
 	}
 }

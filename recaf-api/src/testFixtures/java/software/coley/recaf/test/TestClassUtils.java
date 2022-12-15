@@ -42,7 +42,7 @@ public class TestClassUtils {
 	 * @throws IOException
 	 * 		When a class could not be found at runtime.
 	 */
-	public static JvmClassBundle fromClasses(Class<?>... classes) throws IOException {
+	public static BasicJvmClassBundle fromClasses(Class<?>... classes) throws IOException {
 		BasicJvmClassBundle bundle = new BasicJvmClassBundle();
 		for (Class<?> cls : classes)
 			bundle.initialPut(fromRuntimeClass(cls));
