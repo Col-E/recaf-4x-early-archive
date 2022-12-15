@@ -90,7 +90,6 @@ public class WorkspaceBeanContext implements AlterableContext, WorkspaceOpenList
 	public void onWorkspaceClosed(Workspace workspace) {
 		for (WorkspaceBean<?> bean : map.values()) {
 			try {
-			//	bean.onWorkspaceClosed(workspace);
 			 	bean.destroy();
 			} catch (Throwable t) {
 				logger.error("Failed to update {} bean: {}",
