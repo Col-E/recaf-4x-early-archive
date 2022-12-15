@@ -9,10 +9,7 @@ import software.coley.llzip.ZipIO;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.builder.FileInfoBuilder;
-import software.coley.recaf.info.properties.builtin.PathOriginalNameProperty;
-import software.coley.recaf.info.properties.builtin.PathPrefixProperty;
-import software.coley.recaf.info.properties.builtin.PathSuffixProperty;
-import software.coley.recaf.info.properties.builtin.ZipCompressionProperty;
+import software.coley.recaf.info.properties.builtin.*;
 import software.coley.recaf.util.*;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
@@ -269,6 +266,7 @@ public class BasicResourceImporter implements ResourceImporter {
 					if (existingClass != null) {
 						deduplicateClass(existingClass, classInfo, bundle, files);
 					} else {
+						VersionedClassProperty.set(classInfo, version);
 						bundle.initialPut(classInfo);
 					}
 				} catch (NumberFormatException ex) {
@@ -451,6 +449,7 @@ public class BasicResourceImporter implements ResourceImporter {
 			// We will add the prior one as a file, and record this new one as a class
 			logger.warn("Duplicate class '{}' found. The new entry better aligns to class name so the prior one " +
 					"will be tracked as a file instead: {}", className, existingName);
+			VersionedClassProperty.remove(existingClass);
 			files.initialPut(new FileInfoBuilder<>()
 					.withName(existingName)
 					.withRawContent(existingClass.getBytecode())
@@ -461,6 +460,7 @@ public class BasicResourceImporter implements ResourceImporter {
 			// because that more accurately follows JVM behavior.
 			logger.warn("Duplicate class '{}' found. Neither entry match their class names," +
 					" tracking the newer item as the JVM class and retargeting the old item as a file: {}", className, existingName);
+			VersionedClassProperty.remove(existingClass);
 			files.initialPut(new FileInfoBuilder<>()
 					.withName(existingName)
 					.withRawContent(existingClass.getBytecode())
