@@ -1,10 +1,11 @@
 package software.coley.recaf.services.inheritance;
 
-import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import software.coley.collections.Lists;
 import software.coley.recaf.cdi.AutoRegisterWorkspaceListeners;
+import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
@@ -31,7 +32,7 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
-@Dependent
+@WorkspaceScoped
 @AutoRegisterWorkspaceListeners
 public class InheritanceGraph implements WorkspaceModificationListener, WorkspaceCloseListener,
 		ResourceJvmClassListener, ResourceAndroidClassListener {
@@ -52,7 +53,7 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 	 * 		Workspace to pull classes from.
 	 */
 	@Inject
-	public InheritanceGraph(Workspace workspace) {
+	public InheritanceGraph(@Nullable Workspace workspace) {
 		this.workspace = workspace;
 		if (workspace != null) {
 			// Add listeners to primary resource so when classes update we keep our graph up to date.
@@ -68,7 +69,7 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 	/**
 	 * Refresh parent-to-child lookup.
 	 */
-	public void refreshChildLookup() {
+	private void refreshChildLookup() {
 		// Clear
 		parentToChild.clear();
 
@@ -90,7 +91,7 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 	 * @param parentName
 	 * 		Parent class name.
 	 */
-	public void populateParentToChildLookup(String name, String parentName) {
+	private void populateParentToChildLookup(String name, String parentName) {
 		parentToChild.put(parentName, name);
 	}
 
@@ -100,7 +101,7 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 	 * @param info
 	 * 		Child class.
 	 */
-	public void populateParentToChildLookup(ClassInfo info) {
+	private void populateParentToChildLookup(ClassInfo info) {
 		populateParentToChildLookup(info.getName(), info.getSuperName());
 		for (String itf : info.getInterfaces())
 			populateParentToChildLookup(info.getName(), itf);
@@ -112,7 +113,7 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 	 * @param info
 	 * 		Child class.
 	 */
-	public void removeParentToChildLookup(ClassInfo info) {
+	private void removeParentToChildLookup(ClassInfo info) {
 		removeParentToChildLookup(info.getName(), info.getSuperName());
 		for (String itf : info.getInterfaces())
 			removeParentToChildLookup(info.getName(), itf);
@@ -126,7 +127,7 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 	 * @param parentName
 	 * 		Parent class name.
 	 */
-	public void removeParentToChildLookup(String name, String parentName) {
+	private void removeParentToChildLookup(String name, String parentName) {
 		parentToChild.remove(parentName, name);
 	}
 

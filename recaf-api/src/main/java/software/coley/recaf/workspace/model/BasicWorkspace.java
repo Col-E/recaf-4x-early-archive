@@ -15,7 +15,6 @@ import java.util.List;
  *
  * @author Matt Coley
  */
-@Dependent
 public class BasicWorkspace implements Workspace {
 	private final List<WorkspaceModificationListener> modificationListeners = new ArrayList<>();
 	private final WorkspaceResource primary;

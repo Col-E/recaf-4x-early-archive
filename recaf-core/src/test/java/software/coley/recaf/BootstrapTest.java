@@ -2,8 +2,12 @@ package software.coley.recaf;
 
 import jakarta.enterprise.inject.Instance;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.test.EmptyWorkspace;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.HelloWorld;
+import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
@@ -21,7 +25,7 @@ class BootstrapTest extends TestBase {
 	}
 
 	@Test
-	void testGetDependentScopeInstance() throws IOException {
+	void testGetWorkspaceInstance() throws IOException {
 		assertNull(workspaceManager.getCurrent(), "No workspace should be assigned!");
 
 		// Create workspace with single class
@@ -40,5 +44,22 @@ class BootstrapTest extends TestBase {
 		// Should no longer be null.
 		assertEquals(workspace, currentWorkspaceInstance.get(),
 				"Workspace manager should expose current workspace as dependent scoped bean");
+	}
+
+	@Test
+	void testGetWorkspaceScopedInstance() {
+		// Get the graph when one workspace is open.
+		workspaceManager.setCurrentIgnoringConditions(new EmptyWorkspace());
+		InheritanceGraph graph1 = recaf.getAndCreate(InheritanceGraph.class);
+		InheritanceGraph graph2 = recaf.getAndCreate(InheritanceGraph.class);
+		assertSame(graph1, graph2, "Graph should be workspace-scoped, but values differ!");
+
+		// Assign a new workspace.
+		// The graph should be different since the prior workspace is closed.
+		workspaceManager.setCurrentIgnoringConditions(new EmptyWorkspace());
+		InheritanceGraph graph3 = recaf.getAndCreate(InheritanceGraph.class);
+		InheritanceGraph graph4 = recaf.getAndCreate(InheritanceGraph.class);
+		assertSame(graph3, graph4, "Graph should be workspace-scoped, but values differ!");
+		assertNotSame(graph1, graph3, "Graph scope from before/after a new workspace yielded the same graph bean!");
 	}
 }

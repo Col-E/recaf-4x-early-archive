@@ -7,6 +7,8 @@ import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.se.SeContainer;
 import jakarta.enterprise.inject.spi.Bean;
 import jakarta.enterprise.inject.spi.BeanContainer;
+import software.coley.recaf.cdi.WorkspaceBeanContext;
+import software.coley.recaf.workspace.WorkspaceManager;
 
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
@@ -27,6 +29,18 @@ public class Recaf {
 	 */
 	public Recaf(@Nonnull SeContainer container) {
 		this.container = container;
+		setupWorkspaceScopedBeanContext();
+	}
+
+	/**
+	 * Registers {@link WorkspaceBeanContext} as a listener to the {@link WorkspaceManager} instance.
+	 * This allows the context to remove old beans associated with old workspaces.
+	 */
+	private void setupWorkspaceScopedBeanContext() {
+		WorkspaceBeanContext instance = WorkspaceBeanContext.getInstance();
+		WorkspaceManager workspaceManager = get(WorkspaceManager.class);
+		workspaceManager.addWorkspaceOpenListener(instance);
+		workspaceManager.addWorkspaceCloseListener(instance);
 	}
 
 	/**
@@ -61,8 +75,7 @@ public class Recaf {
 	 * @param <T>
 	 * 		Instance type.
 	 *
-	 * @return {@code true} when available for {@link #proxy(Class)}
-	 * and {@link #literal(Class)} usage.
+	 * @return {@code true} when available for {@link #get(Class)} usage.
 	 */
 	public <T> boolean isAvailable(Class<T> type) {
 		return isAvailable(type, NO_QUALIFIERS);
@@ -76,8 +89,7 @@ public class Recaf {
 	 * @param <T>
 	 * 		Instance type.
 	 *
-	 * @return {@code true} when available for {@link #proxy(Class, Annotation...)}
-	 * and {@link #literal(Class, Annotation...)}  usage.
+	 * @return {@code true} when available for {@link #get(Class, Annotation...)} usage.
 	 */
 	public <T> boolean isAvailable(Class<T> type, Annotation... qualifiers) {
 		Instance<T> instance = instance(type, qualifiers);
@@ -93,8 +105,8 @@ public class Recaf {
 	 * @return Instance of type <i>(Wrapped in a proxy)</i>.
 	 */
 	@Nonnull
-	public <T> T proxy(Class<T> type) {
-		return proxy(type, NO_QUALIFIERS);
+	public <T> T get(Class<T> type) {
+		return get(type, NO_QUALIFIERS);
 	}
 
 	/**
@@ -108,9 +120,10 @@ public class Recaf {
 	 * @return Instance of type <i>(Wrapped in a proxy)</i>.
 	 */
 	@Nonnull
-	public <T> T proxy(Class<T> type, Annotation... qualifiers) {
+	public <T> T get(Class<T> type, Annotation... qualifiers) {
 		return instance(type, qualifiers).get();
 	}
+
 
 	/**
 	 * @param type
@@ -121,8 +134,8 @@ public class Recaf {
 	 * @return Instance of type.
 	 */
 	@Nonnull
-	public <T> T literal(Class<T> type) {
-		return literal(type, NO_QUALIFIERS);
+	public <T> T getAndCreate(Class<T> type) {
+		return getAndCreate(type, NO_QUALIFIERS);
 	}
 
 	/**
@@ -137,7 +150,7 @@ public class Recaf {
 	 */
 	@Nonnull
 	@SuppressWarnings("unchecked")
-	public <T> T literal(Class<T> type, Annotation... qualifiers) {
+	public <T> T getAndCreate(Class<T> type, Annotation... qualifiers) {
 		// Get candidate beans of type given the qualifiers
 		BeanContainer beanContainer = container.getBeanContainer();
 		Set<Bean<?>> beans = (qualifiers == null || qualifiers.length == 0) ?

@@ -33,7 +33,7 @@ class InheritanceGraphTest extends TestBase {
 
 		// Get graph
 		assertTrue(recaf.isAvailable(InheritanceGraph.class), "Graph should be available after setting workspace");
-		graph = recaf.literal(InheritanceGraph.class);
+		graph = recaf.get(InheritanceGraph.class);
 	}
 
 	@Test

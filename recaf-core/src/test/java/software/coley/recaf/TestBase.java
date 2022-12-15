@@ -13,7 +13,7 @@ public class TestBase {
 
 	@BeforeAll
 	public static void setupWorkspaceManager() {
-		workspaceManager = recaf.proxy(WorkspaceManager.class);
+		workspaceManager = recaf.get(WorkspaceManager.class);
 	}
 
 	@AfterAll
