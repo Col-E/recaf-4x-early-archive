@@ -7,6 +7,7 @@ import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.workspace.io.ResourceImporter;
+import software.coley.recaf.workspace.model.EmptyWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.ArrayList;
@@ -41,6 +42,8 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 	@Produces
 	@Dependent
 	public Workspace getCurrent() {
+		if (current == null)
+			return EmptyWorkspace.get();
 		return current;
 	}
 

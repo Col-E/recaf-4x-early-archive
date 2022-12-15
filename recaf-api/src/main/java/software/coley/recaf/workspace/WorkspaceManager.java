@@ -85,6 +85,14 @@ public interface WorkspaceManager {
 	void setCurrentIgnoringConditions(@Nullable Workspace workspace);
 
 	/**
+	 * Closes the current workspace.
+	 */
+	default void closeCurrent() {
+		if (getCurrent() != null)
+			setCurrent(null);
+	}
+
+	/**
 	 * @param primary
 	 * 		Primary resource for editing.
 	 *
