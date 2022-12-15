@@ -31,7 +31,8 @@ class BootstrapTest extends TestBase {
 		// Should be null since nothing is active in the workspace manager.
 		// Thus, the supplier method should yield 'null'.
 		Instance<Workspace> currentWorkspaceInstance = recaf.instance(Workspace.class);
-		assertNull(currentWorkspaceInstance.get(), "No workspace should be available while there is no");
+		assertNull(currentWorkspaceInstance.get(), "No workspace should be available for injection " +
+				"while there is no current workspace");
 
 		// Assign a workspace.
 		workspaceManager.setCurrentIgnoringConditions(workspace);

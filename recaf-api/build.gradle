@@ -10,6 +10,8 @@ dependencies {
     api dexlib
     api cafedude
     api cdi_api
+    api extra_collections
+    api extra_observables
     api hppc
     api llzip
     api logging_impl

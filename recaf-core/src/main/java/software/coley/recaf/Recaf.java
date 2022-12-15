@@ -57,6 +57,35 @@ public class Recaf {
 
 	/**
 	 * @param type
+	 * 		Type to check availability of.
+	 * @param <T>
+	 * 		Instance type.
+	 *
+	 * @return {@code true} when available for {@link #proxy(Class)}
+	 * and {@link #literal(Class)} usage.
+	 */
+	public <T> boolean isAvailable(Class<T> type) {
+		return isAvailable(type, NO_QUALIFIERS);
+	}
+
+	/**
+	 * @param type
+	 * 		Type to check availability of.
+	 * @param qualifiers
+	 * 		Qualifiers to narrow down an option if multiple candidate instances exist for the type.
+	 * @param <T>
+	 * 		Instance type.
+	 *
+	 * @return {@code true} when available for {@link #proxy(Class, Annotation...)}
+	 * and {@link #literal(Class, Annotation...)}  usage.
+	 */
+	public <T> boolean isAvailable(Class<T> type, Annotation... qualifiers) {
+		Instance<T> instance = instance(type, qualifiers);
+		return !instance.isUnsatisfied() && instance.isResolvable();
+	}
+
+	/**
+	 * @param type
 	 * 		Type to get instance of.
 	 * @param <T>
 	 * 		Instance type.

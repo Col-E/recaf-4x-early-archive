@@ -19,6 +19,9 @@ project.ext {
     cdi_api = 'jakarta.enterprise:jakarta.enterprise.cdi-api:4.0.1'
     cdi_impl = 'org.jboss.weld.se:weld-se-core:5.1.0.Final'
 
+    extra_collections = 'com.github.Col-E:ExtraCollections:1.2.1'
+    extra_observables = 'com.github.Col-E:ExtraObservables:1.0.0'
+
     hppc = 'com.carrotsearch:hppc:0.9.1'
 
     llzip = "com.github.Col-E:LL-Java-Zip:$lljzipVersion"

@@ -12,12 +12,12 @@ public class TestBase {
 	protected static WorkspaceManager workspaceManager;
 
 	@BeforeAll
-	static void setup() {
+	public static void setupWorkspaceManager() {
 		workspaceManager = recaf.proxy(WorkspaceManager.class);
 	}
 
 	@AfterAll
-	static void cleanup() {
+	public static void cleanupWorkspace() {
 		// Close any open workspace from tests
 		workspaceManager.setCurrentIgnoringConditions(null);
 	}
