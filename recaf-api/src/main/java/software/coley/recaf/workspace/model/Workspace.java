@@ -85,6 +85,7 @@ public interface Workspace extends Closing {
 	default QueryResult<JvmClassInfo> findJvmClass(String name) {
 		List<WorkspaceResource> resources = new ArrayList<>(getSupportingResources());
 		resources.add(0, getPrimaryResource());
+		resources.addAll(getInternalSupportingResources());
 		for (WorkspaceResource resource : resources) {
 			JvmClassBundle bundle = resource.getJvmClassBundle();
 			JvmClassInfo classInfo = bundle.get(name);
