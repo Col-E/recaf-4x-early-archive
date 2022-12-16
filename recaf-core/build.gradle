@@ -12,3 +12,7 @@ dependencies {
 
     api cdi_impl
 }
+
+test {
+    forkEvery 1
+}
