@@ -44,6 +44,13 @@ public class Recaf {
 	}
 
 	/**
+	 * @return The CDI container.
+	 */
+	public SeContainer getContainer() {
+		return container;
+	}
+
+	/**
 	 * @param type
 	 * 		Type to get an {@link Instance} of.
 	 * @param <T>

@@ -8,6 +8,7 @@ import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.services.Service;
 import software.coley.recaf.util.MultiMap;
 import software.coley.recaf.util.MultiMapBuilder;
 import software.coley.recaf.workspace.WorkspaceCloseListener;
@@ -32,8 +33,9 @@ import java.util.stream.Collectors;
  */
 @WorkspaceScoped
 @AutoRegisterWorkspaceListeners
-public class InheritanceGraph implements WorkspaceModificationListener, WorkspaceCloseListener,
+public class InheritanceGraph implements Service, WorkspaceModificationListener, WorkspaceCloseListener,
 		ResourceJvmClassListener, ResourceAndroidClassListener {
+	public static final String SERVICE_ID = "graph-inheritance";
 	private static final InheritanceVertex STUB = new InheritanceVertex(null, null, null, false);
 	private static final String OBJECT = "java/lang/Object";
 	private final MultiMap<String, String, Set<String>> parentToChild = MultiMapBuilder
@@ -42,16 +44,20 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 			.build();
 	private final Map<String, InheritanceVertex> vertices = new ConcurrentHashMap<>();
 	private final Function<String, InheritanceVertex> vertexProvider = createVertexProvider();
+	private final InheritanceGraphConfig config;
 	private final Workspace workspace;
 
 	/**
 	 * Create an inheritance graph.
 	 *
+	 * @param config
+	 * 		Config instance.
 	 * @param workspace
 	 * 		Workspace to pull classes from.
 	 */
 	@Inject
-	public InheritanceGraph(@Nonnull Workspace workspace) {
+	public InheritanceGraph(InheritanceGraphConfig config, @Nonnull Workspace workspace) {
+		this.config = config;
 		this.workspace = workspace;
 
 		// Add listeners to primary resource so when classes update we keep our graph up to date.
@@ -306,5 +312,15 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 	public void onWorkspaceClosed(Workspace workspace) {
 		parentToChild.clear();
 		vertices.clear();
+	}
+
+	@Override
+	public String getServiceId() {
+		return SERVICE_ID;
+	}
+
+	@Override
+	public InheritanceGraphConfig getServiceConfig() {
+		return config;
 	}
 }
