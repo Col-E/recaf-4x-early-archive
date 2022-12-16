@@ -1,7 +1,6 @@
 package software.coley.recaf.services.inheritance;
 
-import jakarta.annotation.Nullable;
-import jakarta.enterprise.context.Dependent;
+import jakarta.annotation.Nonnull;
 import jakarta.inject.Inject;
 import software.coley.collections.Lists;
 import software.coley.recaf.cdi.AutoRegisterWorkspaceListeners;
@@ -11,7 +10,6 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.util.MultiMap;
 import software.coley.recaf.util.MultiMapBuilder;
-import software.coley.recaf.util.Types;
 import software.coley.recaf.workspace.WorkspaceCloseListener;
 import software.coley.recaf.workspace.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.Workspace;
@@ -53,17 +51,16 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 	 * 		Workspace to pull classes from.
 	 */
 	@Inject
-	public InheritanceGraph(@Nullable Workspace workspace) {
+	public InheritanceGraph(@Nonnull Workspace workspace) {
 		this.workspace = workspace;
-		if (workspace != null) {
-			// Add listeners to primary resource so when classes update we keep our graph up to date.
-			WorkspaceResource primaryResource = workspace.getPrimaryResource();
-			primaryResource.addResourceJvmClassListener(this);
-			primaryResource.addResourceAndroidClassListener(this);
 
-			// Populate downwards (parent --> child) lookup
-			refreshChildLookup();
-		}
+		// Add listeners to primary resource so when classes update we keep our graph up to date.
+		WorkspaceResource primaryResource = workspace.getPrimaryResource();
+		primaryResource.addResourceJvmClassListener(this);
+		primaryResource.addResourceAndroidClassListener(this);
+
+		// Populate downwards (parent --> child) lookup
+		refreshChildLookup();
 	}
 
 	/**
@@ -155,14 +152,16 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 	/**
 	 * @param name
 	 * 		Class name.
+	 * @param includeObject
+	 *        {@code true} to include {@link Object} as a vertex.
 	 *
 	 * @return Complete inheritance family of the class.
 	 */
-	public Set<InheritanceVertex> getVertexFamily(String name) {
+	public Set<InheritanceVertex> getVertexFamily(String name, boolean includeObject) {
 		InheritanceVertex vertex = getVertex(name);
 		if (vertex == null)
 			return Collections.emptySet();
-		return vertex.getFamily();
+		return vertex.getFamily(includeObject);
 	}
 
 	/**
@@ -185,8 +184,8 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 		firstParents.add(first);
 
 		// Ensure 'Object' is last
-		firstParents.remove(Types.OBJECT_TYPE.getInternalName());
-		firstParents.add(Types.OBJECT_TYPE.getInternalName());
+		firstParents.remove(OBJECT);
+		firstParents.add(OBJECT);
 
 		// Base case
 		if (firstParents.contains(second))
@@ -207,14 +206,13 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 
 			for (String parent : nextVertex.getParents().stream()
 					.map(InheritanceVertex::getName).collect(Collectors.toList())) {
-
-				// Parent in the set of visited classes? Then its valid.
-				if (firstParents.contains(parent))
-					return parent;
-
-				// Queue up the parent
-				if (!parent.equals(OBJECT))
+				if (!parent.equals(OBJECT)) {
+					// Parent in the set of visited classes? Then its valid.
+					if (firstParents.contains(parent))
+						return parent;
+					// Queue up the parent
 					queue.add(parent);
+				}
 			}
 		} while (!queue.isEmpty());
 		// Fallback option

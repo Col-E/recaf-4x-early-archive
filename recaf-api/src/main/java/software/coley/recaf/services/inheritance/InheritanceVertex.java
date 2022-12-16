@@ -1,5 +1,6 @@
 package software.coley.recaf.services.inheritance;
 
+import software.coley.collections.Sets;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
@@ -150,6 +151,13 @@ public class InheritanceVertex {
 	}
 
 	/**
+	 * @return {@code true} when the current vertex represents {@link Object}.
+	 */
+	public boolean isJavaLangObject() {
+		return getName().equals("java/lang/Object");
+	}
+
+	/**
 	 * @param name
 	 * 		Method name.
 	 * @param desc
@@ -198,7 +206,7 @@ public class InheritanceVertex {
 	 * @return {@code true} if the vertex is a family member, but is not a child or parent of the current vertex.
 	 */
 	public boolean isIndirectFamilyMember(InheritanceVertex vertex) {
-		return isIndirectFamilyMember(getFamily(), vertex);
+		return isIndirectFamilyMember(getFamily(true), vertex);
 	}
 
 	/**
@@ -217,19 +225,23 @@ public class InheritanceVertex {
 	}
 
 	/**
+	 * @param includeObject
+	 *        {@code true} to include {@link Object} as a vertex.
+	 *
 	 * @return The entire class hierarchy.
 	 */
-	public Set<InheritanceVertex> getFamily() {
+	public Set<InheritanceVertex> getFamily(boolean includeObject) {
 		Set<InheritanceVertex> vertices = new LinkedHashSet<>();
 		visitFamily(vertices);
+		if (!includeObject)
+			vertices.removeIf(InheritanceVertex::isJavaLangObject);
 		return vertices;
 	}
 
 	private void visitFamily(Set<InheritanceVertex> vertices) {
-		vertices.add(this);
-		Stream.concat(allParents(), "java/lang/Object".equals(getName()) ? Stream.empty() : allChildren())
-				.filter(v -> !vertices.contains(v))
-				.forEach(v -> v.visitFamily(vertices));
+		if (vertices.add(this) && !isJavaLangObject())
+			for (InheritanceVertex vertex : allDirectVertices())
+				vertex.visitFamily(vertices);
 	}
 
 	/**
@@ -306,6 +318,13 @@ public class InheritanceVertex {
 			}
 		}
 		return children;
+	}
+
+	/**
+	 * @return All direct parents and child vertices.
+	 */
+	public Set<InheritanceVertex> allDirectVertices() {
+		return Sets.combine(getParents(), getChildren());
 	}
 
 	/**
