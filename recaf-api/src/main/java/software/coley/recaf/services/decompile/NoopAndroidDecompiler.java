@@ -1,5 +1,8 @@
 package software.coley.recaf.services.decompile;
 
+import software.coley.recaf.info.AndroidClassInfo;
+import software.coley.recaf.workspace.model.Workspace;
+
 /**
  * No-op decompiler for {@link JvmDecompiler}
  *
@@ -17,5 +20,10 @@ public class NoopAndroidDecompiler extends AndroidDecompiler {
 	 */
 	public static NoopAndroidDecompiler getInstance() {
 		return INSTANCE;
+	}
+
+	@Override
+	public DecompileResult decompile(Workspace workspace, AndroidClassInfo classInfo) {
+		return new DecompileResult(null, null, DecompileResult.ResultType.SKIPPED);
 	}
 }

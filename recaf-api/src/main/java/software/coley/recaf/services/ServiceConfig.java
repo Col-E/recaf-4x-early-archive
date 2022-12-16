@@ -2,6 +2,7 @@ package software.coley.recaf.services;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import software.coley.recaf.config.ConfigContainer;
 
 /**
  * Base type for a service's config type.
@@ -14,5 +15,5 @@ import jakarta.inject.Inject;
  *
  * @author Matt Coley
  */
-public interface ServiceConfig {
+public interface ServiceConfig extends ConfigContainer {
 }
