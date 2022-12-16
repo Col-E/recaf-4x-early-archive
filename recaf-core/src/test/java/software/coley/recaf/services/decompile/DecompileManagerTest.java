@@ -36,22 +36,30 @@ public class DecompileManagerTest extends TestBase {
 	void testCfr() {
 		JvmDecompiler decompiler = decompilerManager.getJvmDecompiler(CfrDecompiler.NAME);
 		assertNotNull(decompiler, "CFR decompiler was never registered with manager");
-		runDecompilation(decompiler);
+		runJvmDecompilation(decompiler);
 	}
 
-	private static void runDecompilation(JvmDecompiler decompiler) {
+	private static void runJvmDecompilation(JvmDecompiler decompiler) {
+		DecompileResult result;
 		try {
-			DecompileResult result = decompilerManager.decompile(decompiler, workspace, classToDecompile)
-					.get(1, TimeUnit.SECONDS);
+			// Run initial decompilation
+			result = decompilerManager.decompile(decompiler, workspace, classToDecompile).get(1, TimeUnit.SECONDS);
 			assertEquals(DecompileResult.ResultType.SUCCESS, result.getType(), "Decompile result was not successful");
 			assertNotNull(result.getText(), "Decompile result missing text");
 			assertTrue(result.getText().contains("\"Hello world\""), "Decompilation seems to be wrong");
 		} catch (InterruptedException e) {
 			fail("Decompile was interrupted", e);
+			return;
 		} catch (ExecutionException e) {
 			fail("Decompile was encountered exception", e.getCause());
+			return;
 		} catch (TimeoutException e) {
 			fail("Decompile timed out", e);
+			return;
 		}
+
+		// Assert that repeated decompiles use the same result (caching, should be handled by abstract base)
+		DecompileResult newResult = decompiler.decompile(workspace, classToDecompile);
+		assertSame(result, newResult, "Decompiler did not cache results");
 	}
 }
