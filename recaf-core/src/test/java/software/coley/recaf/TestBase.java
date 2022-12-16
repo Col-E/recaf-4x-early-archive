@@ -15,5 +15,6 @@ public class TestBase {
 	@BeforeAll
 	public static void setupWorkspaceManager() {
 		workspaceManager = recaf.get(WorkspaceManager.class);
+		workspaceManager.setCurrent(null);
 	}
 }

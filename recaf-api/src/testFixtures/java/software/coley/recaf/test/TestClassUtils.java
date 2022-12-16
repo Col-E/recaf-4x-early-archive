@@ -51,6 +51,19 @@ public class TestClassUtils {
 
 	/**
 	 * @param classes
+	 * 		Classes to put into the bundle.
+	 *
+	 * @return Class bundle of classes.
+	 */
+	public static BasicJvmClassBundle fromClasses(JvmClassInfo... classes) {
+		BasicJvmClassBundle bundle = new BasicJvmClassBundle();
+		for (JvmClassInfo cls : classes)
+			bundle.initialPut(cls);
+		return bundle;
+	}
+
+	/**
+	 * @param classes
 	 * 		Classes to put into the workspace.
 	 *
 	 * @return Workspace containing classes in single resource.

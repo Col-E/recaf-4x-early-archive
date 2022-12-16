@@ -11,4 +11,5 @@ dependencies {
     testImplementation(testFixtures(project(":recaf-api")))
 
     api cdi_impl
+    api cfr
 }

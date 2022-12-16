@@ -16,6 +16,8 @@ project.ext {
 
     cafedude = "com.github.Col-E:CAFED00D:$cafeDudeVersion"
 
+    cfr = 'org.benf:cfr:0.152'
+
     cdi_api = 'jakarta.enterprise:jakarta.enterprise.cdi-api:4.0.1'
     cdi_impl = 'org.jboss.weld.se:weld-se-core:5.1.0.Final'
 
