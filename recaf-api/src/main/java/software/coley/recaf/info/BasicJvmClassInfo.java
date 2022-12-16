@@ -1,5 +1,6 @@
 package software.coley.recaf.info;
 
+import org.objectweb.asm.ClassReader;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 
 import java.util.Arrays;
@@ -12,6 +13,7 @@ import java.util.Arrays;
 public class BasicJvmClassInfo extends BasicClassInfo implements JvmClassInfo {
 	private final byte[] bytecode;
 	private final int version;
+	private ClassReader reader;
 
 	/**
 	 * @param builder
@@ -26,6 +28,13 @@ public class BasicJvmClassInfo extends BasicClassInfo implements JvmClassInfo {
 	@Override
 	public byte[] getBytecode() {
 		return bytecode;
+	}
+
+	@Override
+	public ClassReader getBytecodeReader() {
+		if (reader == null)
+			reader = new ClassReader(bytecode);
+		return reader;
 	}
 
 	@Override
