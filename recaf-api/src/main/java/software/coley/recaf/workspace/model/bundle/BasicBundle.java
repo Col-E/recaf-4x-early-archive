@@ -6,6 +6,8 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.Info;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 
 /**
@@ -18,9 +20,9 @@ import java.util.stream.Stream;
  */
 public class BasicBundle<I extends Info> implements Bundle<I> {
 	private static final Logger logger = Logging.get(BasicBundle.class);
-	private final Map<String, Stack<I>> history = new HashMap<>();
-	private final List<BundleListener<I>> listeners = new ArrayList<>();
-	private final Map<String, I> backing = new HashMap<>();
+	private final Map<String, Stack<I>> history = new ConcurrentHashMap<>();
+	private final List<BundleListener<I>> listeners = new CopyOnWriteArrayList<>();
+	private final Map<String, I> backing = new ConcurrentHashMap<>();
 
 	/**
 	 * Create initial history item.
