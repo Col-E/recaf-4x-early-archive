@@ -5,9 +5,10 @@ import org.junit.jupiter.api.Test;
 import software.coley.recaf.TestBase;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.Inheritance;
+import software.coley.recaf.test.dummy.StringConsumer;
 import software.coley.recaf.util.Types;
 import software.coley.recaf.workspace.model.Workspace;
-import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 
 import java.io.IOException;
 import java.util.Set;
@@ -26,14 +27,14 @@ class InheritanceGraphTest extends TestBase {
 	@BeforeAll
 	static void setup() throws IOException {
 		// Create workspace with the inheritance classes
-		JvmClassBundle classes = TestClassUtils.fromClasses(Inheritance.class.getClasses());
-		assertEquals(5, classes.size(), "Expecting 5 classes");
+		BasicJvmClassBundle classes = TestClassUtils.fromClasses(Inheritance.class.getClasses());
+		classes.initialPut(TestClassUtils.fromRuntimeClass(StringConsumer.class));
+		assertEquals(6, classes.size(), "Expecting 6 classes");
 		workspace = TestClassUtils.fromBundle(classes);
-		workspaceManager.setCurrentIgnoringConditions(workspace);
+		workspaceManager.setCurrent(workspace);
 
 		// Get graph
-		assertTrue(recaf.isAvailable(InheritanceGraph.class), "Graph should be available after setting workspace");
-		graph = recaf.get(InheritanceGraph.class);
+		graph = recaf.getAndCreate(InheritanceGraph.class);
 	}
 
 	@Test
@@ -54,7 +55,7 @@ class InheritanceGraphTest extends TestBase {
 
 		// Check parents
 		Set<InheritanceVertex> parents = vertex.getParents();
-		assertEquals(2, parents.size(), "Expecting 3 parents for Apple (interfaces, super is object and is ignored)");
+		assertEquals(3, parents.size(), "Expecting 3 parents for Apple (interfaces, super is object and is ignored)");
 		assertTrue(parents.stream()
 						.map(InheritanceVertex::getName)
 						.anyMatch(name -> name.equals(appleName.replace("Apple", "Red"))),
@@ -63,6 +64,13 @@ class InheritanceGraphTest extends TestBase {
 						.map(InheritanceVertex::getName)
 						.anyMatch(name -> name.equals(appleName.replace("Apple", "Edible"))),
 				"Apple missing parent: Edible");
+
+		// Check awareness of library methods
+		vertex = graph.getVertex(StringConsumer.class.getName().replace('.', '/'));
+		assertTrue(vertex.hasMethod("accept", "(Ljava/lang/Object;)V"));
+		assertTrue(vertex.hasMethod("accept", "(Ljava/lang/String;)V")); // Redirects to Object method
+		assertTrue(vertex.isLibraryMethod("accept", "(Ljava/lang/Object;)V")); // From Consumer<T>
+		assertFalse(vertex.isLibraryMethod("accept", "(Ljava/lang/String;)V")); // Local, doesn't matter if renamed.
 	}
 
 	@Test
@@ -74,7 +82,7 @@ class InheritanceGraphTest extends TestBase {
 				appleName.replace("Apple", "Edible"), // parent of apple
 				appleName.replace("Apple", "Grape") // shared parent edible
 		);
-		Set<InheritanceVertex> family = graph.getVertexFamily(appleName);
+		Set<InheritanceVertex> family = graph.getVertexFamily(appleName, false);
 		assertEquals(5, family.size());
 		assertEquals(names, family.stream().map(InheritanceVertex::getName).collect(Collectors.toSet()));
 	}
