@@ -4,11 +4,17 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.observables.ObservableObject;
+import software.coley.recaf.info.AndroidClassInfo;
+import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.Service;
+import software.coley.recaf.util.threading.ThreadPoolFactory;
+import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Manager of multiple {@link Decompiler} instances.
@@ -20,6 +26,7 @@ public class DecompilerManager implements Service {
 	public static final String SERVICE_ID = "decompilers";
 	private static final NoopJvmDecompiler NO_OP_JVM = NoopJvmDecompiler.getInstance();
 	private static final NoopAndroidDecompiler NO_OP_ANDROID = NoopAndroidDecompiler.getInstance();
+	private final ExecutorService decompileThreadPool = ThreadPoolFactory.newFixedThreadPool(SERVICE_ID);
 	private final Map<String, JvmDecompiler> jvmDecompilers = new TreeMap<>();
 	private final Map<String, AndroidDecompiler> androidDecompilers = new TreeMap<>();
 	private final DecompilerManagerConfig config;
@@ -37,6 +44,66 @@ public class DecompilerManager implements Service {
 				.mapObject(key -> jvmDecompilers.getOrDefault(key == null ? "" : key, NO_OP_JVM));
 		targetAndroidDecompiler = config.getPreferredAndroidDecompiler()
 				.mapObject(key -> androidDecompilers.getOrDefault(key == null ? "" : key, NO_OP_ANDROID));
+	}
+
+	/**
+	 * Uses the built-in thread-pool to schedule the decompilation with the {@link #getTargetJvmDecompiler()}.
+	 *
+	 * @param workspace
+	 * 		Workspace to pull additional information from.
+	 * @param classInfo
+	 * 		Class to decompile.
+	 *
+	 * @return Future of decompilation result.
+	 */
+	public CompletableFuture<DecompileResult> decompile(Workspace workspace, JvmClassInfo classInfo) {
+		return decompile(getTargetJvmDecompiler(), workspace, classInfo);
+	}
+
+	/**
+	 * Uses the built-in thread-pool to schedule the decompilation.
+	 *
+	 * @param decompiler
+	 * 		Decompiler implementation to use.
+	 * @param workspace
+	 * 		Workspace to pull additional information from.
+	 * @param classInfo
+	 * 		Class to decompile.
+	 *
+	 * @return Future of decompilation result.
+	 */
+	public CompletableFuture<DecompileResult> decompile(JvmDecompiler decompiler, Workspace workspace, JvmClassInfo classInfo) {
+		return CompletableFuture.supplyAsync(() -> decompiler.decompile(workspace, classInfo), decompileThreadPool);
+	}
+
+	/**
+	 * Uses the built-in thread-pool to schedule the decompilation with the {@link #getTargetAndroidDecompiler()}.
+	 *
+	 * @param workspace
+	 * 		Workspace to pull additional information from.
+	 * @param classInfo
+	 * 		Class to decompile.
+	 *
+	 * @return Future of decompilation result.
+	 */
+	public CompletableFuture<DecompileResult> decompile(Workspace workspace, AndroidClassInfo classInfo) {
+		return decompile(getTargetAndroidDecompiler(), workspace, classInfo);
+	}
+
+	/**
+	 * Uses the built-in thread-pool to schedule the decompilation.
+	 *
+	 * @param decompiler
+	 * 		Decompiler implementation to use.
+	 * @param workspace
+	 * 		Workspace to pull additional information from.
+	 * @param classInfo
+	 * 		Class to decompile.
+	 *
+	 * @return Future of decompilation result.
+	 */
+	public CompletableFuture<DecompileResult> decompile(AndroidDecompiler decompiler, Workspace workspace, AndroidClassInfo classInfo) {
+		return CompletableFuture.supplyAsync(() -> decompiler.decompile(workspace, classInfo), decompileThreadPool);
 	}
 
 	/**

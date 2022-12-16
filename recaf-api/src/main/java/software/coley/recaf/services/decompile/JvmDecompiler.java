@@ -41,13 +41,13 @@ public abstract class JvmDecompiler extends AbstractDecompiler implements Decomp
 	 * @param classInfo
 	 * 		Class to decompile.
 	 *
-	 * @return Future of decompilation result.
+	 * @return Decompilation result.
 	 */
-	public final CompletableFuture<DecompileResult> decompile(Workspace workspace, JvmClassInfo classInfo) {
+	public final DecompileResult decompile(Workspace workspace, JvmClassInfo classInfo) {
 		// Check for cached result, returning it if found.
 		DecompileResult cachedResult = CachedDecompileProperty.get(classInfo, this);
 		if (cachedResult != null)
-			return CompletableFuture.completedFuture(cachedResult);
+			return cachedResult;
 
 		// Get bytecode and run through filters.
 		byte[] bytecode = classInfo.getBytecode();
@@ -55,11 +55,11 @@ public abstract class JvmDecompiler extends AbstractDecompiler implements Decomp
 			bytecode = filter.filter(bytecode);
 
 		// Pass to implementation.
-		return decompile(workspace, classInfo.getName(), bytecode).thenApply(r -> {
-			// Cache result so later runs do not need to redo work.
-			CachedDecompileProperty.set(classInfo, this, r);
-			return r;
-		});
+		DecompileResult result = decompile(workspace, classInfo.getName(), bytecode);
+
+		// Cache result
+		CachedDecompileProperty.set(classInfo, this, result);
+		return result;
 	}
 
 	/**
@@ -70,9 +70,9 @@ public abstract class JvmDecompiler extends AbstractDecompiler implements Decomp
 	 * @param bytecode
 	 * 		Class bytecode.
 	 *
-	 * @return Future of decompilation result.
+	 * @return Decompilation result.
 	 */
-	protected abstract CompletableFuture<DecompileResult> decompile(Workspace workspace, String name, byte[] bytecode);
+	protected abstract DecompileResult decompile(Workspace workspace, String name, byte[] bytecode);
 
 	@Override
 	public boolean equals(Object o) {
