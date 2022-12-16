@@ -1,6 +1,11 @@
 package software.coley.recaf.info.properties.builtin;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.properties.BasicProperty;
+import software.coley.recaf.services.decompile.DecompileResult;
+import software.coley.recaf.services.decompile.Decompiler;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,32 +26,66 @@ public class CachedDecompileProperty extends BasicProperty<CachedDecompileProper
 		super(KEY, new Cache());
 	}
 
-	// TODO: Accessors using decompiler interface once that gets implemented
+	/**
+	 * @param classInfo
+	 * 		Class to cache decompilation of.
+	 * @param decompiler
+	 * 		Associated  decompiler.
+	 * @param result
+	 * 		Decompiler result to cache.
+	 */
+	public static void set(@Nonnull ClassInfo classInfo, @Nonnull Decompiler decompiler,
+						   @Nonnull DecompileResult result) {
+		Cache cache = classInfo.getPropertyValueOrNull(KEY);
+		if (cache == null) {
+			CachedDecompileProperty property = new CachedDecompileProperty();
+			classInfo.setProperty(property);
+			cache = property.value();
+		}
+		// Save to cache
+		cache.save(decompiler.getName(), result);
+	}
 
 	/**
-	 * Basic cache for decompiled code.
+	 * @param classInfo
+	 * 		Class with cached decompilation.
+	 * @param decompiler
+	 * 		Associated decompiler.
+	 *
+	 * @return Cached decompilation result, or {@code null} when no cached value exists.
+	 */
+	@Nullable
+	public static DecompileResult get(@Nonnull ClassInfo classInfo, @Nonnull Decompiler decompiler) {
+		Cache cache = classInfo.getPropertyValueOrNull(KEY);
+		if (cache == null) return null;
+		return cache.get(decompiler.getName());
+	}
+
+	/**
+	 * Basic cache for decompiler results.
 	 */
 	public static class Cache {
-		private final Map<String, String> implToCode = new HashMap<>();
+		// TODO: Should invalidate results if decompiler options have changed.
+		private final Map<String, DecompileResult> implToCode = new HashMap<>();
 
 		/**
 		 * @param decompilerId
 		 * 		Unique ID of decompiler.
 		 *
-		 * @return Decompiled code output for decompiler.
+		 * @return Decompiler result of prior run.
 		 */
-		public String get(String decompilerId) {
+		public DecompileResult get(String decompilerId) {
 			return implToCode.get(decompilerId);
 		}
 
 		/**
 		 * @param decompilerId
 		 * 		Unique ID of decompiler.
-		 * @param decompiled
-		 * 		Decompiled code output for decompiler.
+		 * @param result
+		 * 		Decompiler result to cache.
 		 */
-		public void save(String decompilerId, String decompiled) {
-			implToCode.put(decompilerId, decompiled);
+		public void save(String decompilerId, DecompileResult result) {
+			implToCode.put(decompilerId, result);
 		}
 	}
 }
