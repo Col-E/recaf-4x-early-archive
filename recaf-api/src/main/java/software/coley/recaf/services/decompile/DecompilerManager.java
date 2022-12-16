@@ -1,7 +1,9 @@
 package software.coley.recaf.services.decompile;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.info.AndroidClassInfo;
@@ -36,14 +38,28 @@ public class DecompilerManager implements Service {
 	/**
 	 * @param config
 	 * 		Config to pull values from.
+	 * @param implementations
+	 * 		CDI provider of decompiler implementations.
 	 */
 	@Inject
-	public DecompilerManager(@Nonnull DecompilerManagerConfig config) {
+	public DecompilerManager(@Nonnull DecompilerManagerConfig config,
+							 @Nonnull Instance<Decompiler> implementations) {
 		this.config = config;
+
+		// Mirror properties from config, mapped to instances
 		targetJvmDecompiler = config.getPreferredJvmDecompiler()
 				.mapObject(key -> jvmDecompilers.getOrDefault(key == null ? "" : key, NO_OP_JVM));
 		targetAndroidDecompiler = config.getPreferredAndroidDecompiler()
 				.mapObject(key -> androidDecompilers.getOrDefault(key == null ? "" : key, NO_OP_ANDROID));
+
+		// Register implementations
+		for (Decompiler implementation : implementations) {
+			if (implementation instanceof JvmDecompiler) {
+				register((JvmDecompiler) implementation);
+			} else if (implementation instanceof AndroidDecompiler) {
+				register((AndroidDecompiler) implementation);
+			}
+		}
 	}
 
 	/**
@@ -134,6 +150,28 @@ public class DecompilerManager implements Service {
 	 */
 	public void register(AndroidDecompiler decompiler) {
 		androidDecompilers.put(decompiler.getName(), decompiler);
+	}
+
+	/**
+	 * @param name
+	 * 		Name of decompiler.
+	 *
+	 * @return Decompiler instance, or {@code null} if nothing by the ID was found.
+	 */
+	@Nullable
+	public JvmDecompiler getJvmDecompiler(String name) {
+		return jvmDecompilers.get(name);
+	}
+
+	/**
+	 * @param name
+	 * 		Name of decompiler.
+	 *
+	 * @return Decompiler instance, or {@code null} if nothing by the ID was found.
+	 */
+	@Nullable
+	public AndroidDecompiler getAndroidDecompiler(String name) {
+		return androidDecompilers.get(name);
 	}
 
 	/**

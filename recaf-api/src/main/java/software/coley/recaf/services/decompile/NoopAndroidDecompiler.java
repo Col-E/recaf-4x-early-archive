@@ -8,7 +8,7 @@ import software.coley.recaf.workspace.model.Workspace;
  *
  * @author Matt Coley
  */
-public class NoopAndroidDecompiler extends AndroidDecompiler {
+public class NoopAndroidDecompiler extends AbstractAndroidDecompiler {
 	private static final NoopAndroidDecompiler INSTANCE = new NoopAndroidDecompiler();
 
 	private NoopAndroidDecompiler() {

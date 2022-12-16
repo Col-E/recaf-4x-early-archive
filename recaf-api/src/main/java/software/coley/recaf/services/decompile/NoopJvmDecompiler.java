@@ -7,7 +7,7 @@ import software.coley.recaf.workspace.model.Workspace;
  *
  * @author Matt Coley
  */
-public class NoopJvmDecompiler extends JvmDecompiler {
+public class NoopJvmDecompiler extends AbstractJvmDecompiler {
 	private static final NoopJvmDecompiler INSTANCE = new NoopJvmDecompiler();
 
 	private NoopJvmDecompiler() {
@@ -22,7 +22,7 @@ public class NoopJvmDecompiler extends JvmDecompiler {
 	}
 
 	@Override
-	protected DecompileResult decompile(Workspace workspace, String name, byte[] bytecode) {
+	public DecompileResult decompile(Workspace workspace, String name, byte[] bytecode) {
 		return new DecompileResult(null, null, DecompileResult.ResultType.SKIPPED);
 	}
 }
