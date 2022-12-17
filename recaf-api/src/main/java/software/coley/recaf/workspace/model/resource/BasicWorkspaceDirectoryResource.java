@@ -1,5 +1,7 @@
 package software.coley.recaf.workspace.model.resource;
 
+import jakarta.annotation.Nonnull;
+
 import java.nio.file.Path;
 
 /**
@@ -19,6 +21,7 @@ public class BasicWorkspaceDirectoryResource extends BasicWorkspaceResource impl
 		this.directoryPath = builder.getDirectoryPath();
 	}
 
+	@Nonnull
 	@Override
 	public Path getDirectoryPath() {
 		return directoryPath;

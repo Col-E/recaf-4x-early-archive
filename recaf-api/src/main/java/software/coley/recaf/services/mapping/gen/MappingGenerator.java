@@ -205,11 +205,13 @@ public class MappingGenerator implements Service {
 		});
 	}
 
+	@Nonnull
 	@Override
 	public String getServiceId() {
 		return SERVICE_ID;
 	}
 
+	@Nonnull
 	@Override
 	public ServiceConfig getServiceConfig() {
 		return config;

@@ -60,11 +60,13 @@ public interface JvmClassInfo extends ClassInfo {
 		return false;
 	}
 
+	@Nonnull
 	@Override
 	default JvmClassInfo asJvmClass() {
 		return this;
 	}
 
+	@Nonnull
 	@Override
 	default AndroidClassInfo asAndroidClass() {
 		throw new IllegalStateException("JVM class cannot be cast to Android class");

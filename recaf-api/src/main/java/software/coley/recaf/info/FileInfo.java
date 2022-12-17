@@ -1,5 +1,6 @@
 package software.coley.recaf.info;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.builder.FileInfoBuilder;
 
 /**
@@ -20,11 +21,13 @@ public interface FileInfo extends Info {
 		return FileInfoBuilder.forFile(this);
 	}
 
+	@Nonnull
 	@Override
 	default ClassInfo asClass() {
 		throw new IllegalStateException("File cannot be cast to generic class");
 	}
 
+	@Nonnull
 	@Override
 	default FileInfo asFile() {
 		return this;

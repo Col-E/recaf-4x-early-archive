@@ -19,8 +19,8 @@ import java.util.Collections;
  */
 public class ClassSource implements ClassFileSource {
 	private final Workspace workspace;
-	private String targetClassName;
-	private byte[] targetClassBytecode;
+	private final String targetClassName;
+	private final byte[] targetClassBytecode;
 
 	/**
 	 * Constructs a CFR class source.

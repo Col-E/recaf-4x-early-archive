@@ -1,5 +1,6 @@
 package software.coley.recaf.util.io;
 
+import jakarta.annotation.Nonnull;
 import software.coley.llzip.util.ByteData;
 import software.coley.llzip.util.ByteDataUtil;
 import software.coley.recaf.util.threading.ThreadLocals;
@@ -29,6 +30,7 @@ public final class ByteDataSource implements ByteSource, AutoCloseable {
 		data.close();
 	}
 
+	@Nonnull
 	@Override
 	public byte[] readAll() throws IOException {
 		ByteData data = this.data;
@@ -38,6 +40,7 @@ public final class ByteDataSource implements ByteSource, AutoCloseable {
 		return ByteDataUtil.toByteArray(data);
 	}
 
+	@Nonnull
 	@Override
 	public byte[] peek(int count) {
 		ByteData data = this.data;
@@ -47,6 +50,7 @@ public final class ByteDataSource implements ByteSource, AutoCloseable {
 		return buf;
 	}
 
+	@Nonnull
 	@Override
 	public InputStream openStream() {
 		return new ByteDataInputStream(data);
@@ -72,7 +76,7 @@ public final class ByteDataSource implements ByteSource, AutoCloseable {
 		}
 
 		@Override
-		public int read(byte[] b, int off, int len) throws IOException {
+		public int read(@Nonnull byte[] b, int off, int len) throws IOException {
 			ensureOpen();
 			ByteData data = this.data;
 			long read = this.read;

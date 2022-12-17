@@ -1,5 +1,6 @@
 package software.coley.recaf.workspace.model.resource;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.FileInfo;
@@ -169,27 +170,32 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 		embeddedResources.values().forEach(resource -> resource.setContainingResource(this));
 	}
 
+	@Nonnull
 	@Override
 	public JvmClassBundle getJvmClassBundle() {
 		return jvmClassBundle;
 	}
 
+	@Nonnull
 	@Override
 	public NavigableMap<Integer, JvmClassBundle> getVersionedJvmClassBundles() {
 		return versionedJvmClassBundles;
 	}
 
+	@Nonnull
 	@Override
 	public Map<String, AndroidClassBundle> getAndroidClassBundles() {
 		if (androidClassBundles == null) return Collections.emptyMap();
 		return androidClassBundles;
 	}
 
+	@Nonnull
 	@Override
 	public FileBundle getFileBundle() {
 		return fileBundle;
 	}
 
+	@Nonnull
 	@Override
 	public Map<String, WorkspaceFileResource> getEmbeddedResources() {
 		return embeddedResources;

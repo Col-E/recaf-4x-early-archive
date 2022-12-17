@@ -1,5 +1,7 @@
 package software.coley.recaf.workspace.io;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import me.coley.cafedude.InvalidClassException;
 import me.coley.cafedude.classfile.ClassFile;
@@ -20,8 +22,9 @@ import java.io.IOException;
 public class BasicClassPatcher implements ClassPatcher {
 	private static final Logger logger = Logging.get(BasicClassPatcher.class);
 
+	@Nonnull
 	@Override
-	public byte[] patch(String name, byte[] code) throws IOException {
+	public byte[] patch(@Nullable String name, @Nonnull byte[] code) throws IOException {
 		try {
 			// Patch via CafeDude
 			ClassFileReader reader = new ClassFileReader();

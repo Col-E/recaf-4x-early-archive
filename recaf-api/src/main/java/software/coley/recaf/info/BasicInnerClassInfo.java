@@ -1,5 +1,7 @@
 package software.coley.recaf.info;
 
+import jakarta.annotation.Nonnull;
+
 import java.util.Objects;
 
 /**
@@ -41,11 +43,13 @@ public class BasicInnerClassInfo implements InnerClassInfo {
 		return access;
 	}
 
+	@Nonnull
 	@Override
 	public String getOuterDeclaringClassName() {
 		return getOuterDeclaringClassName;
 	}
 
+	@Nonnull
 	@Override
 	public String getInnerClassName() {
 		return innerClassName;
@@ -61,6 +65,7 @@ public class BasicInnerClassInfo implements InnerClassInfo {
 		return innerName;
 	}
 
+	@Nonnull
 	@Override
 	public String getSimpleName() {
 		// Cache simple name computation

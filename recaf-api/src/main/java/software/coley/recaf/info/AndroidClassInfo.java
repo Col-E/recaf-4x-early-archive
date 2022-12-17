@@ -1,7 +1,7 @@
 package software.coley.recaf.info;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.builder.AndroidClassInfoBuilder;
-import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -32,11 +32,13 @@ public interface AndroidClassInfo extends ClassInfo {
 		return predicate.test(this);
 	}
 
+	@Nonnull
 	@Override
 	default JvmClassInfo asJvmClass() {
 		throw new IllegalStateException("Android class cannot be cast to JVM class");
 	}
 
+	@Nonnull
 	@Override
 	default AndroidClassInfo asAndroidClass() {
 		return this;

@@ -277,8 +277,7 @@ public class StringUtil {
 	 */
 	public static String repeat(String text, int times) {
 		StringBuilder sb = new StringBuilder(text.length() * times);
-		for (int i = 0; i < times; i++)
-			sb.append(text);
+		sb.append(text.repeat(Math.max(0, times)));
 		return sb.toString();
 	}
 

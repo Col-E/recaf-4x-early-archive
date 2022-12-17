@@ -188,11 +188,13 @@ public class DecompilerManager implements Service {
 		return androidDecompilers.values();
 	}
 
+	@Nonnull
 	@Override
 	public String getServiceId() {
 		return SERVICE_ID;
 	}
 
+	@Nonnull
 	@Override
 	public DecompilerManagerConfig getServiceConfig() {
 		return config;

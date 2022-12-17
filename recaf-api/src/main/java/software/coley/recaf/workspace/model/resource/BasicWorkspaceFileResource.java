@@ -1,8 +1,7 @@
 package software.coley.recaf.workspace.model.resource;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.FileInfo;
-
-import java.nio.file.Path;
 
 /**
  * Basic implementation of a workspace resource sourced from a file.
@@ -21,6 +20,7 @@ public class BasicWorkspaceFileResource extends BasicWorkspaceResource implement
 		this.fileInfo = builder.getFileInfo();
 	}
 
+	@Nonnull
 	@Override
 	public FileInfo getFileInfo() {
 		return fileInfo;

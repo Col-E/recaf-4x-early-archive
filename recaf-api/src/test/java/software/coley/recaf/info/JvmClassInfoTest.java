@@ -1,12 +1,8 @@
 package software.coley.recaf.info;
 
 import me.coley.cafedude.classfile.VersionConstants;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.objectweb.asm.ClassReader;
-import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.AccessibleFields;
 import software.coley.recaf.util.ByteHeaderUtil;

@@ -1,7 +1,8 @@
 package software.coley.recaf.util.io;
 
+import jakarta.annotation.Nonnull;
+
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 
@@ -37,17 +38,20 @@ public final class ByteArraySource implements ByteSource {
 		this.len = len;
 	}
 
+	@Nonnull
 	@Override
 	public byte[] readAll() {
 		return Arrays.copyOfRange(bytes, off, len);
 	}
 
+	@Nonnull
 	@Override
 	public byte[] peek(int count) {
 		count = Math.min(count, len);
 		return Arrays.copyOfRange(bytes, off, count);
 	}
 
+	@Nonnull
 	@Override
 	public InputStream openStream() {
 		return new ByteArrayInputStream(bytes, off, len);

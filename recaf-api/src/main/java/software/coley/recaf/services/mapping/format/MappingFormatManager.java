@@ -75,11 +75,13 @@ public class MappingFormatManager implements Service {
 		formatProviderMap.put(name, supplier);
 	}
 
+	@Nonnull
 	@Override
 	public String getServiceId() {
 		return SERVICE_ID;
 	}
 
+	@Nonnull
 	@Override
 	public ServiceConfig getServiceConfig() {
 		return config;

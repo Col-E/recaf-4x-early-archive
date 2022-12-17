@@ -1,5 +1,7 @@
 package software.coley.recaf.util.threading;
 
+import jakarta.annotation.Nonnull;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
@@ -48,7 +50,7 @@ public final class PhasingExecutorService implements ExecutorService {
 	}
 
 	@Override
-	public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+	public boolean awaitTermination(long timeout, @Nonnull TimeUnit unit) throws InterruptedException {
 		try {
 			return phaser.awaitAdvanceInterruptibly(0, timeout, unit) <= 0;
 		} catch (TimeoutException e) {
@@ -56,48 +58,53 @@ public final class PhasingExecutorService implements ExecutorService {
 		}
 	}
 
+	@Nonnull
 	@Override
-	public <T> Future<T> submit(Callable<T> task) {
+	public <T> Future<T> submit(@Nonnull Callable<T> task) {
 		phaser.register();
 		return delegate.submit(wrap(task));
 	}
 
+	@Nonnull
 	@Override
-	public <T> Future<T> submit(Runnable task, T result) {
+	public <T> Future<T> submit(@Nonnull Runnable task, T result) {
 		phaser.register();
 		return delegate.submit(wrap(task), result);
 	}
 
+	@Nonnull
 	@Override
-	public Future<?> submit(Runnable task) {
+	public Future<?> submit(@Nonnull Runnable task) {
 		phaser.register();
 		return delegate.submit(wrap(task));
 	}
 
+	@Nonnull
 	@Override
 	public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
 		phaser.bulkRegister(tasks.size());
 		return delegate.invokeAll(tasks.stream().map(this::wrap).collect(Collectors.toList()));
 	}
 
+	@Nonnull
 	@Override
-	public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException {
+	public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, @Nonnull TimeUnit unit) throws InterruptedException {
 		phaser.bulkRegister(tasks.size());
 		return delegate.invokeAll(tasks.stream().map(this::wrap).collect(Collectors.toList()), timeout, unit);
 	}
 
 	@Override
-	public <T> T invokeAny(Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
+	public <T> T invokeAny(@Nonnull Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+	public <T> T invokeAny(@Nonnull Collection<? extends Callable<T>> tasks, long timeout, @Nonnull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void execute(Runnable command) {
+	public void execute(@Nonnull Runnable command) {
 		phaser.register();
 		delegate.execute(wrap(command));
 	}

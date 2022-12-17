@@ -1,6 +1,5 @@
 package software.coley.recaf.info;
 
-import software.coley.recaf.info.builder.FileInfoBuilder;
 import software.coley.recaf.info.builder.ZipFileInfoBuilder;
 
 /**

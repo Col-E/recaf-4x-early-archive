@@ -1,5 +1,6 @@
 package software.coley.recaf.cdi;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Dependent;
@@ -102,7 +103,7 @@ public class AutoRegisterWorkspaceListenersInterceptor {
 		}
 
 		@Override
-		public void onWorkspaceClosed(Workspace workspace) {
+		public void onWorkspaceClosed(@Nonnull Workspace workspace) {
 			delegate.onWorkspaceClosed(workspace);
 			workspaceManager.removeWorkspaceCloseListener(this);
 		}

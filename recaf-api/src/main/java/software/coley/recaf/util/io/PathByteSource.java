@@ -1,5 +1,7 @@
 package software.coley.recaf.util.io;
 
+import jakarta.annotation.Nonnull;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -22,11 +24,13 @@ final class PathByteSource implements ByteSource {
 		this.path = path;
 	}
 
+	@Nonnull
 	@Override
 	public byte[] readAll() throws IOException {
 		return Files.readAllBytes(path);
 	}
 
+	@Nonnull
 	@Override
 	public byte[] peek(int count) throws IOException {
 		try (InputStream in = openStream()) {
@@ -41,6 +45,7 @@ final class PathByteSource implements ByteSource {
 		}
 	}
 
+	@Nonnull
 	@Override
 	public InputStream openStream() throws IOException {
 		return Files.newInputStream(path);

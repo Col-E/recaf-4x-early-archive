@@ -1,5 +1,6 @@
 package software.coley.recaf.info;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.builder.FileInfoBuilder;
 import software.coley.recaf.info.properties.Property;
 import software.coley.recaf.info.properties.PropertyContainer;
@@ -42,6 +43,7 @@ public class BasicFileInfo implements FileInfo {
 		return rawContent;
 	}
 
+	@Nonnull
 	@Override
 	public String getName() {
 		return name;
@@ -75,6 +77,7 @@ public class BasicFileInfo implements FileInfo {
 		properties.removeProperty(key);
 	}
 
+	@Nonnull
 	@Override
 	public Map<String, Property<?>> getProperties() {
 		return properties.getProperties();

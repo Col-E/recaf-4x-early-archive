@@ -8,10 +8,8 @@ import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.AnnotationImpl;
 import software.coley.recaf.test.dummy.ClassWithAnnotation;
 import software.coley.recaf.test.dummy.TypeAnnotationImpl;
-import software.coley.recaf.util.Types;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;

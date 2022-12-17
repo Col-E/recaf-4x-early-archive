@@ -693,7 +693,7 @@ public final class IOUtil {
 	 * 		Whenn any I/O error occurs.
 	 */
 	public static void cleanDirectory(Path path) throws IOException {
-		Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+		Files.walkFileTree(path, new SimpleFileVisitor<>() {
 			@Override
 			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 				Files.delete(file);

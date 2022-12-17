@@ -29,7 +29,7 @@ public final class Streams {
 	 */
 	public static <T> Stream<T> interruptable(Stream<? extends T> stream) {
 		Spliterator<? extends T> spliterator = stream.spliterator();
-		return StreamSupport.stream(new Spliterators.AbstractSpliterator<T>(spliterator.estimateSize(), spliterator.characteristics()) {
+		return StreamSupport.stream(new Spliterators.AbstractSpliterator<>(spliterator.estimateSize(), spliterator.characteristics()) {
 			@Override
 			public boolean tryAdvance(Consumer<? super T> action) {
 				if (Thread.interrupted()) {

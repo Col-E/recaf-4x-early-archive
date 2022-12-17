@@ -1,5 +1,6 @@
 package software.coley.recaf.workspace.io;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import me.coley.cafedude.classfile.VersionConstants;
@@ -31,6 +32,7 @@ public class BasicInfoImporter implements InfoImporter {
 		this.classPatcher = classPatcher;
 	}
 
+	@Nonnull
 	@Override
 	public Info readInfo(String name, ByteSource source) throws IOException {
 		byte[] data = source.readAll();

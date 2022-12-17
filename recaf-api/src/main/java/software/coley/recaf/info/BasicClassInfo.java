@@ -4,7 +4,6 @@ import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.annotation.TypeAnnotationInfo;
 import software.coley.recaf.info.builder.AbstractClassInfoBuilder;
-import software.coley.recaf.info.member.BasicFieldMember;
 import software.coley.recaf.info.member.BasicMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
@@ -91,6 +90,7 @@ public abstract class BasicClassInfo implements ClassInfo {
 				.forEach(member -> member.setDeclaringClass(this));
 	}
 
+	@Nonnull
 	@Override
 	public String getName() {
 		return name;
@@ -101,6 +101,7 @@ public abstract class BasicClassInfo implements ClassInfo {
 		return superName;
 	}
 
+	@Nonnull
 	@Override
 	public List<String> getInterfaces() {
 		return interfaces;
@@ -121,11 +122,13 @@ public abstract class BasicClassInfo implements ClassInfo {
 		return sourceFileName;
 	}
 
+	@Nonnull
 	@Override
 	public List<AnnotationInfo> getAnnotations() {
 		return annotations;
 	}
 
+	@Nonnull
 	@Override
 	public List<TypeAnnotationInfo> getTypeAnnotations() {
 		return typeAnnotations;
@@ -146,6 +149,7 @@ public abstract class BasicClassInfo implements ClassInfo {
 		return outerMethodDescriptor;
 	}
 
+	@Nonnull
 	@Override
 	public List<String> getOuterClassBreadcrumbs() {
 		if (breadcrumbs == null) {
@@ -169,16 +173,19 @@ public abstract class BasicClassInfo implements ClassInfo {
 		return breadcrumbs;
 	}
 
+	@Nonnull
 	@Override
 	public List<InnerClassInfo> getInnerClasses() {
 		return innerClasses;
 	}
 
+	@Nonnull
 	@Override
 	public List<FieldMember> getFields() {
 		return fields;
 	}
 
+	@Nonnull
 	@Override
 	public List<MethodMember> getMethods() {
 		return methods;
@@ -194,6 +201,7 @@ public abstract class BasicClassInfo implements ClassInfo {
 		properties.removeProperty(key);
 	}
 
+	@Nonnull
 	@Override
 	public Map<String, Property<?>> getProperties() {
 		return properties.getProperties();

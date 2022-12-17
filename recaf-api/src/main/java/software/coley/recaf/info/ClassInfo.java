@@ -245,11 +245,13 @@ public interface ClassInfo extends Info, Annotated, Accessed {
 		return AbstractClassInfoBuilder.forClass(this);
 	}
 
+	@Nonnull
 	@Override
 	default ClassInfo asClass() {
 		return this;
 	}
 
+	@Nonnull
 	@Override
 	default FileInfo asFile() {
 		throw new IllegalStateException("Class cannot be cast to generic file");

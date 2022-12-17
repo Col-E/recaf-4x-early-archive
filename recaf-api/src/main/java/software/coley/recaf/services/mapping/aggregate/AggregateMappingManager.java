@@ -1,5 +1,6 @@
 package software.coley.recaf.services.mapping.aggregate;
 
+import jakarta.annotation.Nonnull;
 import jakarta.inject.Inject;
 import software.coley.recaf.cdi.AutoRegisterWorkspaceListeners;
 import software.coley.recaf.cdi.WorkspaceScoped;
@@ -31,7 +32,7 @@ public class AggregateMappingManager implements Service, WorkspaceCloseListener 
 	}
 
 	@Override
-	public void onWorkspaceClosed(Workspace workspace) {
+	public void onWorkspaceClosed(@Nonnull Workspace workspace) {
 		aggregateListeners.clear();
 		clearAggregated();
 	}
@@ -81,11 +82,13 @@ public class AggregateMappingManager implements Service, WorkspaceCloseListener 
 		return aggregatedMappings;
 	}
 
+	@Nonnull
 	@Override
 	public String getServiceId() {
 		return SERVICE_ID;
 	}
 
+	@Nonnull
 	@Override
 	public AggregateMappingManagerConfig getServiceConfig() {
 		return config;

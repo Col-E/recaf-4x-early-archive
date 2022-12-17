@@ -2,7 +2,6 @@ package software.coley.recaf.services.compile;
 
 import javax.tools.SimpleJavaFileObject;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 

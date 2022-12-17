@@ -12,6 +12,7 @@ import software.coley.recaf.info.properties.PropertyContainer;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Common builder info for {@link ClassInfo}.
@@ -123,10 +124,7 @@ public abstract class AbstractClassInfoBuilder<B extends AbstractClassInfoBuilde
 
 	@SuppressWarnings("unchecked")
 	public B withTypeAnnotations(List<TypeAnnotationInfo> typeAnnotations) {
-		if (typeAnnotations == null)
-			this.typeAnnotations = Collections.emptyList();
-		else
-			this.typeAnnotations = typeAnnotations;
+		this.typeAnnotations = Objects.requireNonNullElse(typeAnnotations, Collections.emptyList());
 		return (B) this;
 	}
 
@@ -177,10 +175,7 @@ public abstract class AbstractClassInfoBuilder<B extends AbstractClassInfoBuilde
 
 	@SuppressWarnings("unchecked")
 	public B withPropertyContainer(PropertyContainer propertyContainer) {
-		if (propertyContainer == null)
-			this.propertyContainer = new BasicPropertyContainer();
-		else
-			this.propertyContainer = propertyContainer;
+		this.propertyContainer = Objects.requireNonNullElseGet(propertyContainer, BasicPropertyContainer::new);
 		return (B) this;
 	}
 

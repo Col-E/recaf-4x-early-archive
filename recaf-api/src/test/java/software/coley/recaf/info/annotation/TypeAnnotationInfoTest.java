@@ -2,12 +2,10 @@ package software.coley.recaf.info.annotation;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.objectweb.asm.TypePath;
 import org.objectweb.asm.TypeReference;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.ClassWithAnnotation;
-import software.coley.recaf.test.dummy.ClassWithInvisAnnotation;
 
 import java.io.IOException;
 

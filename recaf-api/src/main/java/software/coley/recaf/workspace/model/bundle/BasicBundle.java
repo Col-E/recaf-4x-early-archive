@@ -8,7 +8,6 @@ import software.coley.recaf.info.Info;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.Stream;
 
 /**
  * Basic bundle implementation.
@@ -76,6 +75,7 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 		return history.get(key);
 	}
 
+	@Nonnull
 	@Override
 	public Set<String> getDirtyKeys() {
 		Set<String> dirty = new TreeSet<>();
@@ -212,7 +212,7 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 	}
 
 	@Override
-	public void putAll(Map<? extends String, ? extends I> map) {
+	public void putAll(@Nonnull Map<? extends String, ? extends I> map) {
 		throw new UnsupportedOperationException("Bundles cannot use 'putAll'");
 	}
 

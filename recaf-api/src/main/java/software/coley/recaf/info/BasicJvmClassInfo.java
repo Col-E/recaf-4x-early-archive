@@ -1,5 +1,6 @@
 package software.coley.recaf.info;
 
+import jakarta.annotation.Nonnull;
 import org.objectweb.asm.ClassReader;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 
@@ -25,6 +26,7 @@ public class BasicJvmClassInfo extends BasicClassInfo implements JvmClassInfo {
 		this.version = builder.getVersion();
 	}
 
+	@Nonnull
 	@Override
 	public byte[] getBytecode() {
 		return bytecode;

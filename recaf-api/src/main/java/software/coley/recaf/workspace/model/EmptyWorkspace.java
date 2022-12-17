@@ -1,5 +1,6 @@
 package software.coley.recaf.workspace.model;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.workspace.model.bundle.*;
@@ -53,26 +54,31 @@ public class EmptyWorkspace extends BasicWorkspace {
 			}
 		};
 
+		@Nonnull
 		@Override
 		public JvmClassBundle getJvmClassBundle() {
 			return classes;
 		}
 
+		@Nonnull
 		@Override
 		public NavigableMap<Integer, JvmClassBundle> getVersionedJvmClassBundles() {
 			return Collections.emptyNavigableMap();
 		}
 
+		@Nonnull
 		@Override
 		public Map<String, AndroidClassBundle> getAndroidClassBundles() {
 			return Collections.emptyMap();
 		}
 
+		@Nonnull
 		@Override
 		public FileBundle getFileBundle() {
 			return files;
 		}
 
+		@Nonnull
 		@Override
 		public Map<String, WorkspaceFileResource> getEmbeddedResources() {
 			return Collections.emptyMap();

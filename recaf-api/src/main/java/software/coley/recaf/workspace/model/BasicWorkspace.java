@@ -1,5 +1,6 @@
 package software.coley.recaf.workspace.model;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.workspace.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -39,21 +40,25 @@ public class BasicWorkspace implements Workspace {
 		this.supporting.addAll(supporting);
 	}
 
+	@Nonnull
 	@Override
 	public WorkspaceResource getPrimaryResource() {
 		return primary;
 	}
 
+	@Nonnull
 	@Override
 	public List<WorkspaceResource> getSupportingResources() {
 		return supporting;
 	}
 
+	@Nonnull
 	@Override
 	public List<WorkspaceResource> getInternalSupportingResources() {
 		return internal;
 	}
 
+	@Nonnull
 	@Override
 	public List<WorkspaceModificationListener> getWorkspaceModificationListeners() {
 		return modificationListeners;

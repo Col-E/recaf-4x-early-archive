@@ -1,5 +1,6 @@
 package software.coley.recaf.workspace.model.resource;
 
+import jakarta.annotation.Nonnull;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
@@ -108,26 +109,31 @@ public class RuntimeWorkspaceResource implements WorkspaceResource {
 		files = new BasicFileBundle();
 	}
 
+	@Nonnull
 	@Override
 	public JvmClassBundle getJvmClassBundle() {
 		return classes;
 	}
 
+	@Nonnull
 	@Override
 	public FileBundle getFileBundle() {
 		return files;
 	}
 
+	@Nonnull
 	@Override
 	public NavigableMap<Integer, JvmClassBundle> getVersionedJvmClassBundles() {
 		return Collections.emptyNavigableMap();
 	}
 
+	@Nonnull
 	@Override
 	public Map<String, AndroidClassBundle> getAndroidClassBundles() {
 		return Collections.emptyMap();
 	}
 
+	@Nonnull
 	@Override
 	public Map<String, WorkspaceFileResource> getEmbeddedResources() {
 		return Collections.emptyMap();

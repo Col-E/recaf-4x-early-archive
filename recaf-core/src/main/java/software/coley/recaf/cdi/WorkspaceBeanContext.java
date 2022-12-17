@@ -1,5 +1,6 @@
 package software.coley.recaf.cdi;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.spi.AlterableContext;
 import jakarta.enterprise.context.spi.Contextual;
 import jakarta.enterprise.context.spi.CreationalContext;
@@ -87,7 +88,7 @@ public class WorkspaceBeanContext implements AlterableContext, WorkspaceOpenList
 	}
 
 	@Override
-	public void onWorkspaceClosed(Workspace workspace) {
+	public void onWorkspaceClosed(@Nonnull Workspace workspace) {
 		for (WorkspaceBean<?> bean : map.values()) {
 			try {
 			 	bean.destroy();

@@ -1,5 +1,7 @@
 package software.coley.recaf.info.properties;
 
+import jakarta.annotation.Nonnull;
+
 import java.util.Objects;
 
 /**
@@ -25,6 +27,7 @@ public class BasicProperty<V> implements Property<V> {
 		this.value = value;
 	}
 
+	@Nonnull
 	@Override
 	public String key() {
 		return key;

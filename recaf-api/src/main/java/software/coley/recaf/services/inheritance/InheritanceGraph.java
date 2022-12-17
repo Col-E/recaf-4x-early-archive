@@ -309,16 +309,18 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	}
 
 	@Override
-	public void onWorkspaceClosed(Workspace workspace) {
+	public void onWorkspaceClosed(@Nonnull Workspace workspace) {
 		parentToChild.clear();
 		vertices.clear();
 	}
 
+	@Nonnull
 	@Override
 	public String getServiceId() {
 		return SERVICE_ID;
 	}
 
+	@Nonnull
 	@Override
 	public InheritanceGraphConfig getServiceConfig() {
 		return config;

@@ -1,5 +1,6 @@
 package software.coley.recaf.workspace;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Produces;
@@ -33,6 +34,7 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 		this.resourceImporter = resourceImporter;
 	}
 
+	@Nonnull
 	@Override
 	public ResourceImporter getResourceImporter() {
 		return resourceImporter;
@@ -75,6 +77,7 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 	}
 
 
+	@Nonnull
 	@Override
 	public List<WorkspaceCloseCondition> getWorkspaceCloseConditions() {
 		return closeConditions;
@@ -90,6 +93,7 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 		closeConditions.remove(condition);
 	}
 
+	@Nonnull
 	@Override
 	public List<WorkspaceOpenListener> getWorkspaceOpenListeners() {
 		return openListeners;
@@ -105,6 +109,7 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 		openListeners.remove(listener);
 	}
 
+	@Nonnull
 	@Override
 	public List<WorkspaceCloseListener> getWorkspaceCloseListeners() {
 		return closeListeners;
@@ -120,6 +125,7 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 		closeListeners.add(listener);
 	}
 
+	@Nonnull
 	@Override
 	public List<WorkspaceModificationListener> getDefaultWorkspaceModificationListeners() {
 		return defaultModificationListeners;

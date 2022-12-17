@@ -2,7 +2,6 @@ package software.coley.recaf.info.annotation;
 
 import org.objectweb.asm.TypePath;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 

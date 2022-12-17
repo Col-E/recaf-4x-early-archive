@@ -1,8 +1,6 @@
 package software.coley.recaf.info.annotation;
 
 
-import org.objectweb.asm.TypePath;
-
 import java.util.Map;
 
 /**

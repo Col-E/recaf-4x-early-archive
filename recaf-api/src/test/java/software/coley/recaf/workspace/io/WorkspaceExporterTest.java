@@ -9,7 +9,6 @@ import software.coley.recaf.util.ZipCreationUtils;
 import software.coley.recaf.util.io.ByteSources;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
-import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.io.IOException;

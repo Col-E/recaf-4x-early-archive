@@ -1,5 +1,6 @@
 package software.coley.recaf.util.io;
 
+import jakarta.annotation.Nonnull;
 import software.coley.llzip.ZipCompressions;
 import software.coley.llzip.part.LocalFileHeader;
 import software.coley.llzip.util.ByteData;
@@ -21,22 +22,26 @@ public final class LocalFileHeaderSource implements ByteSource {
 		this.fileHeader = fileHeader;
 	}
 
+	@Nonnull
 	@Override
 	public byte[] readAll() throws IOException {
 		return ByteDataUtil.toByteArray(decompress());
 	}
 
+	@Nonnull
 	@Override
 	public byte[] peek(int count) throws IOException {
-		ByteData data = decompress();
-		long length = data.length();
-		if (length < count)
-			count = (int) length;
-		byte[] bytes = new byte[count];
-		data.get(0L, bytes, 0, count);
-		return bytes;
+		try (ByteData data = decompress()) {
+			long length = data.length();
+			if (length < count)
+				count = (int) length;
+			byte[] bytes = new byte[count];
+			data.get(0L, bytes, 0, count);
+			return bytes;
+		}
 	}
 
+	@Nonnull
 	@Override
 	public InputStream openStream() throws IOException {
 		// Delegate to byte source
@@ -45,12 +50,14 @@ public final class LocalFileHeaderSource implements ByteSource {
 
 	/**
 	 * @return {@code true} when the data length of the content is 0.
-	 * @throws IOException
+	 * @throws IOException When data cannot be decompressed to determine true content length.
 	 */
 	public boolean isEmpty() throws IOException {
 		if (fileHeader.getCompressionMethod() == ZipCompressions.STORED)
 			return fileHeader.getFileData().length() == 0;
-		return decompress().length() == 0;
+		try (ByteData data = decompress()) {
+			return data.length() == 0;
+		}
 	}
 
 	private ByteData decompress() throws IOException {

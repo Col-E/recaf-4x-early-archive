@@ -1,5 +1,6 @@
 package software.coley.recaf.info.member;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.annotation.TypeAnnotationInfo;
@@ -75,11 +76,13 @@ public abstract class BasicMember implements ClassMember {
 		return access;
 	}
 
+	@Nonnull
 	@Override
 	public String getName() {
 		return name;
 	}
 
+	@Nonnull
 	@Override
 	public String getDescriptor() {
 		return desc;
@@ -90,11 +93,13 @@ public abstract class BasicMember implements ClassMember {
 		return signature;
 	}
 
+	@Nonnull
 	@Override
 	public List<AnnotationInfo> getAnnotations() {
 		return annotations;
 	}
 
+	@Nonnull
 	@Override
 	public List<TypeAnnotationInfo> getTypeAnnotations() {
 		return typeAnnotations;
@@ -110,6 +115,7 @@ public abstract class BasicMember implements ClassMember {
 		properties.removeProperty(key);
 	}
 
+	@Nonnull
 	@Override
 	public Map<String, Property<?>> getProperties() {
 		return properties.getProperties();

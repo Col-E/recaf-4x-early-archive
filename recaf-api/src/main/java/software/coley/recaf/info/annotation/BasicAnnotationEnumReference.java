@@ -1,5 +1,7 @@
 package software.coley.recaf.info.annotation;
 
+import jakarta.annotation.Nonnull;
+
 /**
  * Basic implementation of an annotation array reference in an element.
  *
@@ -20,11 +22,13 @@ public class BasicAnnotationEnumReference implements AnnotationEnumReference {
 		this.value = value;
 	}
 
+	@Nonnull
 	@Override
 	public String getDescriptor() {
 		return descriptor;
 	}
 
+	@Nonnull
 	@Override
 	public String getValue() {
 		return value;
