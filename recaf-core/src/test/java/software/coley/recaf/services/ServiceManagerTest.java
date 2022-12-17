@@ -5,6 +5,9 @@ import software.coley.recaf.TestBase;
 import software.coley.recaf.services.compile.JavacCompiler;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
+import software.coley.recaf.services.mapping.format.MappingFormatManager;
+import software.coley.recaf.services.mapping.gen.MappingGenerator;
 
 import java.util.Map;
 
@@ -25,5 +28,8 @@ class ServiceManagerTest extends TestBase {
 		assertTrue(allServices.containsKey(DecompilerManager.SERVICE_ID), "Missing decompile manager service");
 		assertTrue(allServices.containsKey(InheritanceGraph.SERVICE_ID), "Missing inheritance graph service");
 		assertTrue(allServices.containsKey(JavacCompiler.SERVICE_ID), "Missing java compiler service");
+		assertTrue(allServices.containsKey(MappingFormatManager.SERVICE_ID), "Missing mapping file format service");
+		assertTrue(allServices.containsKey(MappingGenerator.SERVICE_ID), "Missing mapping generator service");
+		assertTrue(allServices.containsKey(AggregateMappingManager.SERVICE_ID), "Missing mapping aggregator service");
 	}
 }

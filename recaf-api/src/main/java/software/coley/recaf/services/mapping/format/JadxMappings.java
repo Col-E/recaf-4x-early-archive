@@ -12,13 +12,15 @@ import software.coley.recaf.util.StringUtil;
 
 /**
  * Jadx mappings file implementation.
+ * <br>
+ * This format type is no longer used as of Jadx 1.4.2.
+ * Instead, Jadx now uses Engima & TinyV2.
  *
  * @author Matt Coley
  */
 @Dependent
 public class JadxMappings extends MappingsAdapter implements MappingFileFormat {
 	public static final String NAME = "Jadx";
-	private final Logger logger = Logging.get(JadxMappings.class);
 
 	/**
 	 * New jadx instance.

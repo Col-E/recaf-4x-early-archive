@@ -1,6 +1,7 @@
 package software.coley.recaf.services.mapping.gen;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.recaf.info.ClassInfo;
@@ -45,7 +46,7 @@ public class MappingGenerator implements Service {
 	 * @return Newly generated mappings.
 	 */
 	public Mappings generate(@Nonnull WorkspaceResource resource, @Nonnull InheritanceGraph inheritanceGraph,
-							 @Nonnull NameGenerator generator, @Nonnull NameGeneratorFilter filter) {
+							 @Nonnull NameGenerator generator, @Nullable NameGeneratorFilter filter) {
 		MappingsAdapter mappings = new MappingsAdapter("MAP-GEN", true, true);
 		mappings.enableHierarchyLookup(inheritanceGraph);
 		SortedMap<String, ClassInfo> classMap = new TreeMap<>();
@@ -71,7 +72,7 @@ public class MappingGenerator implements Service {
 	}
 
 	private void generateFamilyMappings(@Nonnull MappingsAdapter mappings, @Nonnull Set<InheritanceVertex> family,
-										@Nonnull NameGenerator generator, @Nonnull NameGeneratorFilter filter) {
+										@Nonnull NameGenerator generator, @Nullable NameGeneratorFilter filter) {
 		// Collect the members in the family that are inheritable, and methods that are library implementations.
 		// We want this information so that for these members we give them a single name throughout the family.
 		//  - Methods can be indirectly linked by two interfaces describing the same signature,
