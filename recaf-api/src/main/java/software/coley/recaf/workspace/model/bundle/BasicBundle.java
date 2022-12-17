@@ -55,15 +55,9 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 	 *
 	 * @return Prior associated value, if any.
 	 */
+	@Override
 	public I put(I info) {
 		return put(info.getName(), info);
-	}
-
-	/**
-	 * @return Stream of items.
-	 */
-	public Stream<I> stream() {
-		return values().stream();
 	}
 
 	/**

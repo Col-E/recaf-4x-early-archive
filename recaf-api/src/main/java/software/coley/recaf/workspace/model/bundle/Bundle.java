@@ -8,6 +8,7 @@ import software.coley.recaf.info.Info;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.stream.Stream;
 
 /**
  * Base bundle type.
@@ -36,7 +37,26 @@ public interface Bundle<I extends Info> extends Map<String, I>, Iterable<I>, Clo
 	Set<String> getDirtyKeys();
 
 	/**
-	 * @param key Item key.
+	 * @param info
+	 * 		Item to write.
+	 *
+	 * @return Prior value if any.
+	 */
+	@Nullable
+	I put(I info);
+
+	/**
+	 * @return Stream of items.
+	 */
+	@Nonnull
+	default Stream<I> stream() {
+		return values().stream();
+	}
+
+	/**
+	 * @param key
+	 * 		Item key.
+	 *
 	 * @return {@code true} if the item has a history. Any such item will also be present in {@link #getDirtyKeys()}.
 	 */
 	boolean hasHistory(String key);
@@ -45,7 +65,8 @@ public interface Bundle<I extends Info> extends Map<String, I>, Iterable<I>, Clo
 	 * If the given item isn't part of the bundle, it is added and no historical record is kept.
 	 * Otherwise, the existing item's history is incremented.
 	 *
-	 * @param info Item to update.
+	 * @param info
+	 * 		Item to update.
 	 */
 	void incrementHistory(I info);
 

@@ -112,8 +112,23 @@ public interface WorkspaceResource extends Closing {
 	 * @return Stream of all JVM class bundles in the resource, and in any embedded resources
 	 */
 	default Stream<JvmClassBundle> jvmClassBundleStreamRecursive() {
-		return concat(of(getJvmClassBundle()), getEmbeddedResources().values().stream()
-				.flatMap(WorkspaceResource::jvmClassBundleStream));
+		return concat(jvmClassBundleStream(), getEmbeddedResources().values().stream()
+				.flatMap(WorkspaceResource::jvmClassBundleStreamRecursive));
+	}
+
+	/**
+	 * @return Stream of all versioned JVM class bundles in the resource.
+	 */
+	default Stream<JvmClassBundle> versionedJvmClassBundleStream() {
+		return of(getJvmClassBundle());
+	}
+
+	/**
+	 * @return Stream of all versioned JVM class bundles in the resource, and in any embedded resources
+	 */
+	default Stream<JvmClassBundle> versionedJvmClassBundleStreamRecursive() {
+		return concat(versionedJvmClassBundleStream(), getEmbeddedResources().values().stream()
+				.flatMap(WorkspaceResource::versionedJvmClassBundleStreamRecursive));
 	}
 
 	/**
@@ -142,7 +157,7 @@ public interface WorkspaceResource extends Closing {
 	 * @return Stream of all file bundles in the resource, and in any embedded resources.
 	 */
 	default Stream<FileBundle> fileBundleStreamRecursive() {
-		return concat(of(getFileBundle()), getEmbeddedResources().values().stream()
+		return concat(fileBundleStream(), getEmbeddedResources().values().stream()
 				.flatMap(WorkspaceResource::fileBundleStreamRecursive));
 	}
 
