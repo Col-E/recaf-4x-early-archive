@@ -2,6 +2,7 @@ package software.coley.recaf.services;
 
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.TestBase;
+import software.coley.recaf.services.compile.JavacCompiler;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 
@@ -23,5 +24,6 @@ class ServiceManagerTest extends TestBase {
 		assertFalse(allServices.isEmpty(), "No services found");
 		assertTrue(allServices.containsKey(DecompilerManager.SERVICE_ID), "Missing decompile manager service");
 		assertTrue(allServices.containsKey(InheritanceGraph.SERVICE_ID), "Missing inheritance graph service");
+		assertTrue(allServices.containsKey(JavacCompiler.SERVICE_ID), "Missing java compiler service");
 	}
 }

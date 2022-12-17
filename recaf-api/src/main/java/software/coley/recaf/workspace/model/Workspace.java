@@ -44,6 +44,17 @@ public interface Workspace extends Closing {
 	List<WorkspaceResource> getInternalSupportingResources();
 
 	/**
+	 * @return List of all resources in the workspace. Includes primary, supporting, and internal support resources.
+	 */
+	@Nonnull
+	default List<WorkspaceResource> getAllResources() {
+		List<WorkspaceResource> list = new ArrayList<>(getSupportingResources());
+		list.addAll(getInternalSupportingResources());
+		list.add(0, getPrimaryResource());
+		return list;
+	}
+
+	/**
 	 * @return Listeners for when the current workspace has its supporting resources updated.
 	 */
 	@Nonnull

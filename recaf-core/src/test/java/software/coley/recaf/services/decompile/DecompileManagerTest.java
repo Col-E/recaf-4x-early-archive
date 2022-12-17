@@ -26,8 +26,8 @@ public class DecompileManagerTest extends TestBase {
 
 	@BeforeAll
 	static void setup() throws IOException {
-		classToDecompile = TestClassUtils.fromRuntimeClass(HelloWorld.class);
 		decompilerManager = recaf.get(DecompilerManager.class);
+		classToDecompile = TestClassUtils.fromRuntimeClass(HelloWorld.class);
 		workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(classToDecompile));
 		workspaceManager.setCurrent(workspace);
 	}

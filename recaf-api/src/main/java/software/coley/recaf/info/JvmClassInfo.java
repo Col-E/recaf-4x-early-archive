@@ -33,7 +33,7 @@ public interface JvmClassInfo extends ClassInfo {
 	/**
 	 * @return Class reader of {@link #getBytecode()}.
 	 */
-	ClassReader getBytecodeReader();
+	ClassReader getClassReader();
 
 	/**
 	 * @return Java class file version.
