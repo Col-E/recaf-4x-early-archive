@@ -35,4 +35,6 @@ project.ext {
     junit_params = "org.junit.jupiter:junit-jupiter-params:$junitVersion"
 
     mockito = 'org.mockito:mockito-core:4.9.0'
+
+    regex = 'net.sourceforge.jregex:jregex:1.2_01'
 }

@@ -1,5 +1,6 @@
 package software.coley.recaf.services.mapping.gen;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
@@ -39,7 +40,7 @@ public abstract class NameGeneratorFilter {
 	 *
 	 * @return {@code true} if the generator should create a new name for the class.
 	 */
-	public boolean shouldMapClass(ClassInfo info) {
+	public boolean shouldMapClass(@Nonnull ClassInfo info) {
 		if (defaultMap)
 			return next == null || next.shouldMapClass(info);
 		else
@@ -54,7 +55,7 @@ public abstract class NameGeneratorFilter {
 	 *
 	 * @return {@code true} if the generator should create a new name for the field.
 	 */
-	public boolean shouldMapField(ClassInfo owner, FieldMember field) {
+	public boolean shouldMapField(@Nonnull ClassInfo owner, @Nonnull FieldMember field) {
 		if (defaultMap)
 			return next == null || next.shouldMapField(owner, field);
 		else
@@ -69,7 +70,7 @@ public abstract class NameGeneratorFilter {
 	 *
 	 * @return {@code true} if the generator should create a new name for the method.
 	 */
-	public boolean shouldMapMethod(ClassInfo owner, MethodMember method) {
+	public boolean shouldMapMethod(@Nonnull ClassInfo owner,@Nonnull  MethodMember method) {
 		if (defaultMap)
 			return next == null || next.shouldMapMethod(owner, method);
 		else

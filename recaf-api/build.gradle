@@ -15,4 +15,5 @@ dependencies {
     api hppc
     api llzip
     api logging_impl
+    api regex
 }
