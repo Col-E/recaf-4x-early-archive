@@ -19,6 +19,7 @@ import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
+import software.coley.recaf.info.properties.builtin.RemoteClassloaderProperty;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 import software.coley.recaf.workspace.model.bundle.BundleListener;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
@@ -170,9 +171,10 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 
 		// If this class broadcast isn't for one of our redefine requests, it's a new class.
 		if (!queuedRedefines.remove(data.getName())) {
+			int loaderId = data.getClassLoaderId();
+
 			// Get the bundle for the remote classloader if not specified by parameter
 			if (bundle == null) {
-				int loaderId = data.getClassLoaderId();
 				ClassLoaderInfo loaderInfo = remoteLoaders.get(loaderId);
 				bundle = remoteBundleMap
 						.computeIfAbsent(loaderId, id -> new RemoteJvmClassBundle(loaderInfo));
@@ -180,6 +182,7 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 
 			// Add the class
 			JvmClassInfo classInfo = new JvmClassInfoBuilder(new ClassReader(data.getCode())).build();
+			RemoteClassloaderProperty.set(classInfo, loaderId);
 			bundle.initialPut(classInfo);
 		}
 	}
