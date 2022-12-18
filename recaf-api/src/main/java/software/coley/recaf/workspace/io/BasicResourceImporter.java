@@ -1,6 +1,5 @@
 package software.coley.recaf.workspace.io;
 
-import com.sun.tools.attach.VirtualMachineDescriptor;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -18,7 +17,10 @@ import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
-import software.coley.recaf.workspace.model.resource.*;
+import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
+import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
+import software.coley.recaf.workspace.model.resource.WorkspaceResource;
+import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
 import java.io.IOException;
 import java.net.URL;
@@ -539,11 +541,5 @@ public class BasicResourceImporter implements ResourceImporter {
 		byte[] bytes = IOUtil.toByteArray(url.openStream());
 		ByteSource byteSource = ByteSources.wrap(bytes);
 		return handleSingle(new WorkspaceResourceBuilder(), path, byteSource);
-	}
-
-	@Override
-	public WorkspaceRemoteVmResource importResource(VirtualMachineDescriptor virtualMachineDescriptor) {
-		// TODO: copy over instrumentation-service from dev3, then @Inject the interface
-		throw new UnsupportedOperationException("Instrumentation support not yet implemented");
 	}
 }

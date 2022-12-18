@@ -1,8 +1,6 @@
 package software.coley.recaf.workspace.io;
 
-import com.sun.tools.attach.VirtualMachineDescriptor;
 import software.coley.recaf.util.io.ByteSource;
-import software.coley.recaf.workspace.model.resource.WorkspaceRemoteVmResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.io.File;
@@ -76,15 +74,4 @@ public interface ResourceImporter {
 	default WorkspaceResource importResource(URI uri) throws IOException {
 		return importResource(uri.toURL());
 	}
-
-	/**
-	 * @param virtualMachineDescriptor
-	 * 		Descriptor of the remote JVM to attach to.
-	 *
-	 * @return Workspace resource representing the remote JVM.
-	 *
-	 * @throws IOException
-	 * 		When a connection to the remote JVM cannot be made.
-	 */
-	WorkspaceRemoteVmResource importResource(VirtualMachineDescriptor virtualMachineDescriptor) throws IOException;
 }

@@ -7,12 +7,14 @@ dependencies {
     api asm_commons
     api asm_tree
     api asm_util
-    api dexlib
     api cafedude
     api cdi_api
+    api dexlib
+    api directories
     api extra_collections
     api extra_observables
     api hppc
+    api instrument_server
     api llzip
     api logging_impl
     api regex

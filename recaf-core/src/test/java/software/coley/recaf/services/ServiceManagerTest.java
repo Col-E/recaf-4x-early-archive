@@ -2,6 +2,7 @@ package software.coley.recaf.services;
 
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.TestBase;
+import software.coley.recaf.services.attach.AttachManager;
 import software.coley.recaf.services.compile.JavacCompiler;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
@@ -31,5 +32,6 @@ class ServiceManagerTest extends TestBase {
 		assertTrue(allServices.containsKey(MappingFormatManager.SERVICE_ID), "Missing mapping file format service");
 		assertTrue(allServices.containsKey(MappingGenerator.SERVICE_ID), "Missing mapping generator service");
 		assertTrue(allServices.containsKey(AggregateMappingManager.SERVICE_ID), "Missing mapping aggregator service");
+		assertTrue(allServices.containsKey(AttachManager.SERVICE_ID), "Missing attach service");
 	}
 }

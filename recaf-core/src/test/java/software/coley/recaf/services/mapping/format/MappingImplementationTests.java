@@ -69,10 +69,6 @@ public class MappingImplementationTests {
 		assertEquals("speak", mappings.getMappedMethodName("test/Greetings", "say", "()V"));
 	}
 
-	// TODO: Test cases for other formats once supported
-	//  - TinyV2
-	//  - TSRG
-
 	/**
 	 * @param mappings
 	 * 		Mappings to check.
