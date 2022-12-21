@@ -19,7 +19,7 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.ResourceAndroidClassListener;
 import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
-import software.coley.recaf.workspace.query.QueryResult;
+import software.coley.recaf.workspace.model.FindResult;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -227,7 +227,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 
 	private Function<String, InheritanceVertex> createVertexProvider() {
 		return name -> {
-			QueryResult<? extends ClassInfo> result = workspace.findAnyClass(name);
+			FindResult<? extends ClassInfo> result = workspace.findAnyClass(name);
 			ClassInfo info = result.getItem();
 			if (info == null)
 				return STUB;

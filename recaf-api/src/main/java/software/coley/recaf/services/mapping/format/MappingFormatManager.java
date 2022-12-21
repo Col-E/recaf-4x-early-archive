@@ -83,7 +83,7 @@ public class MappingFormatManager implements Service {
 
 	@Nonnull
 	@Override
-	public ServiceConfig getServiceConfig() {
+	public MappingFormatManagerConfig getServiceConfig() {
 		return config;
 	}
 }

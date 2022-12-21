@@ -1,9 +1,8 @@
-package software.coley.recaf.workspace.query;
+package software.coley.recaf.workspace.model;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.Info;
-import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -18,7 +17,7 @@ import java.util.Objects;
  *
  * @author Matt Coley
  */
-public class QueryResult<T extends Info> {
+public class FindResult<T extends Info> {
 	private final Workspace workspace;
 	private final WorkspaceResource resource;
 	private final Bundle<T> bundle;
@@ -38,8 +37,8 @@ public class QueryResult<T extends Info> {
 	 * 		Matched item.
 	 * 		Can be {@code null} when no result was found.
 	 */
-	public QueryResult(@Nonnull Workspace workspace, @Nullable WorkspaceResource resource,
-					   @Nullable Bundle<T> bundle, @Nullable T item) {
+	public FindResult(@Nonnull Workspace workspace, @Nullable WorkspaceResource resource,
+					  @Nullable Bundle<T> bundle, @Nullable T item) {
 		this.workspace = workspace;
 		this.resource = resource;
 		this.bundle = bundle;
@@ -58,7 +57,6 @@ public class QueryResult<T extends Info> {
 	 * {@link Workspace#getPrimaryResource() primary resource}.
 	 */
 	public boolean isPrimary() {
-		if (workspace == null) return false;
 		return workspace.getPrimaryResource() == resource;
 	}
 
@@ -90,7 +88,7 @@ public class QueryResult<T extends Info> {
 	 * @return {@code true} when the result is an embedded container in {@link WorkspaceResource#getEmbeddedResources()}.
 	 */
 	public boolean isEmbeddedContainer() {
-		if (resource == null || bundle != null) return false;
+		if (resource == null || bundle != null || item == null) return false;
 		return resource.getEmbeddedResources().containsKey(item.getName());
 	}
 
@@ -135,7 +133,7 @@ public class QueryResult<T extends Info> {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 
-		QueryResult<?> that = (QueryResult<?>) o;
+		FindResult<?> that = (FindResult<?>) o;
 
 		if (!workspace.equals(that.workspace)) return false;
 		if (!Objects.equals(resource, that.resource)) return false;

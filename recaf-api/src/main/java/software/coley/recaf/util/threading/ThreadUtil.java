@@ -235,16 +235,28 @@ public class ThreadUtil {
 	}
 
 	/**
-	 * Wraps our executor service into phasing executor
-	 * that allows to wait for completion of all tasks
-	 * passed into it.
+	 * Wraps our executor service into phasing executor that allows to wait for completion of all tasks passed into it.
 	 *
 	 * @return phasing executor service.
 	 *
 	 * @see PhasingExecutorService
 	 */
 	public static ExecutorService phasingService() {
-		return new PhasingExecutorService(scheduledService);
+		return phasingService(scheduledService);
+	}
+
+	/**
+	 * Wraps our executor service into phasing executor that allows to wait for completion of all tasks passed into it.
+	 *
+	 * @param delegate
+	 * 		Executor to delegate thread management to.
+	 *
+	 * @return phasing executor service.
+	 *
+	 * @see PhasingExecutorService
+	 */
+	public static ExecutorService phasingService(ExecutorService delegate) {
+		return new PhasingExecutorService(delegate);
 	}
 
 	/**

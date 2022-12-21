@@ -61,7 +61,7 @@ public class JavacCompiler implements Service {
 
 		// Create a file manager to track files in-memory rather than on-disk
 		List<WorkspaceResource> virtualClassPath = workspace == null ?
-				Collections.emptyList() : workspace.getAllResources();
+				Collections.emptyList() : workspace.getAllResources(true);
 		List<CompilerDiagnostic> diagnostics = new ArrayList<>();
 		JavacListener listenerWrapper = createRecordingListener(listener, diagnostics);
 		JavaFileManager fmFallback = compiler.getStandardFileManager(listenerWrapper, Locale.getDefault(), UTF_8);
@@ -162,7 +162,7 @@ public class JavacCompiler implements Service {
 
 	@Nonnull
 	@Override
-	public ServiceConfig getServiceConfig() {
+	public JavacCompilerConfig getServiceConfig() {
 		return config;
 	}
 }

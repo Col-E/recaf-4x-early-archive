@@ -214,7 +214,7 @@ public class MappingGenerator implements Service {
 
 	@Nonnull
 	@Override
-	public ServiceConfig getServiceConfig() {
+	public MappingGeneratorConfig getServiceConfig() {
 		return config;
 	}
 }

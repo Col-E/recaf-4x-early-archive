@@ -7,6 +7,7 @@ import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
+import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -24,6 +25,7 @@ import java.util.stream.Stream;
  */
 @WorkspaceScoped
 public class MappingApplier {
+	private static final ExecutorService applierThreadPool = ThreadPoolFactory.newFixedThreadPool("mapping-applier");
 	private final InheritanceGraph inheritanceGraph;
 	private final AggregateMappingManager aggregateMappingManager;
 
@@ -77,7 +79,7 @@ public class MappingApplier {
 	 * @return Names of the classes in the resource that had modifications as a result of the mapping operation.
 	 */
 	private static Set<String> applyMappingsWithoutAggregation(WorkspaceResource resource, Mappings mappings) {
-		ExecutorService service = ThreadUtil.phasingService();
+		ExecutorService service = ThreadUtil.phasingService(applierThreadPool);
 		Set<String> modifiedClasses = ConcurrentHashMap.newKeySet();
 		Set<String> newNames = new HashSet<>();
 		Stream.concat(resource.jvmClassBundleStream(), resource.versionedJvmClassBundleStream()).forEach(bundle -> {
