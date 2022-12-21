@@ -9,6 +9,7 @@ import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.services.mapping.format.MappingFormatManager;
 import software.coley.recaf.services.mapping.gen.MappingGenerator;
+import software.coley.recaf.services.search.SearchService;
 
 import java.util.Map;
 
@@ -33,5 +34,6 @@ class ServiceManagerTest extends TestBase {
 		assertTrue(allServices.containsKey(MappingGenerator.SERVICE_ID), "Missing mapping generator service");
 		assertTrue(allServices.containsKey(AggregateMappingManager.SERVICE_ID), "Missing mapping aggregator service");
 		assertTrue(allServices.containsKey(AttachManager.SERVICE_ID), "Missing attach service");
+		assertTrue(allServices.containsKey(SearchService.SERVICE_ID), "Missing search service");
 	}
 }
