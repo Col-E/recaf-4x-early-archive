@@ -38,6 +38,7 @@ public class BasicFileInfo implements FileInfo {
 		this.properties = properties;
 	}
 
+	@Nonnull
 	@Override
 	public byte[] getRawContent() {
 		return rawContent;

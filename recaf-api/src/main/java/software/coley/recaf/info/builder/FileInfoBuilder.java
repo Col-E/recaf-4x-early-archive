@@ -3,6 +3,7 @@ package software.coley.recaf.info.builder;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.properties.BasicPropertyContainer;
 import software.coley.recaf.info.properties.PropertyContainer;
+import software.coley.recaf.util.StringUtil;
 
 /**
  * Common builder info for {@link FileInfo}.
@@ -55,6 +56,8 @@ public class FileInfoBuilder<B extends FileInfoBuilder<?>> {
 			builder = new DexFileInfoBuilder((DexFileInfo) info);
 		} else if (info instanceof ModulesFileInfo) {
 			builder = new ModulesFileInfoBuilder((ModulesFileInfo) info);
+		} else if (info instanceof TextFileInfo) {
+			builder = new TextFileInfoBuilder((TextFileInfo) info);
 		} else {
 			builder = new FileInfoBuilder<>(info);
 		}
@@ -92,6 +95,11 @@ public class FileInfoBuilder<B extends FileInfoBuilder<?>> {
 	}
 
 	public BasicFileInfo build() {
-		return new BasicFileInfo(this);
+		if (name == null) throw new IllegalArgumentException("Name is required");
+		if (rawContent == null) throw new IllegalArgumentException("Content is required");
+		if (StringUtil.isText(rawContent))
+			return new BasicTextFileInfo(this);
+		else
+			return new BasicFileInfo(this);
 	}
 }

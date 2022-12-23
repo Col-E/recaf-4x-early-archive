@@ -4,7 +4,7 @@ import software.coley.recaf.info.BasicZipFileInfo;
 import software.coley.recaf.info.ZipFileInfo;
 
 /**
- * Builder for {@link ZipFileInfoBuilder}.
+ * Builder for {@link ZipFileInfo}.
  *
  * @author Matt Coley
  * @see JarFileInfoBuilder

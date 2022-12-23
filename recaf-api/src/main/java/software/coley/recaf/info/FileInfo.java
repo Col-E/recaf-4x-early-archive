@@ -12,11 +12,13 @@ public interface FileInfo extends Info {
 	/**
 	 * @return Raw bytes of file content.
 	 */
+	@Nonnull
 	byte[] getRawContent();
 
 	/**
 	 * @return New builder wrapping this file information.
 	 */
+	@Nonnull
 	default FileInfoBuilder<?> toBuilder() {
 		return FileInfoBuilder.forFile(this);
 	}
@@ -34,8 +36,17 @@ public interface FileInfo extends Info {
 	}
 
 	/**
+	 * @return Self cast to text file.
+	 */
+	@Nonnull
+	default TextFileInfo asTextFile() {
+		throw new IllegalStateException("Non-text file cannot be cast to text file");
+	}
+
+	/**
 	 * @return Self cast to zip file.
 	 */
+	@Nonnull
 	default ZipFileInfo asZipFile() {
 		throw new IllegalStateException("Non-zip file cannot be cast to zip file");
 	}
@@ -48,6 +59,13 @@ public interface FileInfo extends Info {
 	@Override
 	default boolean isFile() {
 		return true;
+	}
+
+	/**
+	 * @return {@code true} if self is a zip file.
+	 */
+	default boolean isTextFile() {
+		return false;
 	}
 
 	/**

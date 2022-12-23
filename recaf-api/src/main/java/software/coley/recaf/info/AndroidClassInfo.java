@@ -54,6 +54,7 @@ public interface AndroidClassInfo extends ClassInfo {
 		return true;
 	}
 
+	@Nonnull
 	@Override
 	default AndroidClassInfoBuilder toBuilder() {
 		return new AndroidClassInfoBuilder(this);

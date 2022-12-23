@@ -1,5 +1,7 @@
 package software.coley.recaf.info;
 
+import jakarta.annotation.Nonnull;
+
 /**
  * Outline of a ZIP file container.
  *
@@ -10,6 +12,7 @@ package software.coley.recaf.info;
  * @see ApkFileInfo
  */
 public interface ZipFileInfo extends FileInfo {
+	@Nonnull
 	@Override
 	default ZipFileInfo asZipFile() {
 		return this;

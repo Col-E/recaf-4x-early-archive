@@ -32,6 +32,7 @@ public class BasicJvmClassInfo extends BasicClassInfo implements JvmClassInfo {
 		return bytecode;
 	}
 
+	@Nonnull
 	@Override
 	public ClassReader getClassReader() {
 		if (reader == null)

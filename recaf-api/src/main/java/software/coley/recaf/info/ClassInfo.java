@@ -57,6 +57,7 @@ public interface ClassInfo extends Info, Annotated, Accessed {
 	 * @return Stream of all parent types, where the {@link #getSuperName()} is first if present,
 	 * followed by any {@link #getInterfaces()}.
 	 */
+	@Nonnull
 	default Stream<String> parentTypesStream() {
 		return Stream.concat(
 				Stream.ofNullable(getSuperName()),
@@ -241,6 +242,7 @@ public interface ClassInfo extends Info, Annotated, Accessed {
 	/**
 	 * @return New builder wrapping this class information.
 	 */
+	@Nonnull
 	default AbstractClassInfoBuilder<?> toBuilder() {
 		return AbstractClassInfoBuilder.forClass(this);
 	}

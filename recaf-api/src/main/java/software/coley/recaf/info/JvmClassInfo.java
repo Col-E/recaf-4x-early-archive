@@ -33,6 +33,7 @@ public interface JvmClassInfo extends ClassInfo {
 	/**
 	 * @return Class reader of {@link #getBytecode()}.
 	 */
+	@Nonnull
 	ClassReader getClassReader();
 
 	/**
@@ -82,6 +83,7 @@ public interface JvmClassInfo extends ClassInfo {
 		return false;
 	}
 
+	@Nonnull
 	@Override
 	default JvmClassInfoBuilder toBuilder() {
 		return new JvmClassInfoBuilder(this);
