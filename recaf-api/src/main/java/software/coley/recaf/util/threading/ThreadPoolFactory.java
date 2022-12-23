@@ -129,7 +129,7 @@ public class ThreadPoolFactory {
 
 		@Override
 		public Thread newThread(@Nonnull Runnable r) {
-			Thread thread = new Thread(r);
+			Thread thread = new Thread(ThreadUtil.wrap(r));
 			thread.setDaemon(daemon);
 			thread.setName(name + "-" + tid++);
 			return thread;
