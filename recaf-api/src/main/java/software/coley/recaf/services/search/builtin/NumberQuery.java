@@ -2,43 +2,47 @@ package software.coley.recaf.services.search.builtin;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import jregex.Matcher;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.services.search.FileSearchVisitor;
 import software.coley.recaf.services.search.result.FileLocation;
 import software.coley.recaf.services.search.result.Location;
-import software.coley.recaf.util.TextMatchMode;
+import software.coley.recaf.util.NumberMatchMode;
+import software.coley.recaf.util.NumberUtil;
 
 import java.util.function.BiConsumer;
 
+import static software.coley.recaf.util.RegexUtil.getMatcher;
+
 /**
- * String search implementation.
+ * Number search implementation.
  *
  * @author Matt Coley
  */
-public class StringQuery extends AbstractValueQuery {
-	private final TextMatchMode matchMode;
-	private final String target;
+public class NumberQuery extends AbstractValueQuery {
+	private final NumberMatchMode matchMode;
+	private final Number target;
 
 	/**
 	 * @param matchMode
-	 * 		Text matching mode.
+	 * 		Number matching mode.
 	 * @param target
-	 * 		Text to match against.
+	 * 		Number to match against.
 	 */
-	public StringQuery(@Nonnull TextMatchMode matchMode, @Nonnull String target) {
+	public NumberQuery(@Nonnull NumberMatchMode matchMode, @Nonnull Number target) {
 		this.matchMode = matchMode;
 		this.target = target;
 	}
 
 	@Override
 	protected boolean isMatch(Object value) {
-		if (value instanceof String)
-			return isMatch((String) value);
+		if (value instanceof Number)
+			return isMatch((Number) value);
 		return false;
 	}
 
-	protected boolean isMatch(String text) {
-		return matchMode.match(target, text);
+	protected boolean isMatch(Number number) {
+		return matchMode.match(target, number);
 	}
 
 	@Nonnull
@@ -71,8 +75,20 @@ public class StringQuery extends AbstractValueQuery {
 				String[] lines = text.split("\\r?\\n\\r?");
 				for (int i = 0; i < lines.length; i++) {
 					String lineText = lines[i];
-					if (isMatch(lineText))
-						resultSink.accept(currentLocation.withTextLineNumber(i + 1), lineText);
+
+					// Extract numbers (decimal, hex) from line, check if match
+					Matcher matcher = getMatcher("(?:\\b|-)(?:\\d+(?:.\\d+[DdFf]?)?|0[xX][0-9a-fA-F]+)\\b", lineText);
+					while (matcher.find()) {
+						String group = matcher.group(0);
+						try {
+							Number value = NumberUtil.parse(group);
+							if (isMatch(value))
+								resultSink.accept(currentLocation.withTextLineNumber(i + 1), value);
+						} catch (NumberFormatException ignored) {
+							// Invalid match
+						}
+					}
+
 				}
 			}
 		}

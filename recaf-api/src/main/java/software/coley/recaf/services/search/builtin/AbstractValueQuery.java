@@ -1,0 +1,280 @@
+package software.coley.recaf.services.search.builtin;
+
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
+import org.objectweb.asm.*;
+import org.objectweb.asm.tree.InvokeDynamicInsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.slf4j.Logger;
+import software.coley.recaf.RecafConstants;
+import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.annotation.BasicAnnotationInfo;
+import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.services.search.FileQuery;
+import software.coley.recaf.services.search.JvmClassQuery;
+import software.coley.recaf.services.search.JvmClassSearchVisitor;
+import software.coley.recaf.services.search.result.AnnotatableLocation;
+import software.coley.recaf.services.search.result.JvmClassLocation;
+import software.coley.recaf.services.search.result.Location;
+import software.coley.recaf.services.search.result.MemberDeclarationLocation;
+
+import java.util.function.BiConsumer;
+
+/**
+ * General value search.
+ *
+ * @author Matt Coley
+ * @see StringQuery
+ * @see NumberQuery
+ */
+public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
+	// TODO: Implement android query when android capabilities are fleshed out enough to have comparable
+	//    search capabilities in method code
+
+	protected abstract boolean isMatch(Object value);
+
+	@Nonnull
+	@Override
+	public JvmClassSearchVisitor visitor(@Nullable JvmClassSearchVisitor delegate) {
+		return new JvmVisitor(delegate);
+	}
+
+	/**
+	 * Points {@link #visitor(JvmClassSearchVisitor)} to {@link AsmClassValueVisitor}
+	 */
+	private class JvmVisitor implements JvmClassSearchVisitor {
+		private final JvmClassSearchVisitor delegate;
+
+		private JvmVisitor(@Nullable JvmClassSearchVisitor delegate) {
+			this.delegate = delegate;
+		}
+
+		@Override
+		public void visit(@Nonnull BiConsumer<Location, Object> resultSink,
+						  @Nonnull JvmClassLocation currentLocation,
+						  @Nonnull JvmClassInfo classInfo) {
+			if (delegate != null) delegate.visit(resultSink, currentLocation, classInfo);
+
+			classInfo.getClassReader().accept(new AsmClassValueVisitor(resultSink, currentLocation, classInfo), 0);
+		}
+	}
+
+	/**
+	 * Visits values in classes.
+	 */
+	private class AsmClassValueVisitor extends ClassVisitor {
+		private final Logger logger = Logging.get(AsmClassValueVisitor.class);
+		private final BiConsumer<Location, Object> resultSink;
+		private final JvmClassLocation currentLocation;
+		private final JvmClassInfo classInfo;
+
+		protected AsmClassValueVisitor(@Nonnull BiConsumer<Location, Object> resultSink,
+									   @Nonnull JvmClassLocation currentLocation,
+									   @Nonnull JvmClassInfo classInfo) {
+			super(RecafConstants.getAsmVersion());
+			this.resultSink = resultSink;
+			this.currentLocation = currentLocation;
+			this.classInfo = classInfo;
+		}
+
+		@Override
+		public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+			FieldVisitor fv = super.visitField(access, name, desc, signature, value);
+			if (isMatch(value))
+				resultSink.accept(currentLocation, value);
+			FieldMember fieldMember = classInfo.getDeclaredField(name, desc);
+			if (fieldMember != null) {
+				return new AsmFieldValueVisitor(fv, fieldMember, resultSink, currentLocation);
+			} else {
+				logger.error("Failed to lookup field for query: {}.{} {}", classInfo.getName(), name, desc);
+				return fv;
+			}
+		}
+
+		@Override
+		public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+			MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+			MethodMember methodMember = classInfo.getDeclaredMethod(name, desc);
+			if (methodMember != null) {
+				return new AsmMethodValueVisitor(mv, methodMember, resultSink, currentLocation);
+			} else {
+				logger.error("Failed to lookup method for query: {}.{}{}", classInfo.getName(), name, desc);
+				return mv;
+			}
+		}
+
+		@Override
+		public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+			AnnotationVisitor av = super.visitAnnotation(desc, visible);
+			return new AnnotationValueVisitor(av, visible, resultSink,
+					currentLocation.withAnnotation(new BasicAnnotationInfo(visible, desc)));
+		}
+
+		@Override
+		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+			AnnotationVisitor av = super.visitTypeAnnotation(typeRef, typePath, desc, visible);
+			return new AnnotationValueVisitor(av, visible, resultSink,
+					currentLocation.withAnnotation(new BasicAnnotationInfo(visible, desc)));
+		}
+	}
+
+	/**
+	 * Visits values in fields.
+	 */
+	private class AsmFieldValueVisitor extends FieldVisitor {
+		private final BiConsumer<Location, Object> resultSink;
+		private final MemberDeclarationLocation currentLocation;
+
+		public AsmFieldValueVisitor(@Nullable FieldVisitor delegate,
+									@Nonnull FieldMember fieldMember,
+									@Nonnull BiConsumer<Location, Object> resultSink,
+									@Nonnull JvmClassLocation classLocation) {
+			super(RecafConstants.getAsmVersion(), delegate);
+			this.resultSink = resultSink;
+			this.currentLocation = classLocation.withMember(fieldMember);
+		}
+
+		@Override
+		public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+			AnnotationVisitor av = super.visitAnnotation(desc, visible);
+			return new AnnotationValueVisitor(av, visible, resultSink,
+					currentLocation.withAnnotation(new BasicAnnotationInfo(visible, desc)));
+		}
+
+		@Override
+		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+			AnnotationVisitor av = super.visitTypeAnnotation(typeRef, typePath, desc, visible);
+			return new AnnotationValueVisitor(av, visible, resultSink,
+					currentLocation.withAnnotation(new BasicAnnotationInfo(visible, desc)));
+		}
+	}
+
+	/**
+	 * Visits values in methods.
+	 */
+	private class AsmMethodValueVisitor extends MethodVisitor {
+		private final BiConsumer<Location, Object> resultSink;
+		private final MemberDeclarationLocation currentLocation;
+
+		public AsmMethodValueVisitor(@Nullable MethodVisitor delegate,
+									 @Nonnull MethodMember methodMember,
+									 @Nonnull BiConsumer<Location, Object> resultSink,
+									 @Nonnull JvmClassLocation classLocation) {
+			super(RecafConstants.getAsmVersion(), delegate);
+			this.resultSink = resultSink;
+			this.currentLocation = classLocation.withMember(methodMember);
+		}
+
+		@Override
+		public void visitInvokeDynamicInsn(String name, String desc, Handle bsmHandle,
+										   Object... bsmArgs) {
+			super.visitInvokeDynamicInsn(name, desc, bsmHandle, bsmArgs);
+			for (Object bsmArg : bsmArgs) {
+				if (isMatch(bsmArg)) {
+					InvokeDynamicInsnNode indy = new InvokeDynamicInsnNode(name, desc, bsmHandle, bsmArgs);
+					resultSink.accept(currentLocation.withInstruction(indy), bsmArg);
+				}
+			}
+		}
+
+		@Override
+		public void visitLdcInsn(Object value) {
+			super.visitLdcInsn(value);
+			if (isMatch(value))
+				resultSink.accept(currentLocation.withInstruction(new LdcInsnNode(value)), value);
+		}
+
+		@Override
+		public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+			AnnotationVisitor av = super.visitAnnotation(desc, visible);
+			return new AnnotationValueVisitor(av, visible, resultSink,
+					currentLocation.withAnnotation(new BasicAnnotationInfo(visible, desc)));
+		}
+
+		@Override
+		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+			AnnotationVisitor av = super.visitTypeAnnotation(typeRef, typePath, desc, visible);
+			return new AnnotationValueVisitor(av, visible, resultSink,
+					currentLocation.withAnnotation(new BasicAnnotationInfo(visible, desc)));
+		}
+
+		@Override
+		public AnnotationVisitor visitAnnotationDefault() {
+			AnnotationVisitor av = super.visitAnnotationDefault();
+			return new AnnotationValueVisitor(av, true, resultSink, currentLocation);
+		}
+
+		@Override
+		public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
+			AnnotationVisitor av = super.visitParameterAnnotation(parameter, desc, visible);
+			return new AnnotationValueVisitor(av, visible, resultSink,
+					currentLocation.withAnnotation(new BasicAnnotationInfo(visible, desc)));
+		}
+
+		@Override
+		public AnnotationVisitor visitInsnAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+			AnnotationVisitor av = super.visitInsnAnnotation(typeRef, typePath, desc, visible);
+			return new AnnotationValueVisitor(av, visible, resultSink,
+					currentLocation.withAnnotation(new BasicAnnotationInfo(visible, desc)));
+		}
+
+		@Override
+		public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String desc,
+														 boolean visible) {
+			AnnotationVisitor av = super.visitTryCatchAnnotation(typeRef, typePath, desc, visible);
+			return new AnnotationValueVisitor(av, visible, resultSink,
+					currentLocation.withAnnotation(new BasicAnnotationInfo(visible, desc)));
+		}
+
+		@Override
+		public AnnotationVisitor visitLocalVariableAnnotation(int typeRef, TypePath typePath,
+															  Label[] start, Label[] end, int[] index,
+															  String desc, boolean visible) {
+			AnnotationVisitor av = super.visitLocalVariableAnnotation(typeRef, typePath, start, end,
+					index, desc, visible);
+			return new AnnotationValueVisitor(av, visible, resultSink,
+					currentLocation.withAnnotation(new BasicAnnotationInfo(visible, desc)));
+		}
+	}
+
+	/**
+	 * Visits values in annotations.
+	 */
+	private class AnnotationValueVisitor extends AnnotationVisitor {
+		private final BiConsumer<Location, Object> resultSink;
+		private final AnnotatableLocation currentAnnoLocation;
+		private final boolean visible;
+
+		public AnnotationValueVisitor(@Nullable AnnotationVisitor delegate,
+									  boolean visible,
+									  @Nonnull BiConsumer<Location, Object> resultSink,
+									  @Nonnull AnnotatableLocation currentAnnoLocation) {
+			super(RecafConstants.getAsmVersion(), delegate);
+			this.visible = visible;
+			this.resultSink = resultSink;
+			this.currentAnnoLocation = currentAnnoLocation;
+		}
+
+		@Override
+		public AnnotationVisitor visitAnnotation(String name, String descriptor) {
+			AnnotationVisitor av = super.visitAnnotation(name, descriptor);
+			return new AnnotationValueVisitor(av, visible, resultSink,
+					currentAnnoLocation.withAnnotation(new BasicAnnotationInfo(visible, descriptor)));
+		}
+
+		@Override
+		public AnnotationVisitor visitArray(String name) {
+			AnnotationVisitor av = super.visitArray(name);
+			return new AnnotationValueVisitor(av, visible, resultSink, currentAnnoLocation);
+		}
+
+		@Override
+		public void visit(String name, Object value) {
+			super.visit(name, value);
+			if (isMatch(value))
+				resultSink.accept(currentAnnoLocation, value);
+		}
+	}
+}
