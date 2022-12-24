@@ -44,4 +44,9 @@ public abstract class AbstractLocation implements Location {
 	public int hashCode() {
 		return comparableString().hashCode();
 	}
+
+	@Override
+	public String toString() {
+		return comparableString();
+	}
 }

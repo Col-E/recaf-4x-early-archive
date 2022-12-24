@@ -1,8 +1,7 @@
 package software.coley.recaf.services.search.result;
 
-import jakarta.annotation.Nonnull;
+import software.coley.collections.delegate.DelegatingSortedSet;
 
-import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
@@ -10,15 +9,11 @@ import java.util.TreeSet;
  *
  * @author Matt Coley
  */
-public class Results {
-	private final SortedSet<Result<?>> results = new TreeSet<>();
-
-	public void add(@Nonnull Result<?> result) {
-		results.add(result);
-	}
-
-	@Nonnull
-	public SortedSet<Result<?>> getResults() {
-		return results;
+public class Results extends DelegatingSortedSet<Result<?>> {
+	/**
+	 * New results backed by tree-set.
+	 */
+	public Results() {
+		super(new TreeSet<>());
 	}
 }

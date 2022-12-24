@@ -2,10 +2,12 @@ package software.coley.recaf.test;
 
 import org.objectweb.asm.ClassReader;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
@@ -59,6 +61,19 @@ public class TestClassUtils {
 		BasicJvmClassBundle bundle = new BasicJvmClassBundle();
 		for (JvmClassInfo cls : classes)
 			bundle.initialPut(cls);
+		return bundle;
+	}
+
+	/**
+	 * @param files
+	 * 		Files to put into the bundle.
+	 *
+	 * @return File bundle contianing the files.
+	 */
+	public static BasicFileBundle fromFiles(FileInfo... files) {
+		BasicFileBundle bundle = new BasicFileBundle();
+		for (FileInfo file : files)
+			bundle.initialPut(file);
 		return bundle;
 	}
 
