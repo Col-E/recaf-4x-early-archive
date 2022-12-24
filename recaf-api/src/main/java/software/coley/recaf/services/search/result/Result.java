@@ -38,7 +38,15 @@ public abstract class Result<T> implements Comparable<Result<?>> {
 	public int compareTo(@Nonnull Result<?> o) {
 		if (o == this)
 			return 0;
-		return location.compareTo(o.location);
+
+		// Base comparison by location.
+		int cmp = location.compareTo(o.location);
+
+		// Disambiguate if location is the same, but values differ.
+		if (cmp == 0)
+			cmp = Integer.compare(getValue().hashCode(), o.getValue().hashCode());
+
+		return cmp;
 	}
 
 	@Override
