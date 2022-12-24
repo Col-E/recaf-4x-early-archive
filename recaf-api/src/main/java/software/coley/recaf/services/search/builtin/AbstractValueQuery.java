@@ -3,6 +3,8 @@ package software.coley.recaf.services.search.builtin;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.*;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.slf4j.Logger;
@@ -30,6 +32,15 @@ import java.util.function.BiConsumer;
  * @see NumberQuery
  */
 public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
+	private static Number[] OP_TO_VALUE = {
+			0, // NOP
+			0, // NULL
+			-1, 0, 1, 2, 3, 4, 5, // ICONST_X
+			0L, 1L, // LCONST_X
+			0F, 1F, 2F, // FCONST_X
+			0D, 1D // DCONST_X
+	};
+
 	// TODO: Implement android query when android capabilities are fleshed out enough to have comparable
 	//    search capabilities in method code
 
@@ -82,10 +93,10 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 		@Override
 		public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
 			FieldVisitor fv = super.visitField(access, name, desc, signature, value);
-			if (isMatch(value))
-				resultSink.accept(currentLocation, value);
 			FieldMember fieldMember = classInfo.getDeclaredField(name, desc);
 			if (fieldMember != null) {
+				if (isMatch(value))
+					resultSink.accept(currentLocation.withMember(fieldMember), value);
 				return new AsmFieldValueVisitor(fv, fieldMember, resultSink, currentLocation);
 			} else {
 				logger.error("Failed to lookup field for query: {}.{} {}", classInfo.getName(), name, desc);
@@ -177,6 +188,23 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 					resultSink.accept(currentLocation.withInstruction(indy), bsmArg);
 				}
 			}
+		}
+
+		@Override
+		public void visitInsn(int opcode) {
+			super.visitInsn(opcode);
+			if (opcode >= Opcodes.ICONST_M1 && opcode <= Opcodes.DCONST_1) {
+				Number value = OP_TO_VALUE[opcode];
+				if (isMatch(value))
+					resultSink.accept(currentLocation.withInstruction(new InsnNode(opcode)), value);
+			}
+		}
+
+		@Override
+		public void visitIntInsn(int opcode, int operand) {
+			super.visitIntInsn(opcode, operand);
+			if (opcode != Opcodes.NEWARRAY && isMatch(operand))
+				resultSink.accept(currentLocation.withInstruction(new IntInsnNode(opcode, operand)), operand);
 		}
 
 		@Override
