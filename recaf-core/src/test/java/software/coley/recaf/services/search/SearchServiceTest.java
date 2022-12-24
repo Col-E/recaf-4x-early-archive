@@ -9,6 +9,7 @@ import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.builder.TextFileInfoBuilder;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.services.search.builtin.NumberQuery;
+import software.coley.recaf.services.search.builtin.ReferenceQuery;
 import software.coley.recaf.services.search.builtin.StringQuery;
 import software.coley.recaf.services.search.result.*;
 import software.coley.recaf.test.TestClassUtils;
@@ -20,6 +21,8 @@ import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.objectweb.asm.Opcodes.BIPUSH;
@@ -186,6 +189,68 @@ public class SearchServiceTest extends TestBase {
 			} else {
 				fail("Text[Hello] found not in annotation usage");
 			}
+		}
+
+		@Test
+		void testMemberReferenceSearchSysOut() {
+			// References to System.out
+			Results results = searchService.search(classesWorkspace, new ReferenceQuery(
+					TextMatchMode.EQUALS, "java/lang/System", "out", "Ljava/io/PrintStream;"));
+			assertEquals(2, results.size());
+			Results baseline = results;
+
+			// No other references should be of PrintStream as named 'out' in the workspace
+			// so when we omit parameters the results should be the same.
+			results = searchService.search(classesWorkspace, new ReferenceQuery(
+					TextMatchMode.EQUALS, null, "out", "Ljava/io/PrintStream;"));
+			assertEquals(2, results.size());
+
+			results = searchService.search(classesWorkspace, new ReferenceQuery(
+					TextMatchMode.EQUALS, null, "out", null));
+			assertEquals(2, results.size());
+
+			results = searchService.search(classesWorkspace, new ReferenceQuery(
+					TextMatchMode.EQUALS, null, null, "Ljava/io/PrintStream;"));
+			assertEquals(2, results.size());
+
+			results = searchService.search(classesWorkspace, new ReferenceQuery(
+					TextMatchMode.EQUALS, "java/lang/System", null, null));
+			assertEquals(2, results.size());
+		}
+
+		@Test
+		void testClassReferenceToNumberFormatException() throws IOException {
+			Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(
+					TestClassUtils.fromRuntimeClass(ClassWithExceptions.class)
+			));
+
+			Results results = searchService.search(workspace, new ReferenceQuery(
+					TextMatchMode.EQUALS, "java/lang/NumberFormatException"));
+			assertEquals(4, results.size());
+
+			// Thrown type on method declaration
+			Set<Result<?>> throwsMatches = results.stream()
+					.filter(r -> r.getLocation() instanceof ThrowsLocation)
+					.collect(Collectors.toSet());
+			assertEquals(1, throwsMatches.size());
+
+			// NEW instruction is used to create a NFE
+			Set<Result<?>> insnMatches = results.stream()
+					.filter(r -> r.getLocation() instanceof InstructionLocation)
+					.collect(Collectors.toSet());
+			assertEquals(1, insnMatches.size());
+
+			// Type of catch block
+			Set<Result<?>> catchMatches = results.stream()
+					.filter(r -> r.getLocation() instanceof CatchBlockLocation)
+					.collect(Collectors.toSet());
+			assertEquals(1, catchMatches.size());
+
+			// Catch block has local variable
+			Set<Result<?>> varMatches = results.stream()
+					.filter(r -> r.getLocation() instanceof LocalVariableLocation)
+					.collect(Collectors.toSet());
+			assertEquals(1, varMatches.size());
 		}
 	}
 

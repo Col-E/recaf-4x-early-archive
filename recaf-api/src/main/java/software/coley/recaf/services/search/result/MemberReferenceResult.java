@@ -47,7 +47,7 @@ public class MemberReferenceResult extends Result<MemberReferenceResult.MemberRe
 		private final String name;
 		private final String descr;
 
-		private MemberReference(@Nonnull String owner, @Nonnull String name, @Nonnull String descr) {
+		public MemberReference(@Nonnull String owner, @Nonnull String name, @Nonnull String descr) {
 			this.owner = owner;
 			this.name = name;
 			this.descr = descr;
@@ -89,6 +89,35 @@ public class MemberReferenceResult extends Result<MemberReferenceResult.MemberRe
 		@Nonnull
 		public String getDescr() {
 			return descr;
+		}
+
+		@Override
+		public String toString() {
+			return "MemberReference{" +
+					"owner='" + owner + '\'' +
+					", name='" + name + '\'' +
+					", descr='" + descr + '\'' +
+					'}';
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+
+			MemberReference that = (MemberReference) o;
+
+			if (!owner.equals(that.owner)) return false;
+			if (!name.equals(that.name)) return false;
+			return descr.equals(that.descr);
+		}
+
+		@Override
+		public int hashCode() {
+			int result = owner.hashCode();
+			result = 31 * result + name.hashCode();
+			result = 31 * result + descr.hashCode();
+			return result;
 		}
 	}
 }

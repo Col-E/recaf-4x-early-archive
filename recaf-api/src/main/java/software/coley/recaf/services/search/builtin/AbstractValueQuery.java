@@ -32,7 +32,7 @@ import java.util.function.BiConsumer;
  * @see NumberQuery
  */
 public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
-	private static Number[] OP_TO_VALUE = {
+	private static final Number[] OP_TO_VALUE = {
 			0, // NOP
 			0, // NULL
 			-1, 0, 1, 2, 3, 4, 5, // ICONST_X

@@ -7,6 +7,9 @@ import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.Service;
+import software.coley.recaf.services.search.builtin.NumberQuery;
+import software.coley.recaf.services.search.builtin.ReferenceQuery;
+import software.coley.recaf.services.search.builtin.StringQuery;
 import software.coley.recaf.services.search.result.*;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.util.threading.ThreadUtil;
@@ -24,6 +27,9 @@ import java.util.concurrent.ExecutorService;
  * Outline for running various searches.
  *
  * @author Matt Coley
+ * @see NumberQuery
+ * @see ReferenceQuery
+ * @see StringQuery
  */
 @ApplicationScoped
 public class SearchService implements Service {
@@ -82,7 +88,6 @@ public class SearchService implements Service {
 
 		// Run visitors on contents of workspace
 		ExecutorService service = ThreadPoolFactory.newFixedThreadPool(SERVICE_ID + ":" + queries.hashCode());
-		service = ThreadUtil.phasingService(service);
 		for (WorkspaceResource resource : workspace.getAllResources(false)) {
 			// Visit android content
 			if (androidClassVisitor != null) {
