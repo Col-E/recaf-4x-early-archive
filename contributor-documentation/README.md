@@ -7,6 +7,7 @@ not strictly necessary.
 More in depth information can be found here:
 
  - [Architecture](Architecture.md)
+ - [IntelliJ: Configuring for Recaf](IntelliJ.md)
  - [Workspaces: What are they and how do I work with them?](Workspace.md)
 
 With that in mind, here are the big three questions:
