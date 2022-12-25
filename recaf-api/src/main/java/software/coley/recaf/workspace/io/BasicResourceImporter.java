@@ -35,6 +35,7 @@ import java.util.*;
  */
 @ApplicationScoped
 public class BasicResourceImporter implements ResourceImporter {
+	private static final int MAX_ZIP_DEPTH = 3;
 	private static final Logger logger = Logging.get(BasicResourceImporter.class);
 	private final InfoImporter infoImporter;
 
@@ -141,6 +142,20 @@ public class BasicResourceImporter implements ResourceImporter {
 			// Record common entry attributes
 			ZipCompressionProperty.set(info, header.getCompressionMethod());
 			// TODO: Additional ZIP properties
+
+			// Skipping ZIP bombs
+			if (info.isFile() && info.asFile().isZipFile()) {
+				ZipFileInfo zipFile = info.asFile().asZipFile();
+				if (Arrays.equals(zipFile.getRawContent(), zipInfo.getRawContent())) {
+					logger.warn("Skip self-extracting ZIP bomb: {}", entryName);
+					return;
+				} else if (Arrays.stream(Thread.currentThread().getStackTrace())
+						.filter(trace -> trace.getMethodName().equals("handleZip"))
+						.count() > MAX_ZIP_DEPTH) {
+					logger.warn("Skip extracting embedded ZIP after {} levels: {}", MAX_ZIP_DEPTH, entryName);
+					return;
+				}
+			}
 
 			// Add the info to the appropriate bundle
 			addInfo(classes, files, androidClassBundles, versionedJvmClassBundles, embeddedResources,
