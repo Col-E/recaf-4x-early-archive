@@ -1,4 +1,15 @@
-# Developer Documentation Index
+# Contributor Documentation Index
+
+This document contains a brief overview of what a developer should know when working on Recaf.
+Do not take this as a requirements list, but more like a wish-list. Knowing more is always great but
+not strictly necessary.
+
+More in depth information can be found here:
+
+ - [Architecture](Architecture.md)
+ - [Workspaces: What are they and how do I work with them?](Workspace.md)
+
+With that in mind, here are the big three questions:
 
 1. What is Recaf?
 2. What are the separate modules for?
@@ -60,7 +71,7 @@ That depends entirely on what you want to contribute.
 
 **Ideas**: You're always free to open an issue if you have an idea for something useful to add.
 
-**Bug reports**: Please, if you encounter any issues do share all the information that you can. 
+**Bug reports**: Please, if you encounter any issues do share ***all*** the information that you can. 
 We cannot fix issues we are not aware of. In a lot of cases we need samples of the workspace files used
 to fully diagnose an issue and determine a fix. Understandably, that is not always possible, but it helps
 to at least be aware of issues even if we cannot use your samples to fix the problem immediately.

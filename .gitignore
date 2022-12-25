@@ -25,4 +25,6 @@ gradle-app.setting
 hs_err_pid*
 *.log
 *.ctxt
+*.bkp
+*.dtmp
 temp/

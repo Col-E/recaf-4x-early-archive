@@ -70,7 +70,7 @@ public class AutoRegisterWorkspaceListenersInterceptor {
 		} else {
 			// The bean is likely dependent scoped, linked to the lifespan of the current workspace.
 			// This it only really makes sense to have the close listener be supported.
-			// And when the workspace is closed, we want to remove the instance as a listener so it doesn't
+			// And when the workspace is closed, we want to remove the instance as a listener, so it doesn't
 			// stick around longer than it should.
 			if (value instanceof WorkspaceOpenListener)
 				logger.warn("The class '{}' implements '{}' but is not @ApplicationScoped",
