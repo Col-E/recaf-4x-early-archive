@@ -46,12 +46,6 @@ public class DecompilerManager implements Service {
 							 @Nonnull Instance<Decompiler> implementations) {
 		this.config = config;
 
-		// Mirror properties from config, mapped to instances
-		targetJvmDecompiler = config.getPreferredJvmDecompiler()
-				.mapObject(key -> jvmDecompilers.getOrDefault(key == null ? "" : key, NO_OP_JVM));
-		targetAndroidDecompiler = config.getPreferredAndroidDecompiler()
-				.mapObject(key -> androidDecompilers.getOrDefault(key == null ? "" : key, NO_OP_ANDROID));
-
 		// Register implementations
 		for (Decompiler implementation : implementations) {
 			if (implementation instanceof JvmDecompiler) {
@@ -60,6 +54,12 @@ public class DecompilerManager implements Service {
 				register((AndroidDecompiler) implementation);
 			}
 		}
+
+		// Mirror properties from config, mapped to instances
+		targetJvmDecompiler = config.getPreferredJvmDecompiler()
+				.mapObject(key -> jvmDecompilers.getOrDefault(key == null ? "" : key, NO_OP_JVM));
+		targetAndroidDecompiler = config.getPreferredAndroidDecompiler()
+				.mapObject(key -> androidDecompilers.getOrDefault(key == null ? "" : key, NO_OP_ANDROID));
 	}
 
 	/**
