@@ -44,13 +44,13 @@ We will create a single implementation class and mark it as `@ApplicationScoped`
 any specific state, like the current Recaf workspace.
 ```java
 interface Compiler {
-	byte[] build(String src);
+    byte[] build(String src);
 }
 
 @ApplicationScoped
 class CompilerImpl implements Compiler {
-	@Override
-	Sbyte[] build(String src) { ... }
+    @Override
+    Sbyte[] build(String src) { ... }
 }
 ```
 Then in our UI we can create a class that injects the base `Compiler` type. We do not need to know any implementation
@@ -59,13 +59,13 @@ pass it along to our constructor annotated with `@Inject`.
 ```java
 @WorkspaceScoped
 class CompilerGui {
-	TextArea textEditor = ...
-	
-	@Inject CompilerGui(Compiler compiler) { this.compiler = compiler; }
+    TextArea textEditor = ...
+    
+    @Inject CompilerGui(Compiler compiler) { this.compiler = compiler; }
     
     // called when user wants to save (CTRL + S)
     void onSaveRequest() {
-		byte[] code = compiler.build(textEditor.getText());
+        byte[] code = compiler.build(textEditor.getText());
     }
 }
 ```
@@ -78,9 +78,9 @@ is an `Iterable<T>` allowing us to loop over all known implementations of the `D
 ```java
 @ApplicationScoped
 class DecompileManager {
-	@Inject DecompileManager(Instance<Decompiler> implementations) {
-		for (Decompiler implementation : implementations)
-			registerDecompiler(implementation);
+    @Inject DecompileManager(Instance<Decompiler> implementations) {
+        for (Decompiler implementation : implementations)
+            registerDecompiler(implementation);
     }
 }
 ```
