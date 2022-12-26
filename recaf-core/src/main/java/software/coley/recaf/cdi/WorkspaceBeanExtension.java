@@ -13,11 +13,8 @@ import jakarta.enterprise.inject.spi.Extension;
  */
 @SuppressWarnings("unused")
 public class WorkspaceBeanExtension implements Extension {
-	public static AfterBeanDiscovery event;
-
 	public void registerContext(@Observes AfterBeanDiscovery event, BeanManager beanManager) {
 		WorkspaceBeanContext context = WorkspaceBeanContext.getInstance();
 		event.addContext(context);
-		WorkspaceBeanExtension.event = event;
 	}
 }

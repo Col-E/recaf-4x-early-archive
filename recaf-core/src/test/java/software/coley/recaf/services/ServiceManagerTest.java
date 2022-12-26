@@ -2,6 +2,7 @@ package software.coley.recaf.services;
 
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.TestBase;
+import software.coley.recaf.plugin.PluginManager;
 import software.coley.recaf.services.attach.AttachManager;
 import software.coley.recaf.services.compile.JavacCompiler;
 import software.coley.recaf.services.decompile.DecompilerManager;
@@ -35,5 +36,6 @@ class ServiceManagerTest extends TestBase {
 		assertTrue(allServices.containsKey(AggregateMappingManager.SERVICE_ID), "Missing mapping aggregator service");
 		assertTrue(allServices.containsKey(AttachManager.SERVICE_ID), "Missing attach service");
 		assertTrue(allServices.containsKey(SearchService.SERVICE_ID), "Missing search service");
+		assertTrue(allServices.containsKey(PluginManager.SERVICE_ID), "Missing plugin management service");
 	}
 }
