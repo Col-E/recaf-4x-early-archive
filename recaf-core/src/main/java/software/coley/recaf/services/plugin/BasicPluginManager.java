@@ -28,11 +28,12 @@ public class BasicPluginManager implements PluginManager {
 	private final List<PluginLoader> loaders = new ArrayList<>();
 	private final Map<String, PluginContainer<?>> nameMap = new HashMap<>();
 	private final Map<? super Plugin, PluginContainer<?>> instanceMap = new IdentityHashMap<>();
-	private final ClassAllocator classAllocator = new CdiClassAllocator();
+	private final ClassAllocator classAllocator;
 	private final PluginManagerConfig config;
 
 	@Inject
-	public BasicPluginManager(PluginManagerConfig config) {
+	public BasicPluginManager(PluginManagerConfig config, CdiClassAllocator classAllocator) {
+		this.classAllocator = classAllocator;
 		this.config = config;
 
 		// Add ZIP/JAR loading

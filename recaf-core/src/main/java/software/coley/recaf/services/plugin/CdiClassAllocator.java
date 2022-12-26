@@ -1,8 +1,10 @@
 package software.coley.recaf.services.plugin;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.spi.CreationalContext;
 import jakarta.enterprise.inject.se.SeContainer;
 import jakarta.enterprise.inject.spi.*;
+import jakarta.inject.Inject;
 import software.coley.recaf.Bootstrap;
 import software.coley.recaf.Recaf;
 import software.coley.recaf.plugin.AllocationException;
@@ -16,16 +18,19 @@ import java.util.Map;
  *
  * @author Matt Coley
  */
+@ApplicationScoped
 public class CdiClassAllocator implements ClassAllocator {
 	private final Map<Class<?>, Bean<?>> classBeanMap = new IdentityHashMap<>();
-	private final Recaf recaf = Bootstrap.get();
+	private final BeanManager beanManager;
+
+	@Inject
+	public CdiClassAllocator(BeanManager beanManager) {
+		this.beanManager = beanManager;
+	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> T instance(Class<T> cls) throws AllocationException {
-		SeContainer container = recaf.getContainer();
-		BeanManager beanManager = container.getBeanManager();
-		
 		// Create bean
 		Bean<T> bean = (Bean<T>) classBeanMap.computeIfAbsent(cls, c -> {
 			AnnotatedType<T> annotatedClass = beanManager.createAnnotatedType(cls);
