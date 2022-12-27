@@ -17,5 +17,6 @@ dependencies {
     api instrument_server
     api llzip
     api logging_impl
+    api jlinker
     api regex
 }

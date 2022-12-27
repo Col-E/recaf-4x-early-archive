@@ -34,6 +34,8 @@ project.ext {
 
     logging_impl = 'ch.qos.logback:logback-classic:1.2.10' // newer releases break in jar releases
 
+    jlinker = 'com.github.xxDark:jlinker:1.0.4'
+
     junit_api = "org.junit.jupiter:junit-jupiter-api:$junitVersion"
     junit_engine = "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
     junit_params = "org.junit.jupiter:junit-jupiter-params:$junitVersion"
