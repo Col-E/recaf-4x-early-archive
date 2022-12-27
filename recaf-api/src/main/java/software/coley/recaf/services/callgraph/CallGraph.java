@@ -26,8 +26,11 @@ import java.util.*;
 import java.util.stream.Stream;
 
 /**
+ * Represents method calls as a navigable graph.
+ *
  * @author Amejonah
  * @author Matt Coley
+ * @see MethodVertex
  */
 @WorkspaceScoped
 public class CallGraph implements Service, WorkspaceModificationListener, ResourceJvmClassListener {
