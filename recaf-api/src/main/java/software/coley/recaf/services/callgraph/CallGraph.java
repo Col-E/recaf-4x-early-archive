@@ -8,8 +8,8 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import org.objectweb.asm.*;
-import org.slf4j.Logger;
 import software.coley.recaf.RecafConstants;
+import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.info.JvmClassInfo;
@@ -35,7 +35,7 @@ import java.util.stream.Stream;
 @WorkspaceScoped
 public class CallGraph implements Service, WorkspaceModificationListener, ResourceJvmClassListener {
 	public static final String SERVICE_ID = "graph-calls";
-	private static final Logger logger = Logging.get(CallGraph.class);
+	private static final DebuggingLogger logger = Logging.get(CallGraph.class);
 	private final CachedLinkResolver resolver = new CachedLinkResolver();
 	private final Map<JvmClassInfo, LinkedClass> classToLinkerType = Collections.synchronizedMap(new IdentityHashMap<>());
 	private final Map<JvmClassInfo, ClassMethodsContainer> classToMethodsContainer = Collections.synchronizedMap(new IdentityHashMap<>());
@@ -167,41 +167,15 @@ public class CallGraph implements Service, WorkspaceModificationListener, Resour
 	 * @param isInterface
 	 * 		Method interface flag.
 	 */
-	private void onMethodCalled(MutableMethodVertex methodVertex, int opcode, String owner, String name, String descriptor, boolean isInterface) {
-		JvmClassInfo ownerClass = lookup.apply(owner);
-
-		// Skip if we cannot resolve owner
-		if (ownerClass == null) {
-			unresolvedCalls.put(owner, new MethodRef(owner, name, descriptor));
-			return;
-		}
+	private void onMethodCalled(MutableMethodVertex methodVertex, int opcode, String owner, String name,
+								String descriptor, boolean isInterface) {
+		MethodRef ref = new MethodRef(owner, name, descriptor);
 
 		// Resolve the method
-		Result<Resolution<JvmClassInfo, MethodMember>> resolutionResult;
-		LinkedClass linkedOwnerClass = linked(ownerClass);
-		switch (opcode) {
-			case Opcodes.INVOKEVIRTUAL:
-				resolutionResult = resolver.resolveVirtualMethod(linkedOwnerClass, name, descriptor);
-				break;
-			case Opcodes.INVOKESPECIAL:
-				MemberInfo<MethodMember> method = linkedOwnerClass.getMethod(name, descriptor);
-				if (method != null)
-					resolutionResult = Result.ok(new Resolution<>(linkedOwnerClass, method, false));
-				else
-					resolutionResult = Result.error(ResolutionError.NO_SUCH_METHOD);
-				break;
-			case Opcodes.INVOKESTATIC:
-				resolutionResult = resolver.resolveStaticMethod(linkedOwnerClass, name, descriptor);
-				break;
-			case Opcodes.INVOKEINTERFACE:
-				resolutionResult = resolver.resolveInterfaceMethod(linkedOwnerClass, name, descriptor);
-				break;
-			default:
-				throw new IllegalArgumentException("Invalid method opcode: " + opcode);
-		}
+		Result<Resolution<JvmClassInfo, MethodMember>> resolutionResult = resolve(opcode, owner, name, descriptor, isInterface);
 
 		// Handle result
-		if (resolutionResult.isSuccess()) {
+		if (resolutionResult != null && resolutionResult.isSuccess()) {
 			// Extract vertex from resolution
 			Resolution<JvmClassInfo, MethodMember> resolution = resolutionResult.value();
 			ClassMethodsContainer resolvedClass = getClassMethodsContainer(resolution.owner().innerValue());
@@ -210,34 +184,129 @@ public class CallGraph implements Service, WorkspaceModificationListener, Resour
 			// Link the vertices
 			methodVertex.getCalls().add(resolvedMethodCallVertex);
 			resolvedMethodCallVertex.getCallers().add(methodVertex);
+
+			// Remove tracked unresolved call if any exist
+			Set<MethodRef> unresolvedWithinOwner = unresolvedCalls.get(owner);
+			if (unresolvedWithinOwner.remove(ref)) {
+				logger.debugging(l -> l.info("Satisfy unresolved call {}", ref));
+			}
 		} else {
-			unresolvedCalls.put(owner, new MethodRef(owner, name, descriptor));
+			unresolvedCalls.put(owner, ref);
+
+			// The result is null when the class cannot be found.
+			if (resolutionResult == null)
+				logger.debugging(l -> l.warn("Defining class '{}' not found, cannot resolve method {}", owner, ref));
+			else
+				logger.debugging(l -> l.warn("Cannot resolve method: {} - {}", ref, resolutionResult.error()));
 		}
+	}
+
+	/**
+	 * @param opcode
+	 * 		Method invoke opcode.
+	 * @param owner
+	 * 		Declaring class of method.
+	 * @param name
+	 * 		Name of method invoked.
+	 * @param descriptor
+	 * 		Descriptor of method invoked.
+	 * @param isInterface
+	 * 		Invoke interface flag.
+	 *
+	 * @return Resolution result of the method within the owner.
+	 * {@code null} when the {@code owner} could not be found.
+	 */
+	@Nullable
+	public Result<Resolution<JvmClassInfo, MethodMember>> resolve(int opcode, String owner, String name, String descriptor, boolean isInterface) {
+		JvmClassInfo ownerClass = lookup.apply(owner);
+
+		// Skip if we cannot resolve owner
+		if (ownerClass == null) {
+			unresolvedCalls.put(owner, new MethodRef(owner, name, descriptor));
+			return null;
+		}
+
+		Result<Resolution<JvmClassInfo, MethodMember>> resolutionResult;
+		LinkedClass linkedOwnerClass = linked(ownerClass);
+		switch (opcode) {
+			case Opcodes.H_INVOKESPECIAL:
+			case Opcodes.INVOKESPECIAL:
+				// Invoke-Special is a direct call, so we do need to do resolving
+				MemberInfo<MethodMember> method = linkedOwnerClass.getMethod(name, descriptor);
+				if (method != null)
+					resolutionResult = Result.ok(new Resolution<>(linkedOwnerClass, method, false));
+				else
+					resolutionResult = Result.error(ResolutionError.NO_SUCH_METHOD);
+				break;
+			case Opcodes.H_INVOKEVIRTUAL:
+			case Opcodes.INVOKEVIRTUAL:
+				resolutionResult = resolver.resolveVirtualMethod(linkedOwnerClass, name, descriptor);
+				break;
+			case Opcodes.H_INVOKEINTERFACE:
+			case Opcodes.INVOKEINTERFACE:
+				resolutionResult = resolver.resolveInterfaceMethod(linkedOwnerClass, name, descriptor);
+				break;
+			case Opcodes.H_INVOKESTATIC:
+			case Opcodes.INVOKESTATIC:
+				resolutionResult = resolver.resolveStaticMethod(linkedOwnerClass, name, descriptor);
+				break;
+			default:
+				throw new IllegalArgumentException("Invalid method opcode: " + opcode);
+		}
+		return resolutionResult;
 	}
 
 	@Override
 	public void onAddLibrary(Workspace workspace, WorkspaceResource library) {
-		// TODO: Update unresolved
+		// Visit all library classes
+		Stream.concat(library.jvmClassBundleStream(),
+				library.getVersionedJvmClassBundles().values().stream()).forEach(bundle -> {
+			for (JvmClassInfo jvmClass : bundle.values()) {
+				onNewClass(library, bundle, jvmClass);
+			}
+		});
 	}
 
 	@Override
 	public void onRemoveLibrary(Workspace workspace, WorkspaceResource library) {
-		// TODO: Reset
+		// Remove all vertices from library
+		Stream.concat(library.jvmClassBundleStream(),
+				library.getVersionedJvmClassBundles().values().stream()).forEach(bundle -> {
+			for (JvmClassInfo jvmClass : bundle.values()) {
+				onRemoveClass(library, bundle, jvmClass);
+			}
+		});
 	}
 
 	@Override
 	public void onNewClass(WorkspaceResource resource, JvmClassBundle bundle, JvmClassInfo cls) {
-		// TODO: Update unresolved
+		visit(cls);
 	}
 
 	@Override
 	public void onUpdateClass(WorkspaceResource resource, JvmClassBundle bundle, JvmClassInfo oldCls, JvmClassInfo newCls) {
-		// TODO: Update affected vertices
+		onRemoveClass(resource, bundle, oldCls);
+		onNewClass(resource, bundle, newCls);
 	}
 
 	@Override
 	public void onRemoveClass(WorkspaceResource resource, JvmClassBundle bundle, JvmClassInfo cls) {
-		// TODO: Reset affected
+		// Prune vertex connections of all methods within the class
+		ClassMethodsContainer container = getClassMethodsContainer(cls);
+		Set<MethodRef> unresolvedWithinOwner = unresolvedCalls.get(cls.getName());
+		for (MethodVertex vertex : container.getVertices()) {
+			MethodRef ref = vertex.getMethod();
+			if (vertex instanceof MutableMethodVertex) {
+				((MutableMethodVertex) vertex).prune();
+				unresolvedWithinOwner.add(ref);
+			} else {
+				logger.warn("Could not prune reference: {}", ref);
+			}
+		}
+
+		// Remove from maps
+		classToLinkerType.remove(cls);
+		classToMethodsContainer.remove(cls);
 	}
 
 	@Nonnull
@@ -264,6 +333,25 @@ public class CallGraph implements Service, WorkspaceModificationListener, Resour
 		MutableMethodVertex(MethodRef method, MethodMember resolvedMethod) {
 			this.method = method;
 			this.resolvedMethod = resolvedMethod;
+		}
+
+		/**
+		 * Removes this method vertex from connected vertices.
+		 */
+		private void prune() {
+			// Remove this vertex as a caller from the methods we call
+			for (MethodVertex out : getCalls()) {
+				if (out instanceof MutableMethodVertex) {
+					out.getCallers().remove(this);
+				}
+			}
+
+			// Remove this vertex as a destination from methods that call us
+			for (MethodVertex in : getCallers()) {
+				if (in instanceof MutableMethodVertex) {
+					in.getCalls().remove(this);
+				}
+			}
 		}
 
 		@Nonnull

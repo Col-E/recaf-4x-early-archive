@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.MethodMember;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -26,6 +27,20 @@ public class ClassMethodsContainer {
 	 */
 	public ClassMethodsContainer(@Nonnull JvmClassInfo jvmClass) {
 		this.jvmClass = jvmClass;
+	}
+
+	/**
+	 * @return Wrapped {@link JvmClassInfo}.
+	 */
+	public JvmClassInfo getJvmClass() {
+		return jvmClass;
+	}
+
+	/**
+	 * @return Collection of method vertices within this class.
+	 */
+	public Collection<MethodVertex> getVertices() {
+		return methodVertices.values();
 	}
 
 	/**

@@ -112,11 +112,13 @@ public class LinkedClass implements ClassInfo<JvmClassInfo> {
 		return info.getAccess();
 	}
 
+	@Nonnull
 	@Override
 	public ClassInfo<JvmClassInfo> superClass() {
 		return superClassLookup.apply(info.getSuperName());
 	}
 
+	@Nonnull
 	@Override
 	public List<ClassInfo<JvmClassInfo>> interfaces() {
 		return interfacesLookup.apply(info.getInterfaces());
