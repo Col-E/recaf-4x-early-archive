@@ -1,6 +1,5 @@
 package software.coley.recaf.services.callgraph;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.test.TestClassUtils;
@@ -12,19 +11,17 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Tests for {@link CallGraph}
+ */
 class CallGraphTest {
-	static Workspace workspace;
-
-	@BeforeAll
-	static void setup() throws IOException {
-		workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(
+	@Test
+	void testCalleeCallerRelation() throws IOException {
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(
 				StringConsumer.class,
 				StringConsumerUser.class
 		));
-	}
 
-	@Test
-	void test() {
 		JvmClassInfo mainClass = workspace.findJvmClass(StringConsumerUser.class.getName().replace('.', '/')).getItem();
 		JvmClassInfo functionClass = workspace.findJvmClass(StringConsumer.class.getName().replace('.', '/')).getItem();
 		assertNotNull(mainClass, "Missing main class");
@@ -49,4 +46,8 @@ class CallGraphTest {
 		assertNotNull(newVertex, "Missing method vertex for '<init>'");
 		assertTrue(newVertex.getCallers().contains(mainVertex));
 	}
+
+	// TODO: Test removing existing class from workspace makes calls to its methods unresolved
+
+	// TODO: Test adding missing class to workspace makes unresolved calls valid
 }

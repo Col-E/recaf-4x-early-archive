@@ -12,6 +12,8 @@ import software.coley.recaf.services.ServiceConfig;
  */
 @ApplicationScoped
 public class CallGraphConfig extends BasicConfigContainer implements ServiceConfig {
+	// TODO: Limit to call-graph depth
+
 	@Inject
 	public CallGraphConfig() {
 		super(CallGraph.SERVICE_ID + CONFIG_SUFFIX);
