@@ -55,9 +55,13 @@ public class CallGraph implements Service, WorkspaceModificationListener, Resour
 	public CallGraph(@Nonnull CallGraphConfig config, @Nonnull Workspace workspace) {
 		this.config = config;
 		lookup = new ClassLookup(workspace);
-		workspace.addWorkspaceModificationListener(this);
-		workspace.getPrimaryResource().addResourceJvmClassListener(this);
-		initialize(workspace);
+
+		// Only initialize & register listeners if active
+		if (config.getActive().getValue()) {
+			workspace.addWorkspaceModificationListener(this);
+			workspace.getPrimaryResource().addResourceJvmClassListener(this);
+			initialize(workspace);
+		}
 	}
 
 	/**
