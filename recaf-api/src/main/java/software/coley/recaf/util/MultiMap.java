@@ -1,6 +1,11 @@
 package software.coley.recaf.util;
 
-import java.util.*;
+import jakarta.annotation.Nonnull;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -20,7 +25,7 @@ public final class MultiMap<K, V, C extends Collection<V>> {
 	 * @param collectionSupplier
 	 * 		Collection supplier.
 	 */
-	private MultiMap(Map<K, C> backing, Supplier<? extends C> collectionSupplier) {
+	private MultiMap(@Nonnull Map<K, C> backing, @Nonnull Supplier<? extends C> collectionSupplier) {
 		this.backing = backing;
 		this.collectionFunction = __ -> collectionSupplier.get();
 	}
@@ -72,6 +77,7 @@ public final class MultiMap<K, V, C extends Collection<V>> {
 	 *
 	 * @return Collection for the key.
 	 */
+	@Nonnull
 	public C get(K key) {
 		return backing.computeIfAbsent(key, collectionFunction);
 	}
@@ -83,8 +89,9 @@ public final class MultiMap<K, V, C extends Collection<V>> {
 	 * @return A collection of values or an empty list, if none.
 	 */
 	@SuppressWarnings("unchecked")
+	@Nonnull
 	public Collection<V> getIfPresent(K key) {
-		return ((Map<K, Collection<V>>) backing).getOrDefault(key, List.of());
+		return ((Map<K, Collection<V>>) backing).getOrDefault(key, Collections.emptyList());
 	}
 
 	/**
@@ -121,7 +128,7 @@ public final class MultiMap<K, V, C extends Collection<V>> {
 	 *
 	 * @return {@code true} if any value was added to the collection.
 	 */
-	public boolean putAll(K key, Collection<? extends V> values) {
+	public boolean putAll(K key, @Nonnull Collection<? extends V> values) {
 		return get(key).addAll(values);
 	}
 
@@ -150,13 +157,13 @@ public final class MultiMap<K, V, C extends Collection<V>> {
 	 * @param key
 	 * 		Key to remove.
 	 *
-	 * @return Collection of removed values or an empty list,
-	 * if none.
+	 * @return Collection of removed values or an empty list, if none.
 	 */
+	@Nonnull
 	public Collection<V> remove(K key) {
 		Collection<V> collection = backing.remove(key);
 		if (collection == null) {
-			return List.of();
+			return Collections.emptyList();
 		}
 		return collection;
 	}
@@ -171,6 +178,7 @@ public final class MultiMap<K, V, C extends Collection<V>> {
 	/**
 	 * @return All keys.
 	 */
+	@Nonnull
 	public Set<K> keySet() {
 		return backing.keySet();
 	}
@@ -178,6 +186,7 @@ public final class MultiMap<K, V, C extends Collection<V>> {
 	/**
 	 * @return All values.
 	 */
+	@Nonnull
 	public Stream<V> values() {
 		return backing.values()
 				.stream()
@@ -187,6 +196,7 @@ public final class MultiMap<K, V, C extends Collection<V>> {
 	/**
 	 * @return Map entry set.
 	 */
+	@Nonnull
 	public Set<Map.Entry<K, C>> entrySet() {
 		return backing.entrySet();
 	}
@@ -207,6 +217,7 @@ public final class MultiMap<K, V, C extends Collection<V>> {
 	 *
 	 * @return New multi-map.
 	 */
+	@Nonnull
 	public static <K, V, C extends Collection<V>> MultiMap<K, V, C> from(Map<K, C> map, Supplier<? extends C> collectionSupplier) {
 		return new MultiMap<>(map, collectionSupplier);
 	}
