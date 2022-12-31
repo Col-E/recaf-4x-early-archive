@@ -49,9 +49,4 @@ public class ContainingResourceProperty extends BasicProperty<WorkspaceResource>
 	public static WorkspaceResource get(PropertyContainer container) {
 		return container.getPropertyValueOrNull(KEY);
 	}
-
-	@Override
-	public boolean persistent() {
-		return true;
-	}
 }

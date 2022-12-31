@@ -59,9 +59,4 @@ public class PathOriginalNameProperty extends BasicProperty<String> {
 	public static void set(Info info, String original) {
 		info.setProperty(new PathOriginalNameProperty(original));
 	}
-
-	@Override
-	public boolean persistent() {
-		return true;
-	}
 }

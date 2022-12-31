@@ -63,9 +63,4 @@ public class ZipCompressionProperty extends BasicProperty<Integer> {
 	public static void set(Info info, int value) {
 		info.setProperty(new ZipCompressionProperty(value));
 	}
-
-	@Override
-	public boolean persistent() {
-		return true;
-	}
 }

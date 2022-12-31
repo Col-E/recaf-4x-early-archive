@@ -36,12 +36,12 @@ public interface Property<V> {
 	 *     Caches the decompiled code of a class file to prevent duplicate work. Changes when info state
 	 *     <i>(bytecode)</i> is updated, thus should <b>NOT</b> be copied between info instances</li>
 	 * </ul>
-	 * By default, this returns {@code false}.
+	 * By default, this returns {@code true}.
 	 *
 	 * @return {@code true} to represent content that should be persisted across instances.
 	 * {@code false} to represent content that should be dropped between instances.
 	 */
 	default boolean persistent() {
-		return false;
+		return true;
 	}
 }

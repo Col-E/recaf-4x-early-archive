@@ -60,9 +60,4 @@ public class PathSuffixProperty extends BasicProperty<String> {
 	public static void set(Info info, String suffix) {
 		info.setProperty(new PathSuffixProperty(suffix));
 	}
-
-	@Override
-	public boolean persistent() {
-		return true;
-	}
 }

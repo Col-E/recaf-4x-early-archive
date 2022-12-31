@@ -64,9 +64,4 @@ public class PathPrefixProperty extends BasicProperty<String> {
 	public static void set(Info info, String prefix) {
 		info.setProperty(new PathPrefixProperty(prefix));
 	}
-
-	@Override
-	public boolean persistent() {
-		return true;
-	}
 }

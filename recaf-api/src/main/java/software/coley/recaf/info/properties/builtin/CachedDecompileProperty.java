@@ -61,6 +61,12 @@ public class CachedDecompileProperty extends BasicProperty<CachedDecompileProper
 		return cache.get(decompiler.getName());
 	}
 
+	@Override
+	public boolean persistent() {
+		// We should disregard decompilation results between 'versions' of an info object.
+		return false;
+	}
+
 	/**
 	 * Basic cache for decompiler results.
 	 */
