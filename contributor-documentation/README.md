@@ -6,7 +6,9 @@ not strictly necessary.
 
 More in depth information can be found here:
 
- - [Architecture](Architecture.md)
+ - Architecture
+   - [Modules](Architecture-Modules.md)
+   - [CDI](Architecture-CDI.md)
  - [IntelliJ: Configuring for Recaf](IntelliJ.md)
  - [Workspaces: What are they and how do I work with them?](Workspace.md)
 

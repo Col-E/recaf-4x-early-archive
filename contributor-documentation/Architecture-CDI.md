@@ -1,26 +1,8 @@
-# Architecture
-
-This article discusses the high level architecture design of Recaf.
-
-## Modules
-
-Recaf's backend is split into two modules. The `api` and `core` modules.
-
-### API
-
-This portion of Recaf's source contains mostly interfaces and a few basic implementations for regular data types.
-The interfaces and classes here can be thought of as a _"library"_ in their design. Recaf as an application does not
-exist within this module, but almost all of its features are outlined here.
-
-### Core
-
-This portion of Recaf's source is where the _"application"_ logic of Recaf begins to form.
-
-**CDI**
+# Architecture: CDI
 
 Recaf as an application is a CDI container. This facilitates dependency injection throughout the application.
 
-> What is CDI though?
+## What is CDI though?
 
 CDI is [Contexts and Dependency Injection for Java EE](https://www.cdi-spec.org/). If that sounds confusing here's what
 that actually means in practice. When a `class` implements one of Recaf's service interfaces we need a way to access
@@ -99,7 +81,7 @@ CDI managed types.
                                     one implementation exists.
 - `T get(Class<T>)`: Gives you a single instance of the requested type `T`.
 
-**Launching**
+## Launching Recaf
 
 When Recaf is launched, the `Bootstrap` class is used to initialize an instance of `Recaf`.
 The `Bootstrap` class creates a CDI container that is configured to automatically discover implementations of the
