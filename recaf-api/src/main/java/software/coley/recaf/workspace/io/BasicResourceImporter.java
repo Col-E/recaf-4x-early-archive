@@ -1,14 +1,15 @@
 package software.coley.recaf.workspace.io;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.llzip.ZipArchive;
-import software.coley.llzip.ZipIO;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.builder.FileInfoBuilder;
 import software.coley.recaf.info.properties.builtin.*;
+import software.coley.recaf.services.Service;
 import software.coley.recaf.util.*;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
@@ -34,14 +35,17 @@ import java.util.*;
  * @author Matt Coley
  */
 @ApplicationScoped
-public class BasicResourceImporter implements ResourceImporter {
+public class BasicResourceImporter implements ResourceImporter, Service {
 	private static final int MAX_ZIP_DEPTH = 3;
 	private static final Logger logger = Logging.get(BasicResourceImporter.class);
 	private final InfoImporter infoImporter;
+	private final ResourceImporterConfig config;
 
 	@Inject
-	public BasicResourceImporter(InfoImporter infoImporter) {
+	public BasicResourceImporter(@Nonnull InfoImporter infoImporter,
+								 @Nonnull ResourceImporterConfig config) {
 		this.infoImporter = infoImporter;
+		this.config = config;
 	}
 
 	/**
@@ -113,7 +117,7 @@ public class BasicResourceImporter implements ResourceImporter {
 		Map<String, WorkspaceFileResource> embeddedResources = new HashMap<>();
 
 		// Read ZIP entries
-		ZipArchive archive = ZipIO.readJvm(source.readAll());
+		ZipArchive archive = config.getZipStrategy().getValue().mapping().apply(source.readAll());
 		archive.getLocalFiles().forEach(header -> {
 			LocalFileHeaderSource headerSource = new LocalFileHeaderSource(header);
 			String entryName = header.getFileNameAsString();
@@ -556,5 +560,17 @@ public class BasicResourceImporter implements ResourceImporter {
 		byte[] bytes = IOUtil.toByteArray(url.openStream());
 		ByteSource byteSource = ByteSources.wrap(bytes);
 		return handleSingle(new WorkspaceResourceBuilder(), path, byteSource);
+	}
+
+	@Nonnull
+	@Override
+	public String getServiceId() {
+		return SERVICE_ID;
+	}
+
+	@Nonnull
+	@Override
+	public ResourceImporterConfig getServiceConfig() {
+		return config;
 	}
 }

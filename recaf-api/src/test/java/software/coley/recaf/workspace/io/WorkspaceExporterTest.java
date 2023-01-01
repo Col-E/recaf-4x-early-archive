@@ -27,7 +27,10 @@ class WorkspaceExporterTest {
 
 	@BeforeAll
 	static void setup() {
-		importer = new BasicResourceImporter(new BasicInfoImporter(new BasicClassPatcher()));
+		importer = new BasicResourceImporter(
+				new BasicInfoImporter(new BasicClassPatcher()),
+				new ResourceImporterConfig()
+		);
 	}
 
 	@Test

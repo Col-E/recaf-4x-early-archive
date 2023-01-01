@@ -15,6 +15,8 @@ import java.nio.file.Path;
  * @author Matt Coley
  */
 public interface ResourceImporter {
+	String SERVICE_ID = "resource-importer";
+
 	/**
 	 * @param source
 	 * 		Some generic content source.

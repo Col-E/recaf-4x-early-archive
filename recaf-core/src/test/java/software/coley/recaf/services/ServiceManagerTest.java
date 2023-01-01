@@ -12,6 +12,7 @@ import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.services.mapping.format.MappingFormatManager;
 import software.coley.recaf.services.mapping.gen.MappingGenerator;
 import software.coley.recaf.services.search.SearchService;
+import software.coley.recaf.workspace.io.ResourceImporter;
 
 import java.util.Map;
 
@@ -29,6 +30,7 @@ class ServiceManagerTest extends TestBase {
 		// Assert services exist
 		Map<String, Service> allServices = serviceManager.getAllServices();
 		assertFalse(allServices.isEmpty(), "No services found");
+		assertTrue(allServices.containsKey(ResourceImporter.SERVICE_ID), "Missing resource import service");
 		assertTrue(allServices.containsKey(DecompilerManager.SERVICE_ID), "Missing decompile manager service");
 		assertTrue(allServices.containsKey(InheritanceGraph.SERVICE_ID), "Missing inheritance graph service");
 		assertTrue(allServices.containsKey(JavacCompiler.SERVICE_ID), "Missing java compiler service");
