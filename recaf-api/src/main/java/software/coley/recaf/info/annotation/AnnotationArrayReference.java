@@ -9,7 +9,7 @@ import java.util.List;
  */
 public interface AnnotationArrayReference {
 	/**
-	 * @return Array of values.
+	 * @return List of values.
 	 */
 	List<Object> getValues();
 }

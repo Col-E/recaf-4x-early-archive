@@ -20,6 +20,7 @@ import static software.coley.recaf.util.JigsawUtil.*;
  */
 public class AccessPatcher {
 	private static final Logger logger = Logging.get(AccessPatcher.class);
+	private static boolean patched;
 
 	// Deny all constructions.
 	private AccessPatcher() {
@@ -29,6 +30,7 @@ public class AccessPatcher {
 	 * Patches JDK access restrictions.
 	 */
 	public static void patch() {
+		if (patched) return;
 		try {
 			logger.debug("Opening access to all packages");
 			openPackages();
@@ -37,6 +39,8 @@ public class AccessPatcher {
 		} catch (Throwable t) {
 			logger.error("Failed access patching on Java " + SystemInformation.JAVA_VERSION +
 					"(" + SystemInformation.JAVA_VM_VENDOR + ")", t);
+		} finally {
+			patched = true;
 		}
 	}
 

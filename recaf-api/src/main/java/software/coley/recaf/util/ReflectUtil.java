@@ -366,6 +366,7 @@ public final class ReflectUtil {
 		GETTERS.put(long.class, (ReflectUtil.ThrowableGetter<Long>) Field::getLong);
 		GETTERS.put(float.class, (ReflectUtil.ThrowableGetter<Float>) Field::getFloat);
 		GETTERS.put(double.class, (ReflectUtil.ThrowableGetter<Double>) Field::getDouble);
+
 		// Setters
 		SETTERS.put(boolean.class, (ReflectUtil.ThrowableSetter<Boolean>) Field::setBoolean);
 		SETTERS.put(byte.class, (ReflectUtil.ThrowableSetter<Byte>) Field::setByte);
@@ -375,6 +376,9 @@ public final class ReflectUtil {
 		SETTERS.put(long.class, (ReflectUtil.ThrowableSetter<Long>) Field::setLong);
 		SETTERS.put(float.class, (ReflectUtil.ThrowableSetter<Float>) Field::setFloat);
 		SETTERS.put(double.class, (ReflectUtil.ThrowableSetter<Double>) Field::setDouble);
+
+		// Bypass access restrictions
+		AccessPatcher.patch();
 	}
 
 	/**

@@ -115,8 +115,7 @@ public class SearchServiceTest extends TestBase {
 			// Used only in constant-value attribute for field 'CONSTANT_FIELD'
 			Results results = searchService.search(classesWorkspace, new NumberQuery(NumberMatchMode.EQUALS, 16));
 			for (Result<?> result : results) {
-				if (result.getLocation() instanceof MemberDeclarationLocation) {
-					MemberDeclarationLocation location = (MemberDeclarationLocation) result.getLocation();
+				if (result.getLocation() instanceof MemberDeclarationLocation location) {
 					ClassMember declaredMember = location.getDeclaredMember();
 					assertTrue(declaredMember.isField());
 					assertEquals("CONSTANT_FIELD", declaredMember.getName());
@@ -132,8 +131,7 @@ public class SearchServiceTest extends TestBase {
 			// 31 is used in generated hashCode() implementations
 			Results results = searchService.search(classesWorkspace, new NumberQuery(NumberMatchMode.EQUALS, 31));
 			for (Result<?> result : results) {
-				if (result.getLocation() instanceof InstructionLocation) {
-					InstructionLocation location = (InstructionLocation) result.getLocation();
+				if (result.getLocation() instanceof InstructionLocation location) {
 					assertEquals(BIPUSH, location.getInstruction().getOpcode());
 
 					MemberDeclarationLocation parentLocation = location.getDeclaringMethod();
@@ -158,8 +156,7 @@ public class SearchServiceTest extends TestBase {
 
 			Result<?> result = results.iterator().next();
 			Location location = result.getLocation();
-			if (location instanceof AnnotationLocation) {
-				AnnotationLocation annotationLocation = (AnnotationLocation) location;
+			if (location instanceof AnnotationLocation annotationLocation) {
 				AnnotationInfo declaredAnnotation = annotationLocation.getDeclaredAnnotation();
 				assertTrue(declaredAnnotation.isVisible());
 				assertEquals("L" + AnnotationImpl.class.getName().replace('.', '/') + ";",
@@ -180,8 +177,7 @@ public class SearchServiceTest extends TestBase {
 
 			Result<?> result = results.iterator().next();
 			Location location = result.getLocation();
-			if (location instanceof AnnotationLocation) {
-				AnnotationLocation annotationLocation = (AnnotationLocation) location;
+			if (location instanceof AnnotationLocation annotationLocation) {
 				AnnotationInfo declaredAnnotation = annotationLocation.getDeclaredAnnotation();
 				assertTrue(declaredAnnotation.isVisible());
 				assertEquals("L" + TypeAnnotationImpl.class.getName().replace('.', '/') + ";",

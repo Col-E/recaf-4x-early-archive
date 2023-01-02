@@ -32,8 +32,7 @@ public class WorkspaceFileResourceBuilder extends WorkspaceResourceBuilder {
 	 */
 	public WorkspaceFileResourceBuilder(WorkspaceResourceBuilder other) {
 		super(other);
-		if (other instanceof WorkspaceFileResourceBuilder) {
-			WorkspaceFileResourceBuilder otherFileBuilder = (WorkspaceFileResourceBuilder) other;
+		if (other instanceof WorkspaceFileResourceBuilder otherFileBuilder) {
 			withFileInfo(otherFileBuilder.getFileInfo());
 		}
 	}

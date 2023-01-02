@@ -57,10 +57,9 @@ public class MappingApplier {
 	 */
 	public Set<String> apply(Mappings mappings, WorkspaceResource resource) {
 		// Check if mappings can be enriched with type look-ups
-		if (inheritanceGraph != null && mappings instanceof MappingsAdapter) {
+		if (inheritanceGraph != null && mappings instanceof MappingsAdapter adapter) {
 			// If we have "Dog extends Animal" and both define "jump" this lets "Dog.jump()" see "Animal.jump()"
 			// allowing mappings that aren't complete for their type hierarchies to be filled in.
-			MappingsAdapter adapter = (MappingsAdapter) mappings;
 			adapter.enableHierarchyLookup(inheritanceGraph);
 		}
 

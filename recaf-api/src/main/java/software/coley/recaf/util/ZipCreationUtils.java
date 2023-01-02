@@ -86,8 +86,7 @@ public class ZipCreationUtils {
 	 */
 	private static void resetNames(ZipOutputStream zos) {
 		try {
-			Field field = ZipOutputStream.class.getDeclaredField("names");
-			field.setAccessible(true);
+			Field field = ReflectUtil.getDeclaredField(ZipOutputStream.class, "names");
 			Collection<?> names = (Collection<?>) field.get(zos);
 			names.clear();
 		} catch (Exception ex) {

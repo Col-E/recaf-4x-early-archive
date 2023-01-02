@@ -1,7 +1,7 @@
 package software.coley.recaf.services.mapping.aggregate;
 
 /**
- * Listener for when the {@link MappingsManager#getAggregatedMappings() aggregated mappings} are updated.
+ * Listener for when the {@link AggregatedMappings aggregated mappings} are updated.
  *
  * @author Matt Coley
  */

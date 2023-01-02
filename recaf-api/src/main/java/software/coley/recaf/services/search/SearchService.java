@@ -69,16 +69,13 @@ public class SearchService implements Service {
 		JvmClassSearchVisitor jvmClassVisitorTemp = null;
 		FileSearchVisitor fileVisitorTemp = null;
 		for (Query query : queries) {
-			if (query instanceof AndroidClassQuery) {
-				AndroidClassQuery androidClassQuery = (AndroidClassQuery) query;
+			if (query instanceof AndroidClassQuery androidClassQuery) {
 				androidClassVisitorTemp = androidClassQuery.visitor(androidClassVisitorTemp);
 			}
-			if (query instanceof JvmClassQuery) {
-				JvmClassQuery jvmClassQuery = (JvmClassQuery) query;
+			if (query instanceof JvmClassQuery jvmClassQuery) {
 				jvmClassVisitorTemp = jvmClassQuery.visitor(jvmClassVisitorTemp);
 			}
-			if (query instanceof FileQuery) {
-				FileQuery fileQuery = (FileQuery) query;
+			if (query instanceof FileQuery fileQuery) {
 				fileVisitorTemp = fileQuery.visitor(fileVisitorTemp);
 			}
 		}

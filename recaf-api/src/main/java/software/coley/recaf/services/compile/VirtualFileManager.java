@@ -1,5 +1,6 @@
 package software.coley.recaf.services.compile;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import javax.tools.FileObject;
@@ -86,7 +87,7 @@ public class VirtualFileManager extends ForwardingJavaFileManager<JavaFileManage
 	private static final class ClassPathIterator implements Iterator<JavaFileObject> {
 		private final Iterator<JavaFileObject> first, second;
 
-		ClassPathIterator(Iterator<JavaFileObject> first, Iterator<JavaFileObject> second) {
+		ClassPathIterator(@Nonnull Iterator<JavaFileObject> first, @Nonnull Iterator<JavaFileObject> second) {
 			this.first = first;
 			this.second = second;
 		}

@@ -62,8 +62,7 @@ class AnnotationInfoTest {
 		AnnotationElement policyElement = elements.get("policy");
 		assertEquals("policy", policyElement.getElementName());
 		Object policyValue = policyElement.getElementValue();
-		if (policyValue instanceof AnnotationInfo) {
-			AnnotationInfo policyInfo = (AnnotationInfo) policyValue;
+		if (policyValue instanceof AnnotationInfo policyInfo) {
 			assertEquals(1, policyInfo.getElements().size());
 		} else {
 			fail("Annotation element of another annotation should yield embedded 'AnnotationInfo'");

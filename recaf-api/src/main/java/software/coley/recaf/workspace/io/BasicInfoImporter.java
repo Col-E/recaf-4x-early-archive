@@ -77,19 +77,13 @@ public class BasicInfoImporter implements InfoImporter {
 			// Record name, handle extension to determine info-type
 			String extension = IOUtil.getExtension(name);
 			if (extension == null) return builder.build();
-			switch (extension.toUpperCase()) {
-				case "JAR":
-					return builder.asJar().build();
-				case "APK":
-					return builder.asApk().build();
-				case "WAR":
-					return builder.asWar().build();
-				case "JMOD":
-					return builder.asJMod().build();
-				case "ZIP":
-				default:
-					return builder.build();
-			}
+			return switch (extension.toUpperCase()) {
+				case "JAR" -> builder.asJar().build();
+				case "APK" -> builder.asApk().build();
+				case "WAR" -> builder.asWar().build();
+				case "JMOD" -> builder.asJMod().build();
+				default -> builder.build();
+			};
 		}
 
 		// Not a ZIP container, start comparing against other known file types.

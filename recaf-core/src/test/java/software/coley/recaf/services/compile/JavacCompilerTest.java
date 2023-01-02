@@ -33,11 +33,12 @@ public class JavacCompilerTest extends TestBase {
 	void testJavacWithoutWorkspace() {
 		JavacArguments arguments = new JavacArgumentsBuilder()
 				.withClassName("HelloWorld")
-				.withClassSource("public class HelloWorld {\n" +
-						"\tpublic static void main(String[] args) {\n" +
-						"\t\tSystem.out.println(\"Hello world\");\n" +
-						"\t}\n" +
-						"}")
+				.withClassSource("""
+						public class HelloWorld {
+							public static void main(String[] args) {
+								System.out.println("Hello world");
+							}
+						}""")
 				.build();
 
 		// Run compiler
@@ -59,15 +60,16 @@ public class JavacCompilerTest extends TestBase {
 		// Create a HelloWorld that uses 'StringConsumer'
 		JavacArguments arguments = new JavacArgumentsBuilder()
 				.withClassName("HelloWorld")
-				.withClassSource("import dummy.StringConsumer;\n" +
-						"\n" +
-						"public class HelloWorld {\n" +
-						"\tpublic static void main(String[] args) {\n" +
-						"\t\tfor (String arg : args) {\n" +
-						"\t\t\tnew StringConsumer().accept(arg);\n" +
-						"\t\t}\n" +
-						"\t}\n" +
-						"}")
+				.withClassSource("""
+						import dummy.StringConsumer;
+
+						public class HelloWorld {
+							public static void main(String[] args) {
+								for (String arg : args) {
+									new StringConsumer().accept(arg);
+								}
+							}
+						}""")
 				.build();
 
 		// Run compiler, it should fail with no passed workspace due to the unknown 'StringConsumer'

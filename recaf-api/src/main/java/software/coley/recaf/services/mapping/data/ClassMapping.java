@@ -1,5 +1,7 @@
 package software.coley.recaf.services.mapping.data;
 
+import jakarta.annotation.Nonnull;
+
 import java.util.Objects;
 
 /**
@@ -17,14 +19,15 @@ public class ClassMapping {
 	 * @param newName
 	 * 		Post-mapping name.
 	 */
-	public ClassMapping(String oldName, String newName) {
-		this.oldName = Objects.requireNonNull(oldName, "Mapping entries cannot be null");
-		this.newName = Objects.requireNonNull(newName, "Mapping entries cannot be null");
+	public ClassMapping(@Nonnull String oldName, @Nonnull String newName) {
+		this.oldName = oldName;
+		this.newName = newName;
 	}
 
 	/**
 	 * @return Pre-mapping name.
 	 */
+	@Nonnull
 	public String getOldName() {
 		return oldName;
 	}
@@ -32,6 +35,7 @@ public class ClassMapping {
 	/**
 	 * @return Post-mapping name.
 	 */
+	@Nonnull
 	public String getNewName() {
 		return newName;
 	}

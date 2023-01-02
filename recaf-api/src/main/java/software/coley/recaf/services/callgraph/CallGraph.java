@@ -134,18 +134,17 @@ public class CallGraph implements Service, WorkspaceModificationListener, Resour
 							return;
 						}
 						Object handleObj = bootstrapMethodArguments.length == 3 ? bootstrapMethodArguments[1] : null;
-						if (!(handleObj instanceof Handle)) {
-							super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
+						if (handleObj instanceof Handle handle) {
+							switch (handle.getTag()) {
+								case Opcodes.H_INVOKESPECIAL:
+								case Opcodes.H_INVOKEVIRTUAL:
+								case Opcodes.H_INVOKESTATIC:
+								case Opcodes.H_INVOKEINTERFACE:
+									visitMethodInsn(handle.getTag(), handle.getOwner(), handle.getName(), handle.getDesc(), handle.isInterface());
+							}
 							return;
 						}
-						Handle handle = (Handle) handleObj;
-						switch (handle.getTag()) {
-							case Opcodes.H_INVOKESPECIAL:
-							case Opcodes.H_INVOKEVIRTUAL:
-							case Opcodes.H_INVOKESTATIC:
-							case Opcodes.H_INVOKEINTERFACE:
-								visitMethodInsn(handle.getTag(), handle.getOwner(), handle.getName(), handle.getDesc(), handle.isInterface());
-						}
+						super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
 					}
 				};
 			}

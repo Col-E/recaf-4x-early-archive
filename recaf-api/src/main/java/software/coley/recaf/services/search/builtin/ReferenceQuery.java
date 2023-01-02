@@ -230,9 +230,7 @@ public class ReferenceQuery implements JvmClassQuery {
 		public void visitLdcInsn(Object value) {
 			LdcInsnNode insn = new LdcInsnNode(value);
 
-			if (value instanceof Handle) {
-				Handle handle = (Handle) value;
-
+			if (value instanceof Handle handle) {
 				// Check handle ref
 				if (isMemberRefMatch(handle.getOwner(), handle.getName(), handle.getDesc())) {
 					resultSink.accept(currentLocation.withInstruction(insn),

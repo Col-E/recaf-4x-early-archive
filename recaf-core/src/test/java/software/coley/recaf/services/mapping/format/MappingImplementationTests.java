@@ -15,10 +15,11 @@ public class MappingImplementationTests {
 
 	@Test
 	void testTinyV1() {
-		String mappingsText = "v1\tintermediary\tnamed\n" +
-				"CLASS\ttest/Greetings\trename/Hello\n" +
-				"FIELD\ttest/Greetings\tLjava/lang/String;\toldField\tnewField\n" +
-				"METHOD\ttest/Greetings\t()V\tsay\tspeak";
+		String mappingsText = """
+				v1\tintermediary\tnamed
+				CLASS\ttest/Greetings\trename/Hello
+				FIELD\ttest/Greetings\tLjava/lang/String;\toldField\tnewField
+				METHOD\ttest/Greetings\t()V\tsay\tspeak""";
 		Mappings mappings = new TinyV1Mappings();
 		mappings.parse(mappingsText);
 		assertInheritMap(mappings);
@@ -26,9 +27,10 @@ public class MappingImplementationTests {
 
 	@Test
 	void testSimple() {
-		String mappingsText = "test/Greetings rename/Hello\n" +
-				"test/Greetings.oldField Ljava/lang/String; newField\n" +
-				"test/Greetings.say()V speak";
+		String mappingsText = """
+				test/Greetings rename/Hello
+				test/Greetings.oldField Ljava/lang/String; newField
+				test/Greetings.say()V speak""";
 		Mappings mappings = new SimpleMappings();
 		mappings.parse(mappingsText);
 		assertInheritMap(mappings);
@@ -36,10 +38,11 @@ public class MappingImplementationTests {
 
 	@Test
 	void testProguard() {
-		String mappingsText = "# Backwards format because proguard mappings are intended to be undone, not applied\n" +
-				"rename.Hello -> test.Greetings:\n" +
-				"    java.lang.String newField -> oldField\n" +
-				"    void speak() -> say";
+		String mappingsText = """
+				# Backwards format because proguard mappings are intended to be undone, not applied
+				rename.Hello -> test.Greetings:
+				    java.lang.String newField -> oldField
+				    void speak() -> say""";
 		Mappings mappings = new ProguardMappings();
 		mappings.parse(mappingsText);
 		assertInheritMap(mappings);
@@ -47,9 +50,10 @@ public class MappingImplementationTests {
 
 	@Test
 	void testEnigma() {
-		String mappingsText = "CLASS test/Greetings rename/Hello\n" +
-				"\tFIELD oldField newField Ljava/lang/String;\n" +
-				"\tMETHOD say speak ()V";
+		String mappingsText = """
+				CLASS test/Greetings rename/Hello
+				\tFIELD oldField newField Ljava/lang/String;
+				\tMETHOD say speak ()V""";
 		Mappings mappings = new EnigmaMappings();
 		mappings.parse(mappingsText);
 		assertInheritMap(mappings);
@@ -57,9 +61,10 @@ public class MappingImplementationTests {
 
 	@Test
 	void testJadx() {
-		String mappingsText = "c test.Greetings = Hello\n" +
-				"f test.Greetings.oldField:Ljava/lang/String; = newField\n" +
-				"m test.Greetings.say()V = speak";
+		String mappingsText = """
+				c test.Greetings = Hello
+				f test.Greetings.oldField:Ljava/lang/String; = newField
+				m test.Greetings.say()V = speak""";
 		Mappings mappings = new JadxMappings();
 		mappings.parse(mappingsText);
 

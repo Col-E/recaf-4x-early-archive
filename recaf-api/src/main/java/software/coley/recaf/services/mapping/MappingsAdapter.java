@@ -113,11 +113,9 @@ public class MappingsAdapter implements Mappings {
 			String newName = entry.getValue();
 			if (key instanceof ClassMappingKey) {
 				intermediate.addClass(((ClassMappingKey) key).getName(), newName);
-			} else if (key instanceof MethodMappingKey) {
-				MethodMappingKey mk = (MethodMappingKey) key;
+			} else if (key instanceof MethodMappingKey mk) {
 				intermediate.addMethod(mk.getOwner(), mk.getDesc(), mk.getName(), newName);
-			} else if (key instanceof FieldMappingKey) {
-				FieldMappingKey fk = (FieldMappingKey) key;
+			} else if (key instanceof FieldMappingKey fk) {
 				String oldOwner = fk.getOwner();
 				String oldName = fk.getName();
 				String oldDesc = fk.getDesc();

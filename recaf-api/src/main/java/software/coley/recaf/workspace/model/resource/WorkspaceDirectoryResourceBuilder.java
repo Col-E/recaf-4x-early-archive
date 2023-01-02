@@ -34,8 +34,7 @@ public class WorkspaceDirectoryResourceBuilder extends WorkspaceResourceBuilder 
 	 */
 	public WorkspaceDirectoryResourceBuilder(WorkspaceResourceBuilder other) {
 		super(other);
-		if (other instanceof WorkspaceDirectoryResourceBuilder) {
-			WorkspaceDirectoryResourceBuilder otherFileBuilder = (WorkspaceDirectoryResourceBuilder) other;
+		if (other instanceof WorkspaceDirectoryResourceBuilder otherFileBuilder) {
 			withDirectoryPath(otherFileBuilder.getDirectoryPath());
 		}
 	}
