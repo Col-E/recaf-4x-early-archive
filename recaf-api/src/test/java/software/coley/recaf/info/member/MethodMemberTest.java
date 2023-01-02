@@ -2,6 +2,7 @@ package software.coley.recaf.info.member;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.test.TestClassUtils;
@@ -30,7 +31,6 @@ class MethodMemberTest {
 	static MethodMember var_synchronizedMethod;
 	static MethodMember var_nativeMethod;
 	static MethodMember var_abstractMethod;
-	static MethodMember var_strictfpMethod;
 	static MethodMember var_varargsMethod;
 	static JvmClassInfo classWithLambda;
 
@@ -52,7 +52,6 @@ class MethodMemberTest {
 		var_synchronizedMethod = variedMethods.getDeclaredMethod("synchronizedMethod", "()V");
 		var_nativeMethod = variedMethods.getDeclaredMethod("nativeMethod", "()V");
 		var_abstractMethod = variedMethods.getDeclaredMethod("abstractMethod", "()V");
-		var_strictfpMethod = variedMethods.getDeclaredMethod("strictfpMethod", "()V");
 		var_varargsMethod = variedMethods.getDeclaredMethod("varargsMethod", "([Ljava/lang/String;)V");
 
 		classWithLambda = TestClassUtils.fromRuntimeClass(ClassWithLambda.class);
@@ -113,7 +112,6 @@ class MethodMemberTest {
 		assertFalse(var_synchronizedMethod.hasStaticModifier());
 		assertFalse(var_nativeMethod.hasStaticModifier());
 		assertFalse(var_abstractMethod.hasStaticModifier());
-		assertFalse(var_strictfpMethod.hasStaticModifier());
 		assertFalse(var_varargsMethod.hasStaticModifier());
 	}
 
@@ -124,7 +122,6 @@ class MethodMemberTest {
 		assertFalse(var_synchronizedMethod.hasFinalModifier());
 		assertFalse(var_nativeMethod.hasFinalModifier());
 		assertFalse(var_abstractMethod.hasFinalModifier());
-		assertFalse(var_strictfpMethod.hasFinalModifier());
 		assertFalse(var_varargsMethod.hasFinalModifier());
 	}
 
@@ -135,7 +132,6 @@ class MethodMemberTest {
 		assertTrue(var_synchronizedMethod.hasSynchronizedModifier());
 		assertFalse(var_nativeMethod.hasSynchronizedModifier());
 		assertFalse(var_abstractMethod.hasSynchronizedModifier());
-		assertFalse(var_strictfpMethod.hasSynchronizedModifier());
 		assertFalse(var_varargsMethod.hasSynchronizedModifier());
 	}
 
@@ -162,7 +158,6 @@ class MethodMemberTest {
 		assertFalse(var_synchronizedMethod.hasNativeModifier());
 		assertTrue(var_nativeMethod.hasNativeModifier());
 		assertFalse(var_abstractMethod.hasNativeModifier());
-		assertFalse(var_strictfpMethod.hasNativeModifier());
 		assertFalse(var_varargsMethod.hasNativeModifier());
 	}
 
@@ -197,18 +192,18 @@ class MethodMemberTest {
 		assertFalse(var_synchronizedMethod.hasAbstractModifier());
 		assertFalse(var_nativeMethod.hasAbstractModifier());
 		assertTrue(var_abstractMethod.hasAbstractModifier());
-		assertFalse(var_strictfpMethod.hasAbstractModifier());
 		assertFalse(var_varargsMethod.hasAbstractModifier());
 	}
 
 	@Test
 	void hasStrictFpModifier() {
+		// There are no true asserts because the runtime class compiles with the project's Java version.
+		// Since Java 17 'strictfp' is no longer emitted in bytecode since all operations are now strict.
 		assertFalse(var_staticMethod.hasStrictFpModifier());
 		assertFalse(var_finalMethod.hasStrictFpModifier());
 		assertFalse(var_synchronizedMethod.hasStrictFpModifier());
 		assertFalse(var_nativeMethod.hasStrictFpModifier());
 		assertFalse(var_abstractMethod.hasStrictFpModifier());
-		assertTrue(var_strictfpMethod.hasStrictFpModifier());
 		assertFalse(var_varargsMethod.hasStrictFpModifier());
 	}
 
@@ -219,7 +214,6 @@ class MethodMemberTest {
 		assertFalse(var_synchronizedMethod.hasVarargsModifier());
 		assertFalse(var_nativeMethod.hasVarargsModifier());
 		assertFalse(var_abstractMethod.hasVarargsModifier());
-		assertFalse(var_strictfpMethod.hasVarargsModifier());
 		assertTrue(var_varargsMethod.hasVarargsModifier());
 	}
 

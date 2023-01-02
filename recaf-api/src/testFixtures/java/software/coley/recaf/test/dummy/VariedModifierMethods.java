@@ -10,6 +10,6 @@ public abstract class VariedModifierMethods {
 	synchronized void synchronizedMethod(){}
 	native void nativeMethod();
 	abstract void abstractMethod();
-	strictfp void strictfpMethod(){}
+	strictfp void strictfpMethod(){} // As of Java 17, the 'strictfp' modifier is stripped in compilation
 	void varargsMethod(String...varargs){}
 }
