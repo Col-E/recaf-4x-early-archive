@@ -1,4 +1,4 @@
-package software.coley.recaf.plugin;
+package software.coley.recaf.services.plugin;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

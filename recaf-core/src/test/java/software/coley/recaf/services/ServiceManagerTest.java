@@ -2,7 +2,7 @@ package software.coley.recaf.services;
 
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.TestBase;
-import software.coley.recaf.plugin.PluginManager;
+import software.coley.recaf.services.plugin.PluginManager;
 import software.coley.recaf.services.attach.AttachManager;
 import software.coley.recaf.services.callgraph.CallGraph;
 import software.coley.recaf.services.compile.JavacCompiler;

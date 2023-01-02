@@ -2,7 +2,7 @@ package software.coley.recaf;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.parallel.Isolated;
-import software.coley.recaf.plugin.PluginManagerConfig;
+import software.coley.recaf.services.plugin.PluginManagerConfig;
 import software.coley.recaf.workspace.WorkspaceManager;
 
 /**

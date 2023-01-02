@@ -1,6 +1,7 @@
-package software.coley.recaf.plugin;
+package software.coley.recaf.services.plugin;
 
 
+import software.coley.recaf.plugin.*;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.util.io.ByteSource;
 

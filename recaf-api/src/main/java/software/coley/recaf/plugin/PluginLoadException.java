@@ -1,7 +1,7 @@
 package software.coley.recaf.plugin;
 
 /**
- * Exception indicating that {@link PluginManager} failed to load a plugin.
+ * Exception indicating that a {@link Plugin} could not be loaded.
  *
  * @author xDark
  */
