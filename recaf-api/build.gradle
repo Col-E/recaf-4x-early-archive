@@ -1,3 +1,7 @@
+plugins {
+    id "com.peterabeles.gversion" version "1.10"
+}
+
 apply plugin: 'java-library'
 apply plugin: 'java-test-fixtures'
 
@@ -19,4 +23,25 @@ dependencies {
     api logging_impl
     api jlinker
     api regex
+}
+
+// Force generation for gversion data class
+project.compileJava.dependsOn(createVersionFile)
+gversion {
+    srcDir       = "src/generated/java/"
+    classPackage = "software.coley.recaf"
+    className    = "RecafBuildConfig"
+    dateFormat   = "yyyy MM/dd HH:mm"
+    debug        = true
+    language     = "java"
+    explicitType = false
+    annotate     = false
+}
+sourceSets {
+    // Need to add the generated class to the source set
+    main {
+        java {
+            srcDirs 'src/generated/java', 'src/main/java'
+        }
+    }
 }

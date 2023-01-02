@@ -25,7 +25,6 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 	private final Path baseDirectory = createBaseDirectory();
 	private final Path agentDirectory = resolveDirectory("agent");
 	private final Path configDirectory = resolveDirectory("config");
-	private final Path dependenciesDirectory = resolveDirectory("dependencies");
 	private final Path logsDirectory = resolveDirectory("logs");
 	private final Path pluginDirectory = resolveDirectory("plugins");
 	private final Path styleDirectory = resolveDirectory("style");
@@ -55,13 +54,6 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 	 */
 	public Path getConfigDirectory() {
 		return configDirectory;
-	}
-
-	/**
-	 * @return Directory where additional Recaf dependencies are stored to be injected at runtime.
-	 */
-	public Path getDependenciesDirectory() {
-		return dependenciesDirectory;
 	}
 
 	/**

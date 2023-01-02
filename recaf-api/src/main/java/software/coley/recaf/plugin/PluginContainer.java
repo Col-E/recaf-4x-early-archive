@@ -1,5 +1,7 @@
 package software.coley.recaf.plugin;
 
+import jakarta.annotation.Nonnull;
+
 /**
  * Object that holds reference to a plugin and it's information.
  *
@@ -23,7 +25,7 @@ public final class PluginContainer<P extends Plugin> {
 	 * @param loader
 	 * 		Loader of the plugin.
 	 */
-	public PluginContainer(P plugin, PluginInfo information, PluginLoader loader) {
+	public PluginContainer(@Nonnull P plugin, @Nonnull PluginInfo information, @Nonnull PluginLoader loader) {
 		this.plugin = plugin;
 		this.information = information;
 		this.loader = loader;
@@ -32,6 +34,7 @@ public final class PluginContainer<P extends Plugin> {
 	/**
 	 * @return Plugin instance.
 	 */
+	@Nonnull
 	public P getPlugin() {
 		return plugin;
 	}
@@ -39,6 +42,7 @@ public final class PluginContainer<P extends Plugin> {
 	/**
 	 * @return Information about plugin.
 	 */
+	@Nonnull
 	public PluginInfo getInformation() {
 		return information;
 	}
@@ -46,6 +50,7 @@ public final class PluginContainer<P extends Plugin> {
 	/**
 	 * @return Loader of the plugin.
 	 */
+	@Nonnull
 	public PluginLoader getLoader() {
 		return loader;
 	}

@@ -1,3 +1,18 @@
 plugins {
-    id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.13'
+}
+
+application {
+    mainClass = 'software.coley.recaf.RecafUI'
+}
+
+javafx {
+    version = "19"
+    modules = [ 'javafx.controls' ]
+}
+
+dependencies {
+    implementation project(':recaf-core')
+    testImplementation(testFixtures(project(":recaf-api")))
 }
