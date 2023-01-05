@@ -1,5 +1,6 @@
 package software.coley.recaf.services.mapping.aggregate;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.RemapperImpl;
@@ -114,11 +115,6 @@ public class AggregatedMappings extends IntermediateMappings {
 	public void addClass(String oldName, String newName) {
 		super.addClass(oldName, newName);
 		reverseOrderClassMapping.put(newName, oldName);
-	}
-
-	@Override
-	public String implementationName() {
-		return "AGGREGATED";
 	}
 
 	/**

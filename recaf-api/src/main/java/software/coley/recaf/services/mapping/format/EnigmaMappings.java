@@ -1,10 +1,11 @@
 package software.coley.recaf.services.mapping.format;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.mapping.IntermediateMappings;
-import software.coley.recaf.services.mapping.MappingsAdapter;
+import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.data.ClassMapping;
 import software.coley.recaf.services.mapping.data.FieldMapping;
 import software.coley.recaf.services.mapping.data.MethodMapping;
@@ -18,7 +19,7 @@ import java.util.Stack;
  * @author Matt Coley
  */
 @Dependent
-public class EnigmaMappings extends MappingsAdapter implements MappingFileFormat {
+public class EnigmaMappings extends AbstractMappingFileFormat {
 	public static final String NAME = "Enigma";
 	private static final String FAIL = "Invalid Enigma mappings, ";
 	private final Logger logger = Logging.get(EnigmaMappings.class);
@@ -31,12 +32,8 @@ public class EnigmaMappings extends MappingsAdapter implements MappingFileFormat
 	}
 
 	@Override
-	public boolean supportsExportText() {
-		return true;
-	}
-
-	@Override
-	public void parse(String mappingText) {
+	public IntermediateMappings parse(@Nonnull String mappingText) {
+		IntermediateMappings mappings = new IntermediateMappings();
 		String[] lines = StringUtil.splitNewline(mappingText);
 		// COMMENT comment
 		// CLASS BaseClass TargetClass
@@ -65,7 +62,7 @@ public class EnigmaMappings extends MappingsAdapter implements MappingFileFormat
 						// Not all classes need to be renamed if they have child elements that are renamed
 						if (args.length >= 3) {
 							String renamedClass = removeNonePackage(args[2]);
-							addClass(currentClass.peek(), renamedClass);
+							mappings.addClass(currentClass.peek(), renamedClass);
 						}
 						break;
 					case "FIELD":
@@ -79,7 +76,7 @@ public class EnigmaMappings extends MappingsAdapter implements MappingFileFormat
 						String currentField = removeNonePackage(args[1]);
 						String renamedField = removeNonePackage(args[2]);
 						String currentFieldDesc = removeNonePackage(args[3]);
-						addField(currentClass.peek(), currentField, currentFieldDesc, renamedField);
+						mappings.addField(currentClass.peek(), currentFieldDesc, currentField, renamedField);
 						break;
 					case "METHOD":
 						// Check if no longer within inner-class scope
@@ -96,7 +93,7 @@ public class EnigmaMappings extends MappingsAdapter implements MappingFileFormat
 						if (args.length >= 4) {
 							String renamedMethod = args[2];
 							String methodType = args[3];
-							addMethod(currentClass.peek(), currentMethod, methodType, renamedMethod);
+							mappings.addMethod(currentClass.peek(), methodType, currentMethod, renamedMethod);
 						}
 						break;
 					case "COMMENT":
@@ -111,12 +108,13 @@ public class EnigmaMappings extends MappingsAdapter implements MappingFileFormat
 				throw new IllegalArgumentException(FAIL + "failed parsing line " + line, ex);
 			}
 		}
+		return mappings;
 	}
 
 	@Override
-	public String exportText() {
+	public String exportText(Mappings mappings) {
 		StringBuilder sb = new StringBuilder();
-		IntermediateMappings intermediate = exportIntermediate();
+		IntermediateMappings intermediate = mappings.exportIntermediate();
 		for (String oldClassName : intermediate.getClassesWithMappings()) {
 			ClassMapping classMapping = intermediate.getClassMapping(oldClassName);
 			if (classMapping != null) {

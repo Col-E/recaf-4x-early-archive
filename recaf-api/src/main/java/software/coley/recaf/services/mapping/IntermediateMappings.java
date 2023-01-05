@@ -1,5 +1,7 @@
 package software.coley.recaf.services.mapping;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.services.mapping.data.ClassMapping;
 import software.coley.recaf.services.mapping.data.FieldMapping;
 import software.coley.recaf.services.mapping.data.MethodMapping;
@@ -86,6 +88,7 @@ public class IntermediateMappings implements Mappings {
 	/**
 	 * @return Names of classes with mappings.
 	 */
+	@Nonnull
 	public Set<String> getClassesWithMappings() {
 		Set<String> set = new TreeSet<>();
 		set.addAll(classes.keySet());
@@ -97,6 +100,7 @@ public class IntermediateMappings implements Mappings {
 	/**
 	 * @return Class mappings.
 	 */
+	@Nonnull
 	public Map<String, ClassMapping> getClasses() {
 		return classes;
 	}
@@ -104,6 +108,7 @@ public class IntermediateMappings implements Mappings {
 	/**
 	 * @return Field mappings by owner type.
 	 */
+	@Nonnull
 	public Map<String, List<FieldMapping>> getFields() {
 		return fields;
 	}
@@ -111,6 +116,7 @@ public class IntermediateMappings implements Mappings {
 	/**
 	 * @return Method mappings by owner type.
 	 */
+	@Nonnull
 	public Map<String, List<MethodMapping>> getMethods() {
 		return methods;
 	}
@@ -118,6 +124,7 @@ public class IntermediateMappings implements Mappings {
 	/**
 	 * @return Variable mappings by declaring method type.
 	 */
+	@Nonnull
 	public Map<String, List<VariableMapping>> getVariables() {
 		return variables;
 	}
@@ -128,6 +135,7 @@ public class IntermediateMappings implements Mappings {
 	 *
 	 * @return Mapping instance of class. May be {@code null}.
 	 */
+	@Nullable
 	public ClassMapping getClassMapping(String name) {
 		return classes.get(name);
 	}
@@ -138,6 +146,7 @@ public class IntermediateMappings implements Mappings {
 	 *
 	 * @return List of field mapping instances.
 	 */
+	@Nonnull
 	public List<FieldMapping> getClassFieldMappings(String name) {
 		return fields.getOrDefault(name, Collections.emptyList());
 	}
@@ -148,6 +157,7 @@ public class IntermediateMappings implements Mappings {
 	 *
 	 * @return List of method mapping instances.
 	 */
+	@Nonnull
 	public List<MethodMapping> getClassMethodMappings(String name) {
 		return methods.getOrDefault(name, Collections.emptyList());
 	}
@@ -162,10 +172,12 @@ public class IntermediateMappings implements Mappings {
 	 *
 	 * @return List of field mapping instances.
 	 */
+	@Nonnull
 	public List<VariableMapping> getMethodVariableMappings(String ownerName, String methodName, String methodDesc) {
 		return variables.getOrDefault(varKey(ownerName, methodName, methodDesc), Collections.emptyList());
 	}
 
+	@Nullable
 	@Override
 	public String getMappedClassName(String internalName) {
 		ClassMapping mapping = classes.get(internalName);
@@ -174,6 +186,7 @@ public class IntermediateMappings implements Mappings {
 		return mapping.getNewName();
 	}
 
+	@Nullable
 	@Override
 	public String getMappedFieldName(String ownerName, String fieldName, String fieldDesc) {
 		List<FieldMapping> fieldInClass = getClassFieldMappings(ownerName);
@@ -183,6 +196,7 @@ public class IntermediateMappings implements Mappings {
 		return null;
 	}
 
+	@Nullable
 	@Override
 	public String getMappedMethodName(String ownerName, String methodName, String methodDesc) {
 		List<MethodMapping> methodsInClass = getClassMethodMappings(ownerName);
@@ -192,6 +206,7 @@ public class IntermediateMappings implements Mappings {
 		return null;
 	}
 
+	@Nullable
 	@Override
 	public String getMappedVariableName(String className, String methodName, String methodDesc,
 										String name, String desc, int index) {
@@ -205,38 +220,14 @@ public class IntermediateMappings implements Mappings {
 		return null;
 	}
 
-	@Override
-	public String implementationName() {
-		return "INTERMEDIATE";
-	}
-
-	@Override
-	public void parse(String mappingsText) {
-		// no-op
-	}
-
-	@Override
-	public boolean supportsExportText() {
-		return false;
-	}
-
-	@Override
-	public boolean supportsExportIntermediate() {
-		return true;
-	}
-
-	@Override
-	public String exportText() {
-		return null;
-	}
-
+	@Nonnull
 	@Override
 	public IntermediateMappings exportIntermediate() {
 		return this;
 	}
 
 	@Override
-	public void importIntermediate(IntermediateMappings mappings) {
+	public void importIntermediate(@Nonnull IntermediateMappings mappings) {
 		// This is never used for intermediates, so we don't need to implement it.
 		// If somebody wants to, feel free to paste from MappingsAdapter.
 	}

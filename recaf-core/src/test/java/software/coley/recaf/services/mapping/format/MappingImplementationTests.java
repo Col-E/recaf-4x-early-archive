@@ -20,8 +20,8 @@ public class MappingImplementationTests {
 				CLASS\ttest/Greetings\trename/Hello
 				FIELD\ttest/Greetings\tLjava/lang/String;\toldField\tnewField
 				METHOD\ttest/Greetings\t()V\tsay\tspeak""";
-		Mappings mappings = new TinyV1Mappings();
-		mappings.parse(mappingsText);
+		MappingFileFormat format = new TinyV1Mappings();
+		IntermediateMappings mappings = format.parse(mappingsText);
 		assertInheritMap(mappings);
 	}
 
@@ -31,8 +31,8 @@ public class MappingImplementationTests {
 				test/Greetings rename/Hello
 				test/Greetings.oldField Ljava/lang/String; newField
 				test/Greetings.say()V speak""";
-		Mappings mappings = new SimpleMappings();
-		mappings.parse(mappingsText);
+		MappingFileFormat format = new SimpleMappings();
+		IntermediateMappings mappings = format.parse(mappingsText);
 		assertInheritMap(mappings);
 	}
 
@@ -43,8 +43,8 @@ public class MappingImplementationTests {
 				rename.Hello -> test.Greetings:
 				    java.lang.String newField -> oldField
 				    void speak() -> say""";
-		Mappings mappings = new ProguardMappings();
-		mappings.parse(mappingsText);
+		MappingFileFormat format = new ProguardMappings();
+		IntermediateMappings mappings = format.parse(mappingsText);
 		assertInheritMap(mappings);
 	}
 
@@ -54,8 +54,8 @@ public class MappingImplementationTests {
 				CLASS test/Greetings rename/Hello
 				\tFIELD oldField newField Ljava/lang/String;
 				\tMETHOD say speak ()V""";
-		Mappings mappings = new EnigmaMappings();
-		mappings.parse(mappingsText);
+		MappingFileFormat format = new EnigmaMappings();
+		IntermediateMappings mappings = format.parse(mappingsText);
 		assertInheritMap(mappings);
 	}
 
@@ -65,8 +65,8 @@ public class MappingImplementationTests {
 				c test.Greetings = Hello
 				f test.Greetings.oldField:Ljava/lang/String; = newField
 				m test.Greetings.say()V = speak""";
-		Mappings mappings = new JadxMappings();
-		mappings.parse(mappingsText);
+		MappingFileFormat format = new JadxMappings();
+		IntermediateMappings mappings = format.parse(mappingsText);
 
 		// Cannot use same 'assertInheritMap(...)' because Jadx format doesn't allow package renaming
 		assertEquals("test/Hello", mappings.getMappedClassName("test/Greetings"));
@@ -82,58 +82,5 @@ public class MappingImplementationTests {
 		assertEquals("rename/Hello", mappings.getMappedClassName("test/Greetings"));
 		assertEquals("newField", mappings.getMappedFieldName("test/Greetings", "oldField", "Ljava/lang/String;"));
 		assertEquals("speak", mappings.getMappedMethodName("test/Greetings", "say", "()V"));
-	}
-
-	/**
-	 * Dummy mappings that only renames the name "Sample".
-	 */
-	private static class SampleMappings implements Mappings {
-		@Override
-		public String getMappedClassName(String internalName) {
-			if (internalName.equals(NAME_SAMPLE)) {
-				return NAME_RENAMED;
-			}
-			return null;
-		}
-
-		@Override
-		public String getMappedFieldName(String ownerName, String fieldName, String fieldDesc) {
-			return null;
-		}
-
-		@Override
-		public String getMappedMethodName(String ownerName, String methodName, String methodDesc) {
-			return null;
-		}
-
-		@Override
-		public String getMappedVariableName(String className, String methodName, String methodDesc,
-											String name, String desc, int index) {
-			return null;
-		}
-
-		@Override
-		public String implementationName() {
-			return null;
-		}
-
-		@Override
-		public void parse(String mappingsText) {
-		}
-
-		@Override
-		public String exportText() {
-			return null;
-		}
-
-		@Override
-		public IntermediateMappings exportIntermediate() {
-			return null;
-		}
-
-		@Override
-		public void importIntermediate(IntermediateMappings mappings) {
-			// no-op
-		}
 	}
 }

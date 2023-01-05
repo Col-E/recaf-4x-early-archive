@@ -1,10 +1,11 @@
 package software.coley.recaf.services.mapping.format;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.mapping.IntermediateMappings;
-import software.coley.recaf.services.mapping.MappingsAdapter;
+import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.data.ClassMapping;
 import software.coley.recaf.services.mapping.data.FieldMapping;
 import software.coley.recaf.services.mapping.data.MethodMapping;
@@ -17,7 +18,7 @@ import software.coley.recaf.util.StringUtil;
  * @author Wolfie / win32kbase
  */
 @Dependent
-public class TinyV1Mappings extends MappingsAdapter implements MappingFileFormat {
+public class TinyV1Mappings extends AbstractMappingFileFormat {
 	public static final String NAME = "Tiny-V1";
 	private final Logger logger = Logging.get(TinyV1Mappings.class);
 
@@ -29,12 +30,8 @@ public class TinyV1Mappings extends MappingsAdapter implements MappingFileFormat
 	}
 
 	@Override
-	public boolean supportsExportText() {
-		return true;
-	}
-
-	@Override
-	public void parse(String mappingText) {
+	public IntermediateMappings parse(@Nonnull String mappingText) {
+		IntermediateMappings mappings = new IntermediateMappings();
 		String[] lines = StringUtil.splitNewline(mappingText);
 		int lineNum = 0;
 		for (String line : lines) {
@@ -49,7 +46,7 @@ public class TinyV1Mappings extends MappingsAdapter implements MappingFileFormat
 					case "CLASS": {
 						String oldClass = args[1];
 						String newClass = args[2];
-						addClass(oldClass, newClass);
+						mappings.addClass(oldClass, newClass);
 						break;
 					}
 					case "FIELD": {
@@ -57,7 +54,7 @@ public class TinyV1Mappings extends MappingsAdapter implements MappingFileFormat
 						String oldDesc = args[2];
 						String oldName = args[3];
 						String newName = args[4];
-						addField(oldOwner, oldName, oldDesc, newName);
+						mappings.addField(oldOwner, oldDesc, oldName, newName);
 						break;
 					}
 					case "METHOD": {
@@ -65,7 +62,7 @@ public class TinyV1Mappings extends MappingsAdapter implements MappingFileFormat
 						String oldDesc = args[2];
 						String oldName = args[3];
 						String newName = args[4];
-						addMethod(oldOwner, oldName, oldDesc, newName);
+						mappings.addMethod(oldOwner, oldDesc, oldName, newName);
 						break;
 					}
 					default: {
@@ -78,12 +75,13 @@ public class TinyV1Mappings extends MappingsAdapter implements MappingFileFormat
 				break;
 			}
 		}
+		return mappings;
 	}
 
 	@Override
-	public String exportText() {
+	public String exportText(Mappings mappings) {
 		StringBuilder sb = new StringBuilder("v1\tintermediary\tnamed\n");
-		IntermediateMappings intermediate = exportIntermediate();
+		IntermediateMappings intermediate = mappings.exportIntermediate();
 		for (String oldClassName : intermediate.getClassesWithMappings()) {
 			ClassMapping classMapping = intermediate.getClassMapping(oldClassName);
 			if (classMapping != null) {

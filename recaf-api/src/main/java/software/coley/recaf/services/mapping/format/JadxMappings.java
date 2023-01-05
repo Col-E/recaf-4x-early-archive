@@ -1,10 +1,9 @@
 package software.coley.recaf.services.mapping.format;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
-import org.slf4j.Logger;
-import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.mapping.IntermediateMappings;
-import software.coley.recaf.services.mapping.MappingsAdapter;
+import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.data.ClassMapping;
 import software.coley.recaf.services.mapping.data.FieldMapping;
 import software.coley.recaf.services.mapping.data.MethodMapping;
@@ -19,7 +18,7 @@ import software.coley.recaf.util.StringUtil;
  * @author Matt Coley
  */
 @Dependent
-public class JadxMappings extends MappingsAdapter implements MappingFileFormat {
+public class JadxMappings extends AbstractMappingFileFormat {
 	public static final String NAME = "Jadx";
 
 	/**
@@ -30,12 +29,8 @@ public class JadxMappings extends MappingsAdapter implements MappingFileFormat {
 	}
 
 	@Override
-	public boolean supportsExportText() {
-		return true;
-	}
-
-	@Override
-	public void parse(String mappingText) {
+	public IntermediateMappings parse(@Nonnull String mappingText) {
+		IntermediateMappings mappings = new IntermediateMappings();
 		String[] lines = StringUtil.splitNewline(mappingText);
 		// Example:
 		// c android.support.a.b.a = C0005a
@@ -57,7 +52,7 @@ public class JadxMappings extends MappingsAdapter implements MappingFileFormat {
 						// The new value is always in the same package.
 						// Only the class is renamed, not the package.
 						String renamed = packageName + args[2];
-						addClass(original, renamed);
+						mappings.addClass(original, renamed);
 						break;
 					case "f":
 						// 1: class-name.field-name
@@ -69,7 +64,7 @@ public class JadxMappings extends MappingsAdapter implements MappingFileFormat {
 						String fieldType = args[2];
 						String renamedField = args[3];
 						// Replace all "." except last one
-						addField(fieldOwner, fieldName, fieldType, renamedField);
+						mappings.addField(fieldOwner, fieldType, fieldName, renamedField);
 						break;
 					case "m":
 						// 1: class-name.method-name + method-desc
@@ -80,7 +75,7 @@ public class JadxMappings extends MappingsAdapter implements MappingFileFormat {
 						String methodType = m1.substring(m1.indexOf('('));
 						String renamedMethod = args[2];
 						// Replace all "." except last one
-						addMethod(methodOwner, methodName, methodType, renamedMethod);
+						mappings.addMethod(methodOwner, methodType, methodName, renamedMethod);
 						break;
 					default:
 						break;
@@ -89,12 +84,13 @@ public class JadxMappings extends MappingsAdapter implements MappingFileFormat {
 				throw new IllegalArgumentException("Invalid jadx mappings, failed parsing line " + line, ex);
 			}
 		}
+		return mappings;
 	}
 
 	@Override
-	public String exportText() {
+	public String exportText(Mappings mappings) {
 		StringBuilder sb = new StringBuilder();
-		IntermediateMappings intermediate = exportIntermediate();
+		IntermediateMappings intermediate = mappings.exportIntermediate();
 		for (String oldClassName : intermediate.getClassesWithMappings()) {
 			ClassMapping classMapping = intermediate.getClassMapping(oldClassName);
 			if (classMapping != null) {

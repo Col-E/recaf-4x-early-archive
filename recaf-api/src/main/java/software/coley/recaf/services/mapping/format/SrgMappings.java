@@ -1,11 +1,12 @@
 package software.coley.recaf.services.mapping.format;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import org.objectweb.asm.commons.Remapper;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.mapping.IntermediateMappings;
-import software.coley.recaf.services.mapping.MappingsAdapter;
+import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.RemapperImpl;
 import software.coley.recaf.services.mapping.data.ClassMapping;
 import software.coley.recaf.services.mapping.data.FieldMapping;
@@ -18,7 +19,7 @@ import software.coley.recaf.util.StringUtil;
  * @author Matt Coley
  */
 @Dependent
-public class SrgMappings extends MappingsAdapter implements MappingFileFormat {
+public class SrgMappings extends AbstractMappingFileFormat {
 	public static final String NAME = "SRG";
 	private final Logger logger = Logging.get(TinyV1Mappings.class);
 
@@ -30,12 +31,8 @@ public class SrgMappings extends MappingsAdapter implements MappingFileFormat {
 	}
 
 	@Override
-	public boolean supportsExportText() {
-		return true;
-	}
-
-	@Override
-	public void parse(String mappingText) {
+	public IntermediateMappings parse(@Nonnull String mappingText) {
+		IntermediateMappings mappings = new IntermediateMappings();
 		String[] lines = StringUtil.splitNewline(mappingText);
 		int line = 0;
 		for (String lineStr : lines) {
@@ -50,7 +47,7 @@ public class SrgMappings extends MappingsAdapter implements MappingFileFormat {
 					case "CL:":
 						String obfClass = args[1];
 						String renamedClass = args[2];
-						addClass(obfClass, renamedClass);
+						mappings.addClass(obfClass, renamedClass);
 						break;
 					case "FD:": {
 						String obfKey = args[1];
@@ -60,7 +57,7 @@ public class SrgMappings extends MappingsAdapter implements MappingFileFormat {
 						String renamedKey = args[2];
 						splitPos = renamedKey.lastIndexOf('/');
 						String renamedName = renamedKey.substring(splitPos + 1);
-						addField(obfOwner, obfName, renamedName);
+						mappings.addField(obfOwner, null, obfName, renamedName);
 						break;
 					}
 					case "MD:": {
@@ -72,7 +69,7 @@ public class SrgMappings extends MappingsAdapter implements MappingFileFormat {
 						String renamedKey = args[3];
 						splitPos = renamedKey.lastIndexOf('/');
 						String renamedName = renamedKey.substring(splitPos + 1);
-						addMethod(obfOwner, obfName, obfDesc, renamedName);
+						mappings.addMethod(obfOwner, obfDesc, obfName, renamedName);
 						break;
 					}
 					default:
@@ -83,13 +80,14 @@ public class SrgMappings extends MappingsAdapter implements MappingFileFormat {
 				throw new IllegalArgumentException("Failed parsing line " + line, ex);
 			}
 		}
+		return mappings;
 	}
 
 	@Override
-	public String exportText() {
+	public String exportText(Mappings mappings) {
 		StringBuilder sb = new StringBuilder();
-		Remapper remapper = new RemapperImpl(this);
-		IntermediateMappings intermediate = exportIntermediate();
+		Remapper remapper = new RemapperImpl(mappings);
+		IntermediateMappings intermediate = mappings.exportIntermediate();
 		for (String oldClassName : intermediate.getClassesWithMappings()) {
 			ClassMapping classMapping = intermediate.getClassMapping(oldClassName);
 			if (classMapping != null) {

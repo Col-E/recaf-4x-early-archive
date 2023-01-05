@@ -47,7 +47,7 @@ public class MappingGenerator implements Service {
 	 */
 	public Mappings generate(@Nonnull WorkspaceResource resource, @Nonnull InheritanceGraph inheritanceGraph,
 							 @Nonnull NameGenerator generator, @Nullable NameGeneratorFilter filter) {
-		MappingsAdapter mappings = new MappingsAdapter("MAP-GEN", true, true);
+		MappingsAdapter mappings = new MappingsAdapter(true, true);
 		mappings.enableHierarchyLookup(inheritanceGraph);
 		SortedMap<String, ClassInfo> classMap = new TreeMap<>();
 		resource.versionedJvmClassBundleStream()

@@ -1,5 +1,7 @@
 package software.coley.recaf.services.mapping;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceVertex;
 import software.coley.recaf.services.mapping.data.*;
@@ -25,26 +27,23 @@ import java.util.function.Function;
  */
 public class MappingsAdapter implements Mappings {
 	private final Map<MappingKey, String> mappings = new HashMap<>();
-	private final String implementationName;
 	private final boolean supportFieldTypeDifferentiation;
 	private final boolean supportVariableTypeDifferentiation;
 	private InheritanceGraph graph;
 
 	/**
-	 * @param implementationName
-	 * 		Name of the mapping format implementation.
 	 * @param supportFieldTypeDifferentiation
 	 *        {@code true} if the mapping format implementation includes type descriptors in field mappings.
 	 * @param supportVariableTypeDifferentiation
 	 *        {@code true} if the mapping format implementation includes type descriptors in variable mappings.
 	 */
-	public MappingsAdapter(String implementationName, boolean supportFieldTypeDifferentiation,
+	public MappingsAdapter(boolean supportFieldTypeDifferentiation,
 						   boolean supportVariableTypeDifferentiation) {
-		this.implementationName = implementationName;
 		this.supportFieldTypeDifferentiation = supportFieldTypeDifferentiation;
 		this.supportVariableTypeDifferentiation = supportVariableTypeDifferentiation;
 	}
 
+	@Nullable
 	@Override
 	public String getMappedClassName(String internalName) {
 		String mapped = mappings.get(getClassKey(internalName));
@@ -63,6 +62,7 @@ public class MappingsAdapter implements Mappings {
 		return mapped;
 	}
 
+	@Nullable
 	@Override
 	public String getMappedFieldName(String ownerName, String fieldName, String fieldDesc) {
 		MappingKey key = getFieldKey(ownerName, fieldName, fieldDesc);
@@ -73,6 +73,7 @@ public class MappingsAdapter implements Mappings {
 		return mapped;
 	}
 
+	@Nullable
 	@Override
 	public String getMappedMethodName(String ownerName, String methodName, String methodDesc) {
 		MappingKey key = getMethodKey(ownerName, methodName, methodDesc);
@@ -83,6 +84,7 @@ public class MappingsAdapter implements Mappings {
 		return mapped;
 	}
 
+	@Nullable
 	@Override
 	public String getMappedVariableName(String className, String methodName, String methodDesc,
 										String name, String desc, int index) {
@@ -90,21 +92,7 @@ public class MappingsAdapter implements Mappings {
 		return mappings.get(key);
 	}
 
-	@Override
-	public String implementationName() {
-		return implementationName;
-	}
-
-	@Override
-	public void parse(String mappingsText) {
-		// No op
-	}
-
-	@Override
-	public boolean supportsExportIntermediate() {
-		return true;
-	}
-
+	@Nonnull
 	@Override
 	public IntermediateMappings exportIntermediate() {
 		IntermediateMappings intermediate = new IntermediateMappings();
@@ -126,7 +114,7 @@ public class MappingsAdapter implements Mappings {
 	}
 
 	@Override
-	public void importIntermediate(IntermediateMappings mappings) {
+	public void importIntermediate(@Nonnull IntermediateMappings mappings) {
 		for (String className : mappings.getClassesWithMappings()) {
 			ClassMapping classMapping = mappings.getClassMapping(className);
 			if (classMapping != null) {
@@ -220,7 +208,7 @@ public class MappingsAdapter implements Mappings {
 
 	/**
 	 * Some mapping formats do not include field types since name overloading is illegal at the source level of Java.
-	 * Its valid in the bytecode but the mapping omits this info since it isn't necessary information for mapping
+	 * It's valid in the bytecode but the mapping omits this info since it isn't necessary information for mapping
 	 * that does not support name overloading.
 	 *
 	 * @return {@code true} when field mappings include the type descriptor in their lookup information.

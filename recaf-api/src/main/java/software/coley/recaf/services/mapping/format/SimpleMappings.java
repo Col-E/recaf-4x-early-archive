@@ -1,8 +1,9 @@
 package software.coley.recaf.services.mapping.format;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import software.coley.recaf.services.mapping.IntermediateMappings;
-import software.coley.recaf.services.mapping.MappingsAdapter;
+import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.data.ClassMapping;
 import software.coley.recaf.services.mapping.data.FieldMapping;
 import software.coley.recaf.services.mapping.data.MethodMapping;
@@ -29,7 +30,7 @@ import static software.coley.recaf.util.EscapeUtil.unescapeAll;
  * @author Wolfie / win32kbase
  */
 @Dependent
-public class SimpleMappings extends MappingsAdapter implements MappingFileFormat {
+public class SimpleMappings extends AbstractMappingFileFormat {
 	public static final String NAME = "Simple";
 
 	/**
@@ -40,12 +41,8 @@ public class SimpleMappings extends MappingsAdapter implements MappingFileFormat
 	}
 
 	@Override
-	public boolean supportsExportText() {
-		return true;
-	}
-
-	@Override
-	public void parse(String mappingText) {
+	public IntermediateMappings parse(@Nonnull String mappingText) {
+		IntermediateMappings mappings = new IntermediateMappings();
 		String[] lines = StringUtil.splitNewline(mappingText);
 		// # Comment
 		// BaseClass TargetClass
@@ -65,7 +62,7 @@ public class SimpleMappings extends MappingsAdapter implements MappingFileFormat
 				int dot = oldBaseName.lastIndexOf('.');
 				String oldClassName = oldBaseName.substring(0, dot);
 				String oldFieldName = oldBaseName.substring(dot + 1);
-				addField(oldClassName, oldFieldName, desc, targetName);
+				mappings.addField(oldClassName, desc, oldFieldName, targetName);
 			} else {
 				String newName = unescapeAll(args[1]);
 				int dot = oldBaseName.lastIndexOf('.');
@@ -78,22 +75,23 @@ public class SimpleMappings extends MappingsAdapter implements MappingFileFormat
 						// Method descriptor part of ID, split it up
 						String methodName = oldIdentifier.substring(0, methodDescStart);
 						String methodDesc = oldIdentifier.substring(methodDescStart);
-						addMethod(oldClassName, methodName, methodDesc, newName);
+						mappings.addMethod(oldClassName, methodDesc, methodName, newName);
 					} else {
 						// Likely a field without linked descriptor
-						addField(oldClassName, oldIdentifier, newName);
+						mappings.addField(oldClassName, null, oldIdentifier, newName);
 					}
 				} else {
-					addClass(oldBaseName, newName);
+					mappings.addClass(oldBaseName, newName);
 				}
 			}
 		}
+		return mappings;
 	}
 
 	@Override
-	public String exportText() {
+	public String exportText(Mappings mappings) {
 		StringBuilder sb = new StringBuilder();
-		IntermediateMappings intermediate = exportIntermediate();
+		IntermediateMappings intermediate = mappings.exportIntermediate();
 		for (String oldClassName : intermediate.getClassesWithMappings()) {
 			ClassMapping classMapping = intermediate.getClassMapping(oldClassName);
 			String escapedOldClassName = escapeAll(oldClassName);

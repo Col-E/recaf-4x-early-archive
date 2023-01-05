@@ -1,7 +1,8 @@
 package software.coley.recaf.services.mapping.format;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
-import software.coley.recaf.services.mapping.MappingsAdapter;
+import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.util.StringUtil;
 
 import java.util.Arrays;
@@ -15,7 +16,7 @@ import java.util.Map;
  * @author xDark
  */
 @Dependent
-public class ProguardMappings extends MappingsAdapter implements MappingFileFormat {
+public class ProguardMappings extends AbstractMappingFileFormat {
 	public static final String NAME = "Proguard";
 	private static final String SPLITTER = " -> ";
 
@@ -27,7 +28,8 @@ public class ProguardMappings extends MappingsAdapter implements MappingFileForm
 	}
 
 	@Override
-	public void parse(String mappingsText) {
+	public IntermediateMappings parse(@Nonnull String mappingsText) {
+		IntermediateMappings mappings = new IntermediateMappings();
 		List<String> lines = Arrays.asList(StringUtil.splitNewline(mappingsText));
 		Map<String, ProguardClassInfo> classMap = new HashMap<>(16384);
 		StringBuilder firstCache = new StringBuilder();
@@ -48,7 +50,7 @@ public class ProguardMappings extends MappingsAdapter implements MappingFileForm
 				if (right.charAt(right.length() - 1) == ':') {
 					String originalClassName = left.replace('.', '/');
 					String obfuscatedName = right.substring(0, right.length() - 1).replace('.', '/');
-					addClass(obfuscatedName, originalClassName);
+					mappings.addClass(obfuscatedName, originalClassName);
 					if (classInfo != null) {
 						// Record the lines that need to be processed for the prior classInfo entry
 						//  - These lines should include field/method mappings
@@ -110,7 +112,7 @@ public class ProguardMappings extends MappingsAdapter implements MappingFileForm
 						} while (anyLeft);
 					}
 					firstCache.append(')').append(returnType);
-					addMethod(info.mappedName, right, firstCache.toString(), methodName);
+					mappings.addMethod(info.mappedName, firstCache.toString(), right, methodName);
 				} else {
 					String fieldInfo = left;
 					int offset = 0;
@@ -119,10 +121,11 @@ public class ProguardMappings extends MappingsAdapter implements MappingFileForm
 					}
 					String fieldType = denormalizeType(fieldInfo.substring(offset, offset = fieldInfo.indexOf(' ', offset)), firstCache, classMap);
 					String fieldName = fieldInfo.substring(offset + 1);
-					addField(info.mappedName, right, fieldType, fieldName);
+					mappings.addField(info.mappedName, fieldType, right, fieldName);
 				}
 			}
 		}
+		return mappings;
 	}
 
 	private static String denormalizeType(String type, StringBuilder stringCache, Map<String, ProguardClassInfo> map) {
@@ -136,40 +139,23 @@ public class ProguardMappings extends MappingsAdapter implements MappingFileForm
 		stringCache.setLength(0);
 		type = type.substring(0, idx + 1);
 		switch (type) {
-			case "void":
-				type = "V";
-				break;
-			case "long":
-				type = "J";
-				break;
-			case "double":
-				type = "D";
-				break;
-			case "int":
-				type = "I";
-				break;
-			case "float":
-				type = "F";
-				break;
-			case "char":
-				type = "C";
-				break;
-			case "short":
-				type = "S";
-				break;
-			case "byte":
-				type = "B";
-				break;
-			case "boolean":
-				type = "Z";
-				break;
-			default:
+			case "void" -> type = "V";
+			case "long" -> type = "J";
+			case "double" -> type = "D";
+			case "int" -> type = "I";
+			case "float" -> type = "F";
+			case "char" -> type = "C";
+			case "short" -> type = "S";
+			case "byte" -> type = "B";
+			case "boolean" -> type = "Z";
+			default -> {
 				type = type.replace('.', '/');
 				ProguardClassInfo classInfo = map.get(type);
 				if (classInfo != null) {
 					type = classInfo.mappedName;
 				}
 				stringCache.append('L').append(type).append(';');
+			}
 		}
 		if (dimensions != 0 || stringCache.length() != 0) {
 			if (stringCache.length() == 0) {
@@ -181,6 +167,13 @@ public class ProguardMappings extends MappingsAdapter implements MappingFileForm
 			type = stringCache.toString();
 		}
 		return type;
+	}
+
+	@Override
+	public boolean supportsExportText() {
+		// You see how cringe the file parsing is?
+		// Surely you understand why this is 'false'...
+		return false;
 	}
 
 	private static final class ProguardClassInfo {
