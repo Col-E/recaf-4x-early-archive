@@ -78,18 +78,17 @@ public interface Mappings {
 								 String name, String desc, int index);
 
 	/**
-	 * @return Object representation of mappings.
+	 * Generally this is implemented under the assumption that {@link Mappings} is used to model data explicitly.
+	 * For instance, if we have a workspace with a class {@code Person} using this we can see the {@code Person}
+	 * in the resulting {@link IntermediateMappings#getClasses()}.
+	 * <br>
+	 * However, when {@link Mappings} is used to pattern-match and replace <i>(Like replacing a prefix/package
+	 * in a class name)</i> then there is no way to model this since we don't know all possible matches beforehand.
+	 * In such cases, we should <i>avoid using this method</i>.
+	 * But for API consistency an empty {@link IntermediateMappings} should be returned.
 	 *
-	 * @see #importIntermediate(IntermediateMappings)
+	 * @return Object representation of mappings.
 	 */
 	@Nonnull
 	IntermediateMappings exportIntermediate();
-
-	/**
-	 * @param mappings
-	 * 		Object representation of mappings.
-	 *
-	 * @see #exportIntermediate()
-	 */
-	void importIntermediate(@Nonnull IntermediateMappings mappings);
 }

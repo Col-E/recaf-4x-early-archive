@@ -43,6 +43,51 @@ public class MappingsAdapter implements Mappings {
 		this.supportVariableTypeDifferentiation = supportVariableTypeDifferentiation;
 	}
 
+	/**
+	 * Adds all the entries in the given mappings to the current mappings.
+	 *
+	 * @param mappings
+	 * 		Intermediate mappings to add to the current mappings.
+	 */
+	public void importIntermediate(@Nonnull IntermediateMappings mappings) {
+		for (String className : mappings.getClassesWithMappings()) {
+			ClassMapping classMapping = mappings.getClassMapping(className);
+			if (classMapping != null) {
+				String oldClassName = classMapping.getOldName();
+				String newClassName = classMapping.getNewName();
+				if (!oldClassName.equals(newClassName))
+					addClass(oldClassName, newClassName);
+			}
+			for (FieldMapping fieldMapping : mappings.getClassFieldMappings(className)) {
+				String oldName = fieldMapping.getOldName();
+				String newName = fieldMapping.getNewName();
+				if (!oldName.equals(newName)) {
+					if (doesSupportFieldTypeDifferentiation()) {
+						addField(fieldMapping.getOwnerName(), oldName,
+								fieldMapping.getDesc(), newName);
+					} else {
+						addField(fieldMapping.getOwnerName(), oldName,
+								newName);
+					}
+				}
+			}
+			for (MethodMapping methodMapping : mappings.getClassMethodMappings(className)) {
+				String oldMethodName = methodMapping.getOldName();
+				String oldMethodDesc = methodMapping.getDesc();
+				String newMethodName = methodMapping.getNewName();
+				if (!oldMethodName.equals(newMethodName))
+					addMethod(methodMapping.getOwnerName(), oldMethodName,
+							oldMethodDesc, newMethodName);
+				for (VariableMapping variableMapping :
+						mappings.getMethodVariableMappings(className, oldMethodName, oldMethodDesc)) {
+					addVariable(className, oldMethodName, oldMethodDesc,
+							variableMapping.getOldName(), variableMapping.getDesc(), variableMapping.getIndex(),
+							variableMapping.getNewName());
+				}
+			}
+		}
+	}
+
 	@Nullable
 	@Override
 	public String getMappedClassName(String internalName) {
@@ -111,46 +156,6 @@ public class MappingsAdapter implements Mappings {
 			}
 		}
 		return intermediate;
-	}
-
-	@Override
-	public void importIntermediate(@Nonnull IntermediateMappings mappings) {
-		for (String className : mappings.getClassesWithMappings()) {
-			ClassMapping classMapping = mappings.getClassMapping(className);
-			if (classMapping != null) {
-				String oldClassName = classMapping.getOldName();
-				String newClassName = classMapping.getNewName();
-				if (!oldClassName.equals(newClassName))
-					addClass(oldClassName, newClassName);
-			}
-			for (FieldMapping fieldMapping : mappings.getClassFieldMappings(className)) {
-				String oldName = fieldMapping.getOldName();
-				String newName = fieldMapping.getNewName();
-				if (!oldName.equals(newName)) {
-					if (doesSupportFieldTypeDifferentiation()) {
-						addField(fieldMapping.getOwnerName(), oldName,
-								fieldMapping.getDesc(), newName);
-					} else {
-						addField(fieldMapping.getOwnerName(), oldName,
-								newName);
-					}
-				}
-			}
-			for (MethodMapping methodMapping : mappings.getClassMethodMappings(className)) {
-				String oldMethodName = methodMapping.getOldName();
-				String oldMethodDesc = methodMapping.getDesc();
-				String newMethodName = methodMapping.getNewName();
-				if (!oldMethodName.equals(newMethodName))
-					addMethod(methodMapping.getOwnerName(), oldMethodName,
-							oldMethodDesc, newMethodName);
-				for (VariableMapping variableMapping :
-						mappings.getMethodVariableMappings(className, oldMethodName, oldMethodDesc)) {
-					addVariable(className, oldMethodName, oldMethodDesc,
-							variableMapping.getOldName(), variableMapping.getDesc(), variableMapping.getIndex(),
-							variableMapping.getNewName());
-				}
-			}
-		}
 	}
 
 	/**

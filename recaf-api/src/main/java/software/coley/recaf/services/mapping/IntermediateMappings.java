@@ -226,12 +226,6 @@ public class IntermediateMappings implements Mappings {
 		return this;
 	}
 
-	@Override
-	public void importIntermediate(@Nonnull IntermediateMappings mappings) {
-		// This is never used for intermediates, so we don't need to implement it.
-		// If somebody wants to, feel free to paste from MappingsAdapter.
-	}
-
 	private static String varKey(String ownerName, String methodName, String methodDesc) {
 		return String.format("%s\t%s\t%s", ownerName, methodName, methodDesc);
 	}
