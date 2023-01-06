@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import software.coley.recaf.TestBase;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.annotation.AnnotationElement;
+import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
@@ -81,6 +83,9 @@ class MappingApplierTest extends TestBase {
 				//
 				DummyEnum.class,
 				DummyEnumPrinter.class,
+				//
+				AnnotationImpl.class,
+				ClassWithAnnotation.class,
 				//
 				OverlapInterfaceA.class,
 				OverlapInterfaceB.class,
@@ -178,6 +183,51 @@ class MappingApplierTest extends TestBase {
 		// Assert that the methods are still runnable.
 		run(DummyEnumPrinter.class, "run1");
 		run(DummyEnumPrinter.class, "run2");
+	}
+
+	@Test
+	void applyClassWithAnnotation() {
+		String annotationName = AnnotationImpl.class.getName().replace('.', '/');
+		String classWithAnnotationName = ClassWithAnnotation.class.getName().replace('.', '/');
+
+		// Create mappings for all classes but the target 'ClassWithAnnotation'
+		Mappings mappings = mappingGenerator.generate(resource, inheritanceGraph, nameGenerator, new NameGeneratorFilter(null, true) {
+			@Override
+			public boolean shouldMapClass(@Nonnull ClassInfo info) {
+				return !info.getName().equals(classWithAnnotationName);
+			}
+		});
+
+		// Apply the mappings to the workspace
+		Set<String> modified = mappingApplier.apply(mappings, workspace);
+
+		// The annotation class we define should be remapped.
+		// The user class (ClassWithAnnotation) itself should not be remapped,
+		// but its annotation usage should be updated.
+		String mappedAnnotationName = mappings.getMappedClassName(annotationName);
+		assertNotNull(mappedAnnotationName, "AnnotationImpl should be remapped");
+		assertNull(mappings.getMappedClassName(classWithAnnotationName), "ClassWithAnnotation should not be remapped");
+		assertTrue(modified.contains(annotationName), "AnnotationImpl should have updated");
+		assertTrue(modified.contains(classWithAnnotationName), "ClassWithAnnotation should have updated");
+
+		// Assert aggregate updated too.
+		AggregatedMappings aggregatedMappings = aggregateMappingManager.getAggregatedMappings();
+		assertNotNull(aggregatedMappings.getMappedClassName(annotationName),
+				"AnnotationImpl should be tracked in aggregate");
+
+		// Get the names of the annotation's mapped attribute methods
+		String annoValueName = mappings.getMappedMethodName(annotationName, "value", "()Ljava/lang/String;");
+		String annoPolicyName = mappings.getMappedMethodName(annotationName, "policy", "()Ljava/lang/annotation/Retention;");
+
+		// Assert the user class has the correct new values
+		JvmClassInfo classWithAnnotation = workspace.findJvmClass(classWithAnnotationName).getItem();
+		AnnotationInfo annotationInfo = classWithAnnotation.getAnnotations().get(0);
+		assertEquals("L" +mappedAnnotationName + ";", annotationInfo.getDescriptor(),
+				"AnnotationImpl not remapped in ClassWithAnnotation");
+		AnnotationElement valueElement = annotationInfo.getElements().get(annoValueName);
+		AnnotationElement policyElement = annotationInfo.getElements().get(annoPolicyName);
+		assertNotNull(valueElement, "Missing mapped value element");
+		assertNotNull(policyElement, "Missing mapped policy element");
 	}
 
 	@Test

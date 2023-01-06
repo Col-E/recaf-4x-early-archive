@@ -3,7 +3,7 @@ package software.coley.recaf.services.mapping;
 import jakarta.annotation.Nonnull;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
-import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.util.Handles;
 import software.coley.recaf.workspace.model.FindResult;
@@ -33,8 +33,25 @@ public class WorkspaceBackedRemapper extends BasicMappingsRemapper {
 
 	@Override
 	public String mapAnnotationAttributeName(String descriptor, String name) {
-		// TODO: Test renaming annotation methods updates attribute names in usage
-		return name;
+		String annotationName = Type.getType(descriptor).getInternalName();
+		FindResult<? extends ClassInfo> classResult = workspace.findAnyClass(annotationName);
+
+		// Not found, probably not intended to be renamed.
+		if (classResult.isEmpty())
+			return name;
+
+		// Get the declaration and, if found, treat as normal method mapping.
+		ClassInfo info = classResult.getItem();
+		MethodMember attributeMethod = info.getMethods().stream()
+				.filter(method -> method.getName().equals(name))
+				.findFirst().orElse(null);
+
+		// Not found, shouldn't generally happen.
+		if (attributeMethod == null)
+			return name;
+
+		// Use the method mapping from the annotation class's declared methods.
+		return mapMethodName(annotationName, name, attributeMethod.getDescriptor());
 	}
 
 	@Override
