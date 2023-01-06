@@ -9,26 +9,23 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.annotation.AnnotationElement;
 import software.coley.recaf.info.annotation.AnnotationInfo;
-import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
-import software.coley.recaf.services.mapping.gen.BasicNameGenerator;
+import software.coley.recaf.services.mapping.gen.AlphabetNameGenerator;
 import software.coley.recaf.services.mapping.gen.MappingGenerator;
 import software.coley.recaf.services.mapping.gen.NameGenerator;
 import software.coley.recaf.services.mapping.gen.NameGeneratorFilter;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.*;
 import software.coley.recaf.util.ClassDefiner;
-import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -49,7 +46,7 @@ class MappingApplierTest extends TestBase {
 	@BeforeAll
 	static void setupGenerator() {
 		String alphabet = "abcdefghijklmnopqrstuvwxyz";
-		nameGenerator = new BasicNameGenerator(alphabet, 3);
+		nameGenerator = new AlphabetNameGenerator(alphabet, 3);
 	}
 
 	@BeforeEach

@@ -15,7 +15,7 @@ import java.util.Random;
  *
  * @author Matt Coley
  */
-public class BasicNameGenerator implements NameGenerator {
+public class AlphabetNameGenerator implements NameGenerator {
 	private final String alphabet;
 	private final int boundsMin;
 	private final int boundsMax;
@@ -26,7 +26,7 @@ public class BasicNameGenerator implements NameGenerator {
 	 * @param length
 	 * 		Length of output names.
 	 */
-	public BasicNameGenerator(@Nonnull String alphabet, int length) {
+	public AlphabetNameGenerator(@Nonnull String alphabet, int length) {
 		this.alphabet = alphabet;
 
 		// Create bounds range to generate names of the desired length
