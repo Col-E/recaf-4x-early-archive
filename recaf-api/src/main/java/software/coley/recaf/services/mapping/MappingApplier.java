@@ -44,18 +44,20 @@ public class MappingApplier {
 	 * @return Names of the classes in the resource that had modifications as a result of the mapping operation.
 	 */
 	public Set<String> apply(Mappings mappings, Workspace workspace) {
-		return apply(mappings, workspace.getPrimaryResource());
+		return apply(mappings, workspace, workspace.getPrimaryResource());
 	}
 
 	/**
 	 * @param mappings
 	 * 		The mappings to apply.
+	 * @param workspace
+	 * 		Workspace to pull class info from when additional context is needed.
 	 * @param resource
 	 * 		Resource to apply mappings to.
 	 *
 	 * @return Names of the classes in the resource that had modifications as a result of the mapping operation.
 	 */
-	public Set<String> apply(Mappings mappings, WorkspaceResource resource) {
+	public Set<String> apply(Mappings mappings, Workspace workspace, WorkspaceResource resource) {
 		// Check if mappings can be enriched with type look-ups
 		if (inheritanceGraph != null && mappings instanceof MappingsAdapter adapter) {
 			// If we have "Dog extends Animal" and both define "jump" this lets "Dog.jump()" see "Animal.jump()"
@@ -63,13 +65,15 @@ public class MappingApplier {
 			adapter.enableHierarchyLookup(inheritanceGraph);
 		}
 
-		Set<String> modifiedClasses = applyMappingsWithoutAggregation(resource, mappings);
+		Set<String> modifiedClasses = applyMappingsWithoutAggregation(workspace, resource, mappings);
 		if (aggregateMappingManager != null)
 			aggregateMappingManager.updateAggregateMappings(mappings);
 		return modifiedClasses;
 	}
 
 	/**
+	 * @param workspace
+	 * 		Workspace to pull class info from when additional context is needed.
 	 * @param resource
 	 * 		Resource to apply mappings to.
 	 * @param mappings
@@ -77,7 +81,7 @@ public class MappingApplier {
 	 *
 	 * @return Names of the classes in the resource that had modifications as a result of the mapping operation.
 	 */
-	private static Set<String> applyMappingsWithoutAggregation(WorkspaceResource resource, Mappings mappings) {
+	private static Set<String> applyMappingsWithoutAggregation(Workspace workspace, WorkspaceResource resource, Mappings mappings) {
 		ExecutorService service = ThreadUtil.phasingService(applierThreadPool);
 		Set<String> modifiedClasses = ConcurrentHashMap.newKeySet();
 		Set<String> newNames = new HashSet<>();
@@ -89,7 +93,7 @@ public class MappingApplier {
 					// Apply renamer
 					ClassWriter cw = new ClassWriter(0);
 					ClassReader cr = classInfo.getClassReader();
-					RemappingVisitor remapVisitor = new RemappingVisitor(cw, mappings);
+					WorkspaceClassRemapper remapVisitor = new WorkspaceClassRemapper(cw, workspace, mappings);
 					cr.accept(remapVisitor, 0);
 
 					// Update class if it has any modified references

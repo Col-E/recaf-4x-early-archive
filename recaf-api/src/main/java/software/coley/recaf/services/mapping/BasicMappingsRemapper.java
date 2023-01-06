@@ -7,15 +7,15 @@ import org.objectweb.asm.commons.Remapper;
  *
  * @author Matt Coley
  */
-public class RemapperImpl extends Remapper {
-	private final Mappings mappings;
+public class BasicMappingsRemapper extends Remapper {
+	protected final Mappings mappings;
 	private boolean modified;
 
 	/**
 	 * @param mappings
-	 * 		Mappings wrapper to pull values from.
+	 * 		Mappings to pull from.
 	 */
-	public RemapperImpl(Mappings mappings) {
+	public BasicMappingsRemapper(Mappings mappings) {
 		this.mappings = mappings;
 	}
 
@@ -71,15 +71,18 @@ public class RemapperImpl extends Remapper {
 		do {
 			int bookkeep = lastTypeStartOffset;
 			lastTypeStartOffset = methodDescriptor.indexOf('L', lastTypeStartOffset);
+
 			// Append leftover parts on the left side
 			builder.append(methodDescriptor, bookkeep, lastTypeStartOffset);
 			String type = methodDescriptor.substring(lastTypeStartOffset + 1, lastTypeEndOffset);
 			String mapped = mapType(type);
 			builder.append('L').append(mapped).append(';');
+
 			// Skip L_TYPE_;
 			lastTypeStartOffset += type.length() + 2;
 			tail = lastTypeStartOffset;
 		} while ((lastTypeEndOffset = methodDescriptor.indexOf(';', lastTypeEndOffset + 1)) != -1);
+
 		// Append remaining characters (tail onwards)
 		builder.append(methodDescriptor, tail, methodDescriptor.length());
 		return builder.toString();
@@ -116,17 +119,24 @@ public class RemapperImpl extends Remapper {
 	@Override
 	public String mapPackageName(String name) {
 		// Used only by module attributes
-		return super.mapPackageName(name);
+		return name;
 	}
 
 	@Override
 	public String mapModuleName(String name) {
 		// Used only by module attributes
-		return super.mapModuleName(name);
+		return name;
 	}
 
-	protected void markModified() {
-		modified = true;
+	@Override
+	public String mapAnnotationAttributeName(String descriptor, String name) {
+		// Used by annotation visitor
+		return name;
+	}
+
+	@Override
+	public String mapInvokeDynamicMethodName(String name, String descriptor) {
+		return name;
 	}
 
 	/**
@@ -154,6 +164,10 @@ public class RemapperImpl extends Remapper {
 		}
 		// Use existing variable name.
 		return name;
+	}
+
+	protected void markModified() {
+		modified = true;
 	}
 
 	/**

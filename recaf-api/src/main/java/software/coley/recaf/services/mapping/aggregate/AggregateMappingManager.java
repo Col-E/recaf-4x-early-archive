@@ -23,12 +23,14 @@ import java.util.List;
 public class AggregateMappingManager implements Service, WorkspaceCloseListener {
 	public static final String SERVICE_ID = "mapping-aggregator";
 	private final List<AggregatedMappingsListener> aggregateListeners = new ArrayList<>();
-	private final AggregatedMappings aggregatedMappings = new AggregatedMappings();
+	private final AggregatedMappings aggregatedMappings;
 	private final AggregateMappingManagerConfig config;
 
 	@Inject
-	public AggregateMappingManager(AggregateMappingManagerConfig config) {
+	public AggregateMappingManager(AggregateMappingManagerConfig config,
+								   Workspace workspace) {
 		this.config = config;
+		aggregatedMappings = new AggregatedMappings(workspace);
 	}
 
 	@Override

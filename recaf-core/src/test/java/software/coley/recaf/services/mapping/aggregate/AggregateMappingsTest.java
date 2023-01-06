@@ -2,6 +2,7 @@ package software.coley.recaf.services.mapping.aggregate;
 
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.services.mapping.IntermediateMappings;
+import software.coley.recaf.workspace.model.EmptyWorkspace;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -30,7 +31,7 @@ public class AggregateMappingsTest {
 		mappings3.addField("c", "I", "newName", "brandNewName");
 
 		// Setup aggregation
-		AggregatedMappings aggregated = new AggregatedMappings();
+		AggregatedMappings aggregated = new AggregatedMappings(EmptyWorkspace.get());
 		// Validate after first mapping pass
 		aggregated.update(mappings1);
 		assertEquals("b", aggregated.getMappedClassName("a"));
@@ -63,7 +64,7 @@ public class AggregateMappingsTest {
 		mappings3.addMethod("c", "()Lc;", "factory", "getInstance");
 
 		// Setup aggregation
-		AggregatedMappings aggregated = new AggregatedMappings();
+		AggregatedMappings aggregated = new AggregatedMappings(EmptyWorkspace.get());
 		// Validate after first mapping pass
 		aggregated.update(mappings1);
 		assertEquals("b", aggregated.getMappedClassName("a"));

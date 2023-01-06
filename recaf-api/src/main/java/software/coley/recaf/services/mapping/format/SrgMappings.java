@@ -5,9 +5,9 @@ import jakarta.enterprise.context.Dependent;
 import org.objectweb.asm.commons.Remapper;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.services.mapping.BasicMappingsRemapper;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
-import software.coley.recaf.services.mapping.RemapperImpl;
 import software.coley.recaf.services.mapping.data.ClassMapping;
 import software.coley.recaf.services.mapping.data.FieldMapping;
 import software.coley.recaf.services.mapping.data.MethodMapping;
@@ -86,7 +86,7 @@ public class SrgMappings extends AbstractMappingFileFormat {
 	@Override
 	public String exportText(Mappings mappings) {
 		StringBuilder sb = new StringBuilder();
-		Remapper remapper = new RemapperImpl(mappings);
+		Remapper remapper = new BasicMappingsRemapper(mappings);
 		IntermediateMappings intermediate = mappings.exportIntermediate();
 		for (String oldClassName : intermediate.getClassesWithMappings()) {
 			ClassMapping classMapping = intermediate.getClassMapping(oldClassName);

@@ -44,14 +44,14 @@ public class MappingGeneratorTest extends TestBase {
 
 			@Nonnull
 			@Override
-			public String mapField(@Nonnull ClassInfo owner, @Nonnull FieldMember info) {
-				return "mapped" + StringUtil.uppercaseFirstChar(info.getName());
+			public String mapField(@Nonnull ClassInfo owner, @Nonnull FieldMember field) {
+				return "mapped" + StringUtil.uppercaseFirstChar(field.getName());
 			}
 
 			@Nonnull
 			@Override
-			public String mapMethod(@Nonnull ClassInfo owner, @Nonnull MethodMember info) {
-				return "mapped" + StringUtil.uppercaseFirstChar(info.getName());
+			public String mapMethod(@Nonnull ClassInfo owner, @Nonnull MethodMember method) {
+				return "mapped" + StringUtil.uppercaseFirstChar(method.getName());
 			}
 		};
 		workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(
@@ -95,7 +95,7 @@ public class MappingGeneratorTest extends TestBase {
 			// Empty filter with default to 'true' for mapping
 			//  - All classes/fields/methods should be renamed (except <init>/<clinit> and library methods)
 			NameGeneratorFilter filter = new NameGeneratorFilter(null, true) {
-
+				// Empty
 			};
 
 			// Apply and assert all items are mapped
@@ -124,7 +124,7 @@ public class MappingGeneratorTest extends TestBase {
 			// Empty filter with default to 'false' for mapping
 			//  - Nothing should generate
 			NameGeneratorFilter filter = new NameGeneratorFilter(null, false) {
-
+				// Empty
 			};
 
 			// Apply and assert nothing was generated
@@ -137,9 +137,6 @@ public class MappingGeneratorTest extends TestBase {
 
 		@Test
 		void testExcludeClassNameFilter() {
-			String className = AccessibleMethods.class.getName().replace('.', '/');
-			String classNameChild = AccessibleMethodsChild.class.getName().replace('.', '/');
-
 			// Filter to exclude classes by name
 			//  - Classes extending them with overridden methods, the overrides should not be remapped
 			ExcludeClassNameFilter filter =

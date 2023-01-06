@@ -8,11 +8,11 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.Service;
-import software.coley.recaf.services.ServiceConfig;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceVertex;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.MappingsAdapter;
+import software.coley.recaf.services.mapping.gen.filter.ExcludeEnumMethodsFilter;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
@@ -47,6 +47,10 @@ public class MappingGenerator implements Service {
 	 */
 	public Mappings generate(@Nonnull WorkspaceResource resource, @Nonnull InheritanceGraph inheritanceGraph,
 							 @Nonnull NameGenerator generator, @Nullable NameGeneratorFilter filter) {
+		// Adapt filter to handle baseline cases.
+		filter = new ExcludeEnumMethodsFilter(filter);
+
+		// Setup adapter to store our mappings in.
 		MappingsAdapter mappings = new MappingsAdapter(true, true);
 		mappings.enableHierarchyLookup(inheritanceGraph);
 		SortedMap<String, ClassInfo> classMap = new TreeMap<>();
@@ -72,7 +76,7 @@ public class MappingGenerator implements Service {
 	}
 
 	private void generateFamilyMappings(@Nonnull MappingsAdapter mappings, @Nonnull Set<InheritanceVertex> family,
-										@Nonnull NameGenerator generator, @Nullable NameGeneratorFilter filter) {
+										@Nonnull NameGenerator generator, @Nonnull NameGeneratorFilter filter) {
 		// Collect the members in the family that are inheritable, and methods that are library implementations.
 		// We want this information so that for these members we give them a single name throughout the family.
 		//  - Methods can be indirectly linked by two interfaces describing the same signature,
@@ -112,7 +116,7 @@ public class MappingGenerator implements Service {
 				String fieldDesc = field.getDescriptor();
 
 				// Skip if filtered.
-				if (filter != null && !filter.shouldMapField(owner, field))
+				if (!filter.shouldMapField(owner, field))
 					continue;
 
 				// Skip if already mapped.
@@ -147,7 +151,7 @@ public class MappingGenerator implements Service {
 					continue;
 
 				// Skip if filtered.
-				if (filter != null && !filter.shouldMapMethod(owner, method))
+				if (!filter.shouldMapMethod(owner, method))
 					continue;
 
 				// Skip if method is a library method, or is already mapped.
@@ -168,7 +172,7 @@ public class MappingGenerator implements Service {
 					List<Runnable> pendingMapAdditions = new ArrayList<>();
 					for (InheritanceVertex familyVertex : family) {
 						if (familyVertex.hasMethod(methodName, methodDesc)) {
-							if (filter == null || filter.shouldMapMethod(familyVertex.getValue(), method)) {
+							if (filter.shouldMapMethod(familyVertex.getValue(), method)) {
 								pendingMapAdditions.add(() ->
 										mappings.addMethod(familyVertex.getName(), methodName, methodDesc, mappedMethodName));
 							} else {
@@ -196,7 +200,7 @@ public class MappingGenerator implements Service {
 
 			// Skip if filtered.
 			ClassInfo classInfo = vertex.getValue();
-			if (filter != null && !filter.shouldMapClass(classInfo))
+			if (!filter.shouldMapClass(classInfo))
 				return;
 
 			// Add mapping.

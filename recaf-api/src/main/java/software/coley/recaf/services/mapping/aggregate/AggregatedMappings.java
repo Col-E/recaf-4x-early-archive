@@ -3,11 +3,12 @@ package software.coley.recaf.services.mapping.aggregate;
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
-import software.coley.recaf.services.mapping.RemapperImpl;
+import software.coley.recaf.services.mapping.WorkspaceBackedRemapper;
 import software.coley.recaf.services.mapping.data.ClassMapping;
 import software.coley.recaf.services.mapping.data.FieldMapping;
 import software.coley.recaf.services.mapping.data.MemberMapping;
 import software.coley.recaf.services.mapping.data.MethodMapping;
+import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -30,17 +31,25 @@ import java.util.Map;
  */
 public class AggregatedMappings extends IntermediateMappings {
 	private final Map<String, String> reverseOrderClassMapping = new HashMap<>();
-	private final RemapperImpl reverseMapper = new RemapperImpl(this) {
-		@Override
-		public String map(String internalName) {
-			String reverseName = reverseOrderClassMapping.get(internalName);
-			if (reverseName != null) {
-				markModified();
-				return reverseName;
+	private final WorkspaceBackedRemapper reverseMapper;
+
+	/**
+	 * @param workspace
+	 * 		Workspace associated with the aggregate mappings.
+	 */
+	public AggregatedMappings(@Nonnull Workspace workspace) {
+		reverseMapper = new WorkspaceBackedRemapper(workspace, this) {
+			@Override
+			public String map(String internalName) {
+				String reverseName = reverseOrderClassMapping.get(internalName);
+				if (reverseName != null) {
+					markModified();
+					return reverseName;
+				}
+				return internalName;
 			}
-			return internalName;
-		}
-	};
+		};
+	}
 
 	/**
 	 * Lookup the original name of a mapped class.

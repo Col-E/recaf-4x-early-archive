@@ -22,5 +22,10 @@ public abstract class AbstractMappingKey implements MappingKey {
         return getAsText().compareTo(o.getAsText());
     }
 
+    @Override
+    public String toString() {
+        return getAsText();
+    }
+
     protected abstract String toText();
 }
