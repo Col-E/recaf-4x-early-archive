@@ -351,6 +351,7 @@ public class NumberUtil {
 	 * @return {@code base^exp}.
 	 */
 	public static int intPow(int base, int exp) {
+		if (exp < 0) throw new IllegalArgumentException("Exponent must be positive");
 		int result = 1;
 		while (true) {
 			if ((exp & 1) != 0) result *= base;
