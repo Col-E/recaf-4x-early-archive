@@ -14,6 +14,7 @@ import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
+import software.coley.recaf.services.mapping.gen.BasicNameGenerator;
 import software.coley.recaf.services.mapping.gen.MappingGenerator;
 import software.coley.recaf.services.mapping.gen.NameGenerator;
 import software.coley.recaf.services.mapping.gen.NameGeneratorFilter;
@@ -48,30 +49,7 @@ class MappingApplierTest extends TestBase {
 	@BeforeAll
 	static void setupGenerator() {
 		String alphabet = "abcdefghijklmnopqrstuvwxyz";
-		nameGenerator = new NameGenerator() {
-			private String name(String original) {
-				Random random = new Random(original.hashCode());
-				return StringUtil.generateName(alphabet, random.nextInt(1_000, 10_000));
-			}
-
-			@Nonnull
-			@Override
-			public String mapClass(@Nonnull ClassInfo info) {
-				return name(info.getName());
-			}
-
-			@Nonnull
-			@Override
-			public String mapField(@Nonnull ClassInfo owner, @Nonnull FieldMember field) {
-				return name(owner.getName() + field.getName());
-			}
-
-			@Nonnull
-			@Override
-			public String mapMethod(@Nonnull ClassInfo owner, @Nonnull MethodMember method) {
-				return name(owner.getName() + method.getName());
-			}
-		};
+		nameGenerator = new BasicNameGenerator(alphabet, 3);
 	}
 
 	@BeforeEach

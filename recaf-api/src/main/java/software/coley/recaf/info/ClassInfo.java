@@ -54,6 +54,13 @@ public interface ClassInfo extends Info, Annotated, Accessed {
 	}
 
 	/**
+	 * @return {@code true} when the class name has no package.
+	 */
+	default boolean isInDefaultPackage() {
+		return getPackageName() == null;
+	}
+
+	/**
 	 * @return Stream of all parent types, where the {@link #getSuperName()} is first if present,
 	 * followed by any {@link #getInterfaces()}.
 	 */

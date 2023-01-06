@@ -339,4 +339,24 @@ public class NumberUtil {
 			return value.intValue() >>> shift.intValue();
 		}
 	}
+
+	/**
+	 * Fast {@link Math#pow(double, double)} for {@code int}.
+	 *
+	 * @param base
+	 * 		Base value.
+	 * @param exp
+	 * 		Exponent power.
+	 *
+	 * @return {@code base^exp}.
+	 */
+	public static int intPow(int base, int exp) {
+		int result = 1;
+		while (true) {
+			if ((exp & 1) != 0) result *= base;
+			if ((exp >>= 1) == 0) break;
+			base *= base;
+		}
+		return result;
+	}
 }

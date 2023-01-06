@@ -362,17 +362,17 @@ public class StringUtil {
 		// String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 		char[] charz = alphabet.toCharArray();
 		int alphabetLength = charz.length;
-		int m = 8;
-		final char[] array = new char[m];
-		int n = m - 1;
+		int length = 8;
+		final char[] array = new char[length];
+		int offset = length - 1;
 		while (index > charz.length - 1) {
 			int k = Math.abs(-(index % alphabetLength));
-			array[n--] = charz[k];
+			array[offset--] = charz[k];
 			index /= alphabetLength;
 			index -= 1;
 		}
-		array[n] = charz[index];
-		return new String(array, n, m - n);
+		array[offset] = charz[index];
+		return new String(array, offset, length - offset);
 	}
 
 	/**
