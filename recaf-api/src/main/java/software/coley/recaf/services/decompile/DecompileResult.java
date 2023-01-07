@@ -42,6 +42,7 @@ public class DecompileResult {
 	 * @return Failure reason.
 	 * May be {@code null} when {@link #getType()} is not {@link ResultType#FAILURE}.
 	 */
+	@Nullable
 	public Throwable getException() {
 		return exception;
 	}
