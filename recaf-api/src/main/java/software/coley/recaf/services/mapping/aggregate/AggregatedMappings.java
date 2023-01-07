@@ -10,10 +10,7 @@ import software.coley.recaf.services.mapping.data.MemberMapping;
 import software.coley.recaf.services.mapping.data.MethodMapping;
 import software.coley.recaf.workspace.model.Workspace;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Mappings implementation for internal tracking of aggregated mappings.
@@ -245,7 +242,7 @@ public class AggregatedMappings extends IntermediateMappings {
 			// The old name must be the new mapping's base name.
 			// The descriptor types must also match.
 			if (oldMethodMapping.getNewName().equals(newMethodMapping.getOldName()) &&
-					oldMethodMapping.getDesc().equals(unmappedDesc)) {
+					Objects.equals(oldMethodMapping.getDesc(), unmappedDesc)) {
 				target = oldMethodMapping;
 				break;
 			}

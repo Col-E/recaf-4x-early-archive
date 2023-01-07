@@ -46,21 +46,25 @@ public class FieldMapping implements MemberMapping {
 		this.desc = desc;
 	}
 
+	@Nonnull
 	@Override
 	public String getOwnerName() {
 		return ownerName;
 	}
 
+	@Nullable
 	@Override
 	public String getDesc() {
 		return desc;
 	}
 
+	@Nonnull
 	@Override
 	public String getOldName() {
 		return oldName;
 	}
 
+	@Nonnull
 	@Override
 	public String getNewName() {
 		return newName;
