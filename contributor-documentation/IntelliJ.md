@@ -16,7 +16,8 @@ automatically implement methods from a `abstract class` or `interface` these int
 ![2](IntelliJ-settings-2.png)
 
 This second image makes it so the Jakarta `Nonnull` and `Nullable` annotations used in the project are recognized
-by IntelliJ. This allows us to have a basic system for tracking nullability. 
+by IntelliJ. This allows us to have a basic system for tracking nullability. You'll also want to ensure the default
+annotation is the Jakarta one after you add it to the list.
 
 Methods that can return `null` or parameters that may be `null` should be marked with `Nullable`.
 Any time one of these is used, it will warn you when you do not have an appropriate `null` check on a value.
