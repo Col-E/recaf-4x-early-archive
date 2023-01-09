@@ -87,3 +87,20 @@ When Recaf is launched, the `Bootstrap` class is used to initialize an instance 
 The `Bootstrap` class creates a CDI container that is configured to automatically discover implementations of the
 servivces outlined in the `api` module. Once this process is completed, the newly made CDI container is wrapped in
 a `Recaf` instance which lasts for the duration of the application.
+
+## Why are so many UI classes `@Dependent` scoped?
+
+There are multiple reasons.
+
+**1. On principle, they should not model/track data by themselves**
+
+For things like interactive controls that the user sees, they should not _ever_ track data by themselves.
+If a control cannot be tossed in the garbage without adverse side effects, it is poorly designed.
+These controls provide visual access to the data within the Recaf instance _(Like workspace contents)_, nothing more.
+
+**2. CDI cannot create proxies of classes with `final` methods, which UI classes often define**
+
+UI classes like JavaFX's `Menu` often have methods marked as `final` to prevent extensions to override certain behavior.
+The `Menu` class's `List<T> getItems()` is one of these methods. This prevents any `Menu` type being marked as a scope
+like `@ApplicationScoped` since our CDI implementation heavily relies on proxies for scope management.
+When a class is `@Dependent` that means it effectively has no scope, so there is no need to wrap it in a proxy.
