@@ -23,7 +23,8 @@ public class ClassLoaderInternals {
 		// Fetch UCP of application's ClassLoader
 		// - ((ClassLoaders.AppClassLoader) ClassLoaders.appClassLoader()).ucp
 		Class<?> clsClassLoaders = Class.forName("jdk.internal.loader.ClassLoaders");
-		Object appClassLoader = clsClassLoaders.getDeclaredMethod("appClassLoader").invoke(null);
+		Object appClassLoader = ReflectUtil.quietInvoke(clsClassLoaders, null, "appClassLoader",
+				new Class[0], new Object[0]);
 		Class<?> ucpOwner = appClassLoader.getClass();
 
 		// Field removed in 16, but still exists in parent class "BuiltinClassLoader"
