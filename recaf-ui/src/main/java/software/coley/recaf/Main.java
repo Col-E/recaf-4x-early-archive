@@ -7,6 +7,7 @@ import software.coley.recaf.plugin.PluginContainer;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.services.plugin.PluginManager;
 import software.coley.recaf.util.JFXValidation;
+import software.coley.recaf.util.Lang;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -58,29 +59,9 @@ public class Main {
 	 */
 	private static void initialize() {
 		initLogging();
+		initTranslations();
 		initPlugins();
 		RecafApplication.launch(RecafApplication.class, launchArgs);
-	}
-
-	/**
-	 * Load plugins.
-	 */
-	private static void initPlugins() {
-		// Plugin loading is handled in the implementation's @PostConstruct handler
-		PluginManager pluginManager = recaf.get(PluginManager.class);
-
-		// Log the discovered plugins
-		Collection<PluginContainer<? extends Plugin>> plugins = pluginManager.getPlugins();
-		if (plugins.isEmpty()) {
-			logger.info("Initialization: No plugins found");
-		} else {
-			String split = "\n - ";
-			logger.info("Initialization: {} plugins found:" + split + "{}",
-					plugins.size(),
-					plugins.stream().map(PluginContainer::getInformation)
-							.map(info -> info.getName() + " - " + info.getVersion())
-							.collect(Collectors.joining(split)));
-		}
 	}
 
 	/**
@@ -123,6 +104,34 @@ public class Main {
 			}
 		} catch (IOException ex) {
 			logger.warn("Failed to compress old logs", ex);
+		}
+	}
+
+	/**
+	 * Load translations.
+	 */
+	private static void initTranslations() {
+		Lang.initialize();
+	}
+
+	/**
+	 * Load plugins.
+	 */
+	private static void initPlugins() {
+		// Plugin loading is handled in the implementation's @PostConstruct handler
+		PluginManager pluginManager = recaf.get(PluginManager.class);
+
+		// Log the discovered plugins
+		Collection<PluginContainer<? extends Plugin>> plugins = pluginManager.getPlugins();
+		if (plugins.isEmpty()) {
+			logger.info("Initialization: No plugins found");
+		} else {
+			String split = "\n - ";
+			logger.info("Initialization: {} plugins found:" + split + "{}",
+					plugins.size(),
+					plugins.stream().map(PluginContainer::getInformation)
+							.map(info -> info.getName() + " - " + info.getVersion())
+							.collect(Collectors.joining(split)));
 		}
 	}
 }
