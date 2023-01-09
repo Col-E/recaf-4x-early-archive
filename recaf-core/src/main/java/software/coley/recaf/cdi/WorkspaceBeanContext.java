@@ -82,7 +82,7 @@ public class WorkspaceBeanContext implements AlterableContext, WorkspaceOpenList
 	}
 
 	@Override
-	public void onWorkspaceOpened(Workspace workspace) {
+	public void onWorkspaceOpened(@Nonnull Workspace workspace) {
 		// Clear cached beans if any were created while there was no active workspace
 		map.clear();
 	}

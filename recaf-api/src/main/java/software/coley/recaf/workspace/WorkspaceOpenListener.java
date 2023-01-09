@@ -1,5 +1,6 @@
 package software.coley.recaf.workspace;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.cdi.AutoRegisterWorkspaceListeners;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -16,5 +17,5 @@ public interface WorkspaceOpenListener {
 	 * @param workspace
 	 * 		New workspace assigned.
 	 */
-	void onWorkspaceOpened(Workspace workspace);
+	void onWorkspaceOpened(@Nonnull Workspace workspace);
 }

@@ -5,10 +5,7 @@ import software.coley.recaf.workspace.WorkspaceCloseListener;
 import software.coley.recaf.workspace.WorkspaceModificationListener;
 import software.coley.recaf.workspace.WorkspaceOpenListener;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * Applied to bean implementations that want to automatically register workspace listeners:
@@ -20,6 +17,7 @@ import java.lang.annotation.Target;
  *
  * @author Matt Coley
  */
+@Inherited
 @InterceptorBinding
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
