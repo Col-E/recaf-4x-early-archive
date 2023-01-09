@@ -11,10 +11,10 @@ project.ext {
     asm_tree = "org.ow2.asm:asm-tree:$asmVersion"
     asm_util = "org.ow2.asm:asm-util:$asmVersion"
 
+    atlantafx = 'io.github.mkpaz:atlantafx-base:1.1.0'
+
     baksmali = "org.smali:baksmali:$dexVersion"
     dexlib = "org.smali:dexlib2:$dexVersion"
-
-    directories = 'dev.dirs:directories:26'
 
     cafedude = "com.github.Col-E:CAFED00D:$cafeDudeVersion"
 
@@ -22,6 +22,9 @@ project.ext {
 
     cdi_api = 'jakarta.enterprise:jakarta.enterprise.cdi-api:4.0.1'
     cdi_impl = 'org.jboss.weld.se:weld-se-core:5.1.0.Final'
+
+    directories = 'dev.dirs:directories:26'
+    docking = 'com.github.Col-E:tiwulfx-dock:1.2.3'
 
     extra_collections = 'com.github.Col-E:ExtraCollections:1.2.1'
     extra_observables = 'com.github.Col-E:ExtraObservables:1.0.0'
