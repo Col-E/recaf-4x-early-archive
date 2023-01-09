@@ -81,6 +81,22 @@ CDI managed types.
                                     one implementation exists.
 - `T get(Class<T>)`: Gives you a single instance of the requested type `T`.
 
+## What scope should be used for ... ?
+
+Services that are effectively singletons will be `@ApplicationScoped`.
+
+Services that depend on the current content of a workspace will be `@WorkspaceScoped`.
+
+- In some cases, you may want to design a service as `@ApplicationScoped` and just pass in the `Workspace` as a method parameter.
+  For instance, implementing a search. It needs `Workspace` access for sure, but the behavior is constant so it makes more
+  sense to implement it this way as an `@ApplicationScoped` type.
+- A strong case for `@WorkspaceScoped` are services that directly correlate with the contents of a `Workspace`.
+  For instance, the inheritance graph service. The data it models will only ever be relevant to an active workspace.
+  Having to pass in a `Workspace` every time would make implementing caching difficult.
+
+Components acting only as views and wrappers to other components can mirror their dependencies' scope, 
+or use `@Dependent` since its not the view that really matters, but the data backing it.
+
 ## Launching Recaf
 
 When Recaf is launched, the `Bootstrap` class is used to initialize an instance of `Recaf`.
@@ -97,6 +113,8 @@ There are multiple reasons.
 For things like interactive controls that the user sees, they should not _ever_ track data by themselves.
 If a control cannot be tossed in the garbage without adverse side effects, it is poorly designed.
 These controls provide visual access to the data within the Recaf instance _(Like workspace contents)_, nothing more.
+
+This is briefly mentioned before when discussing _"when should I use X scope?"_.
 
 **2. CDI cannot create proxies of classes with `final` methods, which UI classes often define**
 
