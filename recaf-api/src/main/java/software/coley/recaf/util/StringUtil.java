@@ -3,6 +3,7 @@ package software.coley.recaf.util;
 import com.carrotsearch.hppc.CharIntHashMap;
 import com.carrotsearch.hppc.CharIntMap;
 import com.carrotsearch.hppc.cursors.CharIntCursor;
+import jakarta.annotation.Nonnull;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -45,6 +46,20 @@ public class StringUtil {
 		if (split[0].isEmpty())
 			return Arrays.copyOfRange(split, 1, split.length);
 		return split;
+	}
+
+	/**
+	 * @param text
+	 * 		Input text.
+	 * @param cutoff
+	 * 		Sequence to match up to.
+	 *
+	 * @return Input text, up until the first cutoff sequence.
+	 */
+	public static String cutOffAtFirst(@Nonnull String text, @Nonnull String cutoff) {
+		int i = text.indexOf(cutoff);
+		if (i < 0) return text;
+		return text.substring(0, i);
 	}
 
 	/**
