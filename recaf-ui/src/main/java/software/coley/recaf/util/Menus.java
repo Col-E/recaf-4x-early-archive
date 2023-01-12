@@ -100,7 +100,7 @@ public class Menus {
 	 */
 	public static Menu menu(String textKey, Ikon icon, Color color) {
 		FontIconView graphic = color == null ?
-				new FontIconView(icon, IconView.DEFAULT_ICON_SIZE, Color.WHITE) :
+				new FontIconView(icon) :
 				new FontIconView(icon, IconView.DEFAULT_ICON_SIZE, color);
 		return menu(textKey, graphic);
 	}
@@ -222,7 +222,7 @@ public class Menus {
 	 */
 	public static ActionMenuItem action(String textKey, Ikon icon, Color color, Runnable runnable) {
 		FontIconView graphic = color == null ?
-				new FontIconView(icon, IconView.DEFAULT_ICON_SIZE, Color.WHITE) :
+				new FontIconView(icon) :
 				new FontIconView(icon, IconView.DEFAULT_ICON_SIZE, color);
 		return action(textKey, graphic, runnable);
 	}
