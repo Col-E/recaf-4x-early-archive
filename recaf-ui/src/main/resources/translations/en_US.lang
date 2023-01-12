@@ -109,8 +109,13 @@ dialog.restart=To change this configuration option, a restart is recommended.\nA
 dialog.unknownextension=Unknown file extension. Do you want to configure a language association?
 
 ## File chooser
+dialog.title.primary=Primary resource
+dialog.title.supporting=Supporting resources
 dialog.file.open=Open
+dialog.file.open.directory=Directories
+dialog.file.open.file=Files
 dialog.file.export=Export
+dialog.file.nothing=Nothing selected
 dialog.filefilter.any=Any type
 dialog.filefilter.mapping=Mappings
 dialog.filefilter.input=Applications
