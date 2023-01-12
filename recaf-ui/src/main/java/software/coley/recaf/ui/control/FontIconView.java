@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.control;
 
+import jakarta.annotation.Nullable;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -24,12 +25,20 @@ public class FontIconView extends Text {
 	/**
 	 * @param icon
 	 * 		Icon to use.
+	 */
+	public FontIconView(Ikon icon) {
+		this(icon, IconView.DEFAULT_ICON_SIZE, null);
+	}
+
+	/**
+	 * @param icon
+	 * 		Icon to use.
 	 * @param size
 	 * 		Size of icon in pixels.
 	 * @param color
-	 * 		Color to use.
+	 * 		Optional color to use.
 	 */
-	public FontIconView(Ikon icon, int size, Color color) {
+	public FontIconView(Ikon icon, int size, @Nullable Color color) {
 		int code = icon.getCode();
 		IkonHandler ikonHandler = codeToHandler.computeIfAbsent(code, k -> resolver.resolve(icon.getDescription()));
 
@@ -37,7 +46,8 @@ public class FontIconView extends Text {
 		Font font = (Font) ikonHandler.getFont();
 		Font sizedFont = new Font(font.getFamily(), size);
 		setFont(sizedFont);
-		setFill(color);
+		if (color != null) setFill(color);
+		else setStyle("-fx-fill: -color-fg-default;");
 
 		// Set text to ikonli character
 		if (code <= '\uFFFF') {
