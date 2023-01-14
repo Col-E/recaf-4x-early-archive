@@ -2,7 +2,6 @@ package software.coley.recaf.ui.config;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import software.coley.collections.Lists;
 import software.coley.observables.ObservableCollection;
 import software.coley.observables.ObservableInteger;
 import software.coley.observables.ObservableObject;
@@ -19,7 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -59,7 +57,15 @@ public class RecentFilesConfig extends BasicConfigContainer {
 		WorkspaceModel workspaceModel = new WorkspaceModel(primary, libraries);
 
 		// Update value
-		recentWorkspaces.add(workspaceModel);
+		if (recentWorkspaces.contains(workspaceModel)) {
+			// Re-insert at 0'th position so that its at the "top" of the list.
+			List<WorkspaceModel> updatedList = new ArrayList<>(recentWorkspaces.getValue());
+			updatedList.remove(workspaceModel);
+			updatedList.add(0, workspaceModel);
+			recentWorkspaces.setValue(updatedList);
+		} else {
+			recentWorkspaces.add(workspaceModel);
+		}
 	}
 
 	/**
@@ -72,9 +78,8 @@ public class RecentFilesConfig extends BasicConfigContainer {
 		List<WorkspaceModel> loadable = current.stream()
 				.filter(WorkspaceModel::canLoadWorkspace)
 				.toList();
-		if (current.size() != loadable.size()) {
+		if (current.size() != loadable.size())
 			recentWorkspaces.setValue(loadable);
-		}
 	}
 
 	/**
