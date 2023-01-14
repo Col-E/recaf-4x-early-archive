@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.control;
+package software.coley.recaf.ui.wizard;
 
 import atlantafx.base.controls.Spacer;
 import atlantafx.base.theme.Styles;
@@ -21,6 +21,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import software.coley.recaf.ui.control.ActionButton;
+import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.util.Lang;
 
 import java.awt.*;
@@ -35,6 +37,7 @@ import java.util.List;
  */
 public class Wizard extends VBox {
 	private final List<WizardPage> pages;
+	private Runnable onFinish;
 
 	/**
 	 * @param pages
@@ -70,6 +73,12 @@ public class Wizard extends VBox {
 				steps.canGoForwardProperty()
 		);
 		Button next = new ActionButton(nextBinding, () -> {
+			// Cannot go forward only for last page (finish) so handle finish callback here
+			if (!steps.canGoForwardProperty().get() && onFinish != null) {
+				onFinish.run();
+			}
+
+			// Standard progression
 			if (steps.getSelectedPage().canProgressProperty().get()) {
 				steps.forward();
 			} else {
@@ -87,6 +96,14 @@ public class Wizard extends VBox {
 		setMinWidth(600);
 		setPadding(new Insets(15));
 		getChildren().addAll(steps, content, new Separator(), controls);
+	}
+
+	/**
+	 * @param onFinish
+	 * 		Action to run when the user presses the finish button on the last page.
+	 */
+	public void setOnFinish(Runnable onFinish) {
+		this.onFinish = onFinish;
 	}
 
 	/**
@@ -240,20 +257,26 @@ public class Wizard extends VBox {
 
 		/**
 		 * Go back a page if allowed.
+		 *
+		 * @return {@code true} when moved.
 		 */
-		public void backward() {
-			if (!canGoBack.get()) return;
+		public boolean backward() {
+			if (!canGoBack.get()) return false;
 			int current = pages.indexOf(selectedPage.get());
 			selectedPage.set(pages.get(current - 1));
+			return true;
 		}
 
 		/**
 		 * Go forward a page if allowed.
+		 *
+		 * @return {@code true} when moved.
 		 */
-		public void forward() {
-			if (!canGoForward.get()) return;
+		public boolean forward() {
+			if (!canGoForward.get()) return false;
 			int current = pages.indexOf(selectedPage.get());
 			selectedPage.set(pages.get(current + 1));
+			return true;
 		}
 	}
 }
