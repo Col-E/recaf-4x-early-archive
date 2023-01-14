@@ -43,6 +43,21 @@ public interface Workspace extends Closing {
 	List<WorkspaceResource> getInternalSupportingResources();
 
 	/**
+	 * @param resource
+	 * 		Resource to add to {@link #getSupportingResources()}.
+	 */
+	void addSupportingResource(@Nonnull WorkspaceResource resource);
+
+	/**
+	 * @param resource
+	 * 		Resource to remove from {@link #getSupportingResources()}.
+	 *
+	 * @return {@code true} when the resource was removed.
+	 * {@code false} when it was not present.
+	 */
+	boolean removeSupportingResource(@Nonnull WorkspaceResource resource);
+
+	/**
 	 * @param includeInternal
 	 * 		Flag to include internal supporting resources.
 	 *

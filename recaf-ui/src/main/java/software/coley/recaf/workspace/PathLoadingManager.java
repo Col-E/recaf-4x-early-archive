@@ -83,4 +83,28 @@ public class PathLoadingManager {
 			}
 		});
 	}
+
+	/**
+	 * @param workspace
+	 * 		Workspace to add to.
+	 * @param supportingPaths
+	 * 		Paths to the supporting resource files.
+	 * @param errorHandling
+	 * 		Error handling for invalid input.
+	 */
+	public void asyncAddSupportingResourcesToWorkspace(@Nonnull Workspace workspace,
+													   @Nonnull List<Path> supportingPaths,
+													   @Nonnull Consumer<IOException> errorHandling) {
+		// Load resources from paths.
+		loadPool.submit(() -> {
+			try {
+				for (Path supportingPath : supportingPaths) {
+					WorkspaceResource supportResource = resourceImporter.importResource(supportingPath);
+					workspace.addSupportingResource(supportResource);
+				}
+			} catch (IOException ex) {
+				errorHandling.accept(ex);
+			}
+		});
+	}
 }

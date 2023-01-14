@@ -49,19 +49,30 @@ public class BasicWorkspace implements Workspace {
 	@Nonnull
 	@Override
 	public List<WorkspaceResource> getSupportingResources() {
-		return supporting;
+		return Collections.unmodifiableList(supporting);
 	}
 
 	@Nonnull
 	@Override
 	public List<WorkspaceResource> getInternalSupportingResources() {
+		// Internal list is already unmodifiable, no need to wrap.
 		return internal;
+	}
+
+	@Override
+	public void addSupportingResource(@Nonnull WorkspaceResource resource) {
+		supporting.add(resource);
+	}
+
+	@Override
+	public boolean removeSupportingResource(@Nonnull WorkspaceResource resource) {
+		return supporting.remove(resource);
 	}
 
 	@Nonnull
 	@Override
 	public List<WorkspaceModificationListener> getWorkspaceModificationListeners() {
-		return modificationListeners;
+		return Collections.unmodifiableList(modificationListeners);
 	}
 
 	@Override
