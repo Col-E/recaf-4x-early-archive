@@ -1,6 +1,8 @@
 package software.coley.recaf.workspace.model;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.behavior.Closing;
+import software.coley.recaf.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -83,6 +85,16 @@ public class BasicWorkspace implements Workspace {
 	@Override
 	public void removeWorkspaceModificationListener(WorkspaceModificationListener listener) {
 		modificationListeners.remove(listener);
+	}
+
+	/**
+	 * Called by {@link WorkspaceManager} when the workspace is closed.
+	 */
+	@Override
+	public void close() {
+		modificationListeners.clear();
+		supporting.forEach(Closing::close);
+		primary.close();
 	}
 
 	@Override

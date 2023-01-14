@@ -183,14 +183,4 @@ public interface Workspace extends Closing {
 		}
 		return new FindResult<>(this, null, null, null);
 	}
-
-	/**
-	 * Called by {@link WorkspaceManager} when the workspace is closed.
-	 */
-	@Override
-	default void close() {
-		getWorkspaceModificationListeners().clear();
-		getSupportingResources().forEach(Closing::close);
-		getPrimaryResource().close();
-	}
 }
