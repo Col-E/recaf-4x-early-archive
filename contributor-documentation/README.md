@@ -7,8 +7,9 @@ not strictly necessary.
 More in depth information can be found here:
 
  - Architecture
-   - [Modules](Architecture-Modules.md)
-   - [CDI](Architecture-CDI.md)
+   - [Libraries used](Architecture-Libraries.md)
+   - [Recaf's project modules](Architecture-Modules.md)
+   - [Recaf's CDI usage](Architecture-CDI.md)
  - [IntelliJ: Configuring for Recaf](IntelliJ.md)
  - [Workspaces: What are they and how do I work with them?](Workspace.md)
 
