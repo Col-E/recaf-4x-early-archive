@@ -203,6 +203,14 @@ dialog.conv.title.expression=Number expression
 ## Quick nav
 dialog.quicknav=Quick navigation
 
+## Error dialog
+dialog.error.loadworkspace.title=Failed to load workspace
+dialog.error.loadworkspace.header=An error occurred when reading from the selected files
+dialog.error.loadworkspace.content=The error was:
+dialog.error.loadsupport.title=Failed to load supporting resources
+dialog.error.loadsupport.header=An error occurred when reading from the selected files
+dialog.error.loadsupport.content=The error was:
+
 ## Wizard
 wizard.chooseaction=Choose an action
 wizard.selectprimary=Select primary resource
