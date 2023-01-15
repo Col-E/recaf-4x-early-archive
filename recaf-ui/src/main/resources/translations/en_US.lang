@@ -204,6 +204,9 @@ dialog.conv.title.expression=Number expression
 dialog.quicknav=Quick navigation
 
 ## Error dialog
+dialog.error.exportworkspace.title=Failed to export workspace
+dialog.error.exportworkspace.header=An error occurred when writing to the destination
+dialog.error.exportworkspace.content=The error was:
 dialog.error.loadworkspace.title=Failed to load workspace
 dialog.error.loadworkspace.header=An error occurred when reading from the selected files
 dialog.error.loadworkspace.content=The error was:

@@ -61,10 +61,10 @@ public class PathPromptPane extends BorderPane {
 		ObservableValue<String> openText = isFile.map(is -> Lang.get("dialog.file.open") + " - " +
 				(is ? Lang.get("dialog.file.open.file") : Lang.get("dialog.file.open.directory")));
 		Button openButton = new ActionButton(openText, () -> {
-			File filePath = recentFilesConfig.getLastWorkspaceOpenDirectory().unboxingMap(File::new);
+			File recentOpenDir = recentFilesConfig.getLastWorkspaceOpenDirectory().unboxingMap(File::new);
 			if (isFile.get()) {
 				FileChooser chooser = new FileChooser();
-				chooser.setInitialDirectory(filePath);
+				chooser.setInitialDirectory(recentOpenDir);
 				chooser.setTitle(Lang.get("dialog.file.open"));
 
 				// Show the prompt, update the path when complete
@@ -76,7 +76,7 @@ public class PathPromptPane extends BorderPane {
 				}
 			} else {
 				DirectoryChooser chooser = new DirectoryChooser();
-				chooser.setInitialDirectory(filePath);
+				chooser.setInitialDirectory(recentOpenDir);
 				chooser.setTitle(Lang.get("dialog.file.open"));
 
 				// Show the prompt, update the path when complete
