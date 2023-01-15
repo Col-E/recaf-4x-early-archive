@@ -48,7 +48,6 @@ public class BasicAttachManager implements AttachManager {
 	private final Map<VirtualMachineDescriptor, String> virtualMachineMainClassMap = new ConcurrentHashMap<>();
 	private final ObservableList<VirtualMachineDescriptor> virtualMachineDescriptors = new ObservableList<>();
 	private final AttachManagerConfig config;
-	private volatile boolean scanning;
 	private static ExtractState extractState = ExtractState.DEFAULT;
 
 	@Inject
@@ -69,7 +68,7 @@ public class BasicAttachManager implements AttachManager {
 					logger.debug("Extracting agent jar to Recaf directory: {}", agentPath.getFileName());
 					Files.createDirectories(config.getAgentDirectory());
 					Extractor.extractToPath(agentPath);
-					ThreadUtil.scheduleAtFixedRate(this::update, 0, 1, TimeUnit.SECONDS);
+					ThreadUtil.scheduleAtFixedRate(this::passiveScanUpdate, 0, 1, TimeUnit.SECONDS);
 					extractState = ExtractState.SUCCESS;
 				} catch (IOException e) {
 					extractState = ExtractState.FAILURE;
@@ -82,80 +81,12 @@ public class BasicAttachManager implements AttachManager {
 	}
 
 	/**
-	 * Check for new virtual machines.
+	 * Check for new virtual machines in the background.
 	 */
-	private void update() {
-		if (!isScanning())
+	private void passiveScanUpdate() {
+		if (!config.getPassiveScanning().getValue())
 			return;
-		int numDescriptors = virtualMachineDescriptors.size();
-		List<VirtualMachineDescriptor> remoteVmList = VirtualMachine.list();
-		Set<VirtualMachineDescriptor> toRemove = new HashSet<>(virtualMachineDescriptors);
-		List<CompletableFuture<?>> attachFutures = new ArrayList<>();
-		for (VirtualMachineDescriptor descriptor : remoteVmList) {
-			// Still active in VM list, keep it.
-			toRemove.remove(descriptor);
-
-			// Add if not in the list.
-			if (!virtualMachineDescriptors.contains(descriptor)) {
-				String label = descriptor.id() + " - " + StringUtil.withEmptyFallback(descriptor.displayName(), "?");
-				int pid = mapToPid(descriptor);
-				if (pid == currentPid) // skip self
-					continue;
-
-				// Using futures for attach in case one of the VM's decides to hang on response.
-				// Using 'orTimeout' we can prevent such hangs from affecting us.
-				attachFutures.add(ThreadUtil.run(() -> {
-					try {
-						AttachProvider provider = descriptor.provider();
-						return provider.attachVirtualMachine(descriptor);
-					} catch (IOException ex) {
-						virtualMachineFailureMap.put(descriptor, ex);
-						logger.trace("Remote JVM descriptor found (attach-success, read-failure): " + label);
-					} catch (AttachNotSupportedException ex) {
-						virtualMachineFailureMap.put(descriptor, ex);
-						logger.trace("Remote JVM descriptor found (attach-failure): " + label);
-					} catch (Throwable t) {
-						logger.error("Unhandled exception populating remote VM info", t);
-					}
-					return null;
-				}).orTimeout(500, TimeUnit.MILLISECONDS).thenAccept(machine -> {
-					if (machine != null) {
-						virtualMachineMap.put(descriptor, machine);
-						logger.trace("Remote JVM descriptor found (attach-success): " + label);
-
-						// Extract additional information
-						try {
-							virtualMachinePropertiesMap.put(descriptor, machine.getSystemProperties());
-							virtualMachinePidMap.put(descriptor, pid);
-							virtualMachineMainClassMap.put(descriptor, mapToMainClass(descriptor));
-
-							// Insert descriptor in sorted order.
-							int lastComparison = 1;
-							synchronized (virtualMachineDescriptors) {
-								for (int i = 0; i < numDescriptors; i++) {
-									VirtualMachineDescriptor other = virtualMachineDescriptors.get(i);
-									int comparison = descriptorComparator.compare(descriptor, other);
-									if (comparison < lastComparison) {
-										virtualMachineDescriptors.add(i, descriptor);
-										return;
-									}
-								}
-
-								// Greater than all entries, append to end
-								virtualMachineDescriptors.add(descriptor);
-							}
-						} catch (IOException ex) {
-							logger.error("Could not read system properties from remote JVM: " + descriptor, ex);
-						}
-					}
-				}));
-			}
-		}
-		// When all attach attachFutures complete, update the observable list to update the UI
-		ThreadUtil.allOf(attachFutures.toArray(new CompletableFuture[0])).thenRun(() -> {
-			// Remove entries not visited in this pass
-			virtualMachineDescriptors.removeAll(toRemove);
-		});
+		scan();
 	}
 
 	/**
@@ -257,6 +188,84 @@ public class BasicAttachManager implements AttachManager {
 	}
 
 	@Override
+	public boolean canAttach() {
+		return isAgentReady();
+	}
+
+	@Override
+	public void scan() {
+		int numDescriptors = virtualMachineDescriptors.size();
+		List<VirtualMachineDescriptor> remoteVmList = VirtualMachine.list();
+		Set<VirtualMachineDescriptor> toRemove = new HashSet<>(virtualMachineDescriptors);
+		List<CompletableFuture<?>> attachFutures = new ArrayList<>();
+		for (VirtualMachineDescriptor descriptor : remoteVmList) {
+			// Still active in VM list, keep it.
+			toRemove.remove(descriptor);
+
+			// Add if not in the list.
+			if (!virtualMachineDescriptors.contains(descriptor)) {
+				String label = descriptor.id() + " - " + StringUtil.withEmptyFallback(descriptor.displayName(), "?");
+				int pid = mapToPid(descriptor);
+				if (pid == currentPid) // skip self
+					continue;
+
+				// Using futures for attach in case one of the VM's decides to hang on response.
+				// Using 'orTimeout' we can prevent such hangs from affecting us.
+				attachFutures.add(ThreadUtil.run(() -> {
+					try {
+						AttachProvider provider = descriptor.provider();
+						return provider.attachVirtualMachine(descriptor);
+					} catch (IOException ex) {
+						virtualMachineFailureMap.put(descriptor, ex);
+						logger.trace("Remote JVM descriptor found (attach-success, read-failure): " + label);
+					} catch (AttachNotSupportedException ex) {
+						virtualMachineFailureMap.put(descriptor, ex);
+						logger.trace("Remote JVM descriptor found (attach-failure): " + label);
+					} catch (Throwable t) {
+						logger.error("Unhandled exception populating remote VM info", t);
+					}
+					return null;
+				}).orTimeout(500, TimeUnit.MILLISECONDS).thenAccept(machine -> {
+					if (machine != null) {
+						virtualMachineMap.put(descriptor, machine);
+						logger.trace("Remote JVM descriptor found (attach-success): " + label);
+
+						// Extract additional information
+						try {
+							virtualMachinePropertiesMap.put(descriptor, machine.getSystemProperties());
+							virtualMachinePidMap.put(descriptor, pid);
+							virtualMachineMainClassMap.put(descriptor, mapToMainClass(descriptor));
+
+							// Insert descriptor in sorted order.
+							int lastComparison = 1;
+							synchronized (virtualMachineDescriptors) {
+								for (int i = 0; i < numDescriptors; i++) {
+									VirtualMachineDescriptor other = virtualMachineDescriptors.get(i);
+									int comparison = descriptorComparator.compare(descriptor, other);
+									if (comparison < lastComparison) {
+										virtualMachineDescriptors.add(i, descriptor);
+										return;
+									}
+								}
+
+								// Greater than all entries, append to end
+								virtualMachineDescriptors.add(descriptor);
+							}
+						} catch (IOException ex) {
+							logger.error("Could not read system properties from remote JVM: " + descriptor, ex);
+						}
+					}
+				}));
+			}
+		}
+		// When all attach attachFutures complete, update the observable list to update the UI
+		ThreadUtil.allOf(attachFutures.toArray(new CompletableFuture[0])).thenRun(() -> {
+			// Remove entries not visited in this pass
+			virtualMachineDescriptors.removeAll(toRemove);
+		});
+	}
+
+	@Override
 	public WorkspaceRemoteVmResource connect(VirtualMachineDescriptor item) {
 		VirtualMachine virtualMachine = virtualMachineMap.get(item);
 		try {
@@ -323,16 +332,6 @@ public class BasicAttachManager implements AttachManager {
 	@Override
 	public ObservableList<VirtualMachineDescriptor> getVirtualMachineDescriptors() {
 		return virtualMachineDescriptors;
-	}
-
-	@Override
-	public boolean isScanning() {
-		return scanning;
-	}
-
-	@Override
-	public void setScanning(boolean scanning) {
-		this.scanning = scanning;
 	}
 
 	@Nonnull

@@ -17,6 +17,17 @@ public interface AttachManager extends Service {
 	String SERVICE_ID = "attach";
 
 	/**
+	 * @return {@code true} when attach is supported.
+	 * Typically only {@code false} when the agent fails to extract onto the local file system.
+	 */
+	boolean canAttach();
+
+	/**
+	 * Refresh available remote JVMs.
+	 */
+	void scan();
+
+	/**
 	 * Connect to the given VM.
 	 *
 	 * @param item
@@ -70,15 +81,4 @@ public interface AttachManager extends Service {
 	 * @return Observable list of virtual machine descriptors.
 	 */
 	ObservableList<VirtualMachineDescriptor> getVirtualMachineDescriptors();
-
-	/**
-	 * @return {@code true} when passive scanning for new remote VMs.
-	 */
-	boolean isScanning();
-
-	/**
-	 * @param scanning
-	 *        {@code true} to enable passive scanning for new remote VMs.
-	 */
-	void setScanning(boolean scanning);
 }
