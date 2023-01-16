@@ -6,6 +6,7 @@ import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import software.coley.recaf.services.window.WindowManager;
+import software.coley.recaf.ui.RecafTheme;
 import software.coley.recaf.ui.menubar.MainMenu;
 
 /**
@@ -19,7 +20,7 @@ public class RecafApplication extends Application {
 	@Override
 	public void start(Stage stage) {
 		// Setup global style
-		setUserAgentStylesheet(new NordDark().getUserAgentStylesheet());
+		setUserAgentStylesheet(new RecafTheme().getUserAgentStylesheet());
 
 		// Get components
 		MainMenu menu = recaf.get(MainMenu.class);
