@@ -47,6 +47,7 @@ public class BasicAttachManager implements AttachManager {
 	private final Map<VirtualMachineDescriptor, Properties> virtualMachinePropertiesMap = new ConcurrentHashMap<>();
 	private final Map<VirtualMachineDescriptor, String> virtualMachineMainClassMap = new ConcurrentHashMap<>();
 	private final ObservableList<VirtualMachineDescriptor> virtualMachineDescriptors = new ObservableList<>();
+	private final List<PostScanListener> postScanListeners = new ArrayList<>();
 	private final AttachManagerConfig config;
 	private static ExtractState extractState = ExtractState.DEFAULT;
 
@@ -197,6 +198,7 @@ public class BasicAttachManager implements AttachManager {
 		int numDescriptors = virtualMachineDescriptors.size();
 		List<VirtualMachineDescriptor> remoteVmList = VirtualMachine.list();
 		Set<VirtualMachineDescriptor> toRemove = new HashSet<>(virtualMachineDescriptors);
+		Set<VirtualMachineDescriptor> toAdd = new HashSet<>();
 		List<CompletableFuture<?>> attachFutures = new ArrayList<>();
 		for (VirtualMachineDescriptor descriptor : remoteVmList) {
 			// Still active in VM list, keep it.
@@ -243,6 +245,7 @@ public class BasicAttachManager implements AttachManager {
 									VirtualMachineDescriptor other = virtualMachineDescriptors.get(i);
 									int comparison = descriptorComparator.compare(descriptor, other);
 									if (comparison < lastComparison) {
+										toAdd.add(descriptor);
 										virtualMachineDescriptors.add(i, descriptor);
 										return;
 									}
@@ -262,6 +265,10 @@ public class BasicAttachManager implements AttachManager {
 		ThreadUtil.allOf(attachFutures.toArray(new CompletableFuture[0])).thenRun(() -> {
 			// Remove entries not visited in this pass
 			virtualMachineDescriptors.removeAll(toRemove);
+
+			// Call listeners
+			for (PostScanListener listener : postScanListeners)
+				listener.scanCompleted(toAdd, toRemove);
 		});
 	}
 
@@ -332,6 +339,16 @@ public class BasicAttachManager implements AttachManager {
 	@Override
 	public ObservableList<VirtualMachineDescriptor> getVirtualMachineDescriptors() {
 		return virtualMachineDescriptors;
+	}
+
+	@Override
+	public void addPostScanListener(PostScanListener listener) {
+		postScanListeners.add(listener);
+	}
+
+	@Override
+	public void removePostScanListener(PostScanListener listener) {
+		postScanListeners.remove(listener);
 	}
 
 	@Nonnull

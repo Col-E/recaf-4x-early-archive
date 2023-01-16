@@ -81,4 +81,14 @@ public interface AttachManager extends Service {
 	 * @return Observable list of virtual machine descriptors.
 	 */
 	ObservableList<VirtualMachineDescriptor> getVirtualMachineDescriptors();
+
+	/**
+	 * @param listener Listener to add.
+	 */
+	void addPostScanListener(PostScanListener listener);
+
+	/**
+	 * @param listener Listener to remove.
+	 */
+	void removePostScanListener(PostScanListener listener);
 }
