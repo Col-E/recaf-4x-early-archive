@@ -11,7 +11,6 @@ import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.services.attach.AttachManager;
 import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.ui.config.RecentFilesConfig;
 import software.coley.recaf.ui.control.ClosableActionMenuItem;
@@ -49,7 +48,6 @@ public class FileMenu extends WorkspaceAwareMenu {
 	private final PathLoadingManager pathLoadingManager;
 	private final PathExportingManager pathExportingManager;
 	private final WindowManager windowManager;
-	private final AttachManager attachManager;
 	// config
 	private final RecentFilesConfig recentFilesConfig;
 
@@ -58,11 +56,9 @@ public class FileMenu extends WorkspaceAwareMenu {
 					PathLoadingManager pathLoadingManager,
 					PathExportingManager pathExportingManager,
 					WindowManager windowManager,
-					AttachManager attachManager,
 					RecentFilesConfig recentFilesConfig) {
 		super(workspaceManager);
 		this.workspaceManager = workspaceManager;
-		this.attachManager = attachManager;
 		this.pathLoadingManager = pathLoadingManager;
 		this.pathExportingManager = pathExportingManager;
 		this.windowManager = windowManager;
@@ -187,7 +183,7 @@ public class FileMenu extends WorkspaceAwareMenu {
 		stage.setMinWidth(630);
 		stage.setMinHeight(390);
 		stage.show();
-		windowManager.register(stage);
+		windowManager.registerAnonymous(stage);
 	}
 
 	/**
@@ -218,32 +214,24 @@ public class FileMenu extends WorkspaceAwareMenu {
 		stage.setMinWidth(630);
 		stage.setMinHeight(390);
 		stage.show();
-		windowManager.register(stage);
+		windowManager.registerAnonymous(stage);
 	}
 
+	/**
+	 * Display the attach window.
+	 */
 	private void openAttach() {
-		// TODO: Reimplement
-
-		/*
-		GenericWindow window = windows.getAttachWindow();
-		window.titleProperty().bind(Lang.getBinding("menu.file.attach"));
-		window.getStage().setWidth(750);
-		window.getStage().setHeight(450);
-		window.show();
-		window.requestFocus();*/
+		Stage remoteVmWindow = windowManager.getRemoteVmWindow();
+		remoteVmWindow.show();
+		remoteVmWindow.requestFocus();
 	}
 
+	/**
+	 * Display the change viewer window.
+	 */
 	private void openChangeViewer() {
-		// TODO: Reimplement
-
-		/*
-		GenericWindow window = windows.getModificationsWindow();
-		window.titleProperty().bind(Lang.getBinding("modifications.title"));
-		window.getStage().setWidth(750);
-		window.getStage().setHeight(450);
-		window.show();
-		window.requestFocus();
-		 */
+		// TODO: Reimplement change viewer, give it its own @Dependent window like 'RemoteVirtualMachinesWindow'
+		//       and the behavior above in 'openAttach'
 	}
 
 	/**
@@ -265,7 +253,7 @@ public class FileMenu extends WorkspaceAwareMenu {
 	 */
 	private void quit() {
 		// Close all windows. The main window's exit handler should handle the application shutdown.
-		for (Stage window : new ArrayList<>(windowManager.getWindows()))
+		for (Stage window : new ArrayList<>(windowManager.getActiveWindows()))
 			window.close();
 	}
 }

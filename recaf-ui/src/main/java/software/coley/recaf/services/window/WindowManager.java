@@ -1,15 +1,20 @@
 package software.coley.recaf.services.window;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.event.EventHandler;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import org.slf4j.Logger;
 import software.coley.collections.observable.ObservableList;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.Service;
+import software.coley.recaf.ui.window.IdentifiableStage;
 
-import java.util.ConcurrentModificationException;
+import java.util.*;
 
 /**
  * Manages active {@link Stage} windows.
@@ -18,13 +23,25 @@ import java.util.ConcurrentModificationException;
  */
 @ApplicationScoped
 public class WindowManager implements Service {
+	private static final Logger logger = Logging.get(WindowManager.class);
 	public static final String SERVICE_ID = "window-manager";
+	// Built-in window keys
+	public static final String WIN_MAIN = "main";
+	public static final String WIN_REMOTE_VMS = "remote-vms";
+	// Manager instance data
 	private final WindowManagerConfig config;
-	private final ObservableList<Stage> windows = new ObservableList<>();
+	private final ObservableList<Stage> activeWindows = new ObservableList<>();
+	private final Map<String, Stage> windowMappings = new HashMap<>();
 
 	@Inject
-	public WindowManager(WindowManagerConfig config) {
+	public WindowManager(WindowManagerConfig config, Instance<IdentifiableStage> stages) {
 		this.config = config;
+
+		// Register identifiable stages.
+		// These will be @Dependent scoped, so we need to be careful with their instances.
+		// Interacting with named windows should always be done through this class to prevent duplicate allocations.
+		for (IdentifiableStage stage : stages)
+			register(stage.getId(), stage.asStage());
 	}
 
 	/**
@@ -33,25 +50,48 @@ public class WindowManager implements Service {
 	 * @param stage
 	 * 		Stage to register.
 	 */
-	public void register(Stage stage) {
+	public void registerAnonymous(@Nonnull Stage stage) {
+		register(UUID.randomUUID().toString(), stage);
+	}
+
+	/**
+	 * Register listeners on the stage to monitor active state.
+	 *
+	 * @param id
+	 * 		Unique stage identifier.
+	 * @param stage
+	 * 		Stage to register.
+	 */
+	public void register(@Nonnull String id, @Nonnull Stage stage) {
+		// Validate input, ensuring duplicate allocations are not allowed.
+		if (windowMappings.containsKey(id))
+			throw new IllegalStateException("The stage ID was already registered: " + id);
+
 		EventHandler<WindowEvent> baseOnShown = stage.getOnShown();
 		EventHandler<WindowEvent> baseOnHidden = stage.getOnHidden();
 
 		// Wrap original handlers to keep existing behavior.
 		// Record when windows are 'active' based on visibility.
 		EventHandler<WindowEvent> onShown = e -> {
-			windows.add(stage);
+			logger.trace("Stage showing: {}", id);
+			activeWindows.add(stage);
 			if (baseOnShown != null) baseOnShown.handle(e);
+
 		};
 		EventHandler<WindowEvent> onHidden = e -> {
-			windows.remove(stage);
+			logger.trace("Stage hiding: {}", id);
+			activeWindows.remove(stage);
 			if (baseOnHidden != null) baseOnHidden.handle(e);
 		};
 		stage.setOnShown(onShown);
 		stage.setOnHidden(onHidden);
 
 		// If state is already visible, add it right away.
-		if (stage.isShowing()) windows.add(stage);
+		if (stage.isShowing()) activeWindows.add(stage);
+
+		// Register id --> stage
+		windowMappings.put(id, stage);
+		logger.debug("Register stage: {}", id);
 	}
 
 	/**
@@ -61,8 +101,29 @@ public class WindowManager implements Service {
 	 *
 	 * @return Active windows.
 	 */
-	public ObservableList<Stage> getWindows() {
-		return windows;
+	@Nonnull
+	public ObservableList<Stage> getActiveWindows() {
+		return activeWindows;
+	}
+
+	/**
+	 * @param id
+	 * 		Window identifier.
+	 *
+	 * @return Window by ID,
+	 * or {@code null} if no associated window for the ID exists.
+	 */
+	@Nullable
+	public Stage getWindow(@Nonnull String id) {
+		return windowMappings.get(id);
+	}
+
+	/**
+	 * @return Window for the remote VM list.
+	 */
+	@Nonnull
+	public Stage getRemoteVmWindow() {
+		return Objects.requireNonNull(getWindow(WIN_REMOTE_VMS));
 	}
 
 	@Nonnull

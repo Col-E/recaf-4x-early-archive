@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.control;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -28,6 +29,14 @@ public class FontIconView extends Text {
 	 */
 	public FontIconView(Ikon icon) {
 		this(icon, IconView.DEFAULT_ICON_SIZE, null);
+	}
+
+	/**
+	 * @param icon Icon to use.
+	 * @param color Color to use.
+	 */
+	public FontIconView(Ikon icon, @Nonnull Color color) {
+		this(icon, IconView.DEFAULT_ICON_SIZE, color);
 	}
 
 	/**

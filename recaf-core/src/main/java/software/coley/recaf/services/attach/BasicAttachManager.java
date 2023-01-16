@@ -77,6 +77,7 @@ public class BasicAttachManager implements AttachManager {
 			} else {
 				// Already extracted before
 				extractState = ExtractState.SUCCESS;
+				ThreadUtil.scheduleAtFixedRate(this::passiveScanUpdate, 0, 1, TimeUnit.SECONDS);
 			}
 		}
 	}
@@ -85,9 +86,12 @@ public class BasicAttachManager implements AttachManager {
 	 * Check for new virtual machines in the background.
 	 */
 	private void passiveScanUpdate() {
-		if (!config.getPassiveScanning().getValue())
-			return;
-		scan();
+		try {
+			if (config.getPassiveScanning().getValue())
+				scan();
+		} catch (Throwable t) {
+			logger.error("Unhandled exception in JVM scan", t);
+		}
 	}
 
 	/**
@@ -252,6 +256,7 @@ public class BasicAttachManager implements AttachManager {
 								}
 
 								// Greater than all entries, append to end
+								toAdd.add(descriptor);
 								virtualMachineDescriptors.add(descriptor);
 							}
 						} catch (IOException ex) {
@@ -268,7 +273,7 @@ public class BasicAttachManager implements AttachManager {
 
 			// Call listeners
 			for (PostScanListener listener : postScanListeners)
-				listener.scanCompleted(toAdd, toRemove);
+				listener.onScanCompleted(toAdd, toRemove);
 		});
 	}
 

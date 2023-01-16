@@ -19,6 +19,6 @@ public interface PostScanListener {
 	 * @param removed
 	 * 		Old VMs that are no longer available.
 	 */
-	void scanCompleted(@Nonnull Set<VirtualMachineDescriptor> added,
-					   @Nonnull Set<VirtualMachineDescriptor> removed);
+	void onScanCompleted(@Nonnull Set<VirtualMachineDescriptor> added,
+						 @Nonnull Set<VirtualMachineDescriptor> removed);
 }
