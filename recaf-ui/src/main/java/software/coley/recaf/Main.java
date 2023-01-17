@@ -75,6 +75,11 @@ public class Main {
 		Path logFile = directories.getBaseDirectory().resolve("log-" + date + ".txt");
 		Logging.addFileAppender(logFile);
 
+		// Set default error handler
+		Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+			logger.error("Uncaught exception on thread '{}'", t.getName(), e);
+		});
+
 		// Archive old logs
 		try {
 			Files.createDirectories(directories.getLogsDirectory());
