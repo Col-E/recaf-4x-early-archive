@@ -1,9 +1,6 @@
 package software.coley.recaf.workspace.io;
 
-import software.coley.recaf.info.FileInfo;
-import software.coley.recaf.info.Info;
-import software.coley.recaf.info.JarFileInfo;
-import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.*;
 import software.coley.recaf.info.properties.builtin.ZipCompressionProperty;
 import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.util.ZipCreationUtils;
@@ -14,12 +11,16 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.zip.DeflaterOutputStream;
 
 import static software.coley.llzip.ZipCompressions.DEFLATED;
 import static software.coley.llzip.ZipCompressions.STORED;
@@ -94,6 +95,11 @@ public class WorkspaceExportOptions {
 		 * When unknown, defaults to enabling compression.
 		 */
 		MATCH_ORIGINAL,
+		/**
+		 * Compress items only when if it will yield more compact data.
+		 * Some smaller files do not compress well due to the overhead cost of the compression.
+		 */
+		SMART,
 		/**
 		 * Compress all items in the output.
 		 */
@@ -236,6 +242,39 @@ public class WorkspaceExportOptions {
 				case ALWAYS:
 					return DEFLATED;
 				case NEVER:
+					return STORED;
+				case SMART:
+					// Get content from info
+					byte[] content = null;
+					if (info.isFile())
+						content = info.asFile().getRawContent();
+					else if (info.isClass()) {
+						ClassInfo classInfo = info.asClass();
+						if (classInfo.isJvmClass())
+							content = classInfo.asJvmClass().getBytecode();
+					}
+
+					// Validate
+					if (content == null)
+						throw new IllegalStateException("Unhandled info type, cannot get byte[]: " + info.getClass().getName());
+
+					// Check if deflate would be more optimal.
+					InputStream in = new ByteArrayInputStream(content);
+					ByteArrayOutputStream out = new ByteArrayOutputStream();
+					try (DeflaterOutputStream deflate = new DeflaterOutputStream(out)) {
+						byte[] buffer = new byte[2048];
+						int len;
+						while ((len = in.read(buffer)) > 0) {
+							deflate.write(buffer, 0, len);
+						}
+						deflate.finish();
+						int inputSize = content.length;
+						int compressedSize = out.size();
+						if (compressedSize < inputSize)
+							return DEFLATED;
+					} catch (IOException ignored) {
+						// Cannot compress
+					}
 					return STORED;
 				case MATCH_ORIGINAL:
 				default:
