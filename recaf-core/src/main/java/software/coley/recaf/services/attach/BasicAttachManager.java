@@ -239,6 +239,7 @@ public class BasicAttachManager implements AttachManager {
 					}
 					return null;
 				}).orTimeout(500, TimeUnit.MILLISECONDS).thenAccept(machine -> {
+					// Get information from machine if it is available.
 					if (machine != null) {
 						virtualMachineMap.put(descriptor, machine);
 						logger.debug("Remote JVM descriptor found (attach-success): " + label);
@@ -273,27 +274,28 @@ public class BasicAttachManager implements AttachManager {
 									logger.error("Failed to attach JMX agent to remote JVM: {}", label, ex);
 								}
 							}
-
-							// Insert descriptor in sorted order.
-							int lastComparison = 1;
-							synchronized (virtualMachineDescriptors) {
-								for (int i = 0; i < numDescriptors; i++) {
-									VirtualMachineDescriptor other = virtualMachineDescriptors.get(i);
-									int comparison = descriptorComparator.compare(descriptor, other);
-									if (comparison < lastComparison) {
-										toAdd.add(descriptor);
-										virtualMachineDescriptors.add(i, descriptor);
-										return;
-									}
-								}
-
-								// Greater than all entries, append to end
-								toAdd.add(descriptor);
-								virtualMachineDescriptors.add(descriptor);
-							}
 						} catch (IOException ex) {
 							logger.error("Could not read system properties from remote JVM: " + label, ex);
 						}
+					}
+
+					// Add to list for listener call later.
+					toAdd.add(descriptor);
+
+					// Insert descriptor in sorted order.
+					int lastComparison = 1;
+					synchronized (virtualMachineDescriptors) {
+						for (int i = 0; i < numDescriptors; i++) {
+							VirtualMachineDescriptor other = virtualMachineDescriptors.get(i);
+							int comparison = descriptorComparator.compare(descriptor, other);
+							if (comparison < lastComparison) {
+								virtualMachineDescriptors.add(i, descriptor);
+								return;
+							}
+						}
+
+						// Greater than all entries, append to end
+						virtualMachineDescriptors.add(descriptor);
 					}
 				}));
 			}

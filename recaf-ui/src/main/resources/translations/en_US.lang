@@ -236,6 +236,12 @@ workspace.title=Workspace
 ## Attach
 attach.unsupported=Attach failed to initialize
 attach.unsupported.detail=The attach agent failed to self-extract.
+attach.tab.properties=Properties
+attach.tab.classloading=Classes
+attach.tab.compilation=Compilation
+attach.tab.system=System
+attach.tab.runtime=Runtime
+attach.tab.thread=Threads
 
 ## Changes view
 modifications.none=No modification history for item

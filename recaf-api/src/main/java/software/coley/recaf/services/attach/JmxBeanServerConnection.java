@@ -12,11 +12,11 @@ import java.lang.management.*;
  * @author Matt Coley
  */
 public class JmxBeanServerConnection {
-	private static final ObjectName CLASS_LOADING = named(ManagementFactory.CLASS_LOADING_MXBEAN_NAME);
-	private static final ObjectName COMPILATION = named(ManagementFactory.COMPILATION_MXBEAN_NAME);
-	private static final ObjectName OPERATING_SYSTEM = named(ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME);
-	private static final ObjectName RUNTIME = named(ManagementFactory.RUNTIME_MXBEAN_NAME);
-	private static final ObjectName THREAD = named(ManagementFactory.THREAD_MXBEAN_NAME);
+	public static final ObjectName CLASS_LOADING = named(ManagementFactory.CLASS_LOADING_MXBEAN_NAME);
+	public static final ObjectName COMPILATION = named(ManagementFactory.COMPILATION_MXBEAN_NAME);
+	public static final ObjectName OPERATING_SYSTEM = named(ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME);
+	public static final ObjectName RUNTIME = named(ManagementFactory.RUNTIME_MXBEAN_NAME);
+	public static final ObjectName THREAD = named(ManagementFactory.THREAD_MXBEAN_NAME);
 	// The following beans require knowing the bean's domain in advance to supply it as an additional parameter:
 	//  - GARBAGE_COLLECTOR_MXBEAN_DOMAIN_TYPE
 	//  - MEMORY_MANAGER_MXBEAN_DOMAIN_TYPE
