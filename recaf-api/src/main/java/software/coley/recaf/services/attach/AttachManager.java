@@ -6,6 +6,7 @@ import software.coley.collections.observable.ObservableList;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.workspace.model.resource.WorkspaceRemoteVmResource;
 
+import javax.management.MBeanServerConnection;
 import java.util.Properties;
 
 /**
@@ -78,17 +79,27 @@ public interface AttachManager extends Service {
 	String getVirtualMachineMainClass(VirtualMachineDescriptor descriptor);
 
 	/**
+	 * @param descriptor
+	 * 		Lookup descriptor.
+	 *
+	 * @return JMX bean server connection to remote VM.
+	 */
+	JmxBeanServerConnection getJmxServerConnection(VirtualMachineDescriptor descriptor);
+
+	/**
 	 * @return Observable list of virtual machine descriptors.
 	 */
 	ObservableList<VirtualMachineDescriptor> getVirtualMachineDescriptors();
 
 	/**
-	 * @param listener Listener to add.
+	 * @param listener
+	 * 		Listener to add.
 	 */
 	void addPostScanListener(PostScanListener listener);
 
 	/**
-	 * @param listener Listener to remove.
+	 * @param listener
+	 * 		Listener to remove.
 	 */
 	void removePostScanListener(PostScanListener listener);
 }

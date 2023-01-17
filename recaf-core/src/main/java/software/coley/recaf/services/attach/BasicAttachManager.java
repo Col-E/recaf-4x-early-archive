@@ -20,6 +20,10 @@ import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.resource.AgentServerRemoteVmResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceRemoteVmResource;
 
+import javax.management.MBeanServerConnection;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -40,12 +44,14 @@ import java.util.jar.JarFile;
 public class BasicAttachManager implements AttachManager {
 	private static final Logger logger = Logging.get(BasicAttachManager.class);
 	private static final long currentPid = ProcessHandle.current().pid();
+	private static final String JMX_AGENT_ADDRESS = "com.sun.management.jmxremote.localConnectorAddress";
 	private final DescriptorComparator descriptorComparator = new DescriptorComparator();
 	private final Map<VirtualMachineDescriptor, VirtualMachine> virtualMachineMap = new ConcurrentHashMap<>();
 	private final Map<VirtualMachineDescriptor, Exception> virtualMachineFailureMap = new ConcurrentHashMap<>();
 	private final Map<VirtualMachineDescriptor, Integer> virtualMachinePidMap = new ConcurrentHashMap<>();
 	private final Map<VirtualMachineDescriptor, Properties> virtualMachinePropertiesMap = new ConcurrentHashMap<>();
 	private final Map<VirtualMachineDescriptor, String> virtualMachineMainClassMap = new ConcurrentHashMap<>();
+	private final Map<VirtualMachineDescriptor, JmxBeanServerConnection> virtualMachineJmxConnMap = new ConcurrentHashMap<>();
 	private final ObservableList<VirtualMachineDescriptor> virtualMachineDescriptors = new ObservableList<>();
 	private final List<PostScanListener> postScanListeners = new ArrayList<>();
 	private final AttachManagerConfig config;
@@ -71,7 +77,8 @@ public class BasicAttachManager implements AttachManager {
 					Extractor.extractToPath(agentPath);
 					ThreadUtil.scheduleAtFixedRate(this::passiveScanUpdate, 0, 1, TimeUnit.SECONDS);
 					extractState = ExtractState.SUCCESS;
-				} catch (IOException e) {
+				} catch (IOException ex) {
+					logger.error("Failed to extract agent jar to Recaf directory", ex);
 					extractState = ExtractState.FAILURE;
 				}
 			} else {
@@ -223,10 +230,10 @@ public class BasicAttachManager implements AttachManager {
 						return provider.attachVirtualMachine(descriptor);
 					} catch (IOException ex) {
 						virtualMachineFailureMap.put(descriptor, ex);
-						logger.trace("Remote JVM descriptor found (attach-success, read-failure): " + label);
+						logger.debug("Remote JVM descriptor found (attach-success, read-failure): " + label);
 					} catch (AttachNotSupportedException ex) {
 						virtualMachineFailureMap.put(descriptor, ex);
-						logger.trace("Remote JVM descriptor found (attach-failure): " + label);
+						logger.debug("Remote JVM descriptor found (attach-failure): " + label);
 					} catch (Throwable t) {
 						logger.error("Unhandled exception populating remote VM info", t);
 					}
@@ -234,13 +241,38 @@ public class BasicAttachManager implements AttachManager {
 				}).orTimeout(500, TimeUnit.MILLISECONDS).thenAccept(machine -> {
 					if (machine != null) {
 						virtualMachineMap.put(descriptor, machine);
-						logger.trace("Remote JVM descriptor found (attach-success): " + label);
+						logger.debug("Remote JVM descriptor found (attach-success): " + label);
 
 						// Extract additional information
 						try {
-							virtualMachinePropertiesMap.put(descriptor, machine.getSystemProperties());
+							Properties systemProperties = machine.getSystemProperties();
+							virtualMachinePropertiesMap.put(descriptor, systemProperties);
 							virtualMachinePidMap.put(descriptor, pid);
 							virtualMachineMainClassMap.put(descriptor, mapToMainClass(descriptor));
+
+							// Enable optional JMX agent
+							if (config.getAttachJmxAgent().getValue()) {
+								try {
+									Properties agentProperties = machine.getAgentProperties();
+									String serviceUrl = agentProperties.getProperty(JMX_AGENT_ADDRESS);
+									if (serviceUrl == null) {
+										serviceUrl = machine.startLocalManagementAgent();
+										// serviceUrl = agentProperties.getProperty(JMX_AGENT_ADDRESS);
+									}
+
+									if (serviceUrl != null) {
+										JMXServiceURL url = new JMXServiceURL(serviceUrl);
+										@SuppressWarnings("resource") // Do NOT wrap this in a try-with-resource. It will close the connection.
+										JMXConnector connector = JMXConnectorFactory.connect(url);
+										MBeanServerConnection connection = connector.getMBeanServerConnection();
+										virtualMachineJmxConnMap.put(descriptor, new JmxBeanServerConnection(connection));
+									} else {
+										logger.warn("Could fetch JMX agent address, skipping connection for: {}", label);
+									}
+								} catch (Exception ex) {
+									logger.error("Failed to attach JMX agent to remote JVM: {}", label, ex);
+								}
+							}
 
 							// Insert descriptor in sorted order.
 							int lastComparison = 1;
@@ -260,7 +292,7 @@ public class BasicAttachManager implements AttachManager {
 								virtualMachineDescriptors.add(descriptor);
 							}
 						} catch (IOException ex) {
-							logger.error("Could not read system properties from remote JVM: " + descriptor, ex);
+							logger.error("Could not read system properties from remote JVM: " + label, ex);
 						}
 					}
 				}));
@@ -270,6 +302,10 @@ public class BasicAttachManager implements AttachManager {
 		ThreadUtil.allOf(attachFutures.toArray(new CompletableFuture[0])).thenRun(() -> {
 			// Remove entries not visited in this pass
 			virtualMachineDescriptors.removeAll(toRemove);
+			for (VirtualMachineDescriptor descriptor : toRemove) {
+				String label = descriptor.id() + " - " + StringUtil.withEmptyFallback(descriptor.displayName(), "?");
+				logger.debug("Remote JVM descriptor removed: " + label);
+			}
 
 			// Call listeners
 			for (PostScanListener listener : postScanListeners)
@@ -339,6 +375,11 @@ public class BasicAttachManager implements AttachManager {
 	@Override
 	public String getVirtualMachineMainClass(VirtualMachineDescriptor descriptor) {
 		return virtualMachineMainClassMap.get(descriptor);
+	}
+
+	@Override
+	public JmxBeanServerConnection getJmxServerConnection(VirtualMachineDescriptor descriptor) {
+		return virtualMachineJmxConnMap.get(descriptor);
 	}
 
 	@Override
