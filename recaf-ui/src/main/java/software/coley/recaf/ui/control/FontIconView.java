@@ -32,11 +32,23 @@ public class FontIconView extends Text {
 	}
 
 	/**
-	 * @param icon Icon to use.
-	 * @param color Color to use.
+	 * @param icon
+	 * 		Icon to use.
+	 * @param color
+	 * 		Color to use.
 	 */
 	public FontIconView(Ikon icon, @Nonnull Color color) {
 		this(icon, IconView.DEFAULT_ICON_SIZE, color);
+	}
+
+	/**
+	 * @param icon
+	 * 		Icon to use.
+	 * @param size
+	 * 		Size of icon in pixels.
+	 */
+	public FontIconView(Ikon icon, int size) {
+		this(icon, size, null);
 	}
 
 	/**
