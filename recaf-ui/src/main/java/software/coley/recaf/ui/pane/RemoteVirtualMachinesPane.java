@@ -1,6 +1,7 @@
 package software.coley.recaf.ui.pane;
 
 import atlantafx.base.theme.Styles;
+import atlantafx.base.theme.Tweaks;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
@@ -9,9 +10,11 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import org.kordamp.ikonli.Ikon;
@@ -22,6 +25,7 @@ import software.coley.recaf.services.attach.AttachManager;
 import software.coley.recaf.services.attach.AttachManagerConfig;
 import software.coley.recaf.services.attach.JmxBeanServerConnection;
 import software.coley.recaf.services.attach.PostScanListener;
+import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.window.RemoteVirtualMachinesWindow;
 import software.coley.recaf.util.FxThreadUtil;
@@ -33,6 +37,7 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanFeatureInfo;
 import javax.management.MBeanInfo;
 import javax.management.ObjectName;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,10 +50,13 @@ import java.util.stream.Collectors;
 @Dependent
 public class RemoteVirtualMachinesPane extends BorderPane implements PostScanListener {
 	private static final Logger logger = Logging.get(RemoteVirtualMachinesPane.class);
-	private final Map<VirtualMachineDescriptor, VmCell> vmCellMap = new HashMap<>();
-	private final VBox vmCellBox = new VBox();
+	private final Map<VirtualMachineDescriptor, VmPane> vmCellMap = new HashMap<>();
+	private final Map<VirtualMachineDescriptor, Button> vmButtonMap = new HashMap<>();
+	private final VBox vmButtonsList = new VBox();
+	private final BorderPane vmDisplayPane = new BorderPane();
 	private final AttachManager attachManager;
 	private final AttachManagerConfig attachManagerConfig;
+	private VmPane currentVmPane;
 
 	@Inject
 	public RemoteVirtualMachinesPane(AttachManager attachManager, AttachManagerConfig attachManagerConfig) {
@@ -85,12 +93,14 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 			});
 		});
 
-		vmCellBox.setPadding(new Insets(20));
-		vmCellBox.setAlignment(Pos.CENTER);
-		vmCellBox.setSpacing(10);
-		ScrollPane scroll = new ScrollPane(vmCellBox);
+
+		vmButtonsList.setPadding(new Insets(5));
+		vmButtonsList.setAlignment(Pos.TOP_LEFT);
+		vmButtonsList.setSpacing(5);
+		ScrollPane scroll = new ScrollPane(vmButtonsList);
 		scroll.setFitToWidth(true);
-		setCenter(scroll);
+		SplitPane split = new SplitPane(scroll, vmDisplayPane);
+		setCenter(split);
 	}
 
 	/**
@@ -139,50 +149,80 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 		FxThreadUtil.run(() -> {
 			// Add new VM's found
 			for (VirtualMachineDescriptor descriptor : added) {
-				VmCell cell = new VmCell(descriptor);
+				VmPane cell = new VmPane(descriptor);
 				vmCellMap.put(descriptor, cell);
-				vmCellBox.getChildren().add(cell); // TODO: insert in sorted order
+
+				// Button to display the cell
+				Button button = new ActionButton(cell.getLabel(), () -> {
+					vmDisplayPane.setCenter(cell);
+					currentVmPane = cell;
+
+					// Mark button as 'selected'
+					for (Node child : vmButtonsList.getChildren())
+						child.getStyleClass().removeAll(Styles.SUCCESS, Styles.BUTTON_OUTLINED);
+					vmButtonMap.get(descriptor).getStyleClass().addAll(Styles.SUCCESS, Styles.BUTTON_OUTLINED);
+				});
+				button.setFocusTraversable(false);
+				button.setMaxWidth(Double.MAX_VALUE);
+				button.setAlignment(Pos.CENTER_LEFT);
+				button.getStyleClass().add(Styles.ACCENT);
+				vmButtonMap.put(descriptor, button);
+				vmButtonsList.getChildren().add(button); // TODO: insert in sorted order
 			}
 
 			// Remove VM's that are no longer alive.
 			for (VirtualMachineDescriptor descriptor : removed) {
-				VmCell removedCell = vmCellMap.remove(descriptor);
-				vmCellBox.getChildren().remove(removedCell);
+				Button removedButton = vmButtonMap.remove(descriptor);
+				vmButtonsList.getChildren().remove(removedButton);
+
+				VmPane cell = vmCellMap.remove(descriptor);
+				cell.setDisable(true);
 			}
 
-			// Refresh cells
-			for (VmCell cell : vmCellMap.values()) {
-				cell.update();
-			}
+			// Refresh current cell.
+			if (currentVmPane != null && !currentVmPane.isDisabled())
+				currentVmPane.update();
 		});
 	}
 
 	/**
-	 * Cell for a remote JVM.
+	 * Display for a remote JVM.
 	 */
-	private class VmCell extends VBox {
-		private final ContentGrid contentGrid;
+	private class VmPane extends VBox {
+		private final ContentTabs contentGrid;
+		private final String label;
 
 		/**
 		 * @param descriptor
 		 * 		Associated descriptor.
 		 */
-		VmCell(VirtualMachineDescriptor descriptor) {
-			this.contentGrid = new ContentGrid(attachManager, descriptor);
-			getStyleClass().add("tooltip");
+		VmPane(VirtualMachineDescriptor descriptor) {
+			this.contentGrid = new ContentTabs(attachManager, descriptor);
+			VBox.setVgrow(contentGrid, Priority.ALWAYS);
 
 			// Create title label
 			int pid = attachManager.getVirtualMachinePid(descriptor);
 			String mainClass = attachManager.getVirtualMachineMainClass(descriptor);
+			this.label = pid + ": " + mainClass;
+
+			// Create graphic
 			boolean canConnect = attachManager.getVirtualMachineConnectionFailure(descriptor) == null;
 			CarbonIcons titleIcon = canConnect ? CarbonIcons.DEBUG : CarbonIcons.ERROR_FILLED;
 			FontIconView titleGraphic = new FontIconView(titleIcon, 28, canConnect ? Color.GREEN : Color.RED);
-			Label title = new Label(pid + ": " + mainClass);
+			Label title = new Label(label);
 			title.getStyleClass().add(Styles.TEXT_CAPTION);
 			title.setGraphic(titleGraphic);
+			title.setPadding(new Insets(10));
 
 			// Layout
 			getChildren().addAll(title, new Separator(), contentGrid);
+		}
+
+		/**
+		 * @return Display title.
+		 */
+		public String getLabel() {
+			return label;
 		}
 
 		/**
@@ -195,13 +235,10 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 		/**
 		 * Wrapper of multiple content titles.
 		 */
-		private static class ContentGrid extends TabPane {
+		private static class ContentTabs extends TabPane {
 			private final List<AbstractContentTile> tiles = new ArrayList<>();
 
-			public ContentGrid(AttachManager attachManager, VirtualMachineDescriptor descriptor) {
-				// Layout & size
-				setPrefHeight(200);
-
+			public ContentTabs(AttachManager attachManager, VirtualMachineDescriptor descriptor) {
 				// Property tile
 				add(new AbstractContentTile() {
 					private final TableView<String> propertyTable = new TableView<>();
@@ -211,13 +248,18 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 					void setup() {
 						TableColumn<String, String> keyColumn = new TableColumn<>("Key");
 						keyColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue()));
-
 						TableColumn<String, String> valueColumn = new TableColumn<>("Value");
 						valueColumn.setCellValueFactory(param -> new SimpleStringProperty(Objects.toString(lastProperties.get(param.getValue()))));
 
 						ObservableList<TableColumn<String, ?>> columns = propertyTable.getColumns();
 						columns.add(keyColumn);
 						columns.add(valueColumn);
+
+						propertyTable.getStyleClass().addAll(Styles.STRIPED, Tweaks.EDGE_TO_EDGE);
+						propertyTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+						keyColumn.setMaxWidth(1f * Integer.MAX_VALUE * 25);
+						valueColumn.setMaxWidth(1f * Integer.MAX_VALUE * 75);
+
 
 						setCenter(propertyTable);
 					}
@@ -273,6 +315,11 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 							columns.add(keyColumn);
 							columns.add(valueColumn);
 
+							propertyTable.getStyleClass().addAll(Styles.STRIPED, Tweaks.EDGE_TO_EDGE);
+							propertyTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+							keyColumn.setMaxWidth(1f * Integer.MAX_VALUE * 25);
+							valueColumn.setMaxWidth(1f * Integer.MAX_VALUE * 75);
+
 							setCenter(propertyTable);
 						}
 
@@ -285,7 +332,13 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 								Map<String, String> attributeMap = Arrays.stream(attributes)
 										.collect(Collectors.toMap(MBeanFeatureInfo::getDescription, a -> {
 											try {
-												return Objects.toString(jmxConnection.getConnection().getAttribute(name, a.getName()));
+												Object value = jmxConnection.getConnection().getAttribute(name, a.getName());
+												if (value != null) {
+													if (value.getClass().isArray()) {
+														value = Arrays.toString(convertToObjectArray(value));
+													}
+												}
+												return Objects.toString(value);
 											} catch (Exception ex) {
 												return "?";
 											}
@@ -337,6 +390,20 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 			public void update() {
 				for (AbstractContentTile block : tiles)
 					block.update();
+			}
+
+			@SuppressWarnings("all")
+			static Object[] convertToObjectArray(Object array) {
+				Class componentType = array.getClass().getComponentType();
+				if (componentType.isPrimitive()) {
+					int length = Array.getLength(array);
+					Object[] boxedArray = new Object[length];
+					for (int i = 0; i < length; i++)
+						boxedArray[i] = Array.get(array, i);
+					return boxedArray;
+				} else {
+					return (Object[]) array;
+				}
 			}
 		}
 
