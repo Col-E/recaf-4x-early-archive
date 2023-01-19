@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.config;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.observables.ObservableCollection;
@@ -48,9 +49,14 @@ public class RecentFilesConfig extends BasicConfigContainer {
 	 * @param workspace
 	 * 		Workspace to add to {@link #getRecentWorkspaces()}.
 	 */
-	public void addWorkspace(Workspace workspace) {
+	public void addWorkspace(@Nonnull Workspace workspace) {
+		// Only allow serializable workspaces
+		WorkspaceResource primaryResource = workspace.getPrimaryResource();
+		if (!ResourceModel.isSupported(primaryResource))
+			return;
+
 		// Wrap to model
-		ResourceModel primary = ResourceModel.from(workspace.getPrimaryResource());
+		ResourceModel primary = ResourceModel.from(primaryResource);
 		List<ResourceModel> libraries = workspace.getSupportingResources().stream()
 				.map(ResourceModel::from)
 				.toList();
@@ -196,7 +202,7 @@ public class RecentFilesConfig extends BasicConfigContainer {
 		 *
 		 * @return Representation of the content source.
 		 */
-		public static ResourceModel from(WorkspaceResource resource) {
+		public static ResourceModel from(@Nonnull WorkspaceResource resource) {
 			if (resource instanceof WorkspaceFileResource fileResource) {
 				return new ResourceModel(fileResource.getFileInfo().getName());
 			} else if (resource instanceof WorkspaceDirectoryResource fileResource) {
@@ -204,6 +210,16 @@ public class RecentFilesConfig extends BasicConfigContainer {
 			}
 			throw new UnsupportedOperationException("Cannot serialize content source of type: " +
 					resource.getClass().getName());
+		}
+
+		/**
+		 * @param resource
+		 * 		Some resource.
+		 *
+		 * @return {@code true} when it can be represented by this model.
+		 */
+		public static boolean isSupported(WorkspaceResource resource) {
+			return resource instanceof WorkspaceFileResource || resource instanceof WorkspaceDirectoryResource;
 		}
 
 		/**
