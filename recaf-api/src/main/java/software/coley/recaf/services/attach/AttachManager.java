@@ -6,7 +6,6 @@ import software.coley.collections.observable.ObservableList;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.workspace.model.resource.WorkspaceRemoteVmResource;
 
-import javax.management.MBeanServerConnection;
 import java.util.Properties;
 
 /**
@@ -29,14 +28,15 @@ public interface AttachManager extends Service {
 	void scan();
 
 	/**
-	 * Connect to the given VM.
+	 * Create a {@link WorkspaceRemoteVmResource} for the given VM.
+	 * Users must call {@link WorkspaceRemoteVmResource#connect()} to <i>'enable'</i> the resource.
 	 *
 	 * @param item
 	 * 		VM descriptor for VM to connect to.
 	 *
 	 * @return Agent client resource, not yet connected.
 	 */
-	WorkspaceRemoteVmResource connect(VirtualMachineDescriptor item);
+	WorkspaceRemoteVmResource createRemoteResource(VirtualMachineDescriptor item);
 
 	/**
 	 * @param descriptor

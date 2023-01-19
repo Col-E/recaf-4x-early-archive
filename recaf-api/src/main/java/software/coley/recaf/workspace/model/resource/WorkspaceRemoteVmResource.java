@@ -5,8 +5,8 @@ import jakarta.annotation.Nonnull;
 import software.coley.instrument.data.ClassLoaderInfo;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
+import java.io.IOException;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * A resource sourced from a remote {@link VirtualMachine}.
@@ -14,6 +14,14 @@ import java.util.Set;
  * @author Matt Coley
  */
 public interface WorkspaceRemoteVmResource extends WorkspaceResource {
+	/**
+	 * Connects to the remote VM.
+	 *
+	 * @throws IOException
+	 * 		When the connection fails.
+	 */
+	void connect() throws IOException;
+
 	/**
 	 * @return Virtual machine of the remote process attached to.
 	 */

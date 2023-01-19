@@ -316,7 +316,7 @@ public class BasicAttachManager implements AttachManager {
 	}
 
 	@Override
-	public WorkspaceRemoteVmResource connect(VirtualMachineDescriptor item) {
+	public WorkspaceRemoteVmResource createRemoteResource(VirtualMachineDescriptor item) {
 		VirtualMachine virtualMachine = virtualMachineMap.get(item);
 		try {
 			// Will initialize agent server with default arguments

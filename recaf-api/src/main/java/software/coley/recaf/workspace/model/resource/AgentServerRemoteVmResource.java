@@ -25,6 +25,7 @@ import software.coley.recaf.workspace.model.bundle.BundleListener;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -86,75 +87,72 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 		}
 	}
 
-	/**
-	 * Setup client connection handling.
-	 *
-	 * @return {@code true} on success.
-	 * {@code false} when any error occurred.
-	 */
-	public boolean initialize() {
-		try {
-			client.setBroadcastListener((messageType, message) -> {
-				switch (messageType) {
-					case MessageConstants.ID_BROADCAST_LOADER:
-						// New loader reported
-						BroadcastClassloaderMessage loaderMessage = (BroadcastClassloaderMessage) message;
-						ClassLoaderInfo loaderInfo = loaderMessage.getClassLoader();
-						remoteLoaders.put(loaderInfo.getId(), loaderInfo);
-						break;
-					case MessageConstants.ID_BROADCAST_CLASS:
-						// New class, or update to existing class reported
-						BroadcastClassMessage classMessage = (BroadcastClassMessage) message;
-						ClassData data = classMessage.getData();
-						handleReceiveClassData(data, null);
-						break;
-					default:
-						// unknown broadcast packet
-						break;
-				}
-			});
+	@Override
+	public void connect() throws IOException {
+		client.setBroadcastListener((messageType, message) -> {
+			switch (messageType) {
+				case MessageConstants.ID_BROADCAST_LOADER:
+					// New loader reported
+					BroadcastClassloaderMessage loaderMessage = (BroadcastClassloaderMessage) message;
+					ClassLoaderInfo loaderInfo = loaderMessage.getClassLoader();
+					remoteLoaders.put(loaderInfo.getId(), loaderInfo);
+					break;
+				case MessageConstants.ID_BROADCAST_CLASS:
+					// New class, or update to existing class reported
+					BroadcastClassMessage classMessage = (BroadcastClassMessage) message;
+					ClassData data = classMessage.getData();
+					handleReceiveClassData(data, null);
+					break;
+				default:
+					// unknown broadcast packet
+					break;
+			}
+		});
 
-			// Try to connect
-			if (!client.connect())
-				throw new IOException("Client connection failed");
+		// Try to connect
+		logger.info("Connecting to remote JVM '{}' over port {}", virtualMachine.id(), client.getPort());
+		if (!client.connect())
+			throw new IOException("Client connection failed");
 
-			// Request known classloaders
-			client.sendAsync(new RequestClassloadersMessage(), loaderReply -> {
-				for (ClassLoaderInfo loader : loaderReply.getClassLoaders()) {
-					if (loader.isBootstrap())
-						continue;
-					int loaderId = loader.getId();
-					remoteLoaders.put(loaderId, loader);
+		// Request known classloaders
+		logger.info("Sending initial request for classloaders & initial classes...");
+		client.sendAsync(new RequestClassloadersMessage(), loaderReply -> {
+			Collection<ClassLoaderInfo> classLoaders = loaderReply.getClassLoaders();
+			logger.info("Received initial response for classloaders, count={}", classLoaders.size());
+			for (ClassLoaderInfo loader : classLoaders) {
+				if (loader.isBootstrap())
+					continue;
+				int loaderId = loader.getId();
+				remoteLoaders.put(loaderId, loader);
 
-					// Get/create bundle for loader
-					ClassLoaderInfo loaderInfo = remoteLoaders.get(loaderId);
-					RemoteJvmClassBundle bundle = remoteBundleMap
-							.computeIfAbsent(loaderId, id -> new RemoteJvmClassBundle(loaderInfo));
+				// Get/create bundle for loader
+				ClassLoaderInfo loaderInfo = remoteLoaders.get(loaderId);
+				RemoteJvmClassBundle bundle = remoteBundleMap
+						.computeIfAbsent(loaderId, id -> new RemoteJvmClassBundle(loaderInfo));
 
-					// Request all classes from classloader
-					client.sendAsync(new RequestClassloaderClassesMessage(loaderId), classesReply -> {
-						for (String className : classesReply.getClasses()) {
-							if (closed)
-								return;
+				// Request all classes from classloader
+				logger.info("Sending initial request for class names in classloader {}...", loader.getName());
+				client.sendAsync(new RequestClassloaderClassesMessage(loaderId), classesReply -> {
+					Collection<String> classes = classesReply.getClasses();
+					logger.info("Received initial response for class names in classloader {}, count={}",
+							loader.getName(), classes.size());
+					for (String className : classes) {
+						if (closed)
+							return;
 
-							// If class does not exist in bundle, then request it from remote server
-							if (bundle.get(className) == null) {
-								client.sendBlocking(new RequestClassMessage(loaderId, className), reply -> {
-									if (reply.hasData()) {
-										ClassData data = reply.getData();
-										handleReceiveClassData(data, bundle);
-									}
-								});
-							}
+						// If class does not exist in bundle, then request it from remote server
+						if (bundle.get(className) == null) {
+							client.sendBlocking(new RequestClassMessage(loaderId, className), reply -> {
+								if (reply.hasData()) {
+									ClassData data = reply.getData();
+									handleReceiveClassData(data, bundle);
+								}
+							});
 						}
-					});
-				}
-			});
-			return true;
-		} catch (Throwable t) {
-			logger.error("Could not setup connection to agent server, client connect gave 'false'", t);
-			return false;
-		}
+					}
+				});
+			}
+		});
 	}
 
 	/**
