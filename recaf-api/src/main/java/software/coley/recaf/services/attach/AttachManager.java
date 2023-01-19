@@ -2,10 +2,12 @@ package software.coley.recaf.services.attach;
 
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
+import jakarta.annotation.Nonnull;
 import software.coley.collections.observable.ObservableList;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.workspace.model.resource.WorkspaceRemoteVmResource;
 
+import java.io.IOException;
 import java.util.Properties;
 
 /**
@@ -35,8 +37,13 @@ public interface AttachManager extends Service {
 	 * 		VM descriptor for VM to connect to.
 	 *
 	 * @return Agent client resource, not yet connected.
+	 *
+	 * @throws IOException
+	 * 		When the remote resource couldn't be created.
+	 * 		Causing exceptions depend on implementation.
 	 */
-	WorkspaceRemoteVmResource createRemoteResource(VirtualMachineDescriptor item);
+	@Nonnull
+	WorkspaceRemoteVmResource createRemoteResource(VirtualMachineDescriptor item) throws IOException;
 
 	/**
 	 * @param descriptor

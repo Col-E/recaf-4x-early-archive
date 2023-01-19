@@ -315,8 +315,9 @@ public class BasicAttachManager implements AttachManager {
 		});
 	}
 
+	@Nonnull
 	@Override
-	public WorkspaceRemoteVmResource createRemoteResource(VirtualMachineDescriptor item) {
+	public WorkspaceRemoteVmResource createRemoteResource(VirtualMachineDescriptor item) throws IOException {
 		VirtualMachine virtualMachine = virtualMachineMap.get(item);
 		try {
 			// Will initialize agent server with default arguments
@@ -346,12 +347,14 @@ public class BasicAttachManager implements AttachManager {
 			return new AgentServerRemoteVmResource(virtualMachine, client);
 		} catch (AgentLoadException ex) {
 			logger.error("Agent on remote VM '{}' could not be loaded", item, ex);
+			throw new IOException("Failed remote load", ex);
 		} catch (AgentInitializationException ex) {
 			logger.error("Agent on remote VM '{}' crashed on initialization", item, ex);
+			throw new IOException("Failed remote initialization", ex);
 		} catch (IOException ex) {
 			logger.error("IO error when loading agent to remote VM '{}'", item, ex);
+			throw ex;
 		}
-		return null;
 	}
 
 	@Override
