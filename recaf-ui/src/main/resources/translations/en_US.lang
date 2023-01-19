@@ -213,6 +213,9 @@ dialog.error.loadworkspace.content=The error was:
 dialog.error.loadsupport.title=Failed to load supporting resources
 dialog.error.loadsupport.header=An error occurred when reading from the selected files
 dialog.error.loadsupport.content=The error was:
+dialog.error.attach.title=Failed to attach to JVM
+dialog.error.attach.header=An error occurred when connecting to the remote JVM
+dialog.error.attach.content=The error was:
 
 ## Wizard
 wizard.chooseaction=Choose an action
@@ -236,6 +239,7 @@ workspace.title=Workspace
 ## Attach
 attach.unsupported=Attach failed to initialize
 attach.unsupported.detail=The attach agent failed to self-extract.
+attach.connect=Connect
 attach.tab.properties=Properties
 attach.tab.classloading=Classes
 attach.tab.compilation=Compilation

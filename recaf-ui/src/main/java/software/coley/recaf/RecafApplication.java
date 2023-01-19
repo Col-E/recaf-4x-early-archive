@@ -1,6 +1,5 @@
 package software.coley.recaf;
 
-import atlantafx.base.theme.NordDark;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;

@@ -2,6 +2,7 @@ package software.coley.recaf.ui.control;
 
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 
 /**
@@ -18,6 +19,17 @@ public class ActionButton extends Button {
 	 */
 	public ActionButton(String text, Runnable action) {
 		super(text);
+		setOnAction(e -> wrap(e, action));
+	}
+
+	/**
+	 * @param graphic
+	 * 		Button display graphic.
+	 * @param action
+	 * 		Action to run on-click.
+	 */
+	public ActionButton(Node graphic, Runnable action) {
+		setGraphic(graphic);
 		setOnAction(e -> wrap(e, action));
 	}
 

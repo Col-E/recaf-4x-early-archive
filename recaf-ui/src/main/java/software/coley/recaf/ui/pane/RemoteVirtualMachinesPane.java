@@ -28,15 +28,20 @@ import software.coley.recaf.services.attach.PostScanListener;
 import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.window.RemoteVirtualMachinesWindow;
+import software.coley.recaf.util.ErrorDialogs;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.UncheckedSupplier;
 import software.coley.recaf.util.threading.ThreadUtil;
+import software.coley.recaf.workspace.WorkspaceManager;
+import software.coley.recaf.workspace.model.BasicWorkspace;
+import software.coley.recaf.workspace.model.resource.WorkspaceRemoteVmResource;
 
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanFeatureInfo;
 import javax.management.MBeanInfo;
 import javax.management.ObjectName;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -56,12 +61,16 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 	private final BorderPane vmDisplayPane = new BorderPane();
 	private final AttachManager attachManager;
 	private final AttachManagerConfig attachManagerConfig;
+	private final WorkspaceManager workspaceManager;
 	private VmPane currentVmPane;
 
 	@Inject
-	public RemoteVirtualMachinesPane(AttachManager attachManager, AttachManagerConfig attachManagerConfig) {
+	public RemoteVirtualMachinesPane(AttachManager attachManager,
+									 AttachManagerConfig attachManagerConfig,
+									 WorkspaceManager workspaceManager) {
 		this.attachManager = attachManager;
 		this.attachManagerConfig = attachManagerConfig;
+		this.workspaceManager = workspaceManager;
 
 		// Register this class as scan listener so we can update the UI live as updates come in.
 		attachManager.addPostScanListener(this);
@@ -149,6 +158,8 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 		FxThreadUtil.run(() -> {
 			// Add new VM's found
 			for (VirtualMachineDescriptor descriptor : added) {
+				if (vmCellMap.containsKey(descriptor))
+					continue;
 				VmPane cell = new VmPane(descriptor);
 				vmCellMap.put(descriptor, cell);
 
@@ -167,7 +178,7 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 				button.setAlignment(Pos.CENTER_LEFT);
 				button.getStyleClass().add(Styles.ACCENT);
 				vmButtonMap.put(descriptor, button);
-				vmButtonsList.getChildren().add(button); // TODO: insert in sorted order
+				vmButtonsList.getChildren().add(button);
 			}
 
 			// Remove VM's that are no longer alive.
@@ -209,13 +220,32 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 			boolean canConnect = attachManager.getVirtualMachineConnectionFailure(descriptor) == null;
 			CarbonIcons titleIcon = canConnect ? CarbonIcons.DEBUG : CarbonIcons.ERROR_FILLED;
 			FontIconView titleGraphic = new FontIconView(titleIcon, 28, canConnect ? Color.GREEN : Color.RED);
+			Button connectButton = new ActionButton(titleGraphic, () -> {
+				if (workspaceManager.closeCurrent()) {
+					ThreadUtil.run(() -> {
+						WorkspaceRemoteVmResource vmResource = attachManager.createRemoteResource(descriptor);
+						try {
+							vmResource.connect();
+							workspaceManager.setCurrent(new BasicWorkspace(vmResource));
+						} catch (IOException ex) {
+							logger.error("Failed to connect to remote VM: {}", label);
+							ErrorDialogs.show(Lang.getBinding("dialog.error.attach.title"),
+									Lang.getBinding("dialog.error.attach.header"),
+									Lang.getBinding("dialog.error.attach.content"),
+									ex);
+						}
+					});
+				}
+			});
+
 			Label title = new Label(label);
 			title.getStyleClass().add(Styles.TEXT_CAPTION);
-			title.setGraphic(titleGraphic);
 			title.setPadding(new Insets(10));
+			HBox titleWrapper = new HBox(connectButton, title);
+			titleWrapper.setAlignment(Pos.CENTER_LEFT);
 
 			// Layout
-			getChildren().addAll(title, new Separator(), contentGrid);
+			getChildren().addAll(titleWrapper, new Separator(), contentGrid);
 		}
 
 		/**
