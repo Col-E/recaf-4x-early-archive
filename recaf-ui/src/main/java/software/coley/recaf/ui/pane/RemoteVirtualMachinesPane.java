@@ -20,6 +20,7 @@ import javafx.scene.paint.Color;
 import org.kordamp.ikonli.Ikon;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
+import software.coley.observables.ObservableObject;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.attach.AttachManager;
 import software.coley.recaf.services.attach.AttachManagerConfig;
@@ -33,8 +34,10 @@ import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.UncheckedSupplier;
 import software.coley.recaf.util.threading.ThreadUtil;
+import software.coley.recaf.workspace.WorkspaceCloseListener;
 import software.coley.recaf.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.BasicWorkspace;
+import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceRemoteVmResource;
 
 import javax.management.MBeanAttributeInfo;
@@ -53,8 +56,9 @@ import java.util.stream.Collectors;
  * @see RemoteVirtualMachinesWindow
  */
 @Dependent
-public class RemoteVirtualMachinesPane extends BorderPane implements PostScanListener {
+public class RemoteVirtualMachinesPane extends BorderPane implements PostScanListener, WorkspaceCloseListener {
 	private static final Logger logger = Logging.get(RemoteVirtualMachinesPane.class);
+	private final ObservableObject<VirtualMachineDescriptor> connectedVm = new ObservableObject<>(null);
 	private final Map<VirtualMachineDescriptor, VmPane> vmCellMap = new HashMap<>();
 	private final Map<VirtualMachineDescriptor, Button> vmButtonMap = new HashMap<>();
 	private final VBox vmButtonsList = new VBox();
@@ -74,6 +78,10 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 
 		// Register this class as scan listener so we can update the UI live as updates come in.
 		attachManager.addPostScanListener(this);
+
+		// Register this class as a close listener so we can know when the current attached resource is closed.
+		// We'll reset any UI state after doing this associated with being connected.
+		workspaceManager.addWorkspaceCloseListener(this);
 
 		// Setup UI
 		if (attachManager.canAttach())
@@ -102,7 +110,7 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 			});
 		});
 
-
+		// Layout
 		vmButtonsList.setPadding(new Insets(5));
 		vmButtonsList.setAlignment(Pos.TOP_LEFT);
 		vmButtonsList.setSpacing(5);
@@ -170,8 +178,8 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 
 					// Mark button as 'selected'
 					for (Node child : vmButtonsList.getChildren())
-						child.getStyleClass().removeAll(Styles.SUCCESS, Styles.BUTTON_OUTLINED);
-					vmButtonMap.get(descriptor).getStyleClass().addAll(Styles.SUCCESS, Styles.BUTTON_OUTLINED);
+						child.getStyleClass().remove(Styles.BUTTON_OUTLINED);
+					vmButtonMap.get(descriptor).getStyleClass().add(Styles.BUTTON_OUTLINED);
 				});
 				button.setFocusTraversable(false);
 				button.setMaxWidth(Double.MAX_VALUE);
@@ -179,6 +187,15 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 				button.getStyleClass().add(Styles.ACCENT);
 				vmButtonMap.put(descriptor, button);
 				vmButtonsList.getChildren().add(button);
+
+				// Highlight the button bright green if it is the current attached VM.
+				connectedVm.addChangeListener((ob, old, cur) -> {
+					if (cur == descriptor) {
+						button.getStyleClass().addAll(Styles.SUCCESS);
+					} else {
+						button.getStyleClass().removeAll(Styles.SUCCESS);
+					}
+				});
 			}
 
 			// Remove VM's that are no longer alive.
@@ -196,6 +213,11 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 		});
 	}
 
+	@Override
+	public void onWorkspaceClosed(@Nonnull Workspace workspace) {
+		connectedVm.setValue(null);
+	}
+
 	/**
 	 * Display for a remote JVM.
 	 */
@@ -211,22 +233,23 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 			this.contentGrid = new ContentTabs(attachManager, descriptor);
 			VBox.setVgrow(contentGrid, Priority.ALWAYS);
 
-			// Create title label
+			// Remote VM info
 			int pid = attachManager.getVirtualMachinePid(descriptor);
 			String mainClass = attachManager.getVirtualMachineMainClass(descriptor);
 			this.label = pid + ": " + mainClass;
 
-			// Create graphic
+			// Create title controls
 			boolean canConnect = attachManager.getVirtualMachineConnectionFailure(descriptor) == null;
 			CarbonIcons titleIcon = canConnect ? CarbonIcons.DEBUG : CarbonIcons.ERROR_FILLED;
-			FontIconView titleGraphic = new FontIconView(titleIcon, 28, canConnect ? Color.GREEN : Color.RED);
-			Button connectButton = new ActionButton(titleGraphic, () -> {
+			FontIconView titleGraphic = new FontIconView(titleIcon, 28, canConnect ? Color.GREEN.brighter() : Color.RED);
+			Button connectButton = new ActionButton(titleGraphic, Lang.getBinding("attach.connect"), () -> {
 				if (workspaceManager.closeCurrent()) {
 					ThreadUtil.run(() -> {
-						WorkspaceRemoteVmResource vmResource = attachManager.createRemoteResource(descriptor);
 						try {
+							WorkspaceRemoteVmResource vmResource = attachManager.createRemoteResource(descriptor);
 							vmResource.connect();
 							workspaceManager.setCurrent(new BasicWorkspace(vmResource));
+							connectedVm.setValue(descriptor);
 						} catch (IOException ex) {
 							logger.error("Failed to connect to remote VM: {}", label);
 							ErrorDialogs.show(Lang.getBinding("dialog.error.attach.title"),
@@ -237,15 +260,30 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 					});
 				}
 			});
+			// Give the button a rounded appearance, which becomes solid
+			connectButton.setMinWidth(120);
+			connectButton.getStyleClass().add(Styles.ROUNDED);
+			connectedVm.addChangeListener((obs, old, cur) -> {
+				if (cur == descriptor) {
+					connectButton.getStyleClass().addAll(Styles.ACCENT, Styles.SUCCESS);
+					connectButton.setMouseTransparent(true); // Disable clicking again until disconnected
+				} else {
+					connectButton.getStyleClass().removeAll(Styles.ACCENT, Styles.SUCCESS);
+					connectButton.setMouseTransparent(false);
+				}
+			});
 
+			// Layout
 			Label title = new Label(label);
 			title.getStyleClass().add(Styles.TEXT_CAPTION);
 			title.setPadding(new Insets(10));
 			HBox titleWrapper = new HBox(connectButton, title);
 			titleWrapper.setAlignment(Pos.CENTER_LEFT);
+			titleWrapper.setPadding(new Insets(10));
+			titleWrapper.setSpacing(10);
 
 			// Layout
-			getChildren().addAll(titleWrapper, new Separator(), contentGrid);
+			getChildren().addAll(titleWrapper, contentGrid);
 		}
 
 		/**

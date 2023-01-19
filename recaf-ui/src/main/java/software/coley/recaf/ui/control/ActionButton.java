@@ -34,6 +34,20 @@ public class ActionButton extends Button {
 	}
 
 	/**
+	 * @param graphic
+	 * 		Button display graphic.
+	 * @param text
+	 * 		Button display text.
+	 * @param action
+	 * 		Action to run on-click.
+	 */
+	public ActionButton(Node graphic, ObservableValue<String> text, Runnable action) {
+		setGraphic(graphic);
+		textProperty().bind(text);
+		setOnAction(e -> wrap(e, action));
+	}
+
+	/**
 	 * @param text
 	 * 		Button display text.
 	 * @param action
