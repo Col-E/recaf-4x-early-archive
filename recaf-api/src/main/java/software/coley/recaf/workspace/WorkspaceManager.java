@@ -86,10 +86,13 @@ public interface WorkspaceManager {
 
 	/**
 	 * Closes the current workspace.
+	 *
+	 * @return {@code true} on success.
 	 */
-	default void closeCurrent() {
+	default boolean closeCurrent() {
 		if (getCurrent() != null)
-			setCurrent(null);
+			return setCurrent(null);
+		return true;
 	}
 
 	/**
