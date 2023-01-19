@@ -21,8 +21,10 @@ public class ErrorDialogs {
 	 * 		The error to display.
 	 */
 	public static void show(String title, String header, String content, Exception ex) {
-		Alert alert = alert(title, header, content);
-		configure(alert, ex);
+		FxThreadUtil.run(() -> {
+			Alert alert = alert(title, header, content);
+			configure(alert, ex);
+		});
 	}
 
 	/**
@@ -36,8 +38,10 @@ public class ErrorDialogs {
 	 * 		The error to display.
 	 */
 	public static void show(StringBinding title, StringBinding header, StringBinding content, Exception ex) {
-		Alert alert = alert(title, header, content);
-		configure(alert, ex);
+		FxThreadUtil.run(() -> {
+			Alert alert = alert(title, header, content);
+			configure(alert, ex);
+		});
 	}
 
 	private static void configure(Alert alert, Exception ex) {
