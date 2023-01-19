@@ -77,7 +77,7 @@ public class FileMenu extends WorkspaceAwareMenu {
 		MenuItem itemViewChanges = action("menu.file.modifications", CarbonIcons.COMPARE, this::openChangeViewer);
 		MenuItem itemClose = action("menu.file.close", CarbonIcons.TRASH_CAN, this::closeWorkspace);
 		itemAddToWorkspace.disableProperty().bind(hasWorkspace.not());
-		itemExportPrimary.disableProperty().bind(hasWorkspace.not());
+		itemExportPrimary.disableProperty().bind(hasWorkspace.not().and(hasAgentWorkspace.not()));
 		itemViewChanges.disableProperty().bind(hasWorkspace.not());
 		itemClose.disableProperty().bind(hasWorkspace.not());
 
