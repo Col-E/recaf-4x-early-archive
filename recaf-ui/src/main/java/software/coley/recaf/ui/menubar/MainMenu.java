@@ -13,7 +13,7 @@ import javafx.scene.control.MenuBar;
 @Dependent
 public class MainMenu extends MenuBar {
 	@Inject
-	public MainMenu(FileMenu fileMenu) {
-		getMenus().addAll(fileMenu);
+	public MainMenu(FileMenu fileMenu, ConfigMenu configMenu) {
+		getMenus().addAll(fileMenu, configMenu);
 	}
 }

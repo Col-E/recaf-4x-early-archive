@@ -28,6 +28,7 @@ public class WindowManager implements Service {
 	// Built-in window keys
 	public static final String WIN_MAIN = "main";
 	public static final String WIN_REMOTE_VMS = "remote-vms";
+	public static final String WIN_CONFIG = "config";
 	// Manager instance data
 	private final WindowManagerConfig config;
 	private final ObservableList<Stage> activeWindows = new ObservableList<>();
@@ -124,6 +125,14 @@ public class WindowManager implements Service {
 	@Nonnull
 	public Stage getRemoteVmWindow() {
 		return Objects.requireNonNull(getWindow(WIN_REMOTE_VMS));
+	}
+
+	/**
+	 * @return Window for the config display.
+	 */
+	@Nonnull
+	public Stage getConfigWindow() {
+		return Objects.requireNonNull(getWindow(WIN_CONFIG));
 	}
 
 	@Nonnull
