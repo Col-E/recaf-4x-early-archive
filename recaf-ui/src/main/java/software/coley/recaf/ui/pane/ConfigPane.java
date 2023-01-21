@@ -17,6 +17,8 @@ import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigValue;
 import software.coley.recaf.services.config.ConfigManager;
 import software.coley.recaf.services.config.ManagedConfigListener;
+import software.coley.recaf.ui.config.ConfigComponentFactory;
+import software.coley.recaf.ui.config.ConfigComponentManager;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.util.CollectionUtils;
 
@@ -32,6 +34,8 @@ import static software.coley.recaf.util.Lang.getBinding;
  * Pane to display all config values.
  *
  * @author Matt Coley
+ * @see ConfigManager Source of values to pull from.
+ * @see ConfigComponentManager Controls how to represent {@link ConfigValue} instances.
  */
 @Dependent
 public class ConfigPane extends SplitPane implements ManagedConfigListener {
@@ -39,10 +43,12 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 	private final Map<String, ConfigPage> pages = new HashMap<>();
 	private final TreeItem<String> root = new TreeItem<>("root");
 	private final TreeView<String> tree = new TreeView<>();
-	private final BorderPane content = new BorderPane();
+	private final ScrollPane content = new ScrollPane();
+	private final ConfigComponentManager componentManager;
 
 	@Inject
-	public ConfigPane(ConfigManager configManager) {
+	public ConfigPane(ConfigManager configManager, ConfigComponentManager componentManager) {
+		this.componentManager = componentManager;
 		configManager.addManagedConfigListener(this);
 
 		// Setup UI
@@ -71,7 +77,7 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 					textProperty().bind(getBinding(CONF_LANG_PREFIX + item));
 					setOnMousePressed(e -> {
 						ConfigPage page = pages.get(item);
-						if (page != null) content.setCenter(page);
+						if (page != null) content.setContent(page);
 					});
 				}
 			}
@@ -176,8 +182,9 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 	/**
 	 * Page for a single {@link ConfigContainer}.
 	 */
-	static class ConfigPage extends GridPane {
-		public ConfigPage(ConfigContainer container) {
+	private class ConfigPage extends GridPane {
+		@SuppressWarnings({"rawtypes", "unchecked"})
+		private ConfigPage(ConfigContainer container) {
 			// Title
 			Label title = new BoundLabel(getBinding(container.getGroup() + PACKAGE_SPLIT + container.getId()));
 			title.getStyleClass().add(Styles.TITLE_4);
@@ -188,11 +195,14 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 			Map<String, ConfigValue<?>> values = container.getValues();
 			int row = 2;
 			for (Map.Entry<String, ConfigValue<?>> entry : values.entrySet()) {
-				// TODO: Implement properly
-				//  - not all items strictly follow this model.
-				//  - checkboxes are labeled components and should span the whole row
-				add(new Label(entry.getKey()), 0, row);
-				add(new Label("editor"), 1, row);
+				ConfigValue<?> value = entry.getValue();
+				ConfigComponentFactory componentFactory = componentManager.getFactory(value);
+				if (componentFactory.isStandAlone()) {
+					add(componentFactory.create(container, value), 0, row, 2, 1);
+				} else {
+					add(new Label(entry.getKey()), 0, row);
+					add(componentFactory.create(container, value), 1, row);
+				}
 				row++;
 			}
 
@@ -203,7 +213,6 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 			ColumnConstraints columnLabel = new ColumnConstraints();
 			ColumnConstraints columnEditor = new ColumnConstraints();
 			columnEditor.setHgrow(Priority.ALWAYS);
-			columnEditor.setHalignment(HPos.CENTER);
 			getColumnConstraints().addAll(columnLabel, columnEditor);
 		}
 	}
