@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.stream.Stream;
 
 /**
  * Implementation of {@link WorkspaceRemoteVmResource} via {@link Client}.
@@ -55,6 +56,14 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 		super(new WorkspaceResourceBuilder());
 		this.virtualMachine = virtualMachine;
 		this.client = client;
+
+		// Call the parent setup method.
+		super.setup();
+	}
+
+	@Override
+	protected void setup() {
+		// No-op here so the constructor doesn't call it before the fields in THIS class are initialized
 	}
 
 	@Nonnull
@@ -77,18 +86,32 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
+	public Stream<JvmClassBundle> jvmClassBundleStream() {
+		return (Stream<JvmClassBundle>) (Object) remoteBundleMap.values().stream();
+	}
+
+	@Override
 	public void close() {
 		super.close();
-		closed = true;
+
+		// Close client connection
 		try {
-			virtualMachine.detach();
+			closed = true;
+			client.close();
 		} catch (IOException ex) {
-			logger.warn("Failed to properly detach from VM");
+			logger.info("Failed to close client connection to remote VM: {}", virtualMachine.id());
 		}
 	}
 
 	@Override
 	public void connect() throws IOException {
+		if (closed) {
+			closed = false;
+
+			return;
+		}
+
 		client.setBroadcastListener((messageType, message) -> {
 			switch (messageType) {
 				case MessageConstants.ID_BROADCAST_LOADER:

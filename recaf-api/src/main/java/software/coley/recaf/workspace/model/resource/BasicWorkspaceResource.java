@@ -71,6 +71,13 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 		this.androidClassBundles = androidClassBundles;
 		this.embeddedResources = embeddedResources;
 		this.containingResource = containingResource;
+		setup();
+	}
+
+	/**
+	 * Calls other setup methods.
+	 */
+	protected void setup() {
 		setupListenerDelegation();
 		linkContentsToResource();
 		linkToEmbedded();
