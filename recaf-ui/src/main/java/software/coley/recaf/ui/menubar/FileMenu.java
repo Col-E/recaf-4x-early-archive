@@ -21,7 +21,6 @@ import software.coley.recaf.ui.wizard.SinglePathWizardPage;
 import software.coley.recaf.ui.wizard.WizardStage;
 import software.coley.recaf.util.ErrorDialogs;
 import software.coley.recaf.util.Icons;
-import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.PathExportingManager;
 import software.coley.recaf.workspace.PathLoadingManager;
 import software.coley.recaf.workspace.WorkspaceManager;
@@ -33,6 +32,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import static software.coley.recaf.util.Lang.getBinding;
 import static software.coley.recaf.util.Menus.*;
 
 /**
@@ -66,7 +66,7 @@ public class FileMenu extends WorkspaceAwareMenu {
 
 		FontIcon graphic = new FontIcon(CarbonIcons.WORKSPACE);
 		graphic.setIconSize(IconView.DEFAULT_ICON_SIZE);
-		textProperty().bind(Lang.getBinding("menu.file"));
+		textProperty().bind(getBinding("menu.file"));
 		setGraphic(graphic);
 
 		SimpleListProperty<MenuItem> recentItemsProperty = new SimpleListProperty<>(menuRecent.getItems());
@@ -139,9 +139,9 @@ public class FileMenu extends WorkspaceAwareMenu {
 						recentWorkspaces.remove(model);
 						logger.error("Failed to open recent workspace for '{}'", title, ex);
 						ErrorDialogs.show(
-								Lang.getBinding("dialog.error.loadworkspace.title"),
-								Lang.getBinding("dialog.error.loadworkspace.header"),
-								Lang.getBinding("dialog.error.loadworkspace.content"),
+								getBinding("dialog.error.loadworkspace.title"),
+								getBinding("dialog.error.loadworkspace.header"),
+								getBinding("dialog.error.loadworkspace.content"),
 								ex
 						);
 					});
@@ -159,8 +159,8 @@ public class FileMenu extends WorkspaceAwareMenu {
 	 * Display the workspace wizard.
 	 */
 	private void openWorkspace() {
-		SinglePathWizardPage pagePrimary = new SinglePathWizardPage(Lang.getBinding("dialog.title.primary"), recentFilesConfig);
-		MultiPathWizardPage pageSupporting = new MultiPathWizardPage(Lang.getBinding("dialog.title.supporting"), recentFilesConfig);
+		SinglePathWizardPage pagePrimary = new SinglePathWizardPage(getBinding("dialog.title.primary"), recentFilesConfig);
+		MultiPathWizardPage pageSupporting = new MultiPathWizardPage(getBinding("dialog.title.supporting"), recentFilesConfig);
 
 		// Create the window for the wizard and display it.
 		Stage stage = new WizardStage(List.of(pagePrimary, pageSupporting), () -> {
@@ -173,9 +173,9 @@ public class FileMenu extends WorkspaceAwareMenu {
 				logger.error("Failed to load workspace from selected files. Primary file: {}",
 						primaryPath.getFileName().toString(), ex);
 				ErrorDialogs.show(
-						Lang.getBinding("dialog.error.loadworkspace.title"),
-						Lang.getBinding("dialog.error.loadworkspace.header"),
-						Lang.getBinding("dialog.error.loadworkspace.content"),
+						getBinding("dialog.error.loadworkspace.title"),
+						getBinding("dialog.error.loadworkspace.header"),
+						getBinding("dialog.error.loadworkspace.content"),
 						ex
 				);
 			});
@@ -190,7 +190,7 @@ public class FileMenu extends WorkspaceAwareMenu {
 	 * Display a wizard for adding additional resources.
 	 */
 	private void addToWorkspace() {
-		MultiPathWizardPage pageSupporting = new MultiPathWizardPage(Lang.getBinding("dialog.title.supporting"), recentFilesConfig);
+		MultiPathWizardPage pageSupporting = new MultiPathWizardPage(getBinding("dialog.title.supporting"), recentFilesConfig);
 
 		// Create the window for the wizard and display it.
 		Stage stage = new WizardStage(List.of(pageSupporting), () -> {
@@ -204,9 +204,9 @@ public class FileMenu extends WorkspaceAwareMenu {
 				Toolkit.getDefaultToolkit().beep();
 				logger.error("Failed to load supporting resources from selected files.", ex);
 				ErrorDialogs.show(
-						Lang.getBinding("dialog.error.loadsupport.title"),
-						Lang.getBinding("dialog.error.loadsupport.header"),
-						Lang.getBinding("dialog.error.loadsupport.content"),
+						getBinding("dialog.error.loadsupport.title"),
+						getBinding("dialog.error.loadsupport.header"),
+						getBinding("dialog.error.loadsupport.content"),
 						ex
 				);
 			});

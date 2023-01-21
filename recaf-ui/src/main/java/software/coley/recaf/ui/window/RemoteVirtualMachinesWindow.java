@@ -21,10 +21,8 @@ public class RemoteVirtualMachinesWindow extends AbstractIdentifiableStage {
 
 		// Layout
 		titleProperty().bind(Lang.getBinding("menu.file.attach"));
-		setWidth(750);
-		setHeight(450);
 		setMinWidth(750);
 		setMinHeight(450);
-		setScene(new Scene(remoteVirtualMachinesPane));
+		setScene(new Scene(remoteVirtualMachinesPane, 750, 450));
 	}
 }

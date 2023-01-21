@@ -31,7 +31,6 @@ import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.window.RemoteVirtualMachinesWindow;
 import software.coley.recaf.util.ErrorDialogs;
 import software.coley.recaf.util.FxThreadUtil;
-import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.UncheckedSupplier;
 import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.WorkspaceCloseListener;
@@ -48,6 +47,8 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static software.coley.recaf.util.Lang.getBinding;
 
 /**
  * Pane for displaying available remote JVMs from {@link AttachManager}.
@@ -117,6 +118,8 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 		ScrollPane scroll = new ScrollPane(vmButtonsList);
 		scroll.setFitToWidth(true);
 		SplitPane split = new SplitPane(scroll, vmDisplayPane);
+		SplitPane.setResizableWithParent(scroll, false);
+		split.setDividerPositions(0.3);
 		setCenter(split);
 	}
 
@@ -130,12 +133,12 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 
 		Label title = new Label();
 		title.getStyleClass().add(Styles.TITLE_1);
-		title.textProperty().bind(Lang.getBinding("attach.unsupported"));
+		title.textProperty().bind(getBinding("attach.unsupported"));
 		title.setAlignment(Pos.CENTER);
 
 		Label description = new Label();
 		description.getStyleClass().add(Styles.TITLE_4);
-		description.textProperty().bind(Lang.getBinding("attach.unsupported.detail"));
+		description.textProperty().bind(getBinding("attach.unsupported.detail"));
 		description.setAlignment(Pos.CENTER);
 
 		VBox box = new VBox(graphic, title, description);
@@ -242,7 +245,7 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 			boolean canConnect = attachManager.getVirtualMachineConnectionFailure(descriptor) == null;
 			CarbonIcons titleIcon = canConnect ? CarbonIcons.DEBUG : CarbonIcons.ERROR_FILLED;
 			FontIconView titleGraphic = new FontIconView(titleIcon, 28, canConnect ? Color.GREEN.brighter() : Color.RED);
-			Button connectButton = new ActionButton(titleGraphic, Lang.getBinding("attach.connect"), () -> {
+			Button connectButton = new ActionButton(titleGraphic, getBinding("attach.connect"), () -> {
 				if (workspaceManager.closeCurrent()) {
 					ThreadUtil.run(() -> {
 						try {
@@ -252,9 +255,9 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 							connectedVm.setValue(descriptor);
 						} catch (IOException ex) {
 							logger.error("Failed to connect to remote VM: {}", label, ex);
-							ErrorDialogs.show(Lang.getBinding("dialog.error.attach.title"),
-									Lang.getBinding("dialog.error.attach.header"),
-									Lang.getBinding("dialog.error.attach.content"),
+							ErrorDialogs.show(getBinding("dialog.error.attach.title"),
+									getBinding("dialog.error.attach.header"),
+									getBinding("dialog.error.attach.content"),
 									ex);
 						}
 					});
@@ -351,7 +354,7 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 						Tab tab = new Tab();
 						tab.setClosable(false);
 						tab.setGraphic(new FontIconView(CarbonIcons.SETTINGS));
-						tab.textProperty().bind(Lang.getBinding("attach.tab.properties"));
+						tab.textProperty().bind(getBinding("attach.tab.properties"));
 						return tab;
 					}
 				});
@@ -433,7 +436,7 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 							Tab tab = new Tab();
 							tab.setClosable(false);
 							tab.setGraphic(new FontIconView(wrapper.icon()));
-							tab.textProperty().bind(Lang.getBinding(wrapper.langKey()));
+							tab.textProperty().bind(getBinding(wrapper.langKey()));
 							return tab;
 						}
 					});
