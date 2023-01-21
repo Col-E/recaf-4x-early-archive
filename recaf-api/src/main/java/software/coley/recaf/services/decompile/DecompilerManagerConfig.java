@@ -5,6 +5,7 @@ import jakarta.inject.Inject;
 import software.coley.observables.ObservableString;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
+import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.ServiceConfig;
 
 /**
@@ -19,7 +20,7 @@ public class DecompilerManagerConfig extends BasicConfigContainer implements Ser
 
 	@Inject
 	public DecompilerManagerConfig() {
-		super(DecompilerManager.SERVICE_ID + CONFIG_SUFFIX);
+		super(ConfigGroups.SERVICE_DECOMPILE, DecompilerManager.SERVICE_ID + CONFIG_SUFFIX);
 		// Add values
 		addValue(new BasicConfigValue<>("pref-jvm-decompiler", String.class, preferredJvmDecompiler));
 		addValue(new BasicConfigValue<>("pref-android-decompiler", String.class, preferredAndroidDecompiler));

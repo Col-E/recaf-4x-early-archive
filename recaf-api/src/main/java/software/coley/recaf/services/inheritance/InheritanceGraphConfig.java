@@ -3,6 +3,7 @@ package software.coley.recaf.services.inheritance;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.recaf.config.BasicConfigContainer;
+import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.ServiceConfig;
 
 /**
@@ -14,6 +15,6 @@ import software.coley.recaf.services.ServiceConfig;
 public class InheritanceGraphConfig extends BasicConfigContainer implements ServiceConfig {
 	@Inject
 	public InheritanceGraphConfig() {
-		super(InheritanceGraph.SERVICE_ID + CONFIG_SUFFIX);
+		super(ConfigGroups.SERVICE_ANALYSIS, InheritanceGraph.SERVICE_ID + CONFIG_SUFFIX);
 	}
 }

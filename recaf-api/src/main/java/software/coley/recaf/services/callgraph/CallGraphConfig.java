@@ -5,6 +5,7 @@ import jakarta.inject.Inject;
 import software.coley.observables.ObservableBoolean;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
+import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.ServiceConfig;
 
 /**
@@ -18,7 +19,7 @@ public class CallGraphConfig extends BasicConfigContainer implements ServiceConf
 
 	@Inject
 	public CallGraphConfig() {
-		super(CallGraph.SERVICE_ID + CONFIG_SUFFIX);
+		super(ConfigGroups.SERVICE_ANALYSIS, CallGraph.SERVICE_ID + CONFIG_SUFFIX);
 		// Add values
 		addValue(new BasicConfigValue<>("active", Boolean.class, active));
 	}

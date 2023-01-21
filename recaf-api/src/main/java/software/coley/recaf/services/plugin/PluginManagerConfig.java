@@ -3,6 +3,7 @@ package software.coley.recaf.services.plugin;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.recaf.config.BasicConfigContainer;
+import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.ServiceConfig;
 
 /**
@@ -16,7 +17,7 @@ public class PluginManagerConfig extends BasicConfigContainer implements Service
 
 	@Inject
 	public PluginManagerConfig() {
-		super(PluginManager.SERVICE_ID + CONFIG_SUFFIX);
+		super(ConfigGroups.SERVICE_PLUGIN, PluginManager.SERVICE_ID + CONFIG_SUFFIX);
 	}
 
 	/**

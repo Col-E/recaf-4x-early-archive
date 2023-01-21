@@ -6,6 +6,7 @@ import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
+import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.workspace.PathExportingManager;
 import software.coley.recaf.workspace.io.WorkspaceExportOptions;
 import software.coley.recaf.workspace.model.Workspace;
@@ -25,7 +26,7 @@ public class ExportConfig extends BasicConfigContainer {
 
 	@Inject
 	public ExportConfig() {
-		super("export" + CONFIG_SUFFIX);
+		super(ConfigGroups.SERVICE_IO, "export" + CONFIG_SUFFIX);
 		// Add values
 		addValue(new BasicConfigValue<>("compression", WorkspaceExportOptions.CompressType.class, compression));
 		addValue(new BasicConfigValue<>("bundle-supporting-resources", Boolean.class, bundleSupportingResources));

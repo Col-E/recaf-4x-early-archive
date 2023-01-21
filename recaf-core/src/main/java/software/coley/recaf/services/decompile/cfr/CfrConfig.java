@@ -12,6 +12,7 @@ import software.coley.observables.ObservableInteger;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
+import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.util.StringUtil;
 
@@ -111,7 +112,7 @@ public class CfrConfig extends BasicConfigContainer {
 
 	@Inject
 	public CfrConfig() {
-		super("decompiler-cfr" + CONFIG_SUFFIX);
+		super(ConfigGroups.SERVICE_DECOMPILE, "decompiler-cfr" + CONFIG_SUFFIX);
 		// Add values
 		addValue(new BasicConfigValue<>("stringbuffer", BooleanOption.class, stringbuffer));
 		addValue(new BasicConfigValue<>("stringbuilder", BooleanOption.class, stringbuilder));

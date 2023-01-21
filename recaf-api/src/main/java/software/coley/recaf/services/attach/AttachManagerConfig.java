@@ -5,6 +5,7 @@ import jakarta.inject.Inject;
 import software.coley.observables.ObservableBoolean;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
+import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.ServiceConfig;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
 
@@ -24,7 +25,7 @@ public class AttachManagerConfig extends BasicConfigContainer implements Service
 
 	@Inject
 	public AttachManagerConfig(RecafDirectoriesConfig directories) {
-		super(AttachManager.SERVICE_ID + CONFIG_SUFFIX);
+		super(ConfigGroups.SERVICE_DEBUG, AttachManager.SERVICE_ID + CONFIG_SUFFIX);
 		this.directories = directories;
 		// Add values
 		addValue(new BasicConfigValue<>("passive-scanning", Boolean.class, passiveScanning));

@@ -12,13 +12,17 @@ import java.util.TreeMap;
  */
 public class BasicConfigContainer implements ConfigContainer {
 	private final Map<String, ConfigValue<?>> configMap = new TreeMap<>();
+	private final String group;
 	private final String id;
 
 	/**
+	 * @param group
+	 * 		Container group.
 	 * @param id
 	 * 		Container ID.
 	 */
-	public BasicConfigContainer(@Nonnull String id) {
+	public BasicConfigContainer(@Nonnull String group, @Nonnull String id) {
+		this.group = group;
 		this.id = id;
 	}
 
@@ -28,6 +32,11 @@ public class BasicConfigContainer implements ConfigContainer {
 	 */
 	protected void addValue(@Nonnull ConfigValue<?> value) {
 		configMap.put(value.getKey(), value);
+	}
+
+	@Override
+	public String getGroup() {
+		return group;
 	}
 
 	@Override

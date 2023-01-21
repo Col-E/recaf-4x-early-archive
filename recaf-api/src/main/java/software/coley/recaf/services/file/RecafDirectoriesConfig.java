@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.ConfigContainer;
+import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.util.PlatformType;
 
 import java.io.IOException;
@@ -32,7 +33,7 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 
 	@Inject
 	public RecafDirectoriesConfig() {
-		super("directories" + CONFIG_SUFFIX);
+		super(ConfigGroups.SERVICE_IO, "directories" + CONFIG_SUFFIX);
 	}
 
 	/**

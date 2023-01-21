@@ -3,6 +3,7 @@ package software.coley.recaf.services.compile;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.recaf.config.BasicConfigContainer;
+import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.ServiceConfig;
 
 /**
@@ -16,6 +17,6 @@ import software.coley.recaf.services.ServiceConfig;
 public class JavacCompilerConfig extends BasicConfigContainer implements ServiceConfig {
 	@Inject
 	public JavacCompilerConfig() {
-		super(JavacCompiler.SERVICE_ID + CONFIG_SUFFIX);
+		super(ConfigGroups.SERVICE_COMPILE, JavacCompiler.SERVICE_ID + CONFIG_SUFFIX);
 	}
 }

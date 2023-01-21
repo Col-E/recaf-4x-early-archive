@@ -10,6 +10,7 @@ import software.coley.observables.ObservableString;
 import software.coley.recaf.config.BasicCollectionConfigValue;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
+import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
@@ -37,7 +38,7 @@ public class RecentFilesConfig extends BasicConfigContainer {
 
 	@Inject
 	public RecentFilesConfig() {
-		super(ID + CONFIG_SUFFIX);
+		super(ConfigGroups.SERVICE_IO, ID + CONFIG_SUFFIX);
 		// Add values
 		addValue(new BasicConfigValue<>("max-recent-workspaces", Integer.class, maxRecentWorkspaces));
 		addValue(new BasicCollectionConfigValue<>("recent-workspaces", List.class, WorkspaceModel.class, recentWorkspaces));

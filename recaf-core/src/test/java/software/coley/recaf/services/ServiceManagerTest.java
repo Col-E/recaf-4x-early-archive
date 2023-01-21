@@ -2,6 +2,7 @@ package software.coley.recaf.services;
 
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.TestBase;
+import software.coley.recaf.services.config.ConfigManager;
 import software.coley.recaf.services.plugin.PluginManager;
 import software.coley.recaf.services.attach.AttachManager;
 import software.coley.recaf.services.callgraph.CallGraph;
@@ -41,5 +42,6 @@ class ServiceManagerTest extends TestBase {
 		assertTrue(allServices.containsKey(SearchService.SERVICE_ID), "Missing search service");
 		assertTrue(allServices.containsKey(PluginManager.SERVICE_ID), "Missing plugin management service");
 		assertTrue(allServices.containsKey(CallGraph.SERVICE_ID), "Missing call graph service");
+		assertTrue(allServices.containsKey(ConfigManager.SERVICE_ID), "Missing config service");
 	}
 }

@@ -7,6 +7,7 @@ import software.coley.llzip.ZipIO;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
+import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.ServiceConfig;
 import software.coley.recaf.util.UncheckedFunction;
 
@@ -21,7 +22,7 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 
 	@Inject
 	public ResourceImporterConfig() {
-		super(ResourceImporter.SERVICE_ID + CONFIG_SUFFIX);
+		super(ConfigGroups.SERVICE_IO, ResourceImporter.SERVICE_ID + CONFIG_SUFFIX);
 
 		addValue(new BasicConfigValue<>("zip-strategy", ZipStrategy.class, zipStrategy));
 	}

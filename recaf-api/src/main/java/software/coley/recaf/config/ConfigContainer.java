@@ -15,6 +15,16 @@ public interface ConfigContainer {
 	String CONFIG_SUFFIX = "-config";
 
 	/**
+	 * @return Group ID the container belongs to.
+	 *
+	 * @see ConfigGroups For constant values.
+	 */
+	String getGroup();
+
+	/**
+	 * The unique ID of this container should be <i>globally</i> unique.
+	 * The {@link #getGroup() group} does not act as an identifier prefix.
+	 *
 	 * @return Unique ID of this container.
 	 */
 	String getId();
