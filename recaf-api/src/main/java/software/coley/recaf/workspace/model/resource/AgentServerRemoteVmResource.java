@@ -94,10 +94,10 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 	@Override
 	public void close() {
 		super.close();
+		closed = true;
 
 		// Close client connection
 		try {
-			closed = true;
 			client.close();
 		} catch (IOException ex) {
 			logger.info("Failed to close client connection to remote VM: {}", virtualMachine.id());
@@ -106,12 +106,8 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 
 	@Override
 	public void connect() throws IOException {
-		if (closed) {
-			closed = false;
-
-			return;
-		}
-
+		if (closed)
+			throw new IOException("Cannot re-connect to closed resource. Please create a new one.");
 		client.setBroadcastListener((messageType, message) -> {
 			switch (messageType) {
 				case MessageConstants.ID_BROADCAST_LOADER:
@@ -160,9 +156,6 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 					logger.info("Received initial response for class names in classloader {}, count={}",
 							loader.getName(), classes.size());
 					for (String className : classes) {
-						if (closed)
-							return;
-
 						// If class does not exist in bundle, then request it from remote server
 						if (bundle.get(className) == null) {
 							client.sendBlocking(new RequestClassMessage(loaderId, className), reply -> {
