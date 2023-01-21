@@ -251,7 +251,7 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 							workspaceManager.setCurrent(new BasicWorkspace(vmResource));
 							connectedVm.setValue(descriptor);
 						} catch (IOException ex) {
-							logger.error("Failed to connect to remote VM: {}", label);
+							logger.error("Failed to connect to remote VM: {}", label, ex);
 							ErrorDialogs.show(Lang.getBinding("dialog.error.attach.title"),
 									Lang.getBinding("dialog.error.attach.header"),
 									Lang.getBinding("dialog.error.attach.content"),

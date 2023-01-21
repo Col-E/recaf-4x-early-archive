@@ -258,7 +258,6 @@ public class BasicAttachManager implements AttachManager {
 									String serviceUrl = agentProperties.getProperty(JMX_AGENT_ADDRESS);
 									if (serviceUrl == null) {
 										serviceUrl = machine.startLocalManagementAgent();
-										// serviceUrl = agentProperties.getProperty(JMX_AGENT_ADDRESS);
 									}
 
 									if (serviceUrl != null) {
