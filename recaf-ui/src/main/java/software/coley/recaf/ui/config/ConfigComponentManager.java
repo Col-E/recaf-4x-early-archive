@@ -39,19 +39,19 @@ public class ConfigComponentManager {
 								  Instance<TypedConfigComponentFactory<?>> typedFactories) {
 		// Register implementations
 		for (KeyedConfigComponentFactory<?> factory : keyedFactories)
-			register(factory.getKey(), factory);
+			register(factory.getId(), factory);
 		for (TypedConfigComponentFactory<?> factory : typedFactories)
 			register(factory.getType(), factory);
 	}
 
 	/**
-	 * @param key
-	 * 		A {@link ConfigValue#getKey()}, used to create factories to generate components for a specific value.
+	 * @param id
+	 * 		A {@link ConfigValue#getId()}, used to create factories to generate components for a specific value.
 	 * @param factory
 	 * 		Factory to generate components to support the given type.
 	 */
-	public void register(String key, ConfigComponentFactory<?> factory) {
-		keyToConfigurator.put(key, factory);
+	public void register(String id, ConfigComponentFactory<?> factory) {
+		keyToConfigurator.put(id, factory);
 	}
 
 	/**
@@ -75,7 +75,7 @@ public class ConfigComponentManager {
 	@SuppressWarnings("unchecked")
 	public <T> ConfigComponentFactory<T> getFactory(ConfigValue<T> value) {
 		// Get factory for config value ID.
-		String id = value.getKey();
+		String id = value.getId();
 		ConfigComponentFactory<?> factory = keyToConfigurator.get(id);
 		if (factory != null)
 			return (ConfigComponentFactory<T>) factory;

@@ -14,7 +14,7 @@ public interface ConfigValue<T> {
 	/**
 	 * @return Unique ID of this value.
 	 */
-	String getKey();
+	String getId();
 
 	/**
 	 * @return Value type class.

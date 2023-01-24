@@ -15,7 +15,7 @@ import software.coley.recaf.ui.pane.ConfigPane;
  * @author Matt Coley
  * @see ConfigPane UI where these are used.
  * @see ConfigComponentManager Manager for registering these factories.
- * @see KeyedConfigComponentFactory Factory impl for targeting a specific value by its {@link ConfigValue#getKey()}.
+ * @see KeyedConfigComponentFactory Factory impl for targeting a specific value by its {@link ConfigValue#getId()}.
  * @see TypedConfigComponentFactory Factory impl for targeting any value by its {@link ConfigValue#getType()}.
  */
 public abstract class ConfigComponentFactory<T> {
@@ -31,7 +31,7 @@ public abstract class ConfigComponentFactory<T> {
 
 	/**
 	 * @return {@code true} when the created component should span the full page in {@link ConfigPane}.
-	 * {@code false} will place a label next to the created component based on the {@link ConfigValue#getKey()}.
+	 * {@code false} will place a label next to the created component based on the {@link ConfigValue#getId()}.
 	 */
 	public boolean isStandAlone() {
 		return standAlone;

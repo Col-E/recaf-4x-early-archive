@@ -25,7 +25,7 @@ public class BooleanComponentFactory extends TypedConfigComponentFactory<Boolean
 	@Override
 	public Node create(ConfigContainer container, ConfigValue<Boolean> value) {
 		AbstractObservable<Boolean> observable = value.getObservable();
-		String translationKey = container.getGroup() + "." + value.getKey();
+		String translationKey = container.getScopedId(value);
 
 		// Create the component.
 		CheckBox check = new CheckBox();

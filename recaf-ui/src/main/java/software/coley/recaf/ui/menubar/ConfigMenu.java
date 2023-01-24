@@ -34,7 +34,7 @@ public class ConfigMenu extends Menu {
 		textProperty().bind(getBinding("menu.config"));
 		setGraphic(graphic);
 
-		getItems().add(new ActionMenuItem(getBinding("menu.config.edit"), new FontIcon(CarbonIcons.EDIT), this::openEditor));
+		getItems().add(new ActionMenuItem(getBinding("menu.config.edit"), new FontIcon(CarbonIcons.CALIBRATE), this::openEditor));
 		getItems().add(new ActionMenuItem(getBinding("menu.config.export"), new FontIcon(CarbonIcons.DOCUMENT_EXPORT), this::exportProfile));
 		getItems().add(new ActionMenuItem(getBinding("menu.config.import"), new FontIcon(CarbonIcons.DOCUMENT_IMPORT), this::importProfile));
 	}

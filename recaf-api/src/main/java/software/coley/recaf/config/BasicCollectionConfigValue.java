@@ -40,7 +40,7 @@ public class BasicCollectionConfigValue<T, C extends Collection<T>> implements C
 	}
 
 	@Override
-	public String getKey() {
+	public String getId() {
 		return key;
 	}
 

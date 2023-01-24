@@ -31,7 +31,7 @@ public class BasicConfigContainer implements ConfigContainer {
 	 * 		Value to add.
 	 */
 	protected void addValue(@Nonnull ConfigValue<?> value) {
-		configMap.put(value.getKey(), value);
+		configMap.put(value.getId(), value);
 	}
 
 	@Override

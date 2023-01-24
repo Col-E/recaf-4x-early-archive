@@ -30,7 +30,7 @@ public class BasicConfigValue<T> implements ConfigValue<T> {
 	}
 
 	@Override
-	public String getKey() {
+	public String getId() {
 		return key;
 	}
 

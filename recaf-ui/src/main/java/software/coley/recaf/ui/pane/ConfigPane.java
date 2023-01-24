@@ -6,20 +6,21 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
-import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
+import org.kordamp.ikonli.Ikon;
 import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigValue;
 import software.coley.recaf.services.config.ConfigManager;
 import software.coley.recaf.services.config.ManagedConfigListener;
 import software.coley.recaf.ui.config.ConfigComponentFactory;
 import software.coley.recaf.ui.config.ConfigComponentManager;
+import software.coley.recaf.ui.config.ConfigIconManager;
 import software.coley.recaf.ui.control.BoundLabel;
+import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.util.CollectionUtils;
 
 import java.util.HashMap;
@@ -36,6 +37,7 @@ import static software.coley.recaf.util.Lang.getBinding;
  * @author Matt Coley
  * @see ConfigManager Source of values to pull from.
  * @see ConfigComponentManager Controls how to represent {@link ConfigValue} instances.
+ * @see ConfigIconManager Controls which icons to show in the tree for {@link ConfigContainer} paths.
  */
 @Dependent
 public class ConfigPane extends SplitPane implements ManagedConfigListener {
@@ -45,10 +47,13 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 	private final TreeView<String> tree = new TreeView<>();
 	private final ScrollPane content = new ScrollPane();
 	private final ConfigComponentManager componentManager;
+	private final ConfigIconManager iconManager;
 
 	@Inject
-	public ConfigPane(ConfigManager configManager, ConfigComponentManager componentManager) {
+	public ConfigPane(ConfigManager configManager, ConfigComponentManager componentManager,
+					  ConfigIconManager iconManager) {
 		this.componentManager = componentManager;
+		this.iconManager = iconManager;
 		configManager.addManagedConfigListener(this);
 
 		// Setup UI
@@ -73,7 +78,15 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 					textProperty().unbind();
 					textProperty().set(null);
 					setOnMousePressed(null);
+					setGraphic(null);
 				} else {
+					Ikon icon = iconManager.getGroupIcon(item);
+					if (icon == null)
+						icon = iconManager.getContainerIcon(item);
+					if (icon != null)
+						setGraphic(new FontIconView(icon));
+					else
+						setGraphic(null);
 					textProperty().bind(getBinding(CONF_LANG_PREFIX + item));
 					setOnMousePressed(e -> {
 						ConfigPage page = pages.get(item);
@@ -186,7 +199,7 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 		@SuppressWarnings({"rawtypes", "unchecked"})
 		private ConfigPage(ConfigContainer container) {
 			// Title
-			Label title = new BoundLabel(getBinding(container.getGroup() + PACKAGE_SPLIT + container.getId()));
+			Label title = new BoundLabel(getBinding(container.getGroupAndId()));
 			title.getStyleClass().add(Styles.TITLE_4);
 			add(title, 0, 0, 2, 1);
 			add(new Separator(), 0, 1, 2, 1);
@@ -200,7 +213,8 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 				if (componentFactory.isStandAlone()) {
 					add(componentFactory.create(container, value), 0, row, 2, 1);
 				} else {
-					add(new Label(entry.getKey()), 0, row);
+					String key = container.getScopedId(value);
+					add(new BoundLabel(getBinding(key)), 0, row);
 					add(componentFactory.create(container, value), 1, row);
 				}
 				row++;
