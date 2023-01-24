@@ -45,6 +45,7 @@ public class JavacCompilerTest extends TestBase {
 		CompilerResult result = javac.compile(arguments, null, null);
 
 		// Assert no errors
+		assertTrue(result.wasSuccess(), "Result does not indicate success");
 		assertEquals(0, result.getDiagnostics().size(), "There were unexpected diagnostic messages");
 		assertTrue(result.getCompilations().containsKey("HelloWorld"), "Class missing from compile map output");
 

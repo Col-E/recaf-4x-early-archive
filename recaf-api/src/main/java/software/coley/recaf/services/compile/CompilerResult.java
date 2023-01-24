@@ -43,6 +43,15 @@ public class CompilerResult {
 	}
 
 	/**
+	 * @return {@code true} when there are compilations, and no errors thrown.
+	 */
+	public boolean wasSuccess() {
+		return compilations.size() > 0 &&
+				exception == null &&
+				diagnostics.stream().noneMatch(d -> d.getLevel() == CompilerDiagnostic.Level.ERROR);
+	}
+
+	/**
 	 * @return Compilation results.
 	 * May be {@code null} when there are is an {@link #getException()}.
 	 */

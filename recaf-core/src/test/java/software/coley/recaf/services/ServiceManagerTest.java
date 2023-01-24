@@ -12,6 +12,7 @@ import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.services.mapping.format.MappingFormatManager;
 import software.coley.recaf.services.mapping.gen.MappingGenerator;
+import software.coley.recaf.services.script.ScriptEngine;
 import software.coley.recaf.services.search.SearchService;
 import software.coley.recaf.workspace.io.ResourceImporter;
 
@@ -43,5 +44,6 @@ class ServiceManagerTest extends TestBase {
 		assertTrue(allServices.containsKey(PluginManager.SERVICE_ID), "Missing plugin management service");
 		assertTrue(allServices.containsKey(CallGraph.SERVICE_ID), "Missing call graph service");
 		assertTrue(allServices.containsKey(ConfigManager.SERVICE_ID), "Missing config service");
+		assertTrue(allServices.containsKey(ScriptEngine.SERVICE_ID), "Missing script engine service");
 	}
 }
