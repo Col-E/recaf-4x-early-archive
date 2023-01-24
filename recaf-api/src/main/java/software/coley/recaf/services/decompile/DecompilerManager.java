@@ -6,6 +6,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import software.coley.observables.ObservableObject;
+import software.coley.observables.ObservableString;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.Service;
@@ -55,11 +56,26 @@ public class DecompilerManager implements Service {
 			}
 		}
 
+		ObservableString preferredJvmDecompiler = config.getPreferredJvmDecompiler();
+		ObservableString preferredAndroidDecompiler = config.getPreferredAndroidDecompiler();
+
 		// Mirror properties from config, mapped to instances
-		targetJvmDecompiler = config.getPreferredJvmDecompiler()
+		targetJvmDecompiler = preferredJvmDecompiler
 				.mapObject(key -> jvmDecompilers.getOrDefault(key == null ? "" : key, NO_OP_JVM));
-		targetAndroidDecompiler = config.getPreferredAndroidDecompiler()
+		targetAndroidDecompiler = preferredAndroidDecompiler
 				.mapObject(key -> androidDecompilers.getOrDefault(key == null ? "" : key, NO_OP_ANDROID));
+
+		// Select first item if no value is present
+		if (preferredJvmDecompiler.getValue() == null) {
+			JvmDecompiler decompiler = jvmDecompilers.isEmpty() ?
+					NO_OP_JVM : jvmDecompilers.values().iterator().next();
+			preferredJvmDecompiler.setValue(decompiler.getName());
+		}
+		if (preferredAndroidDecompiler.getValue() == null) {
+			AndroidDecompiler decompiler = androidDecompilers.isEmpty() ?
+					NO_OP_ANDROID : androidDecompilers.values().iterator().next();
+			preferredAndroidDecompiler.setValue(decompiler.getName());
+		}
 	}
 
 	/**

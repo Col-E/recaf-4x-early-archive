@@ -14,13 +14,13 @@ public abstract class KeyedConfigComponentFactory<T> extends ConfigComponentFact
 	private final String id;
 
 	/**
-	 * @param createLabel
+	 * @param standAlone
 	 * 		See {@link #isStandAlone()}. Determines if label is automatically added.
 	 * @param id
 	 * 		Value of a {@link ConfigValue#getId()} to associate with.
 	 */
-	protected KeyedConfigComponentFactory(boolean createLabel, String id) {
-		super(createLabel);
+	protected KeyedConfigComponentFactory(boolean standAlone, String id) {
+		super(standAlone);
 		this.id = id;
 	}
 

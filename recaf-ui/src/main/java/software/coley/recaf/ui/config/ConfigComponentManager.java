@@ -1,6 +1,7 @@
 package software.coley.recaf.ui.config;
 
 import atlantafx.base.theme.Styles;
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -50,7 +51,7 @@ public class ConfigComponentManager {
 	 * @param factory
 	 * 		Factory to generate components to support the given type.
 	 */
-	public void register(String id, ConfigComponentFactory<?> factory) {
+	public void register(@Nonnull String id, @Nonnull ConfigComponentFactory<?> factory) {
 		keyToConfigurator.put(id, factory);
 	}
 
@@ -60,7 +61,7 @@ public class ConfigComponentManager {
 	 * @param factory
 	 * 		Factory to generate components to support the given type.
 	 */
-	public void register(Class<?> type, ConfigComponentFactory<?> factory) {
+	public void register(@Nonnull Class<?> type, @Nonnull ConfigComponentFactory<?> factory) {
 		typeToConfigurator.put(type, factory);
 	}
 
@@ -73,7 +74,7 @@ public class ConfigComponentManager {
 	 * @return Component factory for value.
 	 */
 	@SuppressWarnings("unchecked")
-	public <T> ConfigComponentFactory<T> getFactory(ConfigValue<T> value) {
+	public <T> ConfigComponentFactory<T> getFactory(@Nonnull ConfigValue<T> value) {
 		// Get factory for config value ID.
 		String id = value.getId();
 		ConfigComponentFactory<?> factory = keyToConfigurator.get(id);
