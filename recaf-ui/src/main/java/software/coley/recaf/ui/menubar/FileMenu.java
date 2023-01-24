@@ -64,10 +64,8 @@ public class FileMenu extends WorkspaceAwareMenu {
 		this.windowManager = windowManager;
 		this.recentFilesConfig = recentFilesConfig;
 
-		FontIcon graphic = new FontIcon(CarbonIcons.WORKSPACE);
-		graphic.setIconSize(IconView.DEFAULT_ICON_SIZE);
 		textProperty().bind(getBinding("menu.file"));
-		setGraphic(graphic);
+		setGraphic(new FontIconView(CarbonIcons.WORKSPACE));
 
 		SimpleListProperty<MenuItem> recentItemsProperty = new SimpleListProperty<>(menuRecent.getItems());
 		menuRecent.disableProperty().bind(recentItemsProperty.emptyProperty());

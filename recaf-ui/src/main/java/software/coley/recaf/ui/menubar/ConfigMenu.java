@@ -8,10 +8,9 @@ import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.kordamp.ikonli.javafx.FontIcon;
 import software.coley.recaf.services.config.ConfigManager;
 import software.coley.recaf.services.window.WindowManager;
-import software.coley.recaf.ui.control.ActionMenuItem;
-import software.coley.recaf.ui.control.IconView;
 
 import static software.coley.recaf.util.Lang.getBinding;
+import static software.coley.recaf.util.Menus.action;
 
 /**
  * Config menu component for {@link MainMenu}.
@@ -29,14 +28,12 @@ public class ConfigMenu extends Menu {
 		this.windowManager = windowManager;
 		this.configManager = configManager;
 
-		FontIcon graphic = new FontIcon(CarbonIcons.SETTINGS);
-		graphic.setIconSize(IconView.DEFAULT_ICON_SIZE);
 		textProperty().bind(getBinding("menu.config"));
-		setGraphic(graphic);
+		setGraphic(new FontIcon(CarbonIcons.SETTINGS));
 
-		getItems().add(new ActionMenuItem(getBinding("menu.config.edit"), new FontIcon(CarbonIcons.CALIBRATE), this::openEditor));
-		getItems().add(new ActionMenuItem(getBinding("menu.config.export"), new FontIcon(CarbonIcons.DOCUMENT_EXPORT), this::exportProfile));
-		getItems().add(new ActionMenuItem(getBinding("menu.config.import"), new FontIcon(CarbonIcons.DOCUMENT_IMPORT), this::importProfile));
+		getItems().add(action("menu.config.edit", CarbonIcons.CALIBRATE, this::openEditor));
+		getItems().add(action("menu.config.export", CarbonIcons.DOCUMENT_EXPORT, this::exportProfile));
+		getItems().add(action("menu.config.import", CarbonIcons.DOCUMENT_IMPORT, this::importProfile));
 	}
 
 	/**
