@@ -4,6 +4,7 @@ import com.carrotsearch.hppc.CharIntHashMap;
 import com.carrotsearch.hppc.CharIntMap;
 import com.carrotsearch.hppc.cursors.CharIntCursor;
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -60,6 +61,23 @@ public class StringUtil {
 		int i = text.indexOf(cutoff);
 		if (i < 0) return text;
 		return text.substring(0, i);
+	}
+
+	/**
+	 * @param text
+	 * 		Input text.
+	 * @param insertIndex
+	 * 		Position to insert into.
+	 * @param insertion
+	 * 		Text to insert.
+	 *
+	 * @return Modified text.
+	 */
+	public static String insert(@Nonnull String text, int insertIndex, @Nullable String insertion) {
+		if (insertion == null || insertIndex < 0 || insertIndex >= text.length()) return text;
+		String pre = text.substring(0, insertIndex);
+		String post = text.substring(insertIndex);
+		return pre + insertion + post;
 	}
 
 	/**

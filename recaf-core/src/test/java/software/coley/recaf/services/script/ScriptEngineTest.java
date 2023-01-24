@@ -1,12 +1,16 @@
 package software.coley.recaf.services.script;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.TestBase;
-import software.coley.recaf.services.compile.JavacCompiler;
+import software.coley.recaf.services.compile.CompilerDiagnostic;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for {@link ScriptEngine}
@@ -16,33 +20,90 @@ public class ScriptEngineTest extends TestBase {
 
 	@BeforeAll
 	static void setup() {
-		assertTrue(JavacCompiler.isAvailable(), "javac not available!");
 		engine = recaf.get(ScriptEngine.class);
 	}
 
-	@Test
-	void testInlineCode() {
-		engine.run("System.out.println(\"hello\");").thenAccept(result -> {
-			assertTrue(result.wasSuccess());
-			assertFalse(result.wasCompileFailure());
-			assertFalse(result.wasRuntimeError());
-			assertTrue(result.getCompileDiagnostics().isEmpty());
-		});
+	@Nested
+	class Snippet {
+		@Test
+		void testHelloWorld() {
+			assertSuccess("System.out.println(\"hello\");");
+		}
 	}
 
-	@Test
-	void testClassCode() {
-		engine.run("""
-				public class Test {
-					public static void main() {
-						System.out.println("hello");
+	@Nested
+	class Full {
+		@Test
+		void testConstructorInjection() {
+			assertSuccess("""
+					@Dependent
+					public class Test implements Runnable {
+						private final JavacCompiler compiler;
+										
+						@Inject
+						public Test(JavacCompiler compiler) {
+							this.compiler = compiler;
+						}
+						
+						@Override
+						public void run() {
+							System.out.println("hello: " + compiler);
+							if (compiler == null) throw new IllegalStateException();
+						}
 					}
-				}
-				""").thenAccept(result -> {
-			assertTrue(result.wasSuccess());
-			assertFalse(result.wasCompileFailure());
-			assertFalse(result.wasRuntimeError());
-			assertTrue(result.getCompileDiagnostics().isEmpty());
-		});
+					""");
+		}
+
+		@Test
+		void testFieldInjection() {
+			assertSuccess("""
+					@Dependent
+					public class Test implements Runnable {
+						@Inject
+						JavacCompiler compiler;
+						
+						@Override
+						public void run() {
+							System.out.println("hello: " + compiler);
+							if (compiler == null) throw new IllegalStateException();
+						}
+					}
+					""");
+		}
+
+		@Test
+		void testInjectionWithoutStatedScope() {
+			assertSuccess("""
+					public class Test implements Runnable {
+						@Inject
+						JavacCompiler compiler;
+						
+						@Override
+						public void run() {
+							System.out.println("hello: " + compiler);
+							if (compiler == null) throw new IllegalStateException();
+						}
+					}
+					""");
+		}
+	}
+
+	static void assertSuccess(String code) {
+		try {
+			engine.run(code).thenAccept(result -> {
+				for (CompilerDiagnostic diagnostic : result.getCompileDiagnostics())
+					fail("Unexpected diagnostic: " + diagnostic);
+
+				Throwable thrown = result.getRuntimeThrowable();
+				if (thrown != null)
+					fail("Unexpected exception at runtime", thrown);
+
+				assertTrue(result.wasSuccess());
+				assertFalse(result.wasCompileFailure());
+				assertFalse(result.wasRuntimeError());
+			}).get(5, TimeUnit.SECONDS);
+		} catch (InterruptedException | ExecutionException | TimeoutException ex) {
+			fail(ex);
+		}
 	}
 }

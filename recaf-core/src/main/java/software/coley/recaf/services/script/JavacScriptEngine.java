@@ -7,6 +7,7 @@ import jregex.Matcher;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.compile.*;
+import software.coley.recaf.services.plugin.CdiClassAllocator;
 import software.coley.recaf.util.ClassDefiner;
 import software.coley.recaf.util.RegexUtil;
 import software.coley.recaf.util.StringUtil;
@@ -16,6 +17,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 /**
  * Basic implementation of {@link ScriptEngine} using {@link JavacCompiler}.
@@ -40,18 +42,36 @@ public class JavacScriptEngine implements ScriptEngine {
 			"software.coley.recaf.info.builder.*",
 			"software.coley.recaf.info.member.*",
 			"software.coley.recaf.info.properties.*",
+			"software.coley.recaf.services.*",
+			// "software.coley.recaf.services.assemble.*",
+			"software.coley.recaf.services.attach.*",
+			"software.coley.recaf.services.callgraph.*",
+			"software.coley.recaf.services.compile.*",
+			"software.coley.recaf.services.config.*",
+			"software.coley.recaf.services.decompile.*",
+			"software.coley.recaf.services.file.*",
+			"software.coley.recaf.services.inheritance.*",
+			"software.coley.recaf.services.mapping.*",
+			"software.coley.recaf.services.plugin.*",
+			"software.coley.recaf.services.script.*",
+			"software.coley.recaf.services.search.*",
+			// "software.coley.recaf.services.ssvm.*",
 			"software.coley.recaf.util.*",
 			"org.objectweb.asm.*",
-			"org.objectweb.asm.tree.*"
+			"org.objectweb.asm.tree.*",
+			"jakarta.enterprise.context.*",
+			"jakarta.inject.*"
 	);
 	private final Map<Integer, GenerateResult> generateResultMap = new HashMap<>();
 	private final ExecutorService compileAndRunPool = ThreadPoolFactory.newSingleThreadExecutor("script-loader");
 	private final JavacCompiler compiler;
+	private final CdiClassAllocator allocator;
 	private final ScriptEngineConfig config;
 
 	@Inject
-	public JavacScriptEngine(JavacCompiler compiler, ScriptEngineConfig config) {
+	public JavacScriptEngine(JavacCompiler compiler, CdiClassAllocator allocator, ScriptEngineConfig config) {
 		this.compiler = compiler;
+		this.allocator = allocator;
 		this.config = config;
 	}
 
@@ -95,8 +115,10 @@ public class JavacScriptEngine implements ScriptEngine {
 		}
 		if (result.cls != null) {
 			try {
-				Method run = result.cls.getDeclaredMethod("run");
-				run.invoke(null);
+				logger.info("Allocating script instance");
+				Object instance = allocator.instance(result.cls);
+				Method run = instance.getClass().getDeclaredMethod("run");
+				run.invoke(instance);
 				logger.info("Successfully ran script");
 				return new ScriptResult(result.diagnostics);
 			} catch (Exception ex) {
@@ -125,7 +147,13 @@ public class JavacScriptEngine implements ScriptEngine {
 		if (matcher.find())
 			packageName = matcher.group(1);
 		else
-			source = "package " + packageName + "; " + source;
+			source = "package " + packageName + ";\n" + source;
+
+		// Add default imports
+		String imports = "\nimport " + String.join(";\nimport ", DEFAULT_IMPORTS) + ";\n";
+		source = StringUtil.insert(source, source.indexOf(packageName + ";") + packageName.length() + 1, imports);
+
+		// Normalize package name
 		packageName = packageName.replace('.', '/');
 
 		// Extract class name
@@ -168,7 +196,9 @@ public class JavacScriptEngine implements ScriptEngine {
 
 		// Create code (just a basic class with a static 'run' method)
 		StringBuilder code = new StringBuilder(
-				"public class " + className + " implements Opcodes { public static void run() {\n" + script + "\n" + "}}");
+				"@Dependent public class " + className + " implements Runnable, Opcodes { " +
+						"public void run() {\n" + script + "\n" + "}" +
+						"}");
 		for (String imp : imports)
 			code.insert(0, "import " + imp + "; ");
 		code.insert(0, "package " + SCRIPT_PACKAGE_NAME + "; ");
@@ -194,14 +224,16 @@ public class JavacScriptEngine implements ScriptEngine {
 		CompilerResult result = compiler.compile(args, null, null);
 		if (result.wasSuccess()) {
 			try {
-				ClassDefiner definer = new ClassDefiner(result.getCompilations());
+				Map<String, byte[]> classes = result.getCompilations().entrySet().stream()
+						.collect(Collectors.toMap(e -> e.getKey().replace('/', '.'), Map.Entry::getValue));
+				ClassDefiner definer = new ClassDefiner(classes);
 				Class<?> cls = definer.findClass(className.replace('/', '.'));
 				return new GenerateResult(cls, result.getDiagnostics());
 			} catch (Exception ex) {
 				logger.error("Failed to define generated script class", ex);
 			}
 		}
-		return new GenerateResult(null, Collections.emptyList());
+		return new GenerateResult(null, result.getDiagnostics());
 	}
 
 	private record GenerateResult(Class<?> cls, List<CompilerDiagnostic> diagnostics) {
