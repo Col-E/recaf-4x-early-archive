@@ -61,26 +61,22 @@ subprojects {
     }
 
     // All Java plugins should have the same test framework setup.
-    plugins.withType(JavaPlugin).tap {
-        configureEach {
-            dependencies {
-                testImplementation junit_api
-                testImplementation junit_params
-                testImplementation mockito
-                testRuntimeOnly junit_engine
-            }
+    plugins.withType(JavaPlugin).configureEach {
+        dependencies {
+            testImplementation junit_api
+            testImplementation junit_params
+            testImplementation mockito
+            testRuntimeOnly junit_engine
         }
     }
 
     // Need to tell any test-fixture-plugin to include dependencies
     // in its own configuration. Otherwise it can get confused.
-    plugins.withType(JavaTestFixturesPlugin).tap {
-        configureEach {
-            dependencies {
-                testFixturesApi junit_api
-                testFixturesApi junit_params
-                testFixturesApi mockito
-            }
+    plugins.withType(JavaTestFixturesPlugin).configureEach {
+        dependencies {
+            testFixturesApi junit_api
+            testFixturesApi junit_params
+            testFixturesApi mockito
         }
     }
 
