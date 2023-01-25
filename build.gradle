@@ -49,6 +49,7 @@ subprojects {
 
     // ========================== TESTING ==========================
 
+    // All modules should have the same test framework setup.
     test {
         useJUnitPlatform()
 
@@ -60,7 +61,7 @@ subprojects {
         }
     }
 
-    // All Java plugins should have the same test framework setup.
+    // All modules with Java components should share the same test dependencies.
     plugins.withType(JavaPlugin).configureEach {
         dependencies {
             testImplementation junit_api
@@ -80,6 +81,7 @@ subprojects {
         }
     }
 
+    // Configure report outputs, and jacoco packages to target.
     tasks.withType(Test).configureEach {
         reports.html.required = false
         reports.junitXml.required = false
@@ -90,7 +92,7 @@ subprojects {
     }
 }
 
-// Always emit HTML report
+// Always emit HTML aggregate report
 jacocoAggregation {
     outputHtml = true
 }
