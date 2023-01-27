@@ -1,5 +1,6 @@
 package software.coley.recaf.info.properties.builtin;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.properties.BasicProperty;
@@ -31,7 +32,7 @@ public class VersionedClassProperty extends BasicProperty<Integer> {
 	 * May be {@code null} if no version association exists.
 	 */
 	@Nullable
-	public static Integer get(JvmClassInfo classInfo) {
+	public static Integer get(@Nonnull JvmClassInfo classInfo) {
 		return classInfo.getPropertyValueOrNull(KEY);
 	}
 
@@ -42,7 +43,7 @@ public class VersionedClassProperty extends BasicProperty<Integer> {
 	 * 		Version associated with the class,
 	 * 		used as key for {@link WorkspaceResource#getVersionedJvmClassBundles()}.
 	 */
-	public static void set(JvmClassInfo classInfo, int version) {
+	public static void set(@Nonnull JvmClassInfo classInfo, int version) {
 		classInfo.setProperty(new VersionedClassProperty(version));
 	}
 
@@ -50,7 +51,7 @@ public class VersionedClassProperty extends BasicProperty<Integer> {
 	 * @param classInfo
 	 * 		Class info to unlink with a version.
 	 */
-	public static void remove(JvmClassInfo classInfo) {
+	public static void remove(@Nonnull JvmClassInfo classInfo) {
 		classInfo.removeProperty(KEY);
 	}
 }

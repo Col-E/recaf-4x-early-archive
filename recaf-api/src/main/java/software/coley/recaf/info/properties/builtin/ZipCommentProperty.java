@@ -2,7 +2,6 @@ package software.coley.recaf.info.properties.builtin;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import software.coley.llzip.ZipCompressions;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.properties.BasicProperty;
 import software.coley.recaf.info.properties.Property;
@@ -13,14 +12,14 @@ import software.coley.recaf.info.properties.Property;
  *
  * @author Matt Coley
  */
-public class ZipCompressionProperty extends BasicProperty<Integer> {
-	public static final String KEY = "zip-compression";
+public class ZipCommentProperty extends BasicProperty<String> {
+	public static final String KEY = "zip-comment";
 
 	/**
 	 * @param value
-	 * 		Compression type. See {@link ZipCompressions} for values.
+	 * 		Optional comment.
 	 */
-	public ZipCompressionProperty(int value) {
+	public ZipCommentProperty(@Nullable String value) {
 		super(KEY, value);
 	}
 
@@ -28,12 +27,12 @@ public class ZipCompressionProperty extends BasicProperty<Integer> {
 	 * @param info
 	 * 		Info instance.
 	 *
-	 * @return Compression type. See {@link ZipCompressions} for values.
+	 * @return Optional comment.
 	 * {@code null} when no property value is assigned.
 	 */
 	@Nullable
-	public static Integer get(@Nonnull Info info) {
-		Property<Integer> property = info.getProperty(KEY);
+	public static String get(@Nonnull Info info) {
+		Property<String> property = info.getProperty(KEY);
 		if (property != null) {
 			return property.value();
 		}
@@ -44,13 +43,13 @@ public class ZipCompressionProperty extends BasicProperty<Integer> {
 	 * @param info
 	 * 		Info instance.
 	 * @param fallback
-	 * 		Fallback compression type if there is no recorded type for the info instance.
+	 * 		Fallback comment if there is no recorded type for the info instance.
 	 *
-	 * @return Compression type. See {@link ZipCompressions} for values.
-	 * {@code fallback} when no property value is assigned.
+	 * @return Optional comment.
+	 * {@code null} when no property value is assigned.
 	 */
-	public static int getOr(@Nonnull Info info, int fallback) {
-		Integer value = get(info);
+	public static String getOr(@Nonnull Info info, String fallback) {
+		String value = get(info);
 		if (value == null) return fallback;
 		return value;
 	}
@@ -59,10 +58,10 @@ public class ZipCompressionProperty extends BasicProperty<Integer> {
 	 * @param info
 	 * 		Info instance.
 	 * @param value
-	 * 		Compression type. See {@link ZipCompressions} for values.
+	 * 		Optional comment.
 	 */
-	public static void set(@Nonnull Info info, int value) {
-		info.setProperty(new ZipCompressionProperty(value));
+	public static void set(@Nonnull Info info, @Nonnull String value) {
+		info.setProperty(new ZipCommentProperty(value));
 	}
 
 	/**

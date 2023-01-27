@@ -25,7 +25,7 @@ public class PathPrefixProperty extends BasicProperty<String> {
 	 * @param value
 	 * 		Prefix.
 	 */
-	public PathPrefixProperty(String value) {
+	public PathPrefixProperty(@Nonnull String value) {
 		super(KEY, value);
 	}
 
@@ -36,7 +36,7 @@ public class PathPrefixProperty extends BasicProperty<String> {
 	 * @return Name of the info, with the suffix applied if any exist.
 	 */
 	@Nonnull
-	public static String map(Info info) {
+	public static String map(@Nonnull Info info) {
 		String name = info.getName();
 		String prefix = get(info);
 		if (prefix != null)
@@ -51,7 +51,7 @@ public class PathPrefixProperty extends BasicProperty<String> {
 	 * @return Prefix associated with instance.
 	 */
 	@Nullable
-	public static String get(Info info) {
+	public static String get(@Nonnull Info info) {
 		return info.getPropertyValueOrNull(KEY);
 	}
 
@@ -61,7 +61,15 @@ public class PathPrefixProperty extends BasicProperty<String> {
 	 * @param prefix
 	 * 		Suffix to associate with the item.
 	 */
-	public static void set(Info info, String prefix) {
+	public static void set(@Nonnull Info info, @Nonnull String prefix) {
 		info.setProperty(new PathPrefixProperty(prefix));
+	}
+
+	/**
+	 * @param info
+	 * 		Info instance.
+	 */
+	public static void remove(@Nonnull Info info) {
+		info.removeProperty(KEY);
 	}
 }

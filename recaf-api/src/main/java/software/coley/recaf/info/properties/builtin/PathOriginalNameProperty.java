@@ -20,7 +20,7 @@ public class PathOriginalNameProperty extends BasicProperty<String> {
 	 * @param value
 	 * 		Original path name.
 	 */
-	public PathOriginalNameProperty(String value) {
+	public PathOriginalNameProperty(@Nonnull String value) {
 		super(KEY, value);
 	}
 
@@ -31,7 +31,7 @@ public class PathOriginalNameProperty extends BasicProperty<String> {
 	 * @return Original name of the info if set, otherwise the existing info name.
 	 */
 	@Nonnull
-	public static String map(Info info) {
+	public static String map(@Nonnull Info info) {
 		String name = info.getName();
 		String original = info.getPropertyValueOrNull(KEY);
 		if (original != null)
@@ -46,7 +46,7 @@ public class PathOriginalNameProperty extends BasicProperty<String> {
 	 * @return Prefix associated with instance.
 	 */
 	@Nullable
-	public static String get(Info info) {
+	public static String get(@Nonnull Info info) {
 		return info.getPropertyValueOrNull(KEY);
 	}
 
@@ -56,7 +56,15 @@ public class PathOriginalNameProperty extends BasicProperty<String> {
 	 * @param original
 	 * 		Original name to associate with the item.
 	 */
-	public static void set(Info info, String original) {
+	public static void set(@Nonnull Info info, @Nonnull String original) {
 		info.setProperty(new PathOriginalNameProperty(original));
+	}
+
+	/**
+	 * @param info
+	 * 		Info instance.
+	 */
+	public static void remove(@Nonnull Info info) {
+		info.removeProperty(KEY);
 	}
 }

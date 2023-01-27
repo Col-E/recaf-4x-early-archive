@@ -3,6 +3,7 @@ package software.coley.recaf.info.properties.builtin;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.Info;
 import software.coley.recaf.info.properties.BasicProperty;
 import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.Decompiler;
@@ -59,6 +60,14 @@ public class CachedDecompileProperty extends BasicProperty<CachedDecompileProper
 		Cache cache = classInfo.getPropertyValueOrNull(KEY);
 		if (cache == null) return null;
 		return cache.get(decompiler.getName());
+	}
+
+	/**
+	 * @param info
+	 * 		Info instance.
+	 */
+	public static void remove(@Nonnull ClassInfo info) {
+		info.removeProperty(KEY);
 	}
 
 	@Override
