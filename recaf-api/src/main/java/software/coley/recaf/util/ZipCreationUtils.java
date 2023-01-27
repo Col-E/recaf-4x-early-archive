@@ -129,7 +129,7 @@ public class ZipCreationUtils {
 		 * @return Builder.
 		 */
 		public ZipBuilder add(String name, byte[] content) {
-			return add(name, content, true);
+			return add(name, content, true, null, -1, -1, -1);
 		}
 
 		/**
@@ -139,11 +139,20 @@ public class ZipCreationUtils {
 		 * 		Entry contents.
 		 * @param compression
 		 * 		Compression flag.
+		 * @param comment
+		 * 		Optional comment.
+		 * @param createTime
+		 * 		Creation time.
+		 * @param modifyTime
+		 * 		Modification time.
+		 * @param accessTime
+		 * 		Access time.
 		 *
 		 * @return Builder.
 		 */
-		public ZipBuilder add(String name, byte[] content, boolean compression) {
-			return add(new Entry(name, content, compression, null, null, -1, -1, -1));
+		public ZipBuilder add(String name, byte[] content, boolean compression,
+							  String comment, long createTime, long modifyTime, long accessTime) {
+			return add(new Entry(name, content, compression, comment, null, createTime, modifyTime, accessTime));
 		}
 
 		/**

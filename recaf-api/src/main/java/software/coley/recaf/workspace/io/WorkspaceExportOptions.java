@@ -1,7 +1,7 @@
 package software.coley.recaf.workspace.io;
 
 import software.coley.recaf.info.*;
-import software.coley.recaf.info.properties.builtin.ZipCompressionProperty;
+import software.coley.recaf.info.properties.builtin.*;
 import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.util.ZipCreationUtils;
 import software.coley.recaf.workspace.WorkspaceManager;
@@ -131,6 +131,10 @@ public class WorkspaceExportOptions {
 	private class WorkspaceExporterImpl implements WorkspaceExporter {
 		private final Map<String, byte[]> contents = new TreeMap<>();
 		private final Map<String, Integer> compression = new HashMap<>();
+		private final Map<String, String> comments = new HashMap<>();
+		private final Map<String, Long> modifyTimes = new HashMap<>();
+		private final Map<String, Long> createTimes = new HashMap<>();
+		private final Map<String, Long> accessTimes = new HashMap<>();
 
 		@Override
 		public void export(Workspace workspace) throws IOException {
@@ -146,7 +150,15 @@ public class WorkspaceExportOptions {
 					contents.forEach((name, content) -> {
 						// Cannot mirror exact compression type, so we'll just do binary "is this compressed or nah?"
 						boolean compress = compression.getOrDefault(name, STORED) > STORED;
-						finalZipBuilder.add(name, content, compress);
+
+						// Other properties
+						String comment = comments.getOrDefault(name, null);
+						long modifyTime = modifyTimes.getOrDefault(name, -1L);
+						long createTime = createTimes.getOrDefault(name, -1L);
+						long accessTime = accessTimes.getOrDefault(name, -1L);
+
+						// Adding the entry
+						finalZipBuilder.add(name, content, compress, comment, createTime, modifyTime, accessTime);
 					});
 
 					// Write buffer to path
@@ -194,7 +206,7 @@ public class WorkspaceExportOptions {
 			for (JvmClassInfo classInfo : resource.getJvmClassBundle()) {
 				String key = classInfo.getName() + ".class";
 				map.put(key, classInfo.getBytecode());
-				compression.put(key, getCompression(classInfo));
+				updateProperties(key, classInfo);
 			}
 
 			// Place versioned files into map
@@ -204,7 +216,7 @@ public class WorkspaceExportOptions {
 					String key = versionPath + classEntry.getKey() + ".class";
 					JvmClassInfo value = classEntry.getValue();
 					map.put(key, value.getBytecode());
-					compression.put(key, getCompression(value));
+					updateProperties(key, value);
 				}
 			}
 
@@ -216,7 +228,7 @@ public class WorkspaceExportOptions {
 			// Place files into map
 			for (FileInfo fileInfo : resource.getFileBundle()) {
 				map.put(fileInfo.getName(), fileInfo.getRawContent());
-				compression.put(fileInfo.getName(), getCompression(fileInfo));
+				updateProperties(fileInfo.getName(), fileInfo);
 			}
 
 			// Recreate embedded resources as ZIP files with the original file paths
@@ -227,8 +239,35 @@ public class WorkspaceExportOptions {
 				mapInto(embeddedMap, embeddedResource);
 				byte[] embeddedBytes = Unchecked.get(() -> ZipCreationUtils.createZip(embeddedMap));
 				map.put(embeddedFilePath, embeddedBytes);
-				compression.put(embeddedFilePath, getCompression(embeddedResource.getFileInfo()));
+				FileInfo embeddedFile = embeddedResource.getFileInfo();
+				updateProperties(embeddedFilePath, embeddedFile);
 			}
+		}
+
+		/**
+		 * @param name
+		 * 		Map key.
+		 * @param info
+		 * 		Info to pull properties from.
+		 */
+		private void updateProperties(String name, Info info) {
+			compression.put(name, getCompression(info));
+
+			Long createTime = ZipCreationTimeProperty.get(info);
+			if (createTime != null)
+				createTimes.put(name, createTime);
+
+			Long modifyTime = ZipModificationTimeProperty.get(info);
+			if (modifyTime != null)
+				modifyTimes.put(name, modifyTime);
+
+			Long accessTime = ZipAccessTimeProperty.get(info);
+			if (accessTime != null)
+				accessTimes.put(name, accessTime);
+
+			String comment = ZipCommentProperty.get(info);
+			if (comment != null)
+				comments.put(name, comment);
 		}
 
 		/**

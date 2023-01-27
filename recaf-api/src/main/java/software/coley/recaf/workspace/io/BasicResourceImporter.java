@@ -5,6 +5,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.llzip.ZipArchive;
+import software.coley.llzip.part.CentralDirectoryFileHeader;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.builder.FileInfoBuilder;
@@ -144,8 +145,14 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 			}
 
 			// Record common entry attributes
+			CentralDirectoryFileHeader centralHeader = header.getLinkedDirectoryFileHeader();
 			ZipCompressionProperty.set(info, header.getCompressionMethod());
+			ZipModificationTimeProperty.set(info, header.getLastModFileTime());
+			if (centralHeader.getFileCommentLength() > 0)
+				ZipCommentProperty.set(info, centralHeader.getFileCommentAsString());
 			// TODO: Additional ZIP properties
+			//  - creation time (from extra)
+			//  - access time (from extra)
 
 			// Skipping ZIP bombs
 			if (info.isFile() && info.asFile().isZipFile()) {
