@@ -5,6 +5,10 @@ import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JarFileInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.properties.builtin.ZipAccessTimeProperty;
+import software.coley.recaf.info.properties.builtin.ZipCommentProperty;
+import software.coley.recaf.info.properties.builtin.ZipCreationTimeProperty;
+import software.coley.recaf.info.properties.builtin.ZipModificationTimeProperty;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.HelloWorld;
 import software.coley.recaf.util.ZipCreationUtils;
@@ -409,5 +413,40 @@ class ResourceImporterTest {
 		// Validate file bundle content
 		FileInfo fileInfo = resource.getFileBundle().iterator().next();
 		assertArrayEquals(fileBytes, fileInfo.getRawContent(), "Missing data compared to baseline input bytes");
+	}
+
+	@Test
+	void testZipProperties() throws IOException {
+		// Property declarations
+		String comment = "comment";
+		long timeCreate = 1000000000000L;
+		long timeModify = 1200000000000L;
+		long timeAccess = 1400000000000L;
+
+		// Create the file
+		String name = "com/example/application/Config.txt";
+		byte[] data = new byte[]{1, 2, 3, 4, 5};
+		byte[] zipBytes = ZipCreationUtils.builder()
+				.add(name, data, false, comment, timeCreate, timeModify, timeAccess)
+				.bytes();
+		WorkspaceResource resource = importer.importResource(ByteSources.wrap(zipBytes));
+
+		// Should have just ONE file in the file bundle
+		assertEquals(0, resource.getJvmClassBundle().size());
+		assertEquals(0, resource.getVersionedJvmClassBundles().size());
+		assertEquals(0, resource.getAndroidClassBundles().size());
+		assertEquals(1, resource.getFileBundle().size());
+		assertEquals(0, resource.getEmbeddedResources().size());
+		assertNull(resource.getContainingResource());
+		assertFalse(resource.isEmbeddedResource());
+		assertFalse(resource.isInternal());
+
+		// Validate file bundle content
+		FileInfo fileInfo = resource.getFileBundle().iterator().next();
+		assertArrayEquals(data, fileInfo.getRawContent(), "Missing data compared to baseline input bytes");
+		assertEquals(comment, ZipCommentProperty.get(fileInfo), "Missing comment");
+		assertEquals(timeCreate, ZipCreationTimeProperty.get(fileInfo), "Missing creation time");
+		assertEquals(timeModify, ZipModificationTimeProperty.get(fileInfo), "Missing modification time");
+		assertEquals(timeAccess, ZipAccessTimeProperty.get(fileInfo), "Missing access time");
 	}
 }

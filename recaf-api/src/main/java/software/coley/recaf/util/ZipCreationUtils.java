@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -100,6 +101,30 @@ public class ZipCreationUtils {
 	 */
 	public static ZipBuilder builder() {
 		return new ZipBuilder();
+	}
+
+	/**
+	 * Copied from {@code java.util.zip.ZipUtils}.
+	 *
+	 * @param time
+	 * 		Time from extra field at some offset.
+	 *
+	 * @return NIO time representation.
+	 */
+	public static FileTime winTimeToFileTime(long time) {
+		return FileTime.from(time / 10 + -11644473600000000L /* windows epoch */, TimeUnit.MICROSECONDS);
+	}
+
+	/**
+	 * Copied from {@code java.util.zip.ZipUtils}.
+	 *
+	 * @param utime
+	 * 		Time from extra field at some offset.
+	 *
+	 * @return NIO time representation.
+	 */
+	public static FileTime unixTimeToFileTime(long utime) {
+		return FileTime.from(utime, TimeUnit.SECONDS);
 	}
 
 	/**

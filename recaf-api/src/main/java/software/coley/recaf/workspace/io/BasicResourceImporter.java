@@ -6,6 +6,7 @@ import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.llzip.ZipArchive;
 import software.coley.llzip.part.CentralDirectoryFileHeader;
+import software.coley.llzip.util.ByteData;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.builder.FileInfoBuilder;
@@ -147,12 +148,63 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 			// Record common entry attributes
 			CentralDirectoryFileHeader centralHeader = header.getLinkedDirectoryFileHeader();
 			ZipCompressionProperty.set(info, header.getCompressionMethod());
-			ZipModificationTimeProperty.set(info, header.getLastModFileTime());
 			if (centralHeader.getFileCommentLength() > 0)
 				ZipCommentProperty.set(info, centralHeader.getFileCommentAsString());
-			// TODO: Additional ZIP properties
-			//  - creation time (from extra)
-			//  - access time (from extra)
+			int extraLen = header.getExtraFieldLength();
+			if (extraLen > 0 && extraLen < 0xFFFF) {
+				// Reimplementation of 'java.util.zip.ZipEntry#setExtra0(...)'
+				ByteData extra = header.getExtraField();
+				int off = 0;
+				int len = (int) extra.length();
+				while (off + 4 < len) {
+					int tag = extra.getShort(off);
+					int size = extra.getShort(off + 2);
+					off += 4;
+					if (off + size > len)
+						break;
+					if (tag == /* EXTID_NTFS */ 0xA) {
+						if (size < 32) // reserved  4 bytes + tag 2 bytes + size 2 bytes
+							break;   // m[a|c]time 24 bytes
+						int pos = off + 4;
+						if (extra.getShort(pos) != 0x0001 || extra.getShort(pos + 2) != 24)
+							break;
+						long wtime;
+						wtime = extra.getInt(pos + 4) | ((long) extra.getInt(pos + 8) << 32);
+						if (wtime != Long.MIN_VALUE) {
+							ZipModificationTimeProperty.set(info, ZipCreationUtils.winTimeToFileTime(wtime).toMillis());
+						}
+						wtime = extra.getInt(pos + 12) | ((long) extra.getInt(pos + 16) << 32);
+						if (wtime != Long.MIN_VALUE) {
+							ZipAccessTimeProperty.set(info, ZipCreationUtils.winTimeToFileTime(wtime).toMillis());
+						}
+						wtime = extra.getInt(pos + 20) | ((long) extra.getInt(pos + 8) << 24);
+						if (wtime != Long.MIN_VALUE) {
+							ZipCreationTimeProperty.set(info, ZipCreationUtils.winTimeToFileTime(wtime).toMillis());
+						}
+					} else if (tag == /* EXTID_EXTT */ 0x5455) {
+						int flag = extra.get(off);
+						int localOff = 1;
+						// The CEN-header extra field contains the modification
+						// time only, or no timestamp at all. 'sz' is used to
+						// flag its presence or absence. But if mtime is present
+						// in LOC it must be present in CEN as well.
+						if ((flag & 0x1) != 0 && (localOff + 4) <= size) {
+							// get32S(extra, off + localOff)
+							ZipModificationTimeProperty.set(info, ZipCreationUtils.unixTimeToFileTime(extra.getInt(off + localOff)).toMillis());
+							localOff += 4;
+						}
+						if ((flag & 0x2) != 0 && (localOff + 4) <= size) {
+							ZipAccessTimeProperty.set(info, ZipCreationUtils.unixTimeToFileTime(extra.getInt(off + localOff)).toMillis());
+							localOff += 4;
+						}
+						if ((flag & 0x4) != 0 && (localOff + 4) <= size) {
+							ZipCreationTimeProperty.set(info, ZipCreationUtils.unixTimeToFileTime(extra.getInt(off + localOff)).toMillis());
+							localOff += 4;
+						}
+					}
+					off += size;
+				}
+			}
 
 			// Skipping ZIP bombs
 			if (info.isFile() && info.asFile().isZipFile()) {
