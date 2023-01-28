@@ -95,22 +95,6 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 	 * Sets up the UI, and binds passive scanning to only occur while this pane is displayed.
 	 */
 	private void initialize() {
-		// Add listener so that passive scanning in the attach manager only occurs while this pane is visible.
-		sceneProperty().addListener((obScene, initialScene, scene) -> {
-			scene.windowProperty().addListener((obWindow, initialWindow, window) -> {
-				window.showingProperty().addListener((obShowing, oldShowing, showing) -> {
-					// When showing run a scan immediately.
-					// We are already registered as a scan listener, so we can update the display after it finishes.
-					if (showing)
-						ThreadUtil.run(attachManager::scan);
-
-					// Bind scanning to only run when the UI is displayed.
-					logger.debug("Passive JVM scanning: {}", showing ? "ENABLED" : "DISABLED");
-					attachManagerConfig.getPassiveScanning().setValue(showing);
-				});
-			});
-		});
-
 		// Layout
 		vmButtonsList.setPadding(new Insets(5));
 		vmButtonsList.setAlignment(Pos.TOP_LEFT);
