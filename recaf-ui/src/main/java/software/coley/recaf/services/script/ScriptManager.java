@@ -5,6 +5,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jregex.Matcher;
 import org.slf4j.Logger;
+import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableCollection;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.Service;
@@ -19,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 /**
  * Manages local script files.
@@ -32,16 +34,27 @@ public class ScriptManager implements Service {
 	public static final String SERVICE_ID = "script-manager";
 	private static final String TAG_PATTERN = "//(\\s+)?@({key}\\S+)\\s+({value}.+)";
 	private static final Logger logger = Logging.get(ScriptManager.class);
-	private final ExecutorService watchPool = ThreadPoolFactory.newSingleThreadExecutor(SERVICE_ID);
 	private final ObservableCollection<ScriptFile, List<ScriptFile>> scriptFiles = new ObservableCollection<>(ArrayList::new);
 	private final ScriptManagerConfig config;
+	private final WatchTask watchTask;
 
 	@Inject
 	public ScriptManager(ScriptManagerConfig config) {
 		this.config = config;
+		watchTask = new WatchTask();
 
 		// Start watching files in scripts directory
-		watchPool.submit(this::watch);
+		ObservableBoolean fileWatching = config.getFileWatching();
+		if (fileWatching.getValue())
+			watchTask.start();
+
+		// When the watch flag is re-enabled, re-submit the watch-pool task.
+		fileWatching.addChangeListener((ob, old, cur) -> {
+			if (cur)
+				watchTask.start();
+			else
+				watchTask.stop();
+		});
 	}
 
 	/**
@@ -75,46 +88,6 @@ public class ScriptManager implements Service {
 		return new ScriptFile(path, text, tags);
 	}
 
-	/**
-	 * Watch for updates in the scripts directory.
-	 */
-	private void watch() {
-		Path scriptsDirectory = config.getScriptsDirectory();
-		try (WatchService watchService = FileSystems.getDefault().newWatchService()) {
-			WatchKey watchKey = scriptsDirectory.register(watchService,
-					StandardWatchEventKinds.ENTRY_CREATE,
-					StandardWatchEventKinds.ENTRY_MODIFY,
-					StandardWatchEventKinds.ENTRY_DELETE);
-			WatchKey key;
-			while ((key = watchService.take()) != null) {
-				for (WatchEvent<?> event : key.pollEvents()) {
-					Path eventPath = (Path) event.context();
-					if (Files.isRegularFile(eventPath)) {
-						WatchEvent.Kind<?> kind = event.kind();
-						try {
-							if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
-								onScriptCreate(eventPath);
-							} else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
-								onScriptUpdated(eventPath);
-							} else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
-								onScriptRemoved(eventPath);
-							}
-						} catch (Throwable t) {
-							logger.error("Unhandled exception updating available scripts");
-						}
-					}
-				}
-				if (!key.reset())
-					logger.warn("Key was unregistered: {}", key);
-			}
-			watchKey.cancel();
-		} catch (IOException ex) {
-			logger.error("IO exception when handling file watch on scripts directory", ex);
-		} catch (InterruptedException ex) {
-			logger.error("Fle watch on scripts directory was interrupted", ex);
-
-		}
-	}
 
 	/**
 	 * @param path
@@ -170,5 +143,76 @@ public class ScriptManager implements Service {
 	@Override
 	public ScriptManagerConfig getServiceConfig() {
 		return config;
+	}
+
+	/**
+	 * Wrapper to manage threaded watch service on the script directory.
+	 */
+	private class WatchTask {
+		private final Path scriptsDirectory = config.getScriptsDirectory();
+		private final ExecutorService watchPool = ThreadPoolFactory.newSingleThreadExecutor(SERVICE_ID);
+		private Future<?> watchFuture;
+		private WatchService watchService;
+
+		private void start() {
+			// Only start a new thread when the old one is complete, or if no prior one exists.
+			if (watchFuture == null || watchFuture.isDone()) {
+				logger.debug("Starting script directory watch task");
+				watchFuture = watchPool.submit(this::watch);
+			}
+		}
+
+		private void stop() {
+			// Calling 'close()' on the service will make the loop on the service event 'take()' break.
+			if (watchService != null) {
+				try {
+					logger.debug("Stopping script directory watch task");
+					watchService.close();
+					watchService = null;
+				} catch (IOException ex) {
+					logger.debug("Failed to stop script directory watch service");
+				}
+			}
+		}
+
+		private void watch() {
+			try (WatchService watchService = FileSystems.getDefault().newWatchService()) {
+				this.watchService = watchService;
+				WatchKey watchKey = scriptsDirectory.register(watchService,
+						StandardWatchEventKinds.ENTRY_CREATE,
+						StandardWatchEventKinds.ENTRY_MODIFY,
+						StandardWatchEventKinds.ENTRY_DELETE);
+				WatchKey key;
+				while ((key = watchService.take()) != null) {
+					for (WatchEvent<?> event : key.pollEvents()) {
+						Path eventPath = scriptsDirectory.resolve((Path) event.context());
+						if (Files.isRegularFile(eventPath)) {
+							WatchEvent.Kind<?> kind = event.kind();
+							try {
+								if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
+									onScriptCreate(eventPath);
+								} else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+									onScriptUpdated(eventPath);
+								} else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
+									onScriptRemoved(eventPath);
+								}
+							} catch (Throwable t) {
+								logger.error("Unhandled exception updating available scripts");
+							}
+						}
+					}
+					if (!key.reset())
+						logger.warn("Key was unregistered: {}", key);
+				}
+				watchKey.cancel();
+				logger.info("Stopped watching script directory for updates");
+			} catch (IOException ex) {
+				logger.error("IO exception when handling file watch on scripts directory", ex);
+			} catch (InterruptedException ex) {
+				logger.error("File watch on scripts directory was interrupted", ex);
+			} catch (ClosedWatchServiceException ignored) {
+				// expected when watch service is closed
+			}
+		}
 	}
 }

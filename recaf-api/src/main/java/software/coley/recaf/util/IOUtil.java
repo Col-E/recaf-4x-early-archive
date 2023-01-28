@@ -690,7 +690,7 @@ public final class IOUtil {
 	 * 		Directory to clean.
 	 *
 	 * @throws IOException
-	 * 		Whenn any I/O error occurs.
+	 * 		When any I/O error occurs.
 	 */
 	public static void cleanDirectory(Path path) throws IOException {
 		Files.walkFileTree(path, new SimpleFileVisitor<>() {
