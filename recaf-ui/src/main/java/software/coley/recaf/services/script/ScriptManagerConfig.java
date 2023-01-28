@@ -19,7 +19,7 @@ import java.nio.file.Path;
  */
 @ApplicationScoped
 public class ScriptManagerConfig extends BasicConfigContainer implements ServiceConfig {
-	private final ObservableBoolean fileWatching = new ObservableBoolean(false);
+	private final ObservableBoolean fileWatching = new ObservableBoolean(true);
 	private final RecafDirectoriesConfig directories;
 
 	@Inject

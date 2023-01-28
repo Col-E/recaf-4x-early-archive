@@ -15,10 +15,7 @@ import software.coley.recaf.util.threading.ThreadPoolFactory;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
@@ -95,6 +92,7 @@ public class ScriptManager implements Service {
 	 */
 	private void onScriptCreate(@Nonnull Path path) {
 		try {
+			logger.debug("Script created: {}", path);
 			ScriptFile file = read(path);
 			scriptFiles.add(file);
 		} catch (IOException ex) {
@@ -108,6 +106,7 @@ public class ScriptManager implements Service {
 	 */
 	private void onScriptUpdated(@Nonnull Path path) {
 		try {
+			logger.debug("Script updated: {}", path);
 			ScriptFile updated = read(path);
 
 			// Replace old file wrapper with new wrapper
@@ -123,6 +122,7 @@ public class ScriptManager implements Service {
 	 * 		Path of file removed.
 	 */
 	private void onScriptRemoved(@Nonnull Path path) {
+		logger.debug("Script removed: {}", path);
 		scriptFiles.removeIf(file -> path.equals(file.path()));
 	}
 
@@ -155,6 +155,8 @@ public class ScriptManager implements Service {
 		private WatchService watchService;
 
 		private void start() {
+			scanExisting();
+
 			// Only start a new thread when the old one is complete, or if no prior one exists.
 			if (watchFuture == null || watchFuture.isDone()) {
 				logger.debug("Starting script directory watch task");
@@ -168,10 +170,36 @@ public class ScriptManager implements Service {
 				try {
 					logger.debug("Stopping script directory watch task");
 					watchService.close();
-					watchService = null;
 				} catch (IOException ex) {
-					logger.debug("Failed to stop script directory watch service");
+					logger.error("Failed to stop script directory watch service");
 				}
+				watchFuture.cancel(true);
+				watchService = null;
+			}
+		}
+
+		private void scanExisting() {
+			try {
+				// Walk the directory, create or update scripts that exist.
+				Set<ScriptFile> scriptsCopy = new HashSet<>(scriptFiles);
+				Files.walk(scriptsDirectory).forEach(path -> {
+					if (Files.isRegularFile(path)) {
+						Optional<ScriptFile> matchingScript = scriptsCopy.stream()
+								.filter(script -> script.path().equals(path))
+								.findFirst();
+						if (matchingScript.isPresent()) {
+							scriptsCopy.remove(matchingScript.get());
+							onScriptUpdated(path);
+						} else {
+							onScriptCreate(path);
+						}
+					}
+				});
+
+				// Any remaining items in the set do not exist in the directory, so we remove them.
+				scriptFiles.removeAll(scriptsCopy);
+			} catch (IOException ex) {
+				logger.error("Failed to scan existing scripts in script directory", ex);
 			}
 		}
 
@@ -186,19 +214,19 @@ public class ScriptManager implements Service {
 				while ((key = watchService.take()) != null) {
 					for (WatchEvent<?> event : key.pollEvents()) {
 						Path eventPath = scriptsDirectory.resolve((Path) event.context());
+						WatchEvent.Kind<?> kind = event.kind();
 						if (Files.isRegularFile(eventPath)) {
-							WatchEvent.Kind<?> kind = event.kind();
 							try {
 								if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
 									onScriptCreate(eventPath);
 								} else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
 									onScriptUpdated(eventPath);
-								} else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
-									onScriptRemoved(eventPath);
 								}
 							} catch (Throwable t) {
-								logger.error("Unhandled exception updating available scripts");
+								logger.error("Unhandled exception updating available scripts", t);
 							}
+						} else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
+							onScriptRemoved(eventPath);
 						}
 					}
 					if (!key.reset())

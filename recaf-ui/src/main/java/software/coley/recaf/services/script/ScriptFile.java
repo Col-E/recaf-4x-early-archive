@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Wrapper of a script path, with meta-data.
@@ -27,9 +28,11 @@ public record ScriptFile(@Nonnull Path path, @Nonnull String source,
 	 *
 	 * @param engine
 	 * 		Engine to execute with.
+	 *
+	 * @return Script execution future.
 	 */
-	public void execute(@Nonnull ScriptEngine engine) {
-		engine.run(source());
+	public CompletableFuture<ScriptResult> execute(@Nonnull ScriptEngine engine) {
+		return engine.run(source());
 	}
 
 	/**
