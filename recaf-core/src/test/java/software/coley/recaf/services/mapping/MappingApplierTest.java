@@ -94,7 +94,7 @@ class MappingApplierTest extends TestBase {
 		});
 
 		// Apply the mappings to the workspace
-		Set<String> modified = mappingApplier.apply(mappings, workspace);
+		Set<String> modified = mappingApplier.apply(mappings);
 
 		// The supplier class we define should be remapped.
 		// The runner class (AnonymousLambda) itself should not be remapped, but should be updated to point to
@@ -136,7 +136,7 @@ class MappingApplierTest extends TestBase {
 		});
 
 		// Apply the mappings to the workspace
-		Set<String> modified = mappingApplier.apply(mappings, workspace);
+		Set<String> modified = mappingApplier.apply(mappings);
 
 		// The enum class we define should be remapped.
 		// The runner class (DummyEnumPrinter) itself should not be remapped, but should be updated to point to
@@ -174,7 +174,7 @@ class MappingApplierTest extends TestBase {
 		});
 
 		// Apply the mappings to the workspace
-		Set<String> modified = mappingApplier.apply(mappings, workspace);
+		Set<String> modified = mappingApplier.apply(mappings);
 
 		// The annotation class we define should be remapped.
 		// The user class (ClassWithAnnotation) itself should not be remapped,
@@ -226,7 +226,7 @@ class MappingApplierTest extends TestBase {
 		});
 
 		// Apply the mappings to the workspace
-		Set<String> modified = mappingApplier.apply(mappings, workspace);
+		Set<String> modified = mappingApplier.apply(mappings);
 
 		assertNotNull(mappings.getMappedClassName(overlapInterfaceAName), "OverlapInterfaceA should be remapped");
 		assertNotNull(mappings.getMappedClassName(overlapInterfaceBName), "OverlapInterfaceB should be remapped");

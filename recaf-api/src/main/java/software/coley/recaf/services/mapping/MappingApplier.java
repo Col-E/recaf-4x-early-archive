@@ -1,5 +1,6 @@
 package software.coley.recaf.services.mapping;
 
+import jakarta.annotation.Nonnull;
 import jakarta.inject.Inject;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -28,36 +29,26 @@ public class MappingApplier {
 	private static final ExecutorService applierThreadPool = ThreadPoolFactory.newFixedThreadPool("mapping-applier");
 	private final InheritanceGraph inheritanceGraph;
 	private final AggregateMappingManager aggregateMappingManager;
+	private final Workspace workspace;
 
 	@Inject
-	public MappingApplier(InheritanceGraph inheritanceGraph, AggregateMappingManager aggregateMappingManager) {
+	public MappingApplier(InheritanceGraph inheritanceGraph, AggregateMappingManager aggregateMappingManager,
+						  Workspace workspace) {
 		this.inheritanceGraph = inheritanceGraph;
 		this.aggregateMappingManager = aggregateMappingManager;
+		this.workspace = workspace;
 	}
 
 	/**
 	 * @param mappings
 	 * 		The mappings to apply.
-	 * @param workspace
-	 * 		Workspace to apply mappings to <i>(Using primary resource)</i>.
 	 *
 	 * @return Names of the classes in the resource that had modifications as a result of the mapping operation.
 	 */
-	public Set<String> apply(Mappings mappings, Workspace workspace) {
-		return apply(mappings, workspace, workspace.getPrimaryResource());
-	}
+	@Nonnull
+	public Set<String> apply(Mappings mappings) {
+		WorkspaceResource resource = workspace.getPrimaryResource();
 
-	/**
-	 * @param mappings
-	 * 		The mappings to apply.
-	 * @param workspace
-	 * 		Workspace to pull class info from when additional context is needed.
-	 * @param resource
-	 * 		Resource to apply mappings to.
-	 *
-	 * @return Names of the classes in the resource that had modifications as a result of the mapping operation.
-	 */
-	public Set<String> apply(Mappings mappings, Workspace workspace, WorkspaceResource resource) {
 		// Check if mappings can be enriched with type look-ups
 		if (inheritanceGraph != null && mappings instanceof MappingsAdapter adapter) {
 			// If we have "Dog extends Animal" and both define "jump" this lets "Dog.jump()" see "Animal.jump()"
@@ -81,6 +72,7 @@ public class MappingApplier {
 	 *
 	 * @return Names of the classes in the resource that had modifications as a result of the mapping operation.
 	 */
+	@Nonnull
 	private static Set<String> applyMappingsWithoutAggregation(Workspace workspace, WorkspaceResource resource, Mappings mappings) {
 		ExecutorService service = ThreadUtil.phasingService(applierThreadPool);
 		Set<String> modifiedClasses = ConcurrentHashMap.newKeySet();
