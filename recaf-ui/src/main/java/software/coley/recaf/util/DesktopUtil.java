@@ -14,7 +14,7 @@ import java.net.URI;
  * @author Matt Coley
  */
 public class DesktopUtil {
-	private static Dimension screenSize;
+	private static final Dimension screenSize;
 
 	/**
 	 * @return Screen dimensions.
@@ -36,17 +36,11 @@ public class DesktopUtil {
 	 */
 	public static void showDocument(@Nonnull URI uri) throws IOException {
 		switch (PlatformType.get()) {
-			case MAC:
-				Runtime.getRuntime().exec("open " + uri);
-				break;
-			case WINDOWS:
-				Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + uri);
-				break;
-			case LINUX:
+			case MAC -> Runtime.getRuntime().exec("open " + uri);
+			case WINDOWS -> Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + uri);
+			case LINUX -> {
 				Runtime rt = Runtime.getRuntime();
-				String[] browsers = new String[]{"xdg-open", "google-chrome", "firefox", "opera",
-						"konqueror", "mozilla"};
-
+				String[] browsers = new String[]{"xdg-open", "google-chrome", "firefox", "opera", "konqueror", "mozilla"};
 				for (String browser : browsers) {
 					try (InputStream in = rt.exec(new String[]{"which", browser}).getInputStream()) {
 						if (in.read() != -1) {
@@ -56,8 +50,8 @@ public class DesktopUtil {
 					}
 				}
 				throw new IOException("No browser found");
-			default:
-				throw new IllegalStateException("Unsupported OS");
+			}
+			default -> throw new IllegalStateException("Unsupported OS");
 		}
 	}
 

@@ -4,6 +4,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import org.kordamp.ikonli.Ikon;
 
 /**
  * Button with an on-click runnable action.
@@ -30,6 +31,20 @@ public class ActionButton extends Button {
 	 */
 	public ActionButton(Node graphic, Runnable action) {
 		setGraphic(graphic);
+		setOnAction(e -> wrap(e, action));
+	}
+
+	/**
+	 * @param icon
+	 * 		Button display icon.
+	 * @param text
+	 * 		Button display text.
+	 * @param action
+	 * 		Action to run on-click.
+	 */
+	public ActionButton(Ikon icon, ObservableValue<String> text, Runnable action) {
+		setGraphic(new FontIconView(icon));
+		textProperty().bind(text);
 		setOnAction(e -> wrap(e, action));
 	}
 

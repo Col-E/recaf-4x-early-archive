@@ -60,7 +60,6 @@ menu.scripting.manage=Manage scripts
 menu.scripting.new=New script
 menu.scripting.edit=Edit
 menu.scripting.browse=Browse scripts
-menu.scripting.refresh=Refresh scripts
 menu.scripting.save=Save script
 menu.scripting.execute=Execute
 menu.scripting.editor=Script editor

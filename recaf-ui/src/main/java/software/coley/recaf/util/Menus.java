@@ -257,6 +257,21 @@ public class Menus {
 	}
 
 	/**
+	 * @param text
+	 * 		Menu item text.
+	 * @param icon
+	 * 		Ikonli icon for the menu graphic.
+	 * @param runnable
+	 * 		Action to run on click.
+	 *
+	 * @return Action menu item with behavior on-click.
+	 */
+	public static ActionMenuItem actionLiteral(String text, Ikon icon, Runnable runnable) {
+		FontIconView graphic = new FontIconView(icon);
+		return new ActionMenuItem(text, graphic, runnable);
+	}
+
+	/**
 	 * @return New menu separator.
 	 */
 	public static SeparatorMenuItem separator() {

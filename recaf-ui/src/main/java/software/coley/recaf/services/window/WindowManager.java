@@ -5,7 +5,9 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
+import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.slf4j.Logger;
@@ -13,6 +15,7 @@ import software.coley.collections.observable.ObservableList;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.ui.window.IdentifiableStage;
+import software.coley.recaf.util.Icons;
 
 import java.util.*;
 
@@ -20,6 +23,8 @@ import java.util.*;
  * Manages active {@link Stage} windows.
  *
  * @author Matt Coley
+ * @see IdentifiableStage Type added to children of {@link Stage} to support automatic discovery.
+ * @see WindowFactory Service for creating new windows.
  */
 @ApplicationScoped
 public class WindowManager implements Service {
@@ -30,6 +35,7 @@ public class WindowManager implements Service {
 	public static final String WIN_REMOTE_VMS = "remote-vms";
 	public static final String WIN_CONFIG = "config";
 	public static final String WIN_INFO = "system-information";
+	public static final String WIN_SCRIPTS = "script-manager";
 	// Manager instance data
 	private final WindowManagerConfig config;
 	private final ObservableList<Stage> activeWindows = new ObservableList<>();
@@ -54,6 +60,16 @@ public class WindowManager implements Service {
 	 */
 	public void registerAnonymous(@Nonnull Stage stage) {
 		register(UUID.randomUUID().toString(), stage);
+	}
+
+	/**
+	 * Registers listeners on the stage to monitor active state.
+	 *
+	 * @param identifiableStage
+	 * 		Stage to register.
+	 */
+	public void register(@Nonnull IdentifiableStage identifiableStage) {
+		register(identifiableStage.getId(), identifiableStage.asStage());
 	}
 
 	/**
@@ -142,6 +158,14 @@ public class WindowManager implements Service {
 	@Nonnull
 	public Stage getSystemInfoWindow() {
 		return Objects.requireNonNull(getWindow(WIN_INFO));
+	}
+
+	/**
+	 * @return Window for the system information display.
+	 */
+	@Nonnull
+	public Stage getScriptManagerWindow() {
+		return Objects.requireNonNull(getWindow(WIN_SCRIPTS));
 	}
 
 	@Nonnull
