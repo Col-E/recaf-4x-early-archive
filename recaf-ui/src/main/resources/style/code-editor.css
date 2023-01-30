@@ -1,13 +1,39 @@
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: normal;
+    font-weight: normal;
+    src: local('JetBrains Mono'), url('../fonts/JetBrainsMono.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: normal;
+    font-weight: bold;
+    src: local('JetBrains Mono'), url('../fonts/JetBrainsMono-Bold.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: italic;
+    font-weight: normal;
+    src: local('JetBrains Mono'), url('../fonts/JetBrainsMono-Italic.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: italic;
+    font-weight: bold;
+    src: local('JetBrains Mono'), url('../fonts/JetBrainsMono-BoldItalic.ttf') format('truetype');
+}
+
 .code-area {
 	-fx-background-color: -color-base-4;
 	-fx-accent: -color-flair-7;
-    -fx-font-family: monospace;
     -fx-cursor: text;
 }
 
 .code-area .text {
     -fx-fill: -color-fg-default;
+    -fx-font-family: 'JetBrains Mono';
 }
+
 .code-area .paragraph-box {
     -fx-padding: -0.5 0 -0.5 0;
 }
