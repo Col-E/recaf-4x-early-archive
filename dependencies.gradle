@@ -29,6 +29,8 @@ project.ext {
     extra_collections = 'com.github.Col-E:ExtraCollections:1.2.1'
     extra_observables = 'com.github.Col-E:ExtraObservables:1.1.2'
 
+    gson = 'com.google.code.gson:gson:2.10.1'
+
     hppc = 'com.carrotsearch:hppc:0.9.1'
 
     ikonli = 'org.kordamp.ikonli:ikonli-javafx:12.3.1'
@@ -49,4 +51,6 @@ project.ext {
     mockito = 'org.mockito:mockito-core:4.9.0'
 
     regex = 'net.sourceforge.jregex:jregex:1.2_01'
+
+    richtextfx = 'org.fxmisc.richtext:richtextfx:0.11.0'
 }

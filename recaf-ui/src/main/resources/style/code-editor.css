@@ -1,0 +1,31 @@
+.code-area {
+	-fx-background-color: -color-base-4;
+	-fx-accent: -color-flair-7;
+    -fx-font-family: monospace;
+    -fx-cursor: text;
+}
+
+.code-area .text {
+    -fx-fill: -color-fg-default;
+}
+.code-area .paragraph-box {
+    -fx-padding: -0.5 0 -0.5 0;
+}
+
+.code-area .paragraph-box:has-caret {
+    -fx-background-color: -color-base-5;
+}
+
+.code-area .paragraph-box .paragraph-text {
+    -fx-line-spacing: 1;
+}
+
+.code-area .caret {
+    -fx-stroke: -color-fg-default;
+}
+
+.code-area .main-selection {
+    -fx-fill: -color-flair-6;
+}
+
+.code-area .collapse { visibility: collapse; }
