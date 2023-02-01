@@ -1,12 +1,12 @@
 package software.coley.recaf.ui.control.richtext.syntax;
 
-import com.google.gson.annotations.SerializedName;
 import jakarta.annotation.Nonnull;
 import jregex.Matcher;
 import jregex.Pattern;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
 import software.coley.collections.Lists;
+import software.coley.recaf.util.IntRange;
 import software.coley.recaf.util.RegexUtil;
 
 import java.util.*;
@@ -17,14 +17,14 @@ import java.util.*;
  * @author Matt Coley
  */
 public class RegexSyntaxHighlighter implements SyntaxHighlighter {
-	private static final Map<List<Rule>, Pattern> patternCache = new HashMap<>();
-	private final Rule rootRule;
+	private static final Map<List<RegexRule>, Pattern> patternCache = new HashMap<>();
+	private final RegexRule rootRule;
 
 	/**
 	 * @param rootRule
 	 * 		Root rule, constituting a language by its sub-rules.
 	 */
-	public RegexSyntaxHighlighter(Rule rootRule) {
+	public RegexSyntaxHighlighter(RegexRule rootRule) {
 		this.rootRule = rootRule;
 	}
 
@@ -38,13 +38,44 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 		return builder.create();
 	}
 
+	@Nonnull
+	@Override
+	public IntRange expandRange(@Nonnull String text, int initialStart, int initialEnd) {
+		String rangeText = text.substring(initialStart, initialEnd);
+		int start = initialStart;
+		int end = initialEnd;
+
+		// Any rule that has backtracking/advancing needs to be expanded so that if the change breaks the start/end
+		// of one of these matches, the range covers the new start/end. Primary example of this is multi-line comments.
+		//
+		// Example: Deleting the last '/' will expand the range forwards.
+		for (RegexRule rule : rootRule.getSubRules()) {
+			String backtrackMark = rule.getBacktrackMark();
+			String advanceMark = rule.getAdvanceMark();
+
+			if (advanceMark != null && backtrackMark != null) {
+				// Advance forward if start of pattern exists, but no end of pattern exists
+				if (rangeText.contains(backtrackMark))
+					end = Math.max(end, text.indexOf(advanceMark, end));
+
+				// Advance backwards if the end of a pattern exists, but no start of pattern exists
+				if (rangeText.contains(advanceMark)) {
+					int index = text.substring(0, start).lastIndexOf(backtrackMark);
+					if (index >= 0)
+						start = index;
+				}
+			}
+		}
+		return new IntRange(start, end);
+	}
+
 	/**
 	 * @param rules
 	 * 		Rules to match against.
 	 *
 	 * @return Compiled regex pattern from the given rules.
 	 */
-	private static Pattern getCombinedPattern(List<Rule> rules) {
+	private static Pattern getCombinedPattern(List<RegexRule> rules) {
 		// Cache results. Very likely to encounter rule-collection again which makes it wise to save
 		// the result instead of re-computing every time.
 		return patternCache.computeIfAbsent(rules, RegexSyntaxHighlighter::createCombinedPattern);
@@ -56,11 +87,11 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 	 *
 	 * @return Compiled regex pattern from the given rules.
 	 */
-	private static Pattern createCombinedPattern(List<Rule> rules) {
+	private static Pattern createCombinedPattern(List<RegexRule> rules) {
 		// Dummy pattern
 		if (rules.isEmpty()) return RegexUtil.pattern("({EMPTY}EMPTY)");
 		StringBuilder sb = new StringBuilder();
-		for (Rule rule : rules) {
+		for (RegexRule rule : rules) {
 			String pattern = rule.getRegex();
 			sb.append("({").append(rule.getName()).append("}").append(pattern).append(")|");
 		}
@@ -75,7 +106,7 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 	 *
 	 * @return Rule with matching name as matched group.
 	 */
-	private static Rule getRuleFromMatcher(Collection<Rule> rules, Matcher matcher) {
+	private static RegexRule getRuleFromMatcher(Collection<RegexRule> rules, Matcher matcher) {
 		return rules.stream()
 				.filter(rule -> matcher.group(rule.getName()) != null)
 				.findFirst()
@@ -89,7 +120,7 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 		private final List<Region> children = new ArrayList<>();
 		private final Region parent;
 		private final String text;
-		private final Rule rule;
+		private final RegexRule rule;
 		private final int start;
 		private final int end;
 
@@ -107,7 +138,7 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 		 * @param end
 		 * 		End offset in complete text.
 		 */
-		private Region(String text, Region parent, Rule rule, int start, int end) {
+		private Region(String text, Region parent, RegexRule rule, int start, int end) {
 			this.text = text;
 			this.parent = parent;
 			this.rule = rule;
@@ -121,7 +152,7 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 		 * @param rules
 		 * 		Rules to match and split by.
 		 */
-		public void split(List<Rule> rules) {
+		public void split(List<RegexRule> rules) {
 			// Skip when no rules are given.
 			if (rules.isEmpty())
 				return;
@@ -133,11 +164,11 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 				// Create region from found match
 				int localStart = matcher.start();
 				int localEnd = matcher.end();
-				Rule matchedRule = getRuleFromMatcher(rules, matcher);
+				RegexRule matchedRule = getRuleFromMatcher(rules, matcher);
 				Region localChild = new Region(text, this, matchedRule, start + localStart, start + localEnd);
 
 				// Break the new region into smaller ones if the rule associated with the match has sub-rules.
-				List<Rule> subrules = matchedRule.getSubRules();
+				List<RegexRule> subrules = matchedRule.getSubRules();
 				if (!subrules.isEmpty()) localChild.split(subrules);
 
 				// Add child (splitting technically handled in output logic)
@@ -180,7 +211,7 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 		 */
 		private List<String> currentClasses() {
 			if (parent == null) return Collections.emptyList();
-			return Lists.combine(parent.currentClasses(), rule.classes);
+			return Lists.combine(parent.currentClasses(), rule.getClasses());
 		}
 
 		/**
@@ -188,71 +219,7 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 		 */
 		private List<String> unmatchedClasses() {
 			if (parent == null) return Collections.emptyList();
-			return Lists.combine(parent.unmatchedClasses(), parent.rule.classes);
-		}
-	}
-
-	/**
-	 * Regex rule wrapper type.
-	 */
-	public static class Rule {
-		@SerializedName("name")
-		private final String name;
-		@SerializedName("regex")
-		private final String regex;
-		@SerializedName("classes")
-		private final List<String> classes;
-		@SerializedName("sub-rules")
-		private final List<Rule> subRules;
-
-		public Rule(@Nonnull String name, @Nonnull String regex,
-					@Nonnull List<String> classes, @Nonnull List<Rule> subRules) {
-			this.name = name;
-			this.regex = regex;
-			this.classes = classes;
-			this.subRules = subRules;
-		}
-
-		@Nonnull
-		public String getName() {
-			return name;
-		}
-
-		@Nonnull
-		public String getRegex() {
-			return regex;
-		}
-
-		@Nonnull
-		public List<String> getClasses() {
-			return classes;
-		}
-
-		@Nonnull
-		public List<Rule> getSubRules() {
-			return subRules;
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
-
-			Rule rule = (Rule) o;
-
-			if (!name.equals(rule.name)) return false;
-			if (!regex.equals(rule.regex)) return false;
-			if (!classes.equals(rule.classes)) return false;
-			return subRules.equals(rule.subRules);
-		}
-
-		@Override
-		public int hashCode() {
-			int result = name.hashCode();
-			result = 31 * result + regex.hashCode();
-			result = 31 * result + classes.hashCode();
-			result = 31 * result + subRules.hashCode();
-			return result;
+			return Lists.combine(parent.unmatchedClasses(), parent.rule.getClasses());
 		}
 	}
 }

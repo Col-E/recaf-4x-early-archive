@@ -9,12 +9,17 @@ import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.GenericStyledArea;
+import org.fxmisc.richtext.model.StyleSpans;
+import software.coley.recaf.ui.control.richtext.syntax.StyleResult;
 import software.coley.recaf.ui.control.richtext.syntax.SyntaxHighlighter;
+import software.coley.recaf.ui.control.richtext.syntax.SyntaxUtil;
 import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.IntRange;
 import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 
+import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -44,6 +49,37 @@ public class Editor extends StackPane {
 		getStylesheets().add(styleSheetPath);
 		getChildren().add(new VirtualizedScrollPane<>(codeArea));
 		virtualFlow = Unchecked.get(() -> ReflectUtil.quietGet(codeArea, GenericStyledArea.class.getDeclaredField("virtualFlow")));
+
+		// Do not want text wrapping in a code editor.
+		codeArea.setWrapText(false);
+
+		// This property copies the style of adjacent characters when typing (instead of having no style).
+		// It may not seem like much, but it makes our restyle range computation logic much simpler.
+		// Consider a multi-line comment. If you had this set to use the initial style (none) it would break up
+		// multi-line comment style spans. We would have to re-stitch them together based on the inserted text position
+		// which would be a huge pain in the ass.
+		codeArea.setUseInitialStyleForInsertion(false);
+
+		// Register a text change listener and use the inserted/removed text content to determine what portions
+		// of the document need to be restyled.
+		codeArea.plainTextChanges().addObserver(changes -> {
+			if (syntaxHighlighter != null) {
+				schedule(syntaxPool, () -> {
+					IntRange range = SyntaxUtil.getRangeForRestyle(changes, this);
+					int start = range.start();
+					int end = range.end();
+					return new StyleResult(syntaxHighlighter.createStyleSpans(getText(), start, end), start);
+				}, result -> codeArea.setStyleSpans(result.position(), result.spans()));
+			}
+		});
+	}
+
+	/**
+	 * @return Current highlighter.
+	 */
+	@Nullable
+	public SyntaxHighlighter getSyntaxHighlighter() {
+		return syntaxHighlighter;
 	}
 
 	/**
@@ -62,6 +98,13 @@ public class Editor extends StackPane {
 			syntaxHighlighter.install(this);
 			codeArea.setStyleSpans(0, syntaxHighlighter.createStyleSpans(getText(), 0, getTextLength()));
 		}
+	}
+
+	/**
+	 * @return Current style spans for the entire document.
+	 */
+	public StyleSpans<Collection<String>> getStyleSpans() {
+		return codeArea.getStyleSpans(0, getTextLength());
 	}
 
 	/**
