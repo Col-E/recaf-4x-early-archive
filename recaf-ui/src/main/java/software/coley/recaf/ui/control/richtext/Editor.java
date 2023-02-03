@@ -10,6 +10,7 @@ import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.GenericStyledArea;
 import org.fxmisc.richtext.model.StyleSpans;
+import software.coley.recaf.ui.control.richtext.linegraphics.RootLineGraphicFactory;
 import software.coley.recaf.ui.control.richtext.syntax.StyleResult;
 import software.coley.recaf.ui.control.richtext.syntax.SyntaxHighlighter;
 import software.coley.recaf.ui.control.richtext.syntax.SyntaxUtil;
@@ -19,6 +20,7 @@ import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -28,6 +30,10 @@ import java.util.function.Supplier;
 
 /**
  * Modular text editor control.
+ * <ul>
+ *     <li>Configure syntax with {@link #setSyntaxHighlighter(SyntaxHighlighter)}</li>
+ *     <li>Configure line graphics via {@link #getRootLineGraphicFactory()}</li>
+ * </ul>
  *
  * @author Matt Coley
  */
@@ -36,6 +42,7 @@ public class Editor extends StackPane {
 	private final CodeArea codeArea = new CodeArea();
 	private final VirtualFlow<?, ?> virtualFlow;
 	private final ExecutorService syntaxPool = ThreadPoolFactory.newSingleThreadExecutor("syntax-highlight");
+	private final RootLineGraphicFactory rootLineGraphicFactory = new RootLineGraphicFactory(this);
 	private SyntaxHighlighter syntaxHighlighter;
 
 	static {
@@ -53,6 +60,9 @@ public class Editor extends StackPane {
 		// Do not want text wrapping in a code editor.
 		codeArea.setWrapText(false);
 
+		// Set paragraph graphic factory to the user-configurable root graphics factory.
+		codeArea.setParagraphGraphicFactory(rootLineGraphicFactory);
+
 		// This property copies the style of adjacent characters when typing (instead of having no style).
 		// It may not seem like much, but it makes our restyle range computation logic much simpler.
 		// Consider a multi-line comment. If you had this set to use the initial style (none) it would break up
@@ -62,16 +72,18 @@ public class Editor extends StackPane {
 
 		// Register a text change listener and use the inserted/removed text content to determine what portions
 		// of the document need to be restyled.
-		codeArea.plainTextChanges().addObserver(changes -> {
-			if (syntaxHighlighter != null) {
-				schedule(syntaxPool, () -> {
-					IntRange range = SyntaxUtil.getRangeForRestyle(changes, this);
-					int start = range.start();
-					int end = range.end();
-					return new StyleResult(syntaxHighlighter.createStyleSpans(getText(), start, end), start);
-				}, result -> codeArea.setStyleSpans(result.position(), result.spans()));
-			}
-		});
+		codeArea.plainTextChanges()
+				.successionEnds(Duration.ofMillis(150))
+				.addObserver(changes -> {
+					if (syntaxHighlighter != null) {
+						schedule(syntaxPool, () -> {
+							IntRange range = SyntaxUtil.getRangeForRestyle(changes, this);
+							int start = range.start();
+							int end = range.end();
+							return new StyleResult(syntaxHighlighter.createStyleSpans(getText(), start, end), start);
+						}, result -> codeArea.setStyleSpans(result.position(), result.spans()));
+					}
+				});
 	}
 
 	/**
@@ -151,13 +163,31 @@ public class Editor extends StackPane {
 	}
 
 	/**
-	 * Delegates to {@link CodeArea#textProperty()}
+	 * Delegates to {@link CodeArea#textProperty()}.
+	 * <br>
+	 * Do not use this to set text. Instead, use {@link #setText(String)}.
 	 *
 	 * @return Property representation of {@link #getText()}.
 	 */
 	@Nonnull
 	public ObservableValue<String> textProperty() {
 		return codeArea.textProperty();
+	}
+
+	/**
+	 * @return The root line graphics factory.
+	 */
+	@Nonnull
+	public RootLineGraphicFactory getRootLineGraphicFactory() {
+		return rootLineGraphicFactory;
+	}
+
+	/**
+	 * @return Backing text editor component.
+	 */
+	@Nonnull
+	public CodeArea getCodeArea() {
+		return codeArea;
 	}
 
 	/**

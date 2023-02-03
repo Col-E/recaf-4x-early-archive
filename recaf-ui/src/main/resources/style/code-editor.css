@@ -54,4 +54,11 @@
     -fx-fill: -color-flair-6;
 }
 
-.code-area .collapse { visibility: collapse; }
+.code-area .lineno {
+	-fx-background-color: -color-base-2;
+	-fx-max-height: 1000px;
+}
+
+.code-area .lineno .text {
+    -fx-fill: -color-fg-muted;
+}
