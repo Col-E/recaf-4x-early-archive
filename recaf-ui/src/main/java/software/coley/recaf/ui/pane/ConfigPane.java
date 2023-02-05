@@ -21,7 +21,7 @@ import software.coley.recaf.ui.config.ConfigComponentManager;
 import software.coley.recaf.ui.config.ConfigIconManager;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
-import software.coley.recaf.util.CollectionUtils;
+import software.coley.recaf.util.CollectionUtil;
 
 import java.util.HashMap;
 import java.util.List;
@@ -180,7 +180,7 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 					List<String> childrenNames = currentItem.getChildren().stream()
 							.map(TreeItem::getValue)
 							.toList();
-					int insertIndex = CollectionUtils.sortedInsertIndex(childrenNames, currentPackage);
+					int insertIndex = CollectionUtil.sortedInsertIndex(childrenNames, currentPackage);
 					currentItem.getChildren().add(insertIndex, child);
 				} else {
 					// Exit, cannot find item

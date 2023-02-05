@@ -1,6 +1,7 @@
 package software.coley.recaf.ui.control.richtext.linegraphics;
 
 import javafx.scene.Node;
+import software.coley.recaf.ui.control.richtext.EditorComponent;
 
 import java.util.function.IntFunction;
 
@@ -14,14 +15,17 @@ import java.util.function.IntFunction;
  *
  * @author Matt Coley
  * @see AbstractLineGraphicFactory Base implementation of this type.
- * @see RootLineGraphicFactory The root implementation which managed displaying other
- * {@link LineGraphicFactory} instances in order.
+ * @see RootLineGraphicFactory The root implementation which managed displaying other {@link LineGraphicFactory} instances in order.
  */
-public interface LineGraphicFactory extends IntFunction<Node>, Comparable<LineGraphicFactory> {
+public interface LineGraphicFactory extends EditorComponent, IntFunction<Node>, Comparable<LineGraphicFactory> {
 	/**
 	 * Priority for {@link LineNumberFactory}.
 	 */
 	int P_LINE_NUMBERS = 0;
+	/**
+	 * Priority for {@link BracketMatchGraphicFactory}.
+	 */
+	int P_BRACKET_MATCH = 1000;
 
 	/**
 	 * @return Order priority for sorting in {@link RootLineGraphicFactory}. Lower values appear first.

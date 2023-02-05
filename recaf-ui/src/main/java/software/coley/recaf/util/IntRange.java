@@ -10,7 +10,7 @@ package software.coley.recaf.util;
  *
  * @author Matt Coley
  */
-public record IntRange(int start, int end) {
+public record IntRange(int start, int end) implements Comparable<IntRange> {
 	/**
 	 * @return Length of the range.
 	 */
@@ -23,6 +23,22 @@ public record IntRange(int start, int end) {
 	 */
 	public boolean empty() {
 		return length() == 0;
+	}
+
+	/**
+	 * @param startInclusive
+	 * 		Flag to indicate inclusive range check against {@link #start()}.
+	 * @param endInclusive
+	 * 		Flag to indicate inclusive range check against {@link #end()}.
+	 * @param value
+	 * 		Position to check.
+	 *
+	 * @return {@code true} when the position is within this range.
+	 */
+	public boolean isBetween(boolean startInclusive, boolean endInclusive, int value) {
+		if (startInclusive ? value >= start : value > start)
+			return endInclusive ? value <= end : value < end;
+		return false;
 	}
 
 	/**
@@ -43,5 +59,10 @@ public record IntRange(int start, int end) {
 	 */
 	public IntRange extendBackwards(int length) {
 		return new IntRange(Math.max(0, start() - length), end());
+	}
+
+	@Override
+	public int compareTo(IntRange o) {
+		return Integer.compare(start, o.start);
 	}
 }

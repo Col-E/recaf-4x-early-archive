@@ -10,6 +10,7 @@ import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.GenericStyledArea;
 import org.fxmisc.richtext.model.StyleSpans;
+import software.coley.recaf.ui.control.richtext.bracket.BracketTracking;
 import software.coley.recaf.ui.control.richtext.linegraphics.RootLineGraphicFactory;
 import software.coley.recaf.ui.control.richtext.syntax.StyleResult;
 import software.coley.recaf.ui.control.richtext.syntax.SyntaxHighlighter;
@@ -32,6 +33,7 @@ import java.util.function.Supplier;
  * Modular text editor control.
  * <ul>
  *     <li>Configure syntax with {@link #setSyntaxHighlighter(SyntaxHighlighter)}</li>
+ *     <li>Configure bracket tracking with {@link #setBracketTracking(BracketTracking)}</li>
  *     <li>Configure line graphics via {@link #getRootLineGraphicFactory()}</li>
  * </ul>
  *
@@ -44,6 +46,7 @@ public class Editor extends StackPane {
 	private final ExecutorService syntaxPool = ThreadPoolFactory.newSingleThreadExecutor("syntax-highlight");
 	private final RootLineGraphicFactory rootLineGraphicFactory = new RootLineGraphicFactory(this);
 	private SyntaxHighlighter syntaxHighlighter;
+	private BracketTracking bracketTracking;
 
 	static {
 		styleSheetPath = Editor.class.getResource("/style/code-editor.css").toExternalForm();
@@ -87,29 +90,15 @@ public class Editor extends StackPane {
 	}
 
 	/**
-	 * @return Current highlighter.
+	 * Redraw visible paragraph graphics.
+	 * <br>
+	 * <b>Must be called on FX thread.</b>
 	 */
-	@Nullable
-	public SyntaxHighlighter getSyntaxHighlighter() {
-		return syntaxHighlighter;
-	}
-
-	/**
-	 * @param syntaxHighlighter
-	 * 		Highlighter to use.
-	 */
-	public void setSyntaxHighlighter(@Nullable SyntaxHighlighter syntaxHighlighter) {
-		// Uninstall prior
-		SyntaxHighlighter previousSyntaxHighlighter = this.syntaxHighlighter;
-		if (previousSyntaxHighlighter != null)
-			previousSyntaxHighlighter.uninstall(this);
-
-		// Set and install new instance
-		this.syntaxHighlighter = syntaxHighlighter;
-		if (syntaxHighlighter != null) {
-			syntaxHighlighter.install(this);
-			codeArea.setStyleSpans(0, syntaxHighlighter.createStyleSpans(getText(), 0, getTextLength()));
-		}
+	public void redrawParagraphGraphics() {
+		int startParagraphIndex = Math.max(0, codeArea.firstVisibleParToAllParIndex() - 1);
+		int endParagraphIndex = Math.min(codeArea.getParagraphs().size() - 1, codeArea.lastVisibleParToAllParIndex());
+		for (int i = startParagraphIndex; i <= endParagraphIndex; i++)
+			codeArea.recreateParagraphGraphic(i);
 	}
 
 	/**
@@ -180,6 +169,58 @@ public class Editor extends StackPane {
 	@Nonnull
 	public RootLineGraphicFactory getRootLineGraphicFactory() {
 		return rootLineGraphicFactory;
+	}
+
+	/**
+	 * @return Current highlighter.
+	 */
+	@Nullable
+	public SyntaxHighlighter getSyntaxHighlighter() {
+		return syntaxHighlighter;
+	}
+
+	/**
+	 * @param syntaxHighlighter
+	 * 		Highlighter to use.
+	 */
+	public void setSyntaxHighlighter(@Nullable SyntaxHighlighter syntaxHighlighter) {
+		// Uninstall prior.
+		SyntaxHighlighter previousSyntaxHighlighter = this.syntaxHighlighter;
+		if (previousSyntaxHighlighter != null)
+			previousSyntaxHighlighter.uninstall(this);
+
+		// Set and install new instance.
+		this.syntaxHighlighter = syntaxHighlighter;
+		if (syntaxHighlighter != null) {
+			syntaxHighlighter.install(this);
+			codeArea.setStyleSpans(0, syntaxHighlighter.createStyleSpans(getText(), 0, getTextLength()));
+		}
+	}
+
+	/**
+	 * @param bracketTracking
+	 * 		New bracket tracking implementation, or {@code null} to disable bracket tracking.
+	 */
+	public void setBracketTracking(@Nullable BracketTracking bracketTracking) {
+		// Uninstall prior.
+		BracketTracking previousBracketTracking = this.bracketTracking;
+		if (previousBracketTracking != null)
+			previousBracketTracking.uninstall(this);
+
+		// Set and install new instance.
+		this.bracketTracking = bracketTracking;
+		if (bracketTracking != null)
+			bracketTracking.install(this);
+
+		// TODO: Redraw line graphics for visible paragraphs
+	}
+
+	/**
+	 * @return Bracket tracking implementation.
+	 */
+	@Nullable
+	public BracketTracking getBracketTracking() {
+		return bracketTracking;
 	}
 
 	/**

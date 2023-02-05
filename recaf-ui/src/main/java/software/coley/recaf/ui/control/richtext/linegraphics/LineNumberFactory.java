@@ -1,8 +1,10 @@
 package software.coley.recaf.ui.control.richtext.linegraphics;
 
+import jakarta.annotation.Nonnull;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import org.fxmisc.richtext.CodeArea;
+import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.util.StringUtil;
 
 /**
@@ -11,19 +13,28 @@ import software.coley.recaf.util.StringUtil;
  * @author Matt Coley
  */
 public class LineNumberFactory extends AbstractLineGraphicFactory {
-	private final CodeArea codeArea;
+	private CodeArea codeArea;
 
 	/**
-	 * @param codeArea
-	 * 		Parent code area to pull line count from.
+	 * New line number factory.
 	 */
-	public LineNumberFactory(CodeArea codeArea) {
+	public LineNumberFactory() {
 		super(P_LINE_NUMBERS);
-		this.codeArea = codeArea;
+	}
+
+	@Override
+	public void install(@Nonnull Editor editor) {
+		codeArea = editor.getCodeArea();
+	}
+
+	@Override
+	public void uninstall(@Nonnull Editor editor) {
+		codeArea = null;
 	}
 
 	@Override
 	public Node apply(int line) {
+		if (codeArea == null) return null;
 		return new Label(format(line, codeArea.getParagraphs().size()));
 	}
 

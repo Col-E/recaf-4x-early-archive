@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.StyleSpans;
 import software.coley.recaf.ui.control.richtext.Editor;
+import software.coley.recaf.ui.control.richtext.EditorComponent;
 import software.coley.recaf.util.IntRange;
 
 import java.util.Collection;
@@ -14,7 +15,7 @@ import java.util.Collection;
  * @author Matt Coley
  * @see RegexSyntaxHighlighter Regex implementation.
  */
-public interface SyntaxHighlighter {
+public interface SyntaxHighlighter extends EditorComponent {
 	/**
 	 * @param text
 	 * 		Full text.
@@ -63,6 +64,7 @@ public interface SyntaxHighlighter {
 	 * @param editor
 	 * 		Editor installed to.
 	 */
+	@Override
 	default void install(@Nonnull Editor editor) {
 		// no-op by default
 	}
@@ -75,6 +77,7 @@ public interface SyntaxHighlighter {
 	 * @param editor
 	 * 		Editor removed from.
 	 */
+	@Override
 	default void uninstall(@Nonnull Editor editor) {
 		// no-op by default
 	}
