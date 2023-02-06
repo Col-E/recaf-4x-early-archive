@@ -2,10 +2,10 @@ package software.coley.recaf.ui.control.richtext.bracket;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.TwoDimensional;
+import org.reactfx.Change;
+import org.reactfx.EventStream;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
 import software.coley.recaf.ui.control.richtext.linegraphics.BracketMatchGraphicFactory;
@@ -13,8 +13,10 @@ import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.IntRange;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 
+import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Consumer;
 
 /**
  * Bracket tracking component for {@link Editor}.
@@ -24,31 +26,38 @@ import java.util.concurrent.ExecutorService;
  * @see BracketMatchGraphicFactory Adds a line indicator to an {@link Editor} for lines covering the {@link #getRange() range}.
  * @see Editor#setBracketTracking(BracketTracking) Call to install into an {@link Editor}.
  */
-public class BracketTracking implements EditorComponent, ChangeListener<Integer> {
+public class BracketTracking implements EditorComponent, Consumer<Change<Integer>> {
 	private final ExecutorService service = ThreadPoolFactory.newSingleThreadExecutor("brackets");
+	private EventStream<Change<Integer>> lastEventStream;
 	private CodeArea codeArea;
 	private Editor editor;
 	private IntRange range;
 
 	@Override
-	public void changed(ObservableValue<? extends Integer> observable, Integer oldPos, Integer curPos) {
-		// Unbox
-		int pos = curPos;
-		int len = codeArea.getLength();
+	public void install(@Nonnull Editor editor) {
+		this.editor = editor;
+		codeArea = editor.getCodeArea();
 
+		// Register event observer with short delay so rapid event fires only
+		// consume the most recent event instance.
+		lastEventStream = editor.getCaretPosEventStream()
+				.successionEnds(Duration.ofMillis(Editor.SHORT_DELAY_MS));
+		lastEventStream.addObserver(this);
+	}
+
+	@Override
+	public void uninstall(@Nonnull Editor editor) {
+		if (codeArea != null) {
+			lastEventStream.removeObserver(this);
+			lastEventStream = null;
+			codeArea = null;
+		}
+	}
+
+	@Override
+	public void accept(Change<Integer> change) {
 		// Submit task to check for open/close pair
-		service.submit(() -> {
-			// Check if character adjacent to the caret position is an open or closing bracket.
-			boolean found = false;
-			if (pos > 0)
-				found = scan(pos - 1);
-			if (!found && pos < len)
-				found = scan(pos);
-
-			// No bracket pair found, clear range.
-			if (!found)
-				setRange(null);
-		});
+		service.submit(() -> setRange(scanAround(change.getNewValue())));
 	}
 
 	/**
@@ -57,6 +66,22 @@ public class BracketTracking implements EditorComponent, ChangeListener<Integer>
 	@Nullable
 	public IntRange getRange() {
 		return range;
+	}
+
+	/**
+	 * Assigns the current selected bracket pair range.
+	 * When the new value differs from the last value, the linked editor will redraw its paragraph graphics.
+	 *
+	 * @param newRange
+	 * 		New range to assign. {@code null} to remove selected bracket pair range.
+	 */
+	private void setRange(@Nullable IntRange newRange) {
+		IntRange lastRange = range;
+		range = newRange;
+
+		// Redraw paragraphs visible when the range is modified.
+		if (!Objects.equals(lastRange, newRange))
+			FxThreadUtil.run(() -> editor.redrawParagraphGraphics());
 	}
 
 	/**
@@ -89,7 +114,19 @@ public class BracketTracking implements EditorComponent, ChangeListener<Integer>
 		return paragraph <= endParagraph;
 	}
 
-	private boolean scan(int pos) {
+	protected IntRange scanAround(int pos) {
+		int len = codeArea.getLength();
+
+		// Check if character adjacent to the caret position is an open or closing bracket.
+		IntRange found = null;
+		if (pos > 0)
+			found = scanAt(pos - 1);
+		if (found == null && pos < len)
+			found = scanAt(pos);
+		return found;
+	}
+
+	private IntRange scanAt(int pos) {
 		String text = codeArea.getText();
 		char c = text.charAt(pos);
 		char openChar;
@@ -109,54 +146,53 @@ public class BracketTracking implements EditorComponent, ChangeListener<Integer>
 			forward = c == '(';
 		} else {
 			// Not a supported bracket pair
-			return false;
+			return null;
 		}
 
 		return forward ? scanForwards(text, pos, openChar, closeChar) :
 				scanBackwards(text, pos, openChar, closeChar);
 	}
 
-	private boolean scanForwards(String text, int pos, char openChar, char closeChar) {
+	private IntRange scanForwards(String text, int pos, char openChar, char closeChar) {
 		int start = pos;
-		int end = -1;
-		int balance = 1;
+		int end;
 		int open;
 		int close;
-		boolean unmatched = true;
+		int balance = 1;
 		do {
 			open = text.indexOf(openChar, pos + 1);
 			close = text.indexOf(closeChar, pos + 1);
 
-			if (open != -1 && open < close)
+			if (open != -1 && open < close) {
 				balance++;
-			else if (close > pos)
+				pos = open;
+			} else if (close != -1 && close > pos) {
 				balance--;
-			else
-				return false;
+				pos = close;
 
-			if (balance == 0) {
-				end = close;
-				break;
+				// Balance solved
+				if (balance == 0) {
+					end = pos;
+					break;
+				}
+			} else {
+				// Neither an open nor close character was found.
+				// The balance is not resolved, no match.
+				return null;
 			}
-			int next = Math.min(open, close);
-			if (next <= pos)
-				unmatched = false;
-			pos = next;
-		} while (unmatched);
-		if (end > 0) {
-			setRange(new IntRange(start, end));
-			return true;
-		}
-		return false;
+		} while (true);
+
+		// End found? Create range.
+		return (end > 0) ? new IntRange(start, end) : null;
 	}
 
-	private boolean scanBackwards(String text, int pos, char openChar, char closeChar) {
+	private IntRange scanBackwards(String text, int pos, char openChar, char closeChar) {
 		int start = -1;
 		int end = pos;
 		int balance = 1;
 		int open;
 		int close;
-		boolean unmatched = true;
+		boolean remaining = true;
 		do {
 			open = text.lastIndexOf(openChar, pos - 1);
 			close = text.lastIndexOf(closeChar, pos - 1);
@@ -166,52 +202,26 @@ public class BracketTracking implements EditorComponent, ChangeListener<Integer>
 			else if (close != -1 && close < pos)
 				balance++;
 			else
-				return false;
+				return null;
 
+			// Balance solved
 			if (balance == 0) {
 				start = open;
 				break;
 			}
+
+			// Not solved, continue scanning by setting the cut-off for backwards scan
+			// to the next closest item of the open/close character matches.
 			int next = Math.max(open, close);
+
+			// If the next position is the same, or beyond the current position
+			// then that means we have exhausted all matches, and the balance is not solved.
 			if (next >= pos)
-				unmatched = false;
+				remaining = false;
 			pos = next;
-		} while (unmatched);
-		if (start >= 0) {
-			setRange(new IntRange(start, end));
-			return true;
-		}
-		return false;
-	}
+		} while (remaining);
 
-	/**
-	 * Assigns the current selected bracket pair range.
-	 * When the new value differs from the last value, the linked editor will redraw its paragraph graphics.
-	 *
-	 * @param newRange
-	 * 		New range to assign. {@code null} to remove selected bracket pair range.
-	 */
-	private void setRange(@Nullable IntRange newRange) {
-		IntRange lastRange = range;
-		range = newRange;
-
-		// Redraw paragraphs visible when the range is modified.
-		if (!Objects.equals(lastRange, newRange))
-			FxThreadUtil.run(() -> editor.redrawParagraphGraphics());
-	}
-
-	@Override
-	public void install(@Nonnull Editor editor) {
-		this.editor = editor;
-		codeArea = editor.getCodeArea();
-		codeArea.caretPositionProperty().addListener(this);
-	}
-
-	@Override
-	public void uninstall(@Nonnull Editor editor) {
-		if (codeArea != null) {
-			codeArea.caretPositionProperty().removeListener(this);
-			codeArea = null;
-		}
+		// Start found? Create range.
+		return (start >= 0) ? new IntRange(start, end) : null;
 	}
 }

@@ -10,6 +10,9 @@ import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.GenericStyledArea;
 import org.fxmisc.richtext.model.StyleSpans;
+import org.reactfx.Change;
+import org.reactfx.EventStream;
+import org.reactfx.EventStreams;
 import software.coley.recaf.ui.control.richtext.bracket.BracketTracking;
 import software.coley.recaf.ui.control.richtext.linegraphics.RootLineGraphicFactory;
 import software.coley.recaf.ui.control.richtext.syntax.StyleResult;
@@ -40,11 +43,13 @@ import java.util.function.Supplier;
  * @author Matt Coley
  */
 public class Editor extends StackPane {
+	public static final int SHORT_DELAY_MS = 150;
 	private static final String styleSheetPath;
 	private final CodeArea codeArea = new CodeArea();
 	private final VirtualFlow<?, ?> virtualFlow;
 	private final ExecutorService syntaxPool = ThreadPoolFactory.newSingleThreadExecutor("syntax-highlight");
 	private final RootLineGraphicFactory rootLineGraphicFactory = new RootLineGraphicFactory(this);
+	private final EventStream<Change<Integer>> caretPosEventStream;
 	private SyntaxHighlighter syntaxHighlighter;
 	private BracketTracking bracketTracking;
 
@@ -76,7 +81,7 @@ public class Editor extends StackPane {
 		// Register a text change listener and use the inserted/removed text content to determine what portions
 		// of the document need to be restyled.
 		codeArea.plainTextChanges()
-				.successionEnds(Duration.ofMillis(150))
+				.successionEnds(Duration.ofMillis(SHORT_DELAY_MS))
 				.addObserver(changes -> {
 					if (syntaxHighlighter != null) {
 						schedule(syntaxPool, () -> {
@@ -87,6 +92,9 @@ public class Editor extends StackPane {
 						}, result -> codeArea.setStyleSpans(result.position(), result.spans()));
 					}
 				});
+
+		// Create event-streams for various events.
+		caretPosEventStream = EventStreams.changesOf(codeArea.caretPositionProperty());
 	}
 
 	/**
@@ -161,6 +169,14 @@ public class Editor extends StackPane {
 	@Nonnull
 	public ObservableValue<String> textProperty() {
 		return codeArea.textProperty();
+	}
+
+	/**
+	 * @return Event stream wrapper for {@link CodeArea#caretPositionProperty()}.
+	 */
+	@Nonnull
+	public EventStream<Change<Integer>> getCaretPosEventStream() {
+		return caretPosEventStream;
 	}
 
 	/**
