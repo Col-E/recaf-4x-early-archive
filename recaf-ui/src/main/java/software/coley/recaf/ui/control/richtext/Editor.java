@@ -227,8 +227,6 @@ public class Editor extends StackPane {
 		this.bracketTracking = bracketTracking;
 		if (bracketTracking != null)
 			bracketTracking.install(this);
-
-		// TODO: Redraw line graphics for visible paragraphs
 	}
 
 	/**
