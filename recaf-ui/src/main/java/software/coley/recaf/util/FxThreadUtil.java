@@ -24,6 +24,10 @@ public class FxThreadUtil {
 	 * 		Runnable to dispatch in UI thread.
 	 */
 	public static void dispatch(Runnable action) {
+		// Skip under test environment.
+		if (FxTest.isTestEnv()) return;
+
+		// Dispatch immediately if on JFX thread.
 		if (Platform.isFxApplicationThread()) {
 			action.run();
 		} else {
@@ -38,6 +42,9 @@ public class FxThreadUtil {
 	 * 		Runnable to start in UI thread.
 	 */
 	public static void run(Runnable action) {
+		// Skip under test environment.
+		if (FxTest.isTestEnv()) return;
+
 		// I know "Platform.isFxApplicationThread()" exists.
 		// That results in some wonky behavior in various use cases though.
 		Platform.runLater(ThreadUtil.wrap(action));
