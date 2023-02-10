@@ -9,11 +9,12 @@ import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.GenericStyledArea;
+import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.reactfx.Change;
 import org.reactfx.EventStream;
 import org.reactfx.EventStreams;
-import software.coley.recaf.ui.control.richtext.bracket.BracketTracking;
+import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
 import software.coley.recaf.ui.control.richtext.linegraphics.RootLineGraphicFactory;
 import software.coley.recaf.ui.control.richtext.syntax.StyleResult;
 import software.coley.recaf.ui.control.richtext.syntax.SyntaxHighlighter;
@@ -36,7 +37,7 @@ import java.util.function.Supplier;
  * Modular text editor control.
  * <ul>
  *     <li>Configure syntax with {@link #setSyntaxHighlighter(SyntaxHighlighter)}</li>
- *     <li>Configure bracket tracking with {@link #setBracketTracking(BracketTracking)}</li>
+ *     <li>Configure selected bracket tracking with {@link #setSelectedBracketTracking(SelectedBracketTracking)}</li>
  *     <li>Configure line graphics via {@link #getRootLineGraphicFactory()}</li>
  * </ul>
  *
@@ -51,7 +52,7 @@ public class Editor extends StackPane {
 	private final RootLineGraphicFactory rootLineGraphicFactory = new RootLineGraphicFactory(this);
 	private final EventStream<Change<Integer>> caretPosEventStream;
 	private SyntaxHighlighter syntaxHighlighter;
-	private BracketTracking bracketTracking;
+	private SelectedBracketTracking selectedBracketTracking;
 
 	static {
 		styleSheetPath = Editor.class.getResource("/style/code-editor.css").toExternalForm();
@@ -173,6 +174,16 @@ public class Editor extends StackPane {
 	}
 
 	/**
+	 * Delegates to {@link CodeArea#plainTextChanges()}.
+	 *
+	 * @return Event stream for changes to {@link #textProperty()}.
+	 */
+	@Nonnull
+	public EventStream<PlainTextChange> getTextChangeEventStream() {
+		return codeArea.plainTextChanges();
+	}
+
+	/**
 	 * @return Event stream wrapper for {@link CodeArea#caretPositionProperty()}.
 	 */
 	@Nonnull
@@ -215,27 +226,27 @@ public class Editor extends StackPane {
 	}
 
 	/**
-	 * @param bracketTracking
-	 * 		New bracket tracking implementation, or {@code null} to disable bracket tracking.
+	 * @param selectedBracketTracking
+	 * 		New selected bracket tracking implementation, or {@code null} to disable selected bracket tracking.
 	 */
-	public void setBracketTracking(@Nullable BracketTracking bracketTracking) {
+	public void setSelectedBracketTracking(@Nullable SelectedBracketTracking selectedBracketTracking) {
 		// Uninstall prior.
-		BracketTracking previousBracketTracking = this.bracketTracking;
-		if (previousBracketTracking != null)
-			previousBracketTracking.uninstall(this);
+		SelectedBracketTracking previousSelectedBracketTracking = this.selectedBracketTracking;
+		if (previousSelectedBracketTracking != null)
+			previousSelectedBracketTracking.uninstall(this);
 
 		// Set and install new instance.
-		this.bracketTracking = bracketTracking;
-		if (bracketTracking != null)
-			bracketTracking.install(this);
+		this.selectedBracketTracking = selectedBracketTracking;
+		if (selectedBracketTracking != null)
+			selectedBracketTracking.install(this);
 	}
 
 	/**
-	 * @return Bracket tracking implementation.
+	 * @return Selected bracket tracking implementation.
 	 */
 	@Nullable
-	public BracketTracking getBracketTracking() {
-		return bracketTracking;
+	public SelectedBracketTracking getSelectedBracketTracking() {
+		return selectedBracketTracking;
 	}
 
 	/**

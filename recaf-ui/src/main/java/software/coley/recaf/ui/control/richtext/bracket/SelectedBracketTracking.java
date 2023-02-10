@@ -24,9 +24,9 @@ import java.util.function.Consumer;
  *
  * @author Matt Coley
  * @see BracketMatchGraphicFactory Adds a line indicator to an {@link Editor} for lines covering the {@link #getRange() range}.
- * @see Editor#setBracketTracking(BracketTracking) Call to install into an {@link Editor}.
+ * @see Editor#setSelectedBracketTracking(SelectedBracketTracking) Call to install into an {@link Editor}.
  */
-public class BracketTracking implements EditorComponent, Consumer<Change<Integer>> {
+public class SelectedBracketTracking implements EditorComponent, Consumer<Change<Integer>> {
 	private final ExecutorService service = ThreadPoolFactory.newSingleThreadExecutor("brackets");
 	private EventStream<Change<Integer>> lastEventStream;
 	private CodeArea codeArea;

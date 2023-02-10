@@ -14,14 +14,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests for {@link BracketTracking}.
+ * Tests for {@link SelectedBracketTracking}.
  */
-class BracketTrackingTest extends BaseFxTest {
+class SelectedBracketTrackingTest extends BaseFxTest {
 	@Nested
 	class Simple {
 		@Test
 		void testImmediateAdjacent() {
-			BracketTracking tracking = setup(" {} ");
+			SelectedBracketTracking tracking = setup(" {} ");
 			IntRange target = new IntRange(1, 2);
 
 			// Caret not adjacent to bracket
@@ -42,7 +42,7 @@ class BracketTrackingTest extends BaseFxTest {
 
 		@Test
 		void testWithContent() {
-			BracketTracking tracking = setup(" { ... } ");
+			SelectedBracketTracking tracking = setup(" { ... } ");
 			IntRange target = new IntRange(1, 7);
 
 			// Caret not adjacent to bracket
@@ -72,7 +72,7 @@ class BracketTrackingTest extends BaseFxTest {
 
 		@Test
 		void testAtEdges() {
-			BracketTracking tracking = setup("{...}");
+			SelectedBracketTracking tracking = setup("{...}");
 			IntRange target = new IntRange(0, 4);
 
 			// { to right
@@ -103,7 +103,7 @@ class BracketTrackingTest extends BaseFxTest {
 						}
 					}
 					""";
-			BracketTracking tracking = setup(text);
+			SelectedBracketTracking tracking = setup(text);
 			IntRange outer = new IntRange(0, 8);
 			IntRange inner = new IntRange(3, 6);
 
@@ -139,7 +139,7 @@ class BracketTrackingTest extends BaseFxTest {
 		}
 	}
 
-	private BracketTracking setup(String text) {
+	private SelectedBracketTracking setup(String text) {
 		// Setup UI mocks
 		CodeArea codeArea = mock(CodeArea.class, Answers.RETURNS_MOCKS);
 		Editor editor = mock(Editor.class, Answers.RETURNS_MOCKS);
@@ -148,7 +148,7 @@ class BracketTrackingTest extends BaseFxTest {
 		when(codeArea.getLength()).thenReturn(text.length());
 
 		// Create bracket impl
-		BracketTracking tracking = new BracketTracking();
+		SelectedBracketTracking tracking = new SelectedBracketTracking();
 		tracking.install(editor);
 		return tracking;
 	}

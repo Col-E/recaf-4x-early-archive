@@ -6,18 +6,18 @@ import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.Separator;
 import software.coley.recaf.ui.control.richtext.Editor;
-import software.coley.recaf.ui.control.richtext.bracket.BracketTracking;
+import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
 
 /**
  * Graphic factory that adds a line indicator to matched lines containing the
- * {@link BracketTracking#getRange() current bracket pair}.
+ * {@link SelectedBracketTracking#getRange() current bracket pair}.
  *
  * @author Matt Coley
- * @see BracketTracking
+ * @see SelectedBracketTracking
  */
 public class BracketMatchGraphicFactory extends AbstractLineGraphicFactory {
 	private static final Insets PADDING = new Insets(0, 0, 0, 5);
-	private BracketTracking bracketTracking;
+	private SelectedBracketTracking selectedBracketTracking;
 
 	/**
 	 * New graphic factory.
@@ -28,21 +28,21 @@ public class BracketMatchGraphicFactory extends AbstractLineGraphicFactory {
 
 	@Override
 	public void install(@Nonnull Editor editor) {
-		bracketTracking = editor.getBracketTracking();
+		selectedBracketTracking = editor.getSelectedBracketTracking();
 	}
 
 	@Override
 	public void uninstall(@Nonnull Editor editor) {
-		bracketTracking = null;
+		selectedBracketTracking = null;
 	}
 
 	@Override
 	public Node apply(int line) {
 		// Always null if no bracket tracking is registered for the editor.
-		if (bracketTracking == null) return null;
+		if (selectedBracketTracking == null) return null;
 
 		// Add brace line for selected.
-		if (bracketTracking.isSelectedLine(line)) {
+		if (selectedBracketTracking.isSelectedLine(line)) {
 			Separator separator = new Separator(Orientation.VERTICAL);
 			separator.setPadding(PADDING);
 			separator.getStyleClass().add("matched-brace-line");
