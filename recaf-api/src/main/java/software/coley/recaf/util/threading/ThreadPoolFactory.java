@@ -114,7 +114,21 @@ public class ThreadPoolFactory {
 	 * @return {@link Executors#newScheduledThreadPool(int)}.
 	 */
 	public static ScheduledExecutorService newScheduledThreadPool(String name, boolean daemon) {
-		return Executors.newScheduledThreadPool(MAX, new FactoryImpl(name, daemon));
+		return newScheduledThreadPool(name, MAX, daemon);
+	}
+
+	/**
+	 * @param name
+	 * 		Thread pool name.
+	 * @param size
+	 * 		Thread pool size.
+	 * @param daemon
+	 * 		Flag to set created threads as daemon threads.
+	 *
+	 * @return {@link Executors#newScheduledThreadPool(int)}.
+	 */
+	public static ScheduledExecutorService newScheduledThreadPool(String name, int size, boolean daemon) {
+		return Executors.newScheduledThreadPool(size, new FactoryImpl(name, daemon));
 	}
 
 	private static class FactoryImpl implements ThreadFactory {
