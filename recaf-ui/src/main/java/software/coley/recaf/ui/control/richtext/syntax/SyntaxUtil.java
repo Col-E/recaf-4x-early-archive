@@ -5,11 +5,16 @@ import jakarta.annotation.Nullable;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.StyleSpan;
 import org.fxmisc.richtext.model.StyleSpans;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.util.IntRange;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static java.lang.Math.*;
 
 /**
  * Various syntax utils, mostly for range computations.
@@ -17,6 +22,8 @@ import java.util.List;
  * @author Matt Coley
  */
 public class SyntaxUtil {
+	private static final Logger logger = Logging.get(SyntaxUtil.class);
+
 	/**
 	 * @param text
 	 * 		Full document text.
@@ -35,6 +42,7 @@ public class SyntaxUtil {
 											  @Nullable SyntaxHighlighter syntaxHighlighter,
 											  @Nonnull PlainTextChange change) {
 		int textLength = text.length();
+		if (textLength == 0) return IntRange.EMPTY;
 
 		// Get range of change
 		String inserted = change.getInserted();
@@ -53,23 +61,27 @@ public class SyntaxUtil {
 		// If you change a character in the middle of a multi-line comment, this will make the
 		// bounds fit from '/*' to '*/'. This way when we pass the range to the styler it operates on a range
 		// that previously matched a top-level rule. In most cases it will make the same match again.
-		int styleStart = -1;
-		int styleEnd = -1;
+		int styleStart;
+		int styleEnd;
 		List<IntRange> topLevelSpanRanges = SyntaxUtil.flatten(styleSpans);
 		try {
-			int startRangePosition = -1;
-			int endRangePosition = textLength;
-			for (IntRange range : topLevelSpanRanges) {
-				if (startRangePosition == -1 && range.isBetween(true, true, changeStart))
-					startRangePosition = range.start();
-				if (range.isBetween(true, true, changeEnd)) {
-					endRangePosition = range.end();
-					break;
-				}
-			}
-			styleStart = startRangePosition;
-			styleEnd = endRangePosition;
+			// Find where the change start and end positions would be inserted into the flattened ranges.
+			IntRange startMarker = new IntRange(changeStart - 1, changeStart);
+			IntRange endMarker = new IntRange(changeEnd - 1, changeEnd);
+			int searchEnd = topLevelSpanRanges.size() - 1;
+			int startIndex = abs(CollectionUtil.binarySearch(topLevelSpanRanges, startMarker, 0, searchEnd));
+			int endIndex = abs(CollectionUtil.binarySearch(topLevelSpanRanges, endMarker, startIndex, searchEnd));
+
+			// Normalize binary search results.
+			int size = topLevelSpanRanges.size() - 1;
+			startIndex = min(size, max(0, startIndex));
+			endIndex = min(size, max(0, endIndex));
+
+			// Map to positions in the text.
+			styleStart = topLevelSpanRanges.get(startIndex).start();
+			styleEnd = topLevelSpanRanges.get(endIndex).end();
 		} catch (Exception ex) {
+			logger.error("Failed to get span range for change", ex);
 			throw new IllegalStateException(ex);
 		}
 

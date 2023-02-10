@@ -12,6 +12,11 @@ package software.coley.recaf.util;
  */
 public record IntRange(int start, int end) implements Comparable<IntRange> {
 	/**
+	 * Constant range of 0 to 0.
+	 */
+	public static final IntRange EMPTY = new IntRange(0, 0);
+
+	/**
 	 * @return Length of the range.
 	 */
 	public int length() {

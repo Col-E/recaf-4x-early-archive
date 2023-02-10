@@ -32,7 +32,7 @@ public class CollectionUtil {
 
 	public static <T extends Comparable<T>> int binarySearch(T[] items, T target, int first, int last) {
 		if (first > last)
-			return -1;
+			return -last;
 		else {
 			int middle = (first + last) / 2;
 			int compResult = target.compareTo(items[middle]);
@@ -47,7 +47,7 @@ public class CollectionUtil {
 
 	public static <T extends Comparable<T>> int binarySearch(List<T> items, T target, int first, int last) {
 		if (first > last)
-			return -1;
+			return -last;
 		else {
 			int middle = (first + last) / 2;
 			int compResult = target.compareTo(items.get(middle));
