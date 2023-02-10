@@ -32,7 +32,10 @@ public class CollectionUtil {
 
 	public static <T extends Comparable<T>> int binarySearch(T[] items, T target, int first, int last) {
 		if (first > last)
-			return -last;
+			// Typically yield '-1' but with this, we will have it such that if 'target' is not in the list
+			// then the return value will be the negative value of the index where it would be inserted into
+			// while maintaining sorted order.
+			return (first == 0 && last == -1) ? 0 : -last;
 		else {
 			int middle = (first + last) / 2;
 			int compResult = target.compareTo(items[middle]);
@@ -47,7 +50,10 @@ public class CollectionUtil {
 
 	public static <T extends Comparable<T>> int binarySearch(List<T> items, T target, int first, int last) {
 		if (first > last)
-			return -last;
+			// Typically yield '-1' but with this, we will have it such that if 'target' is not in the list
+			// then the return value will be the negative value of the index where it would be inserted into
+			// while maintaining sorted order.
+			return (first == 0 && last == -1) ? 0 : -last;
 		else {
 			int middle = (first + last) / 2;
 			int compResult = target.compareTo(items.get(middle));

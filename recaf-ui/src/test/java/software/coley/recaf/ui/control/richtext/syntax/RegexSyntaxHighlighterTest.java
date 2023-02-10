@@ -252,8 +252,68 @@ class RegexSyntaxHighlighterTest {
 		}
 	}
 
+	/**
+	 * Change for inserting '/' to a broken block comment.
+	 * Should restyle the newly formed block comment range <i>(and some adjacent text, not ideal but not terrible)</i>.
+	 */
+	@Nested
+	class CreateBlockComment_RangeForRestyle {
+		@Test
+		void testAtStart() {
+			String textOpenMissing = """
+					{
+					**
+					* @return foo
+					*/
+					}
+					""";
+
+			// Change for inserting '/' at start
+			PlainTextChange change = new PlainTextChange(textOpenMissing.indexOf('*'), "", "/");
+			String modifiedText = apply(textOpenMissing, change);
+
+			// Initial spans
+			StyleSpans<Collection<String>> spans = HIGHLIGHTER_JAVA.createStyleSpans(textOpenMissing, 0, textOpenMissing.length());
+
+			// Expecting full match of block comment, plus prior unmatched text (range is adjacent)
+			IntRange restyledRange = SyntaxUtil.getRangeForRestyle(modifiedText, spans, HIGHLIGHTER_JAVA, change);
+			String matchedText = restyledRange.sectionOfText(modifiedText);
+			assertTrue(matchedText.substring(2).matches(JAVADOC_PATTERN));
+			assertEquals(0, restyledRange.start());
+			assertEquals(modifiedText.lastIndexOf('/') + 1, restyledRange.end());
+		}
+
+		@Test
+		void testAtEnd() {
+			String textCloseMissing = """
+					{
+					/**
+					* @return foo
+					*
+					}
+					""";
+
+			// Change for inserting '/' at start
+			PlainTextChange change = new PlainTextChange(textCloseMissing.lastIndexOf('*') + 1, "", "/");
+			String modifiedText = apply(textCloseMissing, change);
+
+			// Initial spans
+			StyleSpans<Collection<String>> spans = HIGHLIGHTER_JAVA.createStyleSpans(textCloseMissing, 0, textCloseMissing.length());
+
+			// Expecting full match of block comment, plus following unmatched text (range is adjacent)
+			IntRange restyledRange = SyntaxUtil.getRangeForRestyle(modifiedText, spans, HIGHLIGHTER_JAVA, change);
+			String matchedText = restyledRange.sectionOfText(modifiedText);
+			assertTrue(matchedText.substring(0, matchedText.length() - 2).matches(JAVADOC_PATTERN));
+			assertEquals(modifiedText.indexOf('/'), restyledRange.start());
+			assertEquals(modifiedText.length() - 1, restyledRange.end());
+		}
+	}
+
 	private static String apply(PlainTextChange change) {
-		String text = TEXT_JAVA;
+		return apply(TEXT_JAVA, change);
+	}
+
+	private static String apply(String text, PlainTextChange change) {
 		text = StringUtil.remove(text, change.getPosition(), change.getRemoved().length());
 		text = StringUtil.insert(text, change.getPosition(), change.getInserted());
 		return text;

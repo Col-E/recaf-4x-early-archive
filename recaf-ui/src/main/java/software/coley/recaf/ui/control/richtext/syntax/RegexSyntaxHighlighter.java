@@ -61,11 +61,15 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 				if (rangeText.matches(rule.getRegex()))
 					break;
 
+				// Positions of marks within the text.
+				int backtrackMarkIndex = rangeText.indexOf(backtrackMark);
+				int advanceMarkIndex = rangeText.indexOf(advanceMark);
+
 				// The change in the text caused our pattern to break its original match.
 				// We need to restyle a wider range.
 				//
 				// Advance forward if start of pattern exists, but no end of pattern exists
-				if (rangeText.startsWith(backtrackMark)) {
+				if (backtrackMarkIndex > advanceMarkIndex) {
 					end = Math.max(end, text.indexOf(advanceMark, end) + advanceMark.length());
 
 					// Rules will only expand in one direction, so if we made a match by forward expansion
@@ -76,14 +80,20 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 				}
 
 				// Advance backwards if the end of a pattern exists, but no start of pattern exists
-				if (rangeText.endsWith(advanceMark)) {
+				if (rangeText.contains(advanceMark)) {
 					int index = text.substring(0, start).lastIndexOf(backtrackMark);
 					if (index >= 0) {
-						start = index;
+						// Check if there is an advance mark between the 'start' and the last backtrack mark.
+						// If so, then backtrack has not found something that is open to this match, as it is closed
+						// by the advance mark in the middle.
+						int potentialBoundOfDetectedBacktrack = text.substring(0, start).lastIndexOf(advanceMark);
+						if (index > potentialBoundOfDetectedBacktrack) {
+							start = index;
 
-						// Rules will only expand in one direction, so if we made a match by backwards expansion
-						// then we are done with this rule and do not need to check any other rules.
-						break;
+							// Rules will only expand in one direction, so if we made a match by backwards expansion
+							// then we are done with this rule and do not need to check any other rules.
+							break;
+						}
 					}
 				}
 			}
