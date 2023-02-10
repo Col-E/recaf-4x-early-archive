@@ -35,7 +35,7 @@ public class PathOriginalNameProperty extends BasicProperty<String> {
 		String name = info.getName();
 		String original = info.getPropertyValueOrNull(KEY);
 		if (original != null)
-			return original + name;
+			return original;
 		return name;
 	}
 
@@ -43,7 +43,7 @@ public class PathOriginalNameProperty extends BasicProperty<String> {
 	 * @param info
 	 * 		Info instance.
 	 *
-	 * @return Prefix associated with instance.
+	 * @return Original name associated with instance, or {@code null} when no association exists.
 	 */
 	@Nullable
 	public static String get(@Nonnull Info info) {

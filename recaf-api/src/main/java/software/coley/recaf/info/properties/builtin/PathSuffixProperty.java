@@ -44,7 +44,7 @@ public class PathSuffixProperty extends BasicProperty<String> {
 	 * @param info
 	 * 		Info instance.
 	 *
-	 * @return Suffix associated with instance.
+	 * @return Suffix associated with instance, or {@code null} when no association exists.
 	 */
 	@Nullable
 	public static String get(@Nonnull Info info) {

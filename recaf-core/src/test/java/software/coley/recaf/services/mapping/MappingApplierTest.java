@@ -10,6 +10,7 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.annotation.AnnotationElement;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.info.properties.builtin.OriginalClassNameProperty;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
@@ -99,10 +100,17 @@ class MappingApplierTest extends TestBase {
 		// The supplier class we define should be remapped.
 		// The runner class (AnonymousLambda) itself should not be remapped, but should be updated to point to
 		// the new StringSupplier class name.
-		assertNotNull(mappings.getMappedClassName(stringSupplierName), "StringSupplier should be remapped");
+		String mappedStringSupplierName = mappings.getMappedClassName(stringSupplierName);
+		assertNotNull(mappedStringSupplierName, "StringSupplier should be remapped");
 		assertNull(mappings.getMappedClassName(anonymousLambdaName), "AnonymousLambda should not be remapped");
 		assertTrue(modified.contains(stringSupplierName), "StringSupplier should have updated");
 		assertTrue(modified.contains(anonymousLambdaName), "AnonymousLambda should have updated");
+
+		// Verify that the original name is stored as a property.
+		JvmClassInfo mappedStringSupplier = workspace.findJvmClass(mappedStringSupplierName).getItem();
+		assertNotNull(mappedStringSupplier, "Could not find mapped StringSupplier in workspace");
+		assertEquals(stringSupplierName, OriginalClassNameProperty.get(mappedStringSupplier),
+				"Did not record original name after applying mappings");
 
 		// Assert aggregate updated too.
 		AggregatedMappings aggregatedMappings = aggregateMappingManager.getAggregatedMappings();

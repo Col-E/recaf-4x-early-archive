@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -31,6 +32,19 @@ public interface PropertyContainer {
 	 * 		Property value type.
 	 */
 	<V> void setProperty(Property<V> property);
+
+	/**
+	 * @param key
+	 * 		Key of property to set.
+	 * @param property
+	 * 		Property to set, if no value is associated with the given key.
+	 * @param <V>
+	 * 		Property value type.
+	 */
+	default <V> void setPropertyIfMissing(String key, Supplier<Property<V>> property) {
+		if (getProperty(key) == null)
+			setProperty(property.get());
+	}
 
 	/**
 	 * @param key
