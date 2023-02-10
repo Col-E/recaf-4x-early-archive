@@ -85,7 +85,8 @@ public class Editor extends StackPane {
 				.addObserver(changes -> {
 					if (syntaxHighlighter != null) {
 						schedule(syntaxPool, () -> {
-							IntRange range = SyntaxUtil.getRangeForRestyle(changes, this);
+							IntRange range = SyntaxUtil.getRangeForRestyle(getText(), getStyleSpans(),
+									syntaxHighlighter, changes);
 							int start = range.start();
 							int end = range.end();
 							return new StyleResult(syntaxHighlighter.createStyleSpans(getText(), start, end), start);

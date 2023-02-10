@@ -42,6 +42,18 @@ public record IntRange(int start, int end) implements Comparable<IntRange> {
 	}
 
 	/**
+	 * Shorthand for {@code text.substring(range.start(), range.end())}.
+	 *
+	 * @param text
+	 * 		Text to cut section out of.
+	 *
+	 * @return Section of text of this range.
+	 */
+	public String sectionOfText(String text) {
+		return text.substring(start, end);
+	}
+
+	/**
 	 * @param length
 	 * 		Extension size.
 	 *

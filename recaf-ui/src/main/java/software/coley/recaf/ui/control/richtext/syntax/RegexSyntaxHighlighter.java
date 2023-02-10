@@ -10,14 +10,16 @@ import software.coley.recaf.util.IntRange;
 import software.coley.recaf.util.RegexUtil;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Regex backed syntax highlighter.
  *
  * @author Matt Coley
+ * @see RegexLanguages Predefined languages to pass to {@link RegexSyntaxHighlighter#RegexSyntaxHighlighter(RegexRule)}.
  */
 public class RegexSyntaxHighlighter implements SyntaxHighlighter {
-	private static final Map<List<RegexRule>, Pattern> patternCache = new HashMap<>();
+	private static final Map<List<RegexRule>, Pattern> patternCache = new ConcurrentHashMap<>();
 	private final RegexRule rootRule;
 
 	/**
@@ -54,15 +56,35 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 			String advanceMark = rule.getAdvanceMark();
 
 			if (advanceMark != null && backtrackMark != null) {
+				// If the range is a FULL match (from start to finish, no leading or trailing text)
+				// then we do not need to change anything.
+				if (rangeText.matches(rule.getRegex()))
+					break;
+
+				// The change in the text caused our pattern to break its original match.
+				// We need to restyle a wider range.
+				//
 				// Advance forward if start of pattern exists, but no end of pattern exists
-				if (rangeText.contains(backtrackMark))
-					end = Math.max(end, text.indexOf(advanceMark, end));
+				if (rangeText.startsWith(backtrackMark)) {
+					end = Math.max(end, text.indexOf(advanceMark, end) + advanceMark.length());
+
+					// Rules will only expand in one direction, so if we made a match by forward expansion
+					// then we do not need to do backtracking for this rule.
+					//
+					// We are done and do not need to check any other rules.
+					break;
+				}
 
 				// Advance backwards if the end of a pattern exists, but no start of pattern exists
-				if (rangeText.contains(advanceMark)) {
+				if (rangeText.endsWith(advanceMark)) {
 					int index = text.substring(0, start).lastIndexOf(backtrackMark);
-					if (index >= 0)
+					if (index >= 0) {
 						start = index;
+
+						// Rules will only expand in one direction, so if we made a match by backwards expansion
+						// then we are done with this rule and do not need to check any other rules.
+						break;
+					}
 				}
 			}
 		}
@@ -116,7 +138,7 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 	/**
 	 * Splittable region breaking down rule matches into ranges and sub-ranges.
 	 */
-	private static class Region {
+	public static class Region {
 		private final List<Region> children = new ArrayList<>();
 		private final Region parent;
 		private final String text;
@@ -138,7 +160,7 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 		 * @param end
 		 * 		End offset in complete text.
 		 */
-		private Region(String text, Region parent, RegexRule rule, int start, int end) {
+		public Region(String text, Region parent, RegexRule rule, int start, int end) {
 			this.text = text;
 			this.parent = parent;
 			this.rule = rule;
@@ -209,7 +231,7 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 		/**
 		 * @return List of classes for matching the {@link #rule} in this region.
 		 */
-		private List<String> currentClasses() {
+		public List<String> currentClasses() {
 			if (parent == null) return Collections.emptyList();
 			return Lists.combine(parent.currentClasses(), rule.getClasses());
 		}
@@ -217,7 +239,7 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 		/**
 		 * @return List of classes for unmatched sections in this region.
 		 */
-		private List<String> unmatchedClasses() {
+		public List<String> unmatchedClasses() {
 			if (parent == null) return Collections.emptyList();
 			return Lists.combine(parent.unmatchedClasses(), parent.rule.getClasses());
 		}

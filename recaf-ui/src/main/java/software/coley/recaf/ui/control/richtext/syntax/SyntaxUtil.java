@@ -1,10 +1,10 @@
 package software.coley.recaf.ui.control.richtext.syntax;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.StyleSpan;
 import org.fxmisc.richtext.model.StyleSpans;
-import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.util.IntRange;
 
 import java.util.ArrayList;
@@ -18,45 +18,54 @@ import java.util.List;
  */
 public class SyntaxUtil {
 	/**
+	 * @param text
+	 * 		Full document text.
+	 * @param styleSpans
+	 * 		Existing style-spans for the full document text.
+	 * @param syntaxHighlighter
+	 * 		Existing highlighter to use for {@link SyntaxHighlighter#expandRange(String, int, int)}.
+	 * 		May be {@code null} to skip this process.
 	 * @param change
 	 * 		The change made in the editor's text.
-	 * @param editor
-	 * 		The editor targeted for restyling.
 	 *
 	 * @return Range to restyle in order to fit the changed text.
 	 */
-	public static IntRange getRangeForRestyle(PlainTextChange change, Editor editor) {
-		String text = editor.getText();
+	public static IntRange getRangeForRestyle(@Nonnull String text,
+											  @Nonnull StyleSpans<Collection<String>> styleSpans,
+											  @Nullable SyntaxHighlighter syntaxHighlighter,
+											  @Nonnull PlainTextChange change) {
 		int textLength = text.length();
 
 		// Get range of change
 		String inserted = change.getInserted();
 		String removed = change.getRemoved();
 		int changeStart = change.getPosition();
-		int changeEnd = Integer.MIN_VALUE;
+		int changeEnd;
 		if (!inserted.isBlank()) {
 			changeEnd = change.getInsertionEnd();
 		} else if (!removed.isBlank()) {
 			changeEnd = change.getRemovalEnd();
+		} else {
+			changeEnd = changeStart + Math.abs(change.getNetLength());
 		}
 
 		// Expand the range to the boundaries of top-level flattened style-spans.
 		// If you change a character in the middle of a multi-line comment, this will make the
 		// bounds fit from '/*' to '*/'. This way when we pass the range to the styler it operates on a range
 		// that previously matched a top-level rule. In most cases it will make the same match again.
-		int styleStart;
-		int styleEnd;
-		List<IntRange> topLevelSpanRanges = SyntaxUtil.flatten(editor.getStyleSpans());
+		int styleStart = -1;
+		int styleEnd = -1;
+		List<IntRange> topLevelSpanRanges = SyntaxUtil.flatten(styleSpans);
 		try {
-			int startRangePosition = 0;
+			int startRangePosition = -1;
 			int endRangePosition = textLength;
 			for (IntRange range : topLevelSpanRanges) {
-				int start = range.start();
-				int end = range.end();
-				if (changeStart >= start && changeStart <= end)
-					startRangePosition = start;
-				if (changeEnd >= start && changeEnd <= end)
-					endRangePosition = end;
+				if (startRangePosition == -1 && range.isBetween(true, true, changeStart))
+					startRangePosition = range.start();
+				if (range.isBetween(true, true, changeEnd)) {
+					endRangePosition = range.end();
+					break;
+				}
 			}
 			styleStart = startRangePosition;
 			styleEnd = endRangePosition;
@@ -66,7 +75,7 @@ public class SyntaxUtil {
 
 		// Fit to paragraph start/end (newline boundaries)
 		styleStart = Math.min(styleStart, text.substring(0, styleStart).lastIndexOf('\n') + 1);
-		styleEnd = Math.max(styleEnd, text.indexOf('\n', styleEnd));
+		styleEnd = Math.max(styleEnd, text.indexOf('\n', styleEnd - 1));
 
 		// Allow the syntax highlighter implementation to reshape the range.
 		// Building on the example from before with multi-line comments, lets say you delete the last `/` that
@@ -75,7 +84,6 @@ public class SyntaxUtil {
 		//
 		// Because of this, we let the syntax highlighter implementations expand the range if they have constructs
 		// like multi-line comments.
-		SyntaxHighlighter syntaxHighlighter = editor.getSyntaxHighlighter();
 		if (syntaxHighlighter != null) {
 			IntRange expandedRange = syntaxHighlighter.expandRange(text, styleStart, styleEnd);
 			styleStart = Math.min(styleStart, expandedRange.start());
@@ -83,7 +91,7 @@ public class SyntaxUtil {
 
 			// Fit to paragraph start/end (newline boundaries) again
 			styleStart = Math.min(styleStart, text.substring(0, styleStart).lastIndexOf('\n') + 1);
-			styleEnd = Math.max(styleEnd, text.indexOf('\n', styleEnd));
+			styleEnd = Math.max(styleEnd, text.indexOf('\n', styleEnd - 1));
 		}
 
 		return new IntRange(styleStart, styleEnd);
@@ -97,7 +105,7 @@ public class SyntaxUtil {
 	 * as described prior into a single range. If it were ideally represented as a tree, we are stripping all but the
 	 * base layer.
 	 * <br>
-	 * Usage of this can be seen in {@link #getRangeForRestyle(PlainTextChange, Editor)}.
+	 * Usage of this can be seen in {@link #getRangeForRestyle(String, StyleSpans, SyntaxHighlighter, PlainTextChange)}.
 	 *
 	 * @param styleSpans
 	 * 		Collection of {@link StyleSpan}.
@@ -198,5 +206,4 @@ public class SyntaxUtil {
 			range = range.extendForwards(other.range.length());
 		}
 	}
-
 }

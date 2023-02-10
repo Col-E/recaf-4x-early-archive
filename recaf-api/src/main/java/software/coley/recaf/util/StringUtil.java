@@ -74,10 +74,27 @@ public class StringUtil {
 	 * @return Modified text.
 	 */
 	public static String insert(@Nonnull String text, int insertIndex, @Nullable String insertion) {
-		if (insertion == null || insertIndex < 0 || insertIndex >= text.length()) return text;
+		if (insertion == null || insertion.isEmpty() || insertIndex < 0 || insertIndex >= text.length()) return text;
 		String pre = text.substring(0, insertIndex);
 		String post = text.substring(insertIndex);
 		return pre + insertion + post;
+	}
+
+	/**
+	 * @param text
+	 * 		Input text.
+	 * @param removeIndex
+	 * 		Position to remove at.
+	 * @param removeLength
+	 * 		Length of removal.
+	 *
+	 * @return Modified text.
+	 */
+	public static String remove(@Nonnull String text, int removeIndex, int removeLength) {
+		if (removeIndex < 0 || removeIndex >= text.length()) return text;
+		String pre = text.substring(0, removeIndex);
+		String post = text.substring(removeIndex + removeLength);
+		return pre + post;
 	}
 
 	/**

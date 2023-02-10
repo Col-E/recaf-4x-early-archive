@@ -3,6 +3,7 @@ package software.coley.recaf.ui.control.richtext.syntax;
 import jakarta.annotation.Nonnull;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.StyleSpans;
+import org.objectweb.asm.ClassReader;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
 import software.coley.recaf.util.IntRange;
@@ -33,7 +34,7 @@ public interface SyntaxHighlighter extends EditorComponent {
 	 * By default, the {@link Editor} will create a base range to restyle when a text change is made.
 	 * However, in some cases that range may not be complete due to the change made.
 	 * <br>
-	 * Consider in a multi-line comment if you remove the last '/'. The end is now the next '*\/' found
+	 * Consider in a multi-line comment if you remove the last {@code '/'}. The end is now the next {@code '*\/'} found
 	 * in the document, which can be much further along in the text than the range created by the {@link Editor}.
 	 * Thus, implementations of {@link SyntaxHighlighter} are given the ability to expand ranges when cases like this
 	 * exist.
