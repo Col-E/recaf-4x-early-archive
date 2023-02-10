@@ -6,6 +6,8 @@ import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.TwoDimensional;
 import org.reactfx.Change;
 import org.reactfx.EventStream;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
 import software.coley.recaf.ui.control.richtext.linegraphics.BracketMatchGraphicFactory;
@@ -27,6 +29,7 @@ import java.util.function.Consumer;
  * @see Editor#setSelectedBracketTracking(SelectedBracketTracking) Call to install into an {@link Editor}.
  */
 public class SelectedBracketTracking implements EditorComponent, Consumer<Change<Integer>> {
+	private static final Logger logger = Logging.get(SelectedBracketTracking.class);
 	private final ExecutorService service = ThreadPoolFactory.newSingleThreadExecutor("brackets");
 	private EventStream<Change<Integer>> lastEventStream;
 	private CodeArea codeArea;
@@ -103,15 +106,25 @@ public class SelectedBracketTracking implements EditorComponent, Consumer<Change
 	public boolean isSelectedParagraph(int paragraph) {
 		if (range == null) return false;
 
-		// Check paragraph beyond start range.
-		TwoDimensional.Position startPos = codeArea.offsetToPosition(range.start(), TwoDimensional.Bias.Backward);
-		int startParagraph = startPos.getMajor() - 1; // Position uses line numbers. Offset to paragraph index.
-		if (paragraph < startParagraph) return false;
+		try {
+			int length = editor.getTextLength();
+			int start = Math.max(range.start(), length - 1);
+			int end = Math.max(range.end(), length - 1);
 
-		// Check paragraph before end range.
-		TwoDimensional.Position endPos = codeArea.offsetToPosition(range.end(), TwoDimensional.Bias.Forward);
-		int endParagraph = endPos.getMajor() - 1; // Position uses line numbers. Offset to paragraph index.
-		return paragraph <= endParagraph;
+			// Check paragraph beyond start range.
+			TwoDimensional.Position startPos = codeArea.offsetToPosition(start, TwoDimensional.Bias.Backward);
+			int startParagraph = startPos.getMajor() - 1; // Position uses line numbers. Offset to paragraph index.
+			if (paragraph < startParagraph) return false;
+
+			// Check paragraph before end range.
+			TwoDimensional.Position endPos = codeArea.offsetToPosition(end, TwoDimensional.Bias.Forward);
+			int endParagraph = endPos.getMajor() - 1; // Position uses line numbers. Offset to paragraph index.
+			return paragraph <= endParagraph;
+		} catch (Exception ex) {
+			// Some potential edge cases in 'offsetToPosition' we'll want to look out for.
+			logger.error("Failed to map selected bracket range to paragraph for line {}", paragraph + 1, ex);
+			return false;
+		}
 	}
 
 	protected IntRange scanAround(int pos) {
