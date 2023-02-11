@@ -5,7 +5,6 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.Produces;
-import software.coley.recaf.workspace.io.ResourceImporter;
 import software.coley.recaf.workspace.io.WorkspaceExportOptions;
 import software.coley.recaf.workspace.io.WorkspaceExporter;
 import software.coley.recaf.workspace.model.BasicWorkspace;
@@ -21,13 +20,6 @@ import java.util.List;
  * @author Matt Coley
  */
 public interface WorkspaceManager {
-	/**
-	 * @return Tool for creating and importing {@link WorkspaceResource} instances
-	 * from a variety of input content types.
-	 */
-	@Nonnull
-	ResourceImporter getResourceImporter();
-
 	/**
 	 * @param options
 	 * 		Exporting options, includes details on where to export, how to repackage content, etc.

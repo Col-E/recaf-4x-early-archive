@@ -4,10 +4,8 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Produces;
-import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.workspace.io.ResourceImporter;
 import software.coley.recaf.workspace.model.EmptyWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -26,19 +24,7 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 	private final List<WorkspaceOpenListener> openListeners = new ArrayList<>();
 	private final List<WorkspaceCloseListener> closeListeners = new ArrayList<>();
 	private final List<WorkspaceModificationListener> defaultModificationListeners = new ArrayList<>();
-	private final ResourceImporter resourceImporter;
 	private Workspace current;
-
-	@Inject
-	public BasicWorkspaceManager(ResourceImporter resourceImporter) {
-		this.resourceImporter = resourceImporter;
-	}
-
-	@Nonnull
-	@Override
-	public ResourceImporter getResourceImporter() {
-		return resourceImporter;
-	}
 
 	@Override
 	@Produces
