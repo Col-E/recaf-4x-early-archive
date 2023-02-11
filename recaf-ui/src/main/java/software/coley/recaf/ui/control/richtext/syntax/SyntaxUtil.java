@@ -69,7 +69,7 @@ public class SyntaxUtil {
 			IntRange startMarker = new IntRange(changeStart - 1, changeStart);
 			IntRange endMarker = new IntRange(changeEnd - 1, changeEnd);
 			int searchEnd = topLevelSpanRanges.size() - 1;
-			int startIndex = abs(CollectionUtil.binarySearch(topLevelSpanRanges, startMarker, 0, searchEnd));
+			int startIndex = abs(CollectionUtil.binarySearch(topLevelSpanRanges, startMarker));
 			int endIndex = abs(CollectionUtil.binarySearch(topLevelSpanRanges, endMarker, startIndex, searchEnd));
 
 			// Normalize binary search results.
