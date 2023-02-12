@@ -2,10 +2,13 @@ package software.coley.recaf.ui.control.tree;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
 import javafx.scene.control.TreeView;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.services.cell.IconProviderService;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.workspace.WorkspaceCloseListener;
 import software.coley.recaf.workspace.WorkspaceModificationListener;
@@ -25,6 +28,7 @@ import java.util.List;
  *
  * @author Matt Coley
  */
+@Dependent
 public class WorkspaceTree extends TreeView<WorkspaceTreePath> implements
 		WorkspaceModificationListener, WorkspaceCloseListener,
 		ResourceJvmClassListener, ResourceAndroidClassListener, ResourceFileListener {
@@ -33,10 +37,12 @@ public class WorkspaceTree extends TreeView<WorkspaceTreePath> implements
 
 	/**
 	 * Initialize empty tree.
+	 * @param iconService Icon provider for cells.
 	 */
-	public WorkspaceTree() {
+	@Inject
+	public WorkspaceTree(IconProviderService iconService) {
 		setShowRoot(false);
-		setCellFactory(param -> new WorkspaceTreeCell());
+		setCellFactory(param -> new WorkspaceTreeCell(iconService));
 	}
 
 	/**

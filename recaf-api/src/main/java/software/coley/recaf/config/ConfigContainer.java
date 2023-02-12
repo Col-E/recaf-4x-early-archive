@@ -12,6 +12,7 @@ import static software.coley.recaf.config.ConfigGroups.PACKAGE_SPLIT;
  *
  * @author Matt Coley.
  * @see ConfigValue Values within this container.
+ * @see ConfigGroups Values for {@link #getGroup()}.
  */
 public interface ConfigContainer {
 	String CONFIG_SUFFIX = "-config";
