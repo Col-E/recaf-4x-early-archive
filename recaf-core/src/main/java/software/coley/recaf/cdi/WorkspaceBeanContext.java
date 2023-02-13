@@ -11,7 +11,6 @@ import software.coley.recaf.workspace.WorkspaceCloseListener;
 import software.coley.recaf.workspace.WorkspaceOpenListener;
 import software.coley.recaf.workspace.model.Workspace;
 
-
 import java.lang.annotation.Annotation;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -85,13 +84,17 @@ public class WorkspaceBeanContext implements AlterableContext, WorkspaceOpenList
 	public void onWorkspaceOpened(@Nonnull Workspace workspace) {
 		// Clear cached beans if any were created while there was no active workspace
 		map.clear();
+
+		// For eager beans, initialize them.
+		for (Bean<?> bean : EagerInitializationExtension.getWorkspaceScopedEagerBeans())
+			EagerInitializationExtension.create(bean);
 	}
 
 	@Override
 	public void onWorkspaceClosed(@Nonnull Workspace workspace) {
 		for (WorkspaceBean<?> bean : map.values()) {
 			try {
-			 	bean.destroy();
+				bean.destroy();
 			} catch (Throwable t) {
 				logger.error("Failed to update {} bean: {}",
 						WorkspaceScoped.class.getSimpleName(),

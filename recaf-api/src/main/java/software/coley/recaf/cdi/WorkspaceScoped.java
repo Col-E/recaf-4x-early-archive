@@ -9,6 +9,8 @@ import java.lang.annotation.*;
  * Applied to classes that operate in the lifecycle of an active {@link Workspace}.
  * <br>
  * Generally these classes represent independent services and components.
+ *
+ * @author Matt Coley
  */
 @NormalScope
 @Inherited
