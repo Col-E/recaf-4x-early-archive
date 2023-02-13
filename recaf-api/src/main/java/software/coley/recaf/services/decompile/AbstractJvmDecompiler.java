@@ -11,9 +11,12 @@ import java.util.Set;
 /**
  * Basic setup for {@link JvmDecompiler}.
  *
+ * @param <C>
+ * 		Config type.
+ *
  * @author Matt Coley
  */
-public abstract class AbstractJvmDecompiler extends AbstractDecompiler implements JvmDecompiler {
+public abstract class AbstractJvmDecompiler<C extends DecompilerConfig> extends AbstractDecompiler<C> implements JvmDecompiler<C> {
 	private final Set<JvmInputFilter> inputFilters = new HashSet<>();
 
 	/**
@@ -21,21 +24,24 @@ public abstract class AbstractJvmDecompiler extends AbstractDecompiler implement
 	 * 		Decompiler name.
 	 * @param version
 	 * 		Decompiler version.
+	 * @param config
+	 * 		Decompiler configuration.
 	 */
-	public AbstractJvmDecompiler(@Nonnull String name, @Nonnull String version) {
-		super(name, version);
+	public AbstractJvmDecompiler(@Nonnull String name, @Nonnull String version, @Nonnull C config) {
+		super(name, version, config);
 	}
 
 	@Override
-	public void addJvmInputFilter(JvmInputFilter filter) {
+	public void addJvmInputFilter(@Nonnull JvmInputFilter filter) {
 		inputFilters.add(filter);
 	}
 
 	@Override
-	public final DecompileResult decompile(Workspace workspace, JvmClassInfo classInfo) {
-		// Check for cached result, returning it if found.
+	public final DecompileResult decompile(@Nonnull Workspace workspace, @Nonnull JvmClassInfo classInfo) {
+		// Check for cached result, returning the cached result if found
+		// and only if the current config matches the one that yielded the cached result.
 		DecompileResult cachedResult = CachedDecompileProperty.get(classInfo, this);
-		if (cachedResult != null)
+		if (cachedResult != null && cachedResult.getConfigHash() == getConfig().getConfigHash())
 			return cachedResult;
 
 		// Get bytecode and run through filters.
@@ -46,7 +52,7 @@ public abstract class AbstractJvmDecompiler extends AbstractDecompiler implement
 		// Pass to implementation.
 		DecompileResult result = decompile(workspace, classInfo.getName(), bytecode);
 
-		// Cache result
+		// Cache result.
 		CachedDecompileProperty.set(classInfo, this, result);
 		return result;
 	}
@@ -57,7 +63,7 @@ public abstract class AbstractJvmDecompiler extends AbstractDecompiler implement
 		if (o == null || getClass() != o.getClass()) return false;
 		if (!super.equals(o)) return false;
 
-		AbstractJvmDecompiler other = (AbstractJvmDecompiler) o;
+		AbstractJvmDecompiler<?> other = (AbstractJvmDecompiler<?>) o;
 
 		return inputFilters.equals(other.inputFilters);
 	}

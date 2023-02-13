@@ -3,7 +3,6 @@ package software.coley.recaf.info.properties.builtin;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
-import software.coley.recaf.info.Info;
 import software.coley.recaf.info.properties.BasicProperty;
 import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.Decompiler;
@@ -80,7 +79,6 @@ public class CachedDecompileProperty extends BasicProperty<CachedDecompileProper
 	 * Basic cache for decompiler results.
 	 */
 	public static class Cache {
-		// TODO: Should invalidate results if decompiler options have changed.
 		private final Map<String, DecompileResult> implToCode = new HashMap<>();
 
 		/**

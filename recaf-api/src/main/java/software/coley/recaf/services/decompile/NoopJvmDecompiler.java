@@ -1,5 +1,6 @@
 package software.coley.recaf.services.decompile;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.workspace.model.Workspace;
 
 /**
@@ -7,11 +8,11 @@ import software.coley.recaf.workspace.model.Workspace;
  *
  * @author Matt Coley
  */
-public class NoopJvmDecompiler extends AbstractJvmDecompiler {
+public class NoopJvmDecompiler extends AbstractJvmDecompiler<NoopDecompilerConfig> {
 	private static final NoopJvmDecompiler INSTANCE = new NoopJvmDecompiler();
 
 	private NoopJvmDecompiler() {
-		super("no-op-jvm", "1.0.0");
+		super("no-op-jvm", "1.0.0", new NoopDecompilerConfig());
 	}
 
 	/**
@@ -22,7 +23,7 @@ public class NoopJvmDecompiler extends AbstractJvmDecompiler {
 	}
 
 	@Override
-	public DecompileResult decompile(Workspace workspace, String name, byte[] bytecode) {
-		return new DecompileResult(null, null, DecompileResult.ResultType.SKIPPED);
+	public DecompileResult decompile(@Nonnull Workspace workspace, @Nonnull String name, @Nonnull byte[] bytecode) {
+		return new DecompileResult(null, null, DecompileResult.ResultType.SKIPPED, getConfig().getConfigHash());
 	}
 }

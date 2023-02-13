@@ -34,12 +34,12 @@ public class DecompileManagerTest extends TestBase {
 
 	@Test
 	void testCfr() {
-		JvmDecompiler decompiler = decompilerManager.getJvmDecompiler(CfrDecompiler.NAME);
+		JvmDecompiler<?> decompiler = decompilerManager.getJvmDecompiler(CfrDecompiler.NAME);
 		assertNotNull(decompiler, "CFR decompiler was never registered with manager");
 		runJvmDecompilation(decompiler);
 	}
 
-	private static void runJvmDecompilation(JvmDecompiler decompiler) {
+	private static void runJvmDecompilation(JvmDecompiler<?> decompiler) {
 		try {
 			// Run initial decompilation
 			DecompileResult result = decompilerManager.decompile(decompiler, workspace, classToDecompile)
@@ -51,6 +51,12 @@ public class DecompileManagerTest extends TestBase {
 			// Assert that repeated decompiles use the same result (caching, should be handled by abstract base)
 			DecompileResult newResult = decompiler.decompile(workspace, classToDecompile);
 			assertSame(result, newResult, "Decompiler did not cache results");
+
+			// Change the decompiler hash. The decompiler result should change.
+			decompiler.getConfig().setConfigHash(-1);
+			newResult = decompilerManager.decompile(decompiler, workspace, classToDecompile)
+					.get(1, TimeUnit.SECONDS);
+			assertNotSame(result, newResult, "Decompiler used cached result even though config hash changed");
 		} catch (InterruptedException e) {
 			fail("Decompile was interrupted", e);
 		} catch (ExecutionException e) {

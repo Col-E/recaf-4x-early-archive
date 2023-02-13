@@ -2,6 +2,7 @@ package software.coley.recaf.services.decompile;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.recaf.info.properties.builtin.CachedDecompileProperty;
 
 import java.util.Objects;
 
@@ -14,6 +15,7 @@ public class DecompileResult {
 	private final String text;
 	private final Throwable exception;
 	private final ResultType type;
+	private final int configHash;
 
 	/**
 	 * @param text
@@ -22,11 +24,15 @@ public class DecompileResult {
 	 * 		Failure reason.
 	 * @param type
 	 * 		Result type.
+	 * @param configHash
+	 * 		Value of {@link DecompilerConfig#getConfigHash()} of associated decompiler.
+	 * 		Used to determine if cached value in {@link CachedDecompileProperty} is up-to-date with current config.
 	 */
-	public DecompileResult(@Nullable String text, @Nullable Throwable exception, @Nonnull ResultType type) {
+	public DecompileResult(@Nullable String text, @Nullable Throwable exception, @Nonnull ResultType type, int configHash) {
 		this.text = text;
 		this.exception = exception;
 		this.type = type;
+		this.configHash = configHash;
 	}
 
 	/**
@@ -55,16 +61,25 @@ public class DecompileResult {
 		return type;
 	}
 
+	/**
+	 * @return Value of {@link DecompilerConfig#getConfigHash()} of associated decompiler.
+	 * Used to determine if cached value in {@link CachedDecompileProperty} is up-to-date with current config.
+	 */
+	public int getConfigHash() {
+		return configHash;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 
-		DecompileResult other = (DecompileResult) o;
+		DecompileResult that = (DecompileResult) o;
 
-		if (!Objects.equals(text, other.text)) return false;
-		if (!Objects.equals(exception, other.exception)) return false;
-		return type == other.type;
+		if (configHash != that.configHash) return false;
+		if (!Objects.equals(text, that.text)) return false;
+		if (!Objects.equals(exception, that.exception)) return false;
+		return type == that.type;
 	}
 
 	@Override
@@ -72,6 +87,7 @@ public class DecompileResult {
 		int result = text != null ? text.hashCode() : 0;
 		result = 31 * result + (exception != null ? exception.hashCode() : 0);
 		result = 31 * result + type.hashCode();
+		result = 31 * result + configHash;
 		return result;
 	}
 
