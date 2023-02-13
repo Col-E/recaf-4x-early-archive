@@ -3,6 +3,8 @@ package software.coley.recaf.services.inheritance;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.TestBase;
+import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.Inheritance;
 import software.coley.recaf.test.dummy.StringConsumer;
@@ -11,6 +13,7 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -29,7 +32,7 @@ class InheritanceGraphTest extends TestBase {
 		// Create workspace with the inheritance classes
 		BasicJvmClassBundle classes = TestClassUtils.fromClasses(Inheritance.class.getClasses());
 		classes.initialPut(TestClassUtils.fromRuntimeClass(StringConsumer.class));
-		assertEquals(6, classes.size(), "Expecting 6 classes");
+		assertEquals(7, classes.size(), "Expecting 7 classes");
 		workspace = TestClassUtils.fromBundle(classes);
 		workspaceManager.setCurrent(workspace);
 
@@ -101,5 +104,19 @@ class InheritanceGraphTest extends TestBase {
 		commonType = graph.getCommon(appleName, UUID.randomUUID().toString());
 		assertEquals(Types.OBJECT_TYPE.getInternalName(), commonType,
 				"Common type of two unrelated classes should be Object");
+	}
+
+	@Test
+	void getFamilyOfThrowable() {
+		String notFoodExceptionName = Inheritance.NotFoodException.class.getName().replace('.', '/');
+		JvmClassInfo notFoodException = workspace.findJvmClass(notFoodExceptionName).getItem();
+		assertNotNull(notFoodException, "Could not find class 'NotFoodException'");
+
+		// Assert that looking at child types of throwable finds NotFoodException.
+		// Our class extends Exception, which extends Throwable. So there should be a vertex between Throwable and our type.
+		List<ClassInfo> throwableClasses = graph.getVertex("java/lang/Throwable").getAllChildren().stream()
+				.map(InheritanceVertex::getValue)
+				.toList();
+		assertTrue(throwableClasses.contains(notFoodException), "Subtypes of 'Throwable' did not yield 'NotFoodException'");
 	}
 }

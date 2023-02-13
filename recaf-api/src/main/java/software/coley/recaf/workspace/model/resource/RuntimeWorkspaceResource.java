@@ -46,7 +46,7 @@ public class RuntimeWorkspaceResource implements WorkspaceResource {
 		RuntimeWorkspaceResource resource = this;
 		classes = new BasicJvmClassBundle() {
 			@Override
-			public JvmClassInfo get(Object name) {
+			public JvmClassInfo get(@Nonnull Object name) {
 				if (name == null)
 					return null;
 				String key = name.toString();
@@ -77,22 +77,22 @@ public class RuntimeWorkspaceResource implements WorkspaceResource {
 			}
 
 			@Override
-			public void incrementHistory(JvmClassInfo info) {
+			public void incrementHistory(@Nonnull JvmClassInfo info) {
 				// no-op
 			}
 
 			@Override
-			public void decrementHistory(String key) {
+			public void decrementHistory(@Nonnull String key) {
 				// no-op
 			}
 
 			@Override
-			public JvmClassInfo remove(Object key) {
+			public JvmClassInfo remove(@Nonnull Object key) {
 				return get(key);
 			}
 
 			@Override
-			public boolean containsKey(Object key) {
+			public boolean containsKey(@Nonnull Object key) {
 				return get(key) != null;
 			}
 

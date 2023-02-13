@@ -29,7 +29,7 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 	 * @param info
 	 * 		Origin item.
 	 */
-	private void initHistory(I info) {
+	private void initHistory(@Nonnull I info) {
 		Stack<I> itemHistory = new Stack<>();
 		itemHistory.push(info);
 		history.put(info.getName(), itemHistory);
@@ -41,7 +41,7 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 	 * @param info
 	 * 		Item to put.
 	 */
-	public void initialPut(I info) {
+	public void initialPut(@Nonnull I info) {
 		backing.put(info.getName(), info);
 		initHistory(info);
 	}
@@ -55,7 +55,7 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 	 * @return Prior associated value, if any.
 	 */
 	@Override
-	public I put(I info) {
+	public I put(@Nonnull I info) {
 		return put(info.getName(), info);
 	}
 
@@ -71,7 +71,7 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 	}
 
 	@Override
-	public Stack<I> getHistory(String key) {
+	public Stack<I> getHistory(@Nonnull String key) {
 		return history.get(key);
 	}
 
@@ -88,12 +88,12 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 	}
 
 	@Override
-	public boolean hasHistory(String key) {
+	public boolean hasHistory(@Nonnull String key) {
 		return history.get(key) != null;
 	}
 
 	@Override
-	public void incrementHistory(I info) {
+	public void incrementHistory(@Nonnull I info) {
 		String key = info.getName();
 		Stack<I> itemHistory = getHistory(key);
 		if (itemHistory == null) {
@@ -104,7 +104,7 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 	}
 
 	@Override
-	public void decrementHistory(String key) {
+	public void decrementHistory(@Nonnull String key) {
 		Stack<I> itemHistory = getHistory(key);
 		if (itemHistory == null) {
 			throw new IllegalStateException("Failed history decrement, no prior history to read from for: " + key);
@@ -130,12 +130,12 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 	}
 
 	@Override
-	public void addBundleListener(BundleListener<I> listener) {
+	public void addBundleListener(@Nonnull BundleListener<I> listener) {
 		listeners.add(listener);
 	}
 
 	@Override
-	public void removeBundleListener(BundleListener<I> listener) {
+	public void removeBundleListener(@Nonnull BundleListener<I> listener) {
 		listeners.remove(listener);
 	}
 
@@ -155,22 +155,22 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 	}
 
 	@Override
-	public boolean containsKey(Object key) {
+	public boolean containsKey(@Nonnull Object key) {
 		return backing.containsKey(key);
 	}
 
 	@Override
-	public boolean containsValue(Object value) {
+	public boolean containsValue(@Nonnull Object value) {
 		return backing.containsValue(value);
 	}
 
 	@Override
-	public I get(Object key) {
+	public I get(@Nonnull Object key) {
 		return backing.get(key);
 	}
 
 	@Override
-	public I put(String key, I newValue) {
+	public I put(@Nonnull String key, @Nonnull I newValue) {
 		I oldValue = backing.put(key, newValue);
 		// Notify listener
 		for (BundleListener<I> listener : listeners) {
@@ -194,7 +194,7 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 	}
 
 	@Override
-	public I remove(Object key) {
+	public I remove(@Nonnull Object key) {
 		I info = backing.remove(key);
 		if (info != null) {
 			// Notify listener

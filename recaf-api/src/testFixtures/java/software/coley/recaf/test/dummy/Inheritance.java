@@ -19,4 +19,7 @@ public class Inheritance {
 
 	public class Grape implements Edible {
 	}
+
+	public class NotFoodException extends Exception {
+	}
 }

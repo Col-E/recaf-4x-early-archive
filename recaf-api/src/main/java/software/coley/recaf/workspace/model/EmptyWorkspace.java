@@ -43,13 +43,13 @@ public class EmptyWorkspace extends BasicWorkspace {
 	private static class EmptyWorkspaceResource implements WorkspaceResource {
 		private final JvmClassBundle classes = new BasicJvmClassBundle() {
 			@Override
-			public JvmClassInfo get(Object key) {
+			public JvmClassInfo get(@Nonnull Object key) {
 				return null;
 			}
 		};
 		private final FileBundle files = new BasicFileBundle() {
 			@Override
-			public FileInfo put(String key, FileInfo newValue) {
+			public FileInfo put(@Nonnull String key, @Nonnull FileInfo newValue) {
 				return null;
 			}
 		};

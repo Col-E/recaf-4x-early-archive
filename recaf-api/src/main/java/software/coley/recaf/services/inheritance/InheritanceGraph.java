@@ -13,13 +13,13 @@ import software.coley.recaf.util.MultiMap;
 import software.coley.recaf.util.MultiMapBuilder;
 import software.coley.recaf.workspace.WorkspaceCloseListener;
 import software.coley.recaf.workspace.WorkspaceModificationListener;
+import software.coley.recaf.workspace.model.FindResult;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.ResourceAndroidClassListener;
 import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
-import software.coley.recaf.workspace.model.FindResult;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -105,9 +105,29 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 * 		Child class.
 	 */
 	private void populateParentToChildLookup(ClassInfo info) {
-		populateParentToChildLookup(info.getName(), info.getSuperName());
-		for (String itf : info.getInterfaces())
-			populateParentToChildLookup(info.getName(), itf);
+		// Skip if already visited (since we register both ways, we want to check the child here)
+		String name = info.getName();
+		String superName = info.getSuperName();
+		if (parentToChild.containsKey(superName))
+			return;
+
+		// Add direct parent
+		populateParentToChildLookup(name, superName);
+
+		// Visit parent
+		InheritanceVertex superVertex = vertexProvider.apply(superName);
+		if (superVertex != null && !superVertex.isJavaLangObject() && superVertex.getValue() != null)
+			populateParentToChildLookup(superVertex.getValue());
+
+		// Add direct interfaces
+		for (String itf : info.getInterfaces()) {
+			populateParentToChildLookup(name, itf);
+
+			// Visit interfaces
+			InheritanceVertex interfaceVertex = vertexProvider.apply(itf);
+			if (interfaceVertex != null && interfaceVertex.getValue() != null)
+				populateParentToChildLookup(interfaceVertex.getValue());
+		}
 	}
 
 	/**
