@@ -5,9 +5,8 @@ import jakarta.inject.Inject;
 import software.coley.collections.Lists;
 import software.coley.recaf.cdi.AutoRegisterWorkspaceListeners;
 import software.coley.recaf.cdi.WorkspaceScoped;
-import software.coley.recaf.info.AndroidClassInfo;
-import software.coley.recaf.info.ClassInfo;
-import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.*;
+import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.util.MultiMap;
 import software.coley.recaf.util.MultiMapBuilder;
@@ -25,6 +24,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Class inheritance graph utility.
@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 public class InheritanceGraph implements Service, WorkspaceModificationListener, WorkspaceCloseListener,
 		ResourceJvmClassListener, ResourceAndroidClassListener {
 	public static final String SERVICE_ID = "graph-inheritance";
-	private static final InheritanceVertex STUB = new InheritanceVertex(null, null, null, false);
+	private static final InheritanceVertex STUB = new InheritanceStubVertex();
 	private static final String OBJECT = "java/lang/Object";
 	private final MultiMap<String, String, Set<String>> parentToChild = MultiMapBuilder
 			.<String, String>hashKeys()
@@ -344,5 +344,92 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	@Override
 	public InheritanceGraphConfig getServiceConfig() {
 		return config;
+	}
+
+	private static class InheritanceStubVertex extends InheritanceVertex {
+		private InheritanceStubVertex() {
+			super(new StubClass(), in -> null, in -> null, false);
+		}
+
+		@Override
+		public boolean hasField(String name, String desc) {
+			return false;
+		}
+
+		@Override
+		public boolean hasMethod(String name, String desc) {
+			return false;
+		}
+
+		@Override
+		public boolean isJavaLangObject() {
+			return false;
+		}
+
+		@Override
+		public boolean isParentOf(InheritanceVertex vertex) {
+			return false;
+		}
+
+		@Override
+		public boolean isChildOf(InheritanceVertex vertex) {
+			return false;
+		}
+
+		@Override
+		public boolean isIndirectFamilyMember(InheritanceVertex vertex) {
+			return false;
+		}
+
+		@Override
+		public boolean isIndirectFamilyMember(Set<InheritanceVertex> family, InheritanceVertex vertex) {
+			return false;
+		}
+
+		@Override
+		public Set<InheritanceVertex> getFamily(boolean includeObject) {
+			return Collections.emptySet();
+		}
+
+		@Override
+		public Set<InheritanceVertex> getAllParents() {
+			return Collections.emptySet();
+		}
+
+		@Override
+		public Stream<InheritanceVertex> allParents() {
+			return Stream.empty();
+		}
+
+		@Override
+		public Set<InheritanceVertex> getParents() {
+			return Collections.emptySet();
+		}
+
+		@Override
+		public Set<InheritanceVertex> getAllChildren() {
+			return Collections.emptySet();
+		}
+
+		@Override
+		public Set<InheritanceVertex> getChildren() {
+			return Collections.emptySet();
+		}
+
+		@Override
+		public Set<InheritanceVertex> allDirectVertices() {
+			return Collections.emptySet();
+		}
+
+		@Override
+		public String getName() {
+			return "$$STUB$$";
+		}
+	}
+
+	private static class StubClass extends BasicJvmClassInfo {
+		public StubClass() {
+			super(new JvmClassInfoBuilder());
+		}
 	}
 }

@@ -1,5 +1,6 @@
 package software.coley.recaf.services.inheritance;
 
+import jakarta.annotation.Nonnull;
 import software.coley.collections.Sets;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
@@ -39,8 +40,9 @@ public class InheritanceVertex {
 	 * @param isPrimary
 	 * 		Flag for if the class belongs to a workspaces primary resource.
 	 */
-	public InheritanceVertex(ClassInfo value, Function<String, InheritanceVertex> lookup,
-							 Function<String, Collection<String>> childrenLookup, boolean isPrimary) {
+	public InheritanceVertex(@Nonnull ClassInfo value,
+							 @Nonnull Function<String, InheritanceVertex> lookup,
+							 @Nonnull Function<String, Collection<String>> childrenLookup, boolean isPrimary) {
 		this.value = value;
 		this.lookup = lookup;
 		this.childrenLookup = childrenLookup;
