@@ -62,7 +62,6 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 		}
 	}
 
-
 	@Nonnull
 	@Override
 	public List<WorkspaceCloseCondition> getWorkspaceCloseConditions() {

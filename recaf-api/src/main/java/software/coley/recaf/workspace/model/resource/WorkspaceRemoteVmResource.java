@@ -3,6 +3,8 @@ package software.coley.recaf.workspace.model.resource;
 import com.sun.tools.attach.VirtualMachine;
 import jakarta.annotation.Nonnull;
 import software.coley.instrument.data.ClassLoaderInfo;
+import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.properties.builtin.RemoteClassloaderProperty;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
 import java.io.IOException;
@@ -12,6 +14,8 @@ import java.util.Map;
  * A resource sourced from a remote {@link VirtualMachine}.
  *
  * @author Matt Coley
+ * @see RemoteClassloaderProperty Property on {@link JvmClassInfo} instances, indcating which {@link ClassLoaderInfo}
+ * the info is associated with in {@link #getRemoteLoaders()} and {@link #getJvmClassloaderBundles()}.
  */
 public interface WorkspaceRemoteVmResource extends WorkspaceResource {
 	/**

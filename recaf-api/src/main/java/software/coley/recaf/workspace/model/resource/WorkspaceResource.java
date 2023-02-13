@@ -3,12 +3,10 @@ package software.coley.recaf.workspace.model.resource;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.behavior.Closing;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.workspace.model.Workspace;
-import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
-import software.coley.recaf.workspace.model.bundle.Bundle;
-import software.coley.recaf.workspace.model.bundle.FileBundle;
-import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.workspace.model.bundle.*;
 
 import java.util.Map;
 import java.util.NavigableMap;
@@ -142,8 +140,23 @@ public interface WorkspaceResource extends Closing {
 	 * @return Stream of all Android class bundles in the resource, and in any embedded resources.
 	 */
 	default Stream<AndroidClassBundle> androidClassBundleStreamRecursive() {
-		return concat(getAndroidClassBundles().values().stream(), getEmbeddedResources().values().stream()
+		return concat(androidClassBundleStream(), getEmbeddedResources().values().stream()
 				.flatMap(WorkspaceResource::androidClassBundleStreamRecursive));
+	}
+
+	/**
+	 * @return Stream of all immediate class bundles in the resource.
+	 */
+	default Stream<ClassBundle<? extends ClassInfo>> classBundleStream() {
+		return concat(jvmClassBundleStream(), androidClassBundleStream());
+	}
+
+	/**
+	 * @return Stream of all class bundles in the resource, and in any embedded resources.
+	 */
+	default Stream<ClassBundle<? extends ClassInfo>> classBundleStreamRecursive() {
+		return concat(classBundleStream(), getEmbeddedResources().values().stream()
+				.flatMap(WorkspaceResource::classBundleStreamRecursive));
 	}
 
 	/**
