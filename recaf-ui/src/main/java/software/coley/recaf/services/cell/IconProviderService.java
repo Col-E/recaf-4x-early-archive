@@ -219,6 +219,54 @@ public class IconProviderService implements Service {
 	}
 
 	/**
+	 * @return Default icon provider for classes.
+	 */
+	@Nonnull
+	public ClassIconProviderFactory getClassIconDefault() {
+		return classIconDefault;
+	}
+
+	/**
+	 * @return Default icon provider for files.
+	 */
+	@Nonnull
+	public FileIconProviderFactory getFileIconDefault() {
+		return fileIconDefault;
+	}
+
+	/**
+	 * @return Default icon provider for packages.
+	 */
+	@Nonnull
+	public PackageIconProviderFactory getPackageIconDefault() {
+		return packageIconDefault;
+	}
+
+	/**
+	 * @return Default icon provider for directories.
+	 */
+	@Nonnull
+	public DirectoryIconProviderFactory getDirectoryIconDefault() {
+		return directoryIconDefault;
+	}
+
+	/**
+	 * @return Default icon provider for bundles.
+	 */
+	@Nonnull
+	public BundleIconProviderFactory getBundleIconDefault() {
+		return bundleIconDefault;
+	}
+
+	/**
+	 * @return Default icon provider for resources.
+	 */
+	@Nonnull
+	public ResourceIconProviderFactory getResourceIconDefault() {
+		return resourceIconDefault;
+	}
+
+	/**
 	 * @return Override factory for supplying class icon providers.
 	 */
 	@Nullable

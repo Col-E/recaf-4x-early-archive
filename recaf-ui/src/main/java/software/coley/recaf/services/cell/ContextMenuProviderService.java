@@ -220,6 +220,54 @@ public class ContextMenuProviderService implements Service {
 	}
 
 	/**
+	 * @return Default menu provider for classes.
+	 */
+	@Nonnull
+	public ClassContextMenuProviderFactory getClassContextMenuDefault() {
+		return classContextMenuDefault;
+	}
+
+	/**
+	 * @return Default menu provider for files.
+	 */
+	@Nonnull
+	public FileContextMenuProviderFactory getFileContextMenuDefault() {
+		return fileContextMenuDefault;
+	}
+
+	/**
+	 * @return Default menu provider for packages.
+	 */
+	@Nonnull
+	public PackageContextMenuProviderFactory getPackageContextMenuDefault() {
+		return packageContextMenuDefault;
+	}
+
+	/**
+	 * @return Default menu provider for directories.
+	 */
+	@Nonnull
+	public DirectoryContextMenuProviderFactory getDirectoryContextMenuDefault() {
+		return directoryContextMenuDefault;
+	}
+
+	/**
+	 * @return Default menu provider for bundles.
+	 */
+	@Nonnull
+	public BundleContextMenuProviderFactory getBundleContextMenuDefault() {
+		return bundleContextMenuDefault;
+	}
+
+	/**
+	 * @return Default menu provider for resources.
+	 */
+	@Nonnull
+	public ResourceContextMenuProviderFactory getResourceContextMenuDefault() {
+		return resourceContextMenuDefault;
+	}
+
+	/**
 	 * @return Override factory for supplying class menu providers.
 	 */
 	@Nullable
