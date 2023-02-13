@@ -327,7 +327,7 @@ public class BasicAttachManager implements AttachManager {
 				// Load the agent to start it.
 				try {
 					port = SocketAvailability.findAvailable();
-					String agentAbsolutePath = getAgentJarPath().toAbsolutePath().toString();
+					String agentAbsolutePath = StringUtil.pathToAbsoluteString(getAgentJarPath());
 					virtualMachine.loadAgent(agentAbsolutePath, "port=" + port);
 				} catch (AgentLoadException ex) {
 					// The agent jar file is written in Java 8. But Recaf uses Java 11+.

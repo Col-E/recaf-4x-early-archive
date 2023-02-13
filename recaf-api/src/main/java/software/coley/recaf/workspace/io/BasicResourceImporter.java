@@ -598,7 +598,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 	@Override
 	public WorkspaceResource importResource(Path path) throws IOException {
 		// Load name/data from path, parse into resource.
-		String absolutePath = path.toAbsolutePath().toString();
+		String absolutePath = StringUtil.pathToAbsoluteString(path);
 		if (Files.isDirectory(path)) {
 			return handleDirectory(new WorkspaceResourceBuilder(), path);
 		} else {

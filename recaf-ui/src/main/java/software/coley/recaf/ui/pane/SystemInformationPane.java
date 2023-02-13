@@ -17,6 +17,7 @@ import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.SubLabeled;
 import software.coley.recaf.util.DesktopUtil;
+import software.coley.recaf.util.StringUtil;
 
 import javax.tools.ToolProvider;
 import java.nio.file.Path;
@@ -79,7 +80,7 @@ public class SystemInformationPane extends GridPane {
 		addRow(r++, new SubLabeled(getBinding("help.recaf"), getBinding("help.recaf.sub")));
 		addRow(r++, new Label("Version"), new Label(RecafBuildConfig.VERSION));
 		addRow(r++, new Label("Build"), new Label(RecafBuildConfig.GIT_SHA.substring(0, 7) + " " + RecafBuildConfig.GIT_DATE));
-		addRow(r++, new Label("Settings directory"), new Label(baseDir.toAbsolutePath().toString()));
+		addRow(r++, new Label("Settings directory"), new Label(StringUtil.pathToAbsoluteString(baseDir.toAbsolutePath())));
 		add(new Separator(), 0, (SEP_SIZE - 1) + r, 2, SEP_SIZE);
 		r += (SEP_SIZE + 1);
 

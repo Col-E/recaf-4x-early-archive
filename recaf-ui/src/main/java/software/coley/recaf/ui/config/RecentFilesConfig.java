@@ -11,6 +11,7 @@ import software.coley.recaf.config.BasicCollectionConfigValue;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
+import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
@@ -207,7 +208,7 @@ public class RecentFilesConfig extends BasicConfigContainer {
 			if (resource instanceof WorkspaceFileResource fileResource) {
 				return new ResourceModel(fileResource.getFileInfo().getName());
 			} else if (resource instanceof WorkspaceDirectoryResource fileResource) {
-				return new ResourceModel(fileResource.getDirectoryPath().toAbsolutePath().toString());
+				return new ResourceModel(StringUtil.pathToAbsoluteString(fileResource.getDirectoryPath()));
 			}
 			throw new UnsupportedOperationException("Cannot serialize content source of type: " +
 					resource.getClass().getName());

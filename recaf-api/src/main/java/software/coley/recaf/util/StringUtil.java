@@ -14,6 +14,7 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
@@ -160,6 +161,39 @@ public class StringUtil {
 			count++;
 		}
 		return count;
+	}
+
+	/**
+	 * @param path
+	 * 		Some path.
+	 *
+	 * @return String of path.
+	 */
+	public static String pathToString(Path path) {
+		return path.toString();
+	}
+
+	/**
+	 * @param path
+	 * 		Some path.
+	 *
+	 * @return String of file name at path.
+	 */
+	public static String pathToNameString(Path path) {
+		return path.getFileName().toString();
+	}
+
+	/**
+	 * @param path
+	 * 		Some path.
+	 *
+	 * @return String of absolute path.
+	 */
+	public static String pathToAbsoluteString(Path path) {
+		String absolutePath = path.toAbsolutePath().toString();
+		if (absolutePath.indexOf('\\') > 0) // Translate windows-specific path to platform independent path name
+			absolutePath = absolutePath.replace('\\', '/');
+		return absolutePath;
 	}
 
 	/**
