@@ -14,8 +14,8 @@ subprojects {
     apply plugin: 'com.github.ben-manes.versions'
 
     repositories {
-        mavenCentral()
         mavenLocal()
+        mavenCentral()
         google()
         maven { url 'https://jitpack.io' }
         maven { url 'https://maven.quiltmc.org/repository/release/' }
