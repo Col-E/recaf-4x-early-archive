@@ -1,6 +1,6 @@
 # Architecture: Modules
 
-Recaf's backend is split into two modules. The `api` and `core` modules.
+Recaf's backend is split into two modules. The `api` and `core` modules. The JavaFX frontend is located in the `ui` module.
 
 ## API
 
@@ -13,3 +13,7 @@ exist within this module, but almost all of its features are outlined here.
 This portion of Recaf's source is where the _"application"_ logic of Recaf begins to form. Interfaces are given more 
 complex implementations in this module, especially if they depend on specific 3rd party libraries _(As to not bloat
 the dependency tree of the `api` module)_.
+
+## UI
+
+This portion of Recaf's source is JavaFX application that enables interaction with features from `core` and `api`.
