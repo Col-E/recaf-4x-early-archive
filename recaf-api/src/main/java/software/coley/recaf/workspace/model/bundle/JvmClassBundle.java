@@ -8,4 +8,4 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  *
  * @author Matt Coley
  */
-public interface JvmClassBundle extends Bundle<JvmClassInfo> {}
+public interface JvmClassBundle extends ClassBundle<JvmClassInfo> {}

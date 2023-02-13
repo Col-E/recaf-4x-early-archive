@@ -8,6 +8,7 @@ import software.coley.recaf.services.cell.IconProvider;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
+import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 /**
@@ -17,13 +18,18 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 @ApplicationScoped
 public class BasicBundleIconProviderFactory implements BundleIconProviderFactory {
-	private static final IconProvider PROVIDER = Icons.createProvider(Icons.FILE_ZIP);
+	private static final IconProvider CLASS_BUNDLE = Icons.createProvider(Icons.FOLDER_SRC);
+	private static final IconProvider FILE_BUNDLE = Icons.createProvider(Icons.FOLDER_RES);
 
 	@Nonnull
 	@Override
 	public IconProvider getBundleIconProvider(@Nonnull Workspace workspace,
 											  @Nonnull WorkspaceResource resource,
 											  @Nonnull Bundle<? extends Info> bundle) {
-		return PROVIDER;
+		if (bundle instanceof ClassBundle) {
+			return CLASS_BUNDLE;
+		} else {
+			return FILE_BUNDLE;
+		}
 	}
 }

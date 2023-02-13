@@ -8,5 +8,5 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  *
  * @author Matt Coley
  */
-public interface AndroidClassBundle extends Bundle<AndroidClassInfo> {
+public interface AndroidClassBundle extends ClassBundle<AndroidClassInfo> {
 }
