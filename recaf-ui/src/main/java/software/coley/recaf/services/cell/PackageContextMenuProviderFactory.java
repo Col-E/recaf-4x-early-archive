@@ -10,12 +10,12 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 /**
- * Icon provider for packages <i>(paths in {@link JvmClassBundle} and {@link AndroidClassBundle})</i>,
- * to be plugged into {@link IconProviderService} to allow for third party icon customization.
+ * Context menu provider for packages <i>(paths in {@link JvmClassBundle} and {@link AndroidClassBundle})</i>,
+ * to be plugged into {@link ContextMenuProviderService} to allow for third party menu customization.
  *
  * @author Matt Coley
  */
-public interface PackageIconProviderFactory extends IconProviderFactory {
+public interface PackageContextMenuProviderFactory extends ContextMenuProviderFactory {
 	/**
 	 * @param workspace
 	 * 		Containing workspace.
@@ -26,13 +26,13 @@ public interface PackageIconProviderFactory extends IconProviderFactory {
 	 * @param packageName
 	 * 		The full package name, separated by {@code /}.
 	 *
-	 * @return Icon provider for the package.
+	 * @return Menu provider for the package.
 	 */
 	@Nonnull
-	default IconProvider getPackageIconProvider(@Nonnull Workspace workspace,
-												@Nonnull WorkspaceResource resource,
-												@Nonnull ClassBundle<? extends ClassInfo> bundle,
-												@Nonnull String packageName) {
+	default ContextMenuProvider getPackageContextMenuProvider(@Nonnull Workspace workspace,
+															  @Nonnull WorkspaceResource resource,
+															  @Nonnull ClassBundle<? extends ClassInfo> bundle,
+															  @Nonnull String packageName) {
 		return emptyProvider();
 	}
 }

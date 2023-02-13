@@ -8,6 +8,7 @@ import software.coley.recaf.services.cell.PackageIconProviderFactory;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
+import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 /**
@@ -23,7 +24,7 @@ public class BasicPackageIconProviderFactory implements PackageIconProviderFacto
 	@Override
 	public IconProvider getPackageIconProvider(@Nonnull Workspace workspace,
 											   @Nonnull WorkspaceResource resource,
-											   @Nonnull Bundle<? extends ClassInfo> bundle,
+											   @Nonnull ClassBundle<? extends ClassInfo> bundle,
 											   @Nonnull String packageName) {
 		return PROVIDER;
 	}

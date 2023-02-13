@@ -8,6 +8,7 @@ import javafx.scene.control.TreeView;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.services.cell.ContextMenuProviderService;
 import software.coley.recaf.services.cell.IconProviderService;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.workspace.WorkspaceCloseListener;
@@ -38,11 +39,13 @@ public class WorkspaceTree extends TreeView<WorkspaceTreePath> implements
 	/**
 	 * Initialize empty tree.
 	 * @param iconService Icon provider for cells.
+	 * @param contextService Context menu service.
 	 */
 	@Inject
-	public WorkspaceTree(IconProviderService iconService) {
+	public WorkspaceTree(@Nonnull IconProviderService iconService,
+						 @Nonnull ContextMenuProviderService contextService) {
 		setShowRoot(false);
-		setCellFactory(param -> new WorkspaceTreeCell(iconService));
+		setCellFactory(param -> new WorkspaceTreeCell(iconService, contextService));
 	}
 
 	/**

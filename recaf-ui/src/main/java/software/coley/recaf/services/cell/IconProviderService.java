@@ -8,10 +8,7 @@ import software.coley.recaf.info.*;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
 import software.coley.recaf.workspace.model.Workspace;
-import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
-import software.coley.recaf.workspace.model.bundle.Bundle;
-import software.coley.recaf.workspace.model.bundle.FileBundle;
-import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.workspace.model.bundle.*;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 /**
@@ -178,7 +175,7 @@ public class IconProviderService implements Service {
 	@Nonnull
 	public IconProvider getPackageIconProvider(@Nonnull Workspace workspace,
 											   @Nonnull WorkspaceResource resource,
-											   @Nonnull Bundle<? extends ClassInfo> bundle,
+											   @Nonnull ClassBundle<? extends ClassInfo> bundle,
 											   @Nonnull String packageName) {
 		PackageIconProviderFactory factory = packageIconOverride != null ? packageIconOverride : packageIconDefault;
 		return factory.getPackageIconProvider(workspace, resource, bundle, packageName);
