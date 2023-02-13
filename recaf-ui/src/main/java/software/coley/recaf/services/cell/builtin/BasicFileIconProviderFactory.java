@@ -27,6 +27,8 @@ public class BasicFileIconProviderFactory implements FileIconProviderFactory {
 	private static final IconProvider IMAGE = Icons.createProvider(Icons.FILE_IMAGE);
 	private static final IconProvider EXECUTABLE = Icons.createProvider(Icons.FILE_PROGRAM);
 	private static final IconProvider ZIP = Icons.createProvider(Icons.FILE_ZIP);
+	private static final IconProvider JAR = Icons.createProvider(Icons.FILE_JAR);
+	private static final IconProvider ANDROID = Icons.createProvider(Icons.ANDROID);
 	private static final IconProvider UNKNOWN = Icons.createProvider(Icons.FILE_BINARY);
 
 	@Nonnull
@@ -38,9 +40,15 @@ public class BasicFileIconProviderFactory implements FileIconProviderFactory {
 		// Built-in info match
 		if (info.isTextFile()) {
 			String name = info.getName();
-			String ext = name.substring(name.lastIndexOf('.') + 1);
+			String ext = name.substring(name.lastIndexOf('.') + 1).toLowerCase();
 			return (CODE_EXTENSIONS.contains(ext)) ? TEXT_CODE : TEXT;
 		} else if (info.isZipFile()) {
+			String name = info.getName();
+			String ext = name.substring(name.lastIndexOf('.') + 1).toLowerCase();
+			if (ext.equals("jar") || ext.equals("jmod") || ext.equals("war"))
+				return JAR;
+			if (ext.equals("apk"))
+				return ANDROID;
 			return ZIP;
 		}
 
@@ -48,10 +56,14 @@ public class BasicFileIconProviderFactory implements FileIconProviderFactory {
 		byte[] content = info.getRawContent();
 		if (ByteHeaderUtil.matchAny(content, ByteHeaderUtil.IMAGE_HEADERS))
 			return IMAGE;
+		if (ByteHeaderUtil.match(content, ByteHeaderUtil.CLASS))
+			return JAR;
 		if (ByteHeaderUtil.matchAny(content, ByteHeaderUtil.PROGRAM_HEADERS))
 			return EXECUTABLE;
 		if (ByteHeaderUtil.matchAny(content, ByteHeaderUtil.AUDIO_HEADERS))
 			return AUDIO;
+		if (ByteHeaderUtil.match(content, ByteHeaderUtil.DEX))
+			return ANDROID;
 
 		// No obvious association
 		return UNKNOWN;
