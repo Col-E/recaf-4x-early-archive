@@ -7,12 +7,9 @@ import software.coley.recaf.workspace.model.Workspace;
 /**
  * Outline for decompilers targeting {@link JvmClassInfo}.
  *
- * @param <C>
- * 		Config type.
- *
  * @author Matt Coley
  */
-public interface JvmDecompiler<C extends DecompilerConfig> extends Decompiler<C> {
+public interface JvmDecompiler extends Decompiler {
 	/**
 	 * @param filter
 	 * 		Filter to add.

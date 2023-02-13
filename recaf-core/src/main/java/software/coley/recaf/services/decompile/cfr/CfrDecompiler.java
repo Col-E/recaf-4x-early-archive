@@ -8,6 +8,7 @@ import org.benf.cfr.reader.util.CfrVersionInfo;
 import org.benf.cfr.reader.util.DecompilerComment;
 import software.coley.recaf.services.decompile.AbstractJvmDecompiler;
 import software.coley.recaf.services.decompile.DecompileResult;
+import software.coley.recaf.services.decompile.DecompilerConfig;
 import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -20,7 +21,7 @@ import java.util.Collections;
  * @author Matt Coley
  */
 @ApplicationScoped
-public class CfrDecompiler extends AbstractJvmDecompiler<CfrConfig> {
+public class CfrDecompiler extends AbstractJvmDecompiler {
 	public static final String NAME = "CFR";
 	private final CfrConfig config;
 
@@ -37,7 +38,7 @@ public class CfrDecompiler extends AbstractJvmDecompiler<CfrConfig> {
 	}
 
 	@Override
-	public DecompileResult decompile(@Nonnull Workspace workspace, @Nonnull String name, @Nonnull  byte[] bytecode) {
+	public DecompileResult decompile(@Nonnull Workspace workspace, @Nonnull String name, @Nonnull byte[] bytecode) {
 		ClassSource source = new ClassSource(workspace, name, bytecode);
 		SinkFactoryImpl sink = new SinkFactoryImpl();
 		CfrDriver driver = new CfrDriver.Builder()
@@ -51,6 +52,11 @@ public class CfrDecompiler extends AbstractJvmDecompiler<CfrConfig> {
 		if (decompile == null)
 			return new DecompileResult(null, sink.getException(), DecompileResult.ResultType.FAILURE, configHash);
 		return new DecompileResult(decompile, null, DecompileResult.ResultType.SUCCESS, configHash);
+	}
+
+	@Override
+	public CfrConfig getConfig() {
+		return (CfrConfig) super.getConfig();
 	}
 
 	static {

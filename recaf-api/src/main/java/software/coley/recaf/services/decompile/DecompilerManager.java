@@ -30,11 +30,11 @@ public class DecompilerManager implements Service {
 	private static final NoopJvmDecompiler NO_OP_JVM = NoopJvmDecompiler.getInstance();
 	private static final NoopAndroidDecompiler NO_OP_ANDROID = NoopAndroidDecompiler.getInstance();
 	private final ExecutorService decompileThreadPool = ThreadPoolFactory.newFixedThreadPool(SERVICE_ID);
-	private final Map<String, JvmDecompiler<?>> jvmDecompilers = new TreeMap<>();
-	private final Map<String, AndroidDecompiler<?>> androidDecompilers = new TreeMap<>();
+	private final Map<String, JvmDecompiler> jvmDecompilers = new TreeMap<>();
+	private final Map<String, AndroidDecompiler> androidDecompilers = new TreeMap<>();
 	private final DecompilerManagerConfig config;
-	private final ObservableObject<JvmDecompiler<?>> targetJvmDecompiler;
-	private final ObservableObject<AndroidDecompiler<?>> targetAndroidDecompiler;
+	private final ObservableObject<JvmDecompiler> targetJvmDecompiler;
+	private final ObservableObject<AndroidDecompiler> targetAndroidDecompiler;
 
 	/**
 	 * @param config
@@ -44,14 +44,14 @@ public class DecompilerManager implements Service {
 	 */
 	@Inject
 	public DecompilerManager(@Nonnull DecompilerManagerConfig config,
-							 @Nonnull Instance<Decompiler<?>> implementations) {
+							 @Nonnull Instance<Decompiler> implementations) {
 		this.config = config;
 
 		// Register implementations
-		for (Decompiler<?> implementation : implementations) {
-			if (implementation instanceof JvmDecompiler<?> jvmDecompiler) {
+		for (Decompiler implementation : implementations) {
+			if (implementation instanceof JvmDecompiler jvmDecompiler) {
 				register(jvmDecompiler);
-			} else if (implementation instanceof AndroidDecompiler<?> androidDecompiler) {
+			} else if (implementation instanceof AndroidDecompiler androidDecompiler) {
 				register(androidDecompiler);
 			}
 		}
@@ -67,12 +67,12 @@ public class DecompilerManager implements Service {
 
 		// Select first item if no value is present
 		if (preferredJvmDecompiler.getValue() == null) {
-			JvmDecompiler<?> decompiler = jvmDecompilers.isEmpty() ?
+			JvmDecompiler decompiler = jvmDecompilers.isEmpty() ?
 					NO_OP_JVM : jvmDecompilers.values().iterator().next();
 			preferredJvmDecompiler.setValue(decompiler.getName());
 		}
 		if (preferredAndroidDecompiler.getValue() == null) {
-			AndroidDecompiler<?> decompiler = androidDecompilers.isEmpty() ?
+			AndroidDecompiler decompiler = androidDecompilers.isEmpty() ?
 					NO_OP_ANDROID : androidDecompilers.values().iterator().next();
 			preferredAndroidDecompiler.setValue(decompiler.getName());
 		}
@@ -104,7 +104,7 @@ public class DecompilerManager implements Service {
 	 *
 	 * @return Future of decompilation result.
 	 */
-	public CompletableFuture<DecompileResult> decompile(JvmDecompiler<?> decompiler, Workspace workspace, JvmClassInfo classInfo) {
+	public CompletableFuture<DecompileResult> decompile(JvmDecompiler decompiler, Workspace workspace, JvmClassInfo classInfo) {
 		return CompletableFuture.supplyAsync(() -> decompiler.decompile(workspace, classInfo), decompileThreadPool);
 	}
 
@@ -134,21 +134,21 @@ public class DecompilerManager implements Service {
 	 *
 	 * @return Future of decompilation result.
 	 */
-	public CompletableFuture<DecompileResult> decompile(AndroidDecompiler<?> decompiler, Workspace workspace, AndroidClassInfo classInfo) {
+	public CompletableFuture<DecompileResult> decompile(AndroidDecompiler decompiler, Workspace workspace, AndroidClassInfo classInfo) {
 		return CompletableFuture.supplyAsync(() -> decompiler.decompile(workspace, classInfo), decompileThreadPool);
 	}
 
 	/**
 	 * @return Preferred JVM decompiler.
 	 */
-	public JvmDecompiler<?> getTargetJvmDecompiler() {
+	public JvmDecompiler getTargetJvmDecompiler() {
 		return targetJvmDecompiler.getValue();
 	}
 
 	/**
 	 * @return Preferred Android decompiler.
 	 */
-	public AndroidDecompiler<?> getTargetAndroidDecompiler() {
+	public AndroidDecompiler getTargetAndroidDecompiler() {
 		return targetAndroidDecompiler.getValue();
 	}
 
@@ -156,7 +156,7 @@ public class DecompilerManager implements Service {
 	 * @param decompiler
 	 * 		JVM decompiler to add.
 	 */
-	public void register(JvmDecompiler<?> decompiler) {
+	public void register(JvmDecompiler decompiler) {
 		jvmDecompilers.put(decompiler.getName(), decompiler);
 	}
 
@@ -164,7 +164,7 @@ public class DecompilerManager implements Service {
 	 * @param decompiler
 	 * 		Android decompiler to add.
 	 */
-	public void register(AndroidDecompiler<?> decompiler) {
+	public void register(AndroidDecompiler decompiler) {
 		androidDecompilers.put(decompiler.getName(), decompiler);
 	}
 
@@ -175,7 +175,7 @@ public class DecompilerManager implements Service {
 	 * @return Decompiler instance, or {@code null} if nothing by the ID was found.
 	 */
 	@Nullable
-	public JvmDecompiler<?> getJvmDecompiler(String name) {
+	public JvmDecompiler getJvmDecompiler(String name) {
 		return jvmDecompilers.get(name);
 	}
 
@@ -186,21 +186,21 @@ public class DecompilerManager implements Service {
 	 * @return Decompiler instance, or {@code null} if nothing by the ID was found.
 	 */
 	@Nullable
-	public AndroidDecompiler<?> getAndroidDecompiler(String name) {
+	public AndroidDecompiler getAndroidDecompiler(String name) {
 		return androidDecompilers.get(name);
 	}
 
 	/**
 	 * @return Available JVM class decompilers.
 	 */
-	public Collection<JvmDecompiler<?>> getJvmDecompilers() {
+	public Collection<JvmDecompiler> getJvmDecompilers() {
 		return jvmDecompilers.values();
 	}
 
 	/**
 	 * @return Available android class decompilers.
 	 */
-	public Collection<AndroidDecompiler<?>> getAndroidDecompilers() {
+	public Collection<AndroidDecompiler> getAndroidDecompilers() {
 		return androidDecompilers.values();
 	}
 

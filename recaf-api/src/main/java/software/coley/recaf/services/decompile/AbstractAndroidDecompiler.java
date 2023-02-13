@@ -5,12 +5,9 @@ import jakarta.annotation.Nonnull;
 /**
  * Basic setup for {@link AndroidDecompiler}.
  *
- * @param <C>
- * 		Config type.
- *
  * @author Matt Coley
  */
-public abstract class AbstractAndroidDecompiler<C extends DecompilerConfig> extends AbstractDecompiler<C> implements AndroidDecompiler<C> {
+public abstract class AbstractAndroidDecompiler extends AbstractDecompiler implements AndroidDecompiler {
 	/**
 	 * @param name
 	 * 		Decompiler name.
@@ -19,7 +16,7 @@ public abstract class AbstractAndroidDecompiler<C extends DecompilerConfig> exte
 	 * @param config
 	 * 		Decompiler configuration.
 	 */
-	public AbstractAndroidDecompiler(@Nonnull String name, @Nonnull String version, @Nonnull C config) {
+	public AbstractAndroidDecompiler(@Nonnull String name, @Nonnull String version, @Nonnull DecompilerConfig config) {
 		super(name, version, config);
 	}
 }

@@ -11,12 +11,9 @@ import java.util.Set;
 /**
  * Basic setup for {@link JvmDecompiler}.
  *
- * @param <C>
- * 		Config type.
- *
  * @author Matt Coley
  */
-public abstract class AbstractJvmDecompiler<C extends DecompilerConfig> extends AbstractDecompiler<C> implements JvmDecompiler<C> {
+public abstract class AbstractJvmDecompiler extends AbstractDecompiler implements JvmDecompiler {
 	private final Set<JvmInputFilter> inputFilters = new HashSet<>();
 
 	/**
@@ -27,7 +24,7 @@ public abstract class AbstractJvmDecompiler<C extends DecompilerConfig> extends 
 	 * @param config
 	 * 		Decompiler configuration.
 	 */
-	public AbstractJvmDecompiler(@Nonnull String name, @Nonnull String version, @Nonnull C config) {
+	public AbstractJvmDecompiler(@Nonnull String name, @Nonnull String version, @Nonnull DecompilerConfig config) {
 		super(name, version, config);
 	}
 
@@ -63,7 +60,7 @@ public abstract class AbstractJvmDecompiler<C extends DecompilerConfig> extends 
 		if (o == null || getClass() != o.getClass()) return false;
 		if (!super.equals(o)) return false;
 
-		AbstractJvmDecompiler<?> other = (AbstractJvmDecompiler<?>) o;
+		AbstractJvmDecompiler other = (AbstractJvmDecompiler) o;
 
 		return inputFilters.equals(other.inputFilters);
 	}

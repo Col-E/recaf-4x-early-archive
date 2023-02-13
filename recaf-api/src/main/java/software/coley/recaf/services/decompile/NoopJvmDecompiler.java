@@ -8,7 +8,7 @@ import software.coley.recaf.workspace.model.Workspace;
  *
  * @author Matt Coley
  */
-public class NoopJvmDecompiler extends AbstractJvmDecompiler<NoopDecompilerConfig> {
+public class NoopJvmDecompiler extends AbstractJvmDecompiler {
 	private static final NoopJvmDecompiler INSTANCE = new NoopJvmDecompiler();
 
 	private NoopJvmDecompiler() {

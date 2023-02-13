@@ -5,15 +5,12 @@ import jakarta.annotation.Nonnull;
 /**
  * Base for {@link Decompiler}.
  *
- * @param <C>
- * 		Config type.
- *
  * @author Matt Coley
  */
-public class AbstractDecompiler<C extends DecompilerConfig> implements Decompiler<C> {
+public class AbstractDecompiler implements Decompiler {
 	private final String name;
 	private final String version;
-	private final C config;
+	private final DecompilerConfig config;
 
 	/**
 	 * @param name
@@ -23,7 +20,7 @@ public class AbstractDecompiler<C extends DecompilerConfig> implements Decompile
 	 * @param config
 	 * 		Decompiler configuration.
 	 */
-	public AbstractDecompiler(@Nonnull String name, @Nonnull String version, @Nonnull C config) {
+	public AbstractDecompiler(@Nonnull String name, @Nonnull String version, @Nonnull DecompilerConfig config) {
 		this.name = name;
 		this.version = version;
 		this.config = config;
@@ -40,7 +37,7 @@ public class AbstractDecompiler<C extends DecompilerConfig> implements Decompile
 	}
 
 	@Override
-	public C getConfig() {
+	public DecompilerConfig getConfig() {
 		return config;
 	}
 
@@ -49,7 +46,7 @@ public class AbstractDecompiler<C extends DecompilerConfig> implements Decompile
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 
-		AbstractDecompiler<?> that = (AbstractDecompiler<?>) o;
+		AbstractDecompiler that = (AbstractDecompiler) o;
 
 		if (!name.equals(that.name)) return false;
 		if (!version.equals(that.version)) return false;

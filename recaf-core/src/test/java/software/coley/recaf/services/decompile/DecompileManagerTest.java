@@ -34,12 +34,12 @@ public class DecompileManagerTest extends TestBase {
 
 	@Test
 	void testCfr() {
-		JvmDecompiler<?> decompiler = decompilerManager.getJvmDecompiler(CfrDecompiler.NAME);
+		JvmDecompiler decompiler = decompilerManager.getJvmDecompiler(CfrDecompiler.NAME);
 		assertNotNull(decompiler, "CFR decompiler was never registered with manager");
 		runJvmDecompilation(decompiler);
 	}
 
-	private static void runJvmDecompilation(JvmDecompiler<?> decompiler) {
+	private static void runJvmDecompilation(JvmDecompiler decompiler) {
 		try {
 			// Run initial decompilation
 			DecompileResult result = decompilerManager.decompile(decompiler, workspace, classToDecompile)
