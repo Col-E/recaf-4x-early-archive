@@ -7,10 +7,7 @@ import javafx.scene.control.ContextMenu;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
-import software.coley.recaf.services.cell.ClassContextMenuProviderFactory;
-import software.coley.recaf.services.cell.ContextMenuProvider;
-import software.coley.recaf.services.cell.IconProvider;
-import software.coley.recaf.services.cell.IconProviderService;
+import software.coley.recaf.services.cell.*;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
@@ -24,10 +21,13 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 @ApplicationScoped
 public class BasicClassContextMenuProviderFactory implements ClassContextMenuProviderFactory {
+	private final TextProviderService textService;
 	private final IconProviderService iconService;
 
 	@Inject
-	public BasicClassContextMenuProviderFactory(@Nonnull IconProviderService iconService) {
+	public BasicClassContextMenuProviderFactory(@Nonnull TextProviderService textService,
+												@Nonnull IconProviderService iconService) {
+		this.textService = textService;
 		this.iconService = iconService;
 	}
 
@@ -73,19 +73,23 @@ public class BasicClassContextMenuProviderFactory implements ClassContextMenuPro
 									 @Nonnull WorkspaceResource resource,
 									 @Nonnull ClassBundle<? extends ClassInfo> bundle,
 									 @Nonnull ClassInfo info) {
-		String name = info.getName().substring(info.getName().lastIndexOf('/') + 1); // TODO: escape name (configurable service)
+		TextProvider nameProvider;
 		IconProvider iconProvider;
 		if (info.isJvmClass()) {
+			nameProvider = textService.getJvmClassInfoTextProvider(workspace, resource,
+					(JvmClassBundle) bundle, info.asJvmClass());
 			iconProvider = iconService.getJvmClassInfoIconProvider(workspace, resource,
 					(JvmClassBundle) bundle, info.asJvmClass());
 		} else if (info.isAndroidClass()) {
+			nameProvider = textService.getAndroidClassInfoTextProvider(workspace, resource,
+					(AndroidClassBundle) bundle, info.asAndroidClass());
 			iconProvider = iconService.getAndroidClassInfoIconProvider(workspace, resource,
 					(AndroidClassBundle) bundle, info.asAndroidClass());
 		} else {
 			throw new IllegalStateException("Unknown class type: " + info.getClass().getName());
 		}
 		ContextMenu menu = new ContextMenu();
-		addHeader(menu, name, iconProvider.makeIcon());
+		addHeader(menu, nameProvider.makeText(), iconProvider.makeIcon());
 		return menu;
 	}
 

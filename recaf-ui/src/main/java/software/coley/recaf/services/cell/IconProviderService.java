@@ -136,29 +136,6 @@ public class IconProviderService implements Service {
 	}
 
 	/**
-	 * Delegates to {@link DirectoryIconProviderFactory}.
-	 *
-	 * @param workspace
-	 * 		Containing workspace.
-	 * @param resource
-	 * 		Containing resource.
-	 * @param bundle
-	 * 		Containing bundle.
-	 * @param directoryName
-	 * 		The full path of the directory.
-	 *
-	 * @return Icon provider for the directory.
-	 */
-	@Nonnull
-	public IconProvider getDirectoryIconProvider(@Nonnull Workspace workspace,
-												 @Nonnull WorkspaceResource resource,
-												 @Nonnull FileBundle bundle,
-												 @Nonnull String directoryName) {
-		DirectoryIconProviderFactory factory = directoryIconOverride != null ? directoryIconOverride : directoryIconDefault;
-		return factory.getDirectoryIconProvider(workspace, resource, bundle, directoryName);
-	}
-
-	/**
 	 * Delegates to {@link PackageIconProviderFactory}.
 	 *
 	 * @param workspace
@@ -179,6 +156,29 @@ public class IconProviderService implements Service {
 											   @Nonnull String packageName) {
 		PackageIconProviderFactory factory = packageIconOverride != null ? packageIconOverride : packageIconDefault;
 		return factory.getPackageIconProvider(workspace, resource, bundle, packageName);
+	}
+
+	/**
+	 * Delegates to {@link DirectoryIconProviderFactory}.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param directoryName
+	 * 		The full path of the directory.
+	 *
+	 * @return Icon provider for the directory.
+	 */
+	@Nonnull
+	public IconProvider getDirectoryIconProvider(@Nonnull Workspace workspace,
+												 @Nonnull WorkspaceResource resource,
+												 @Nonnull FileBundle bundle,
+												 @Nonnull String directoryName) {
+		DirectoryIconProviderFactory factory = directoryIconOverride != null ? directoryIconOverride : directoryIconDefault;
+		return factory.getDirectoryIconProvider(workspace, resource, bundle, directoryName);
 	}
 
 	/**

@@ -1,5 +1,6 @@
 package software.coley.recaf.services.cell;
 
+import jakarta.annotation.Nullable;
 import javafx.scene.control.ContextMenu;
 
 /**
@@ -9,7 +10,8 @@ import javafx.scene.control.ContextMenu;
  */
 public interface ContextMenuProvider {
 	/**
-	 * @return Provided menu.
+	 * @return Provided menu. May be {@code null}.
 	 */
+	@Nullable
 	ContextMenu makeMenu();
 }

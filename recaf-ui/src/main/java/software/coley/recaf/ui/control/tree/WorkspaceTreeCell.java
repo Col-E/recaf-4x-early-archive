@@ -9,13 +9,9 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.services.cell.ContextMenuProviderService;
 import software.coley.recaf.services.cell.IconProviderService;
-import software.coley.recaf.util.Lang;
-import software.coley.recaf.util.StringUtil;
+import software.coley.recaf.services.cell.TextProviderService;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.*;
-import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
-import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
-import software.coley.recaf.workspace.model.resource.WorkspaceRemoteVmResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 /**
@@ -24,17 +20,22 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  * @author Matt Coley
  */
 public class WorkspaceTreeCell extends TreeCell<WorkspaceTreePath> {
+	private final TextProviderService textService;
 	private final IconProviderService iconService;
 	private final ContextMenuProviderService contextMenuService;
 
 	/**
+	 * @param textService
+	 * 		Service to provide text.
 	 * @param iconService
 	 * 		Service to provide icons.
 	 * @param contextMenuService
 	 * 		Service to provide context menus.
 	 */
-	public WorkspaceTreeCell(@Nonnull IconProviderService iconService,
+	public WorkspaceTreeCell(@Nonnull TextProviderService textService,
+							 @Nonnull IconProviderService iconService,
 							 @Nonnull ContextMenuProviderService contextMenuService) {
+		this.textService = textService;
 		this.iconService = iconService;
 		this.contextMenuService = contextMenuService;
 	}
@@ -65,33 +66,46 @@ public class WorkspaceTreeCell extends TreeCell<WorkspaceTreePath> {
 		}
 	}
 
+	/**
+	 * @param item
+	 * 		Item to create text for.
+	 *
+	 * @return Text for the item represented by the path.
+	 */
 	@SuppressWarnings("all") // for the NPE, doesn't understand 'hasX' contracts.
-	public static String textOf(@Nonnull WorkspaceTreePath item) {
+	private String textOf(@Nonnull WorkspaceTreePath item) {
+		Workspace workspace = item.workspace();
+		WorkspaceResource resource = item.resource();
+		Bundle<? extends Info> bundle = item.bundle();
 		if (item.hasInfo()) {
-			String name = item.info().getName();
-			return name.substring(name.lastIndexOf('/') + 1); // TODO: escape name (configurable service)
-		} else if (item.hasLocalPath()) {
-			String path = item.localPath();
-			return path.substring(path.lastIndexOf('/') + 1); // TODO: escape name (configurable service)
-		} else if (item.hasBundle()) {
-			Bundle<? extends Info> bundle = item.bundle();
-			if (bundle instanceof ClassBundle)
-				return Lang.get("tree.classes");
-			else
-				return Lang.get("tree.files");
-		} else {
-			WorkspaceResource resource = item.resource();
-			if (resource instanceof WorkspaceFileResource fileResource) {
-				String name = fileResource.getFileInfo().getName();
-				return name.substring(name.lastIndexOf('/') + 1);
-			} else if (resource instanceof WorkspaceDirectoryResource directoryResource) {
-				return StringUtil.pathToNameString(directoryResource.getDirectoryPath());
-			} else if (resource instanceof WorkspaceRemoteVmResource remoteVmResource) {
-				return remoteVmResource.getVirtualMachine().id();
+			Info info = item.info();
+			if (info.isFile()) {
+				return textService.getFileInfoTextProvider(workspace, resource,
+						(FileBundle) bundle, info.asFile()).makeText();
+			} else if (info.isClass()) {
+				ClassInfo classInfo = info.asClass();
+				if (classInfo.isAndroidClass()) {
+					return textService.getAndroidClassInfoTextProvider(workspace, resource,
+							(AndroidClassBundle) bundle, classInfo.asAndroidClass()).makeText();
+				} else {
+					return textService.getJvmClassInfoTextProvider(workspace, resource,
+							(JvmClassBundle) bundle, classInfo.asJvmClass()).makeText();
+				}
 			}
-
-			return resource.getClass().getSimpleName();
+		} else if (item.hasLocalPath()) {
+			if (bundle instanceof FileBundle fileBundle) {
+				return textService.getDirectoryTextProvider(workspace, resource, fileBundle, item.localPath()).makeText();
+			} else if (bundle instanceof ClassBundle<? extends ClassInfo> classBundle) {
+				return textService.getPackageTextProvider(workspace, resource, classBundle, item.localPath()).makeText();
+			}
+		} else if (item.hasBundle()) {
+			return textService.getBundleTextProvider(workspace, resource, bundle).makeText();
+		} else {
+			return textService.getResourceTextProvider(workspace, resource).makeText();
 		}
+
+		// No text
+		return null;
 	}
 
 	/**
@@ -100,7 +114,7 @@ public class WorkspaceTreeCell extends TreeCell<WorkspaceTreePath> {
 	 *
 	 * @return Icon for the item represented by the path.
 	 */
-	@SuppressWarnings("all")
+	@SuppressWarnings("all") // for the NPE, doesn't understand 'hasX' contracts.
 	private Node graphicOf(@Nonnull WorkspaceTreePath item) {
 		Workspace workspace = item.workspace();
 		WorkspaceResource resource = item.resource();
@@ -142,7 +156,7 @@ public class WorkspaceTreeCell extends TreeCell<WorkspaceTreePath> {
 	 *
 	 * @return Context-menu for the item represented by the path.
 	 */
-	@SuppressWarnings("all")
+	@SuppressWarnings("all") // for the NPE, doesn't understand 'hasX' contracts.
 	private ContextMenu contextMenuOf(@Nonnull WorkspaceTreePath item) {
 		Workspace workspace = item.workspace();
 		WorkspaceResource resource = item.resource();

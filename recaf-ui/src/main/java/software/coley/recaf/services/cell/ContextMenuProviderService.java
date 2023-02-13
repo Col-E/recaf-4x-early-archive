@@ -64,6 +64,11 @@ public class ContextMenuProviderService implements Service {
 		this.directoryContextMenuDefault = directoryContextMenuDefault;
 		this.bundleContextMenuDefault = bundleContextMenuDefault;
 		this.resourceContextMenuDefault = resourceContextMenuDefault;
+
+		// TODO: Factories for (here and in other services)
+		//  - inner classes of ClassInfo
+		//  - fields of ClassInfo
+		//  - methods of ClassInfo
 	}
 
 	/**
@@ -87,7 +92,6 @@ public class ContextMenuProviderService implements Service {
 																  @Nonnull JvmClassInfo info) {
 		ClassContextMenuProviderFactory factory = classContextMenuOverride != null ? classContextMenuOverride : classContextMenuDefault;
 		return factory.getJvmClassInfoContextMenuProvider(workspace, resource, bundle, info);
-
 	}
 
 	/**

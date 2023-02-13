@@ -173,7 +173,7 @@ public class WorkspaceTreeNode extends TreeItem<WorkspaceTreePath> implements Co
 
 	@Override
 	public String toString() {
-		return WorkspaceTreeCell.textOf(getValue());
+		return getClass().getSimpleName() + "[" + getValue().toString() + "]";
 	}
 
 	/**

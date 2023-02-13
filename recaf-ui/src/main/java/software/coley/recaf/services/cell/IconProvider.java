@@ -1,5 +1,6 @@
 package software.coley.recaf.services.cell;
 
+import jakarta.annotation.Nullable;
 import javafx.scene.Node;
 
 /**
@@ -11,7 +12,8 @@ import javafx.scene.Node;
 @FunctionalInterface
 public interface IconProvider {
 	/**
-	 * @return Provided icon.
+	 * @return Provided icon. May be {@code null}.
 	 */
+	@Nullable
 	Node makeIcon();
 }

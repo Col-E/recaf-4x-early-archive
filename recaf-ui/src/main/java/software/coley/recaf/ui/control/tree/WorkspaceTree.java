@@ -10,6 +10,7 @@ import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.cell.ContextMenuProviderService;
 import software.coley.recaf.services.cell.IconProviderService;
+import software.coley.recaf.services.cell.TextProviderService;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.workspace.WorkspaceCloseListener;
 import software.coley.recaf.workspace.WorkspaceModificationListener;
@@ -38,14 +39,20 @@ public class WorkspaceTree extends TreeView<WorkspaceTreePath> implements
 
 	/**
 	 * Initialize empty tree.
-	 * @param iconService Icon provider for cells.
-	 * @param contextService Context menu service.
+	 *
+	 * @param textService
+	 * 		Text provider for cells.
+	 * @param iconService
+	 * 		Icon provider for cells.
+	 * @param contextService
+	 * 		Context menu provider for cells.
 	 */
 	@Inject
-	public WorkspaceTree(@Nonnull IconProviderService iconService,
+	public WorkspaceTree(@Nonnull TextProviderService textService,
+						 @Nonnull IconProviderService iconService,
 						 @Nonnull ContextMenuProviderService contextService) {
 		setShowRoot(false);
-		setCellFactory(param -> new WorkspaceTreeCell(iconService, contextService));
+		setCellFactory(param -> new WorkspaceTreeCell(textService, iconService, contextService));
 	}
 
 	/**

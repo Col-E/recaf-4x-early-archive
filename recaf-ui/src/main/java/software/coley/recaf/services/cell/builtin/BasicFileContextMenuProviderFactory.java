@@ -5,10 +5,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.scene.control.ContextMenu;
 import software.coley.recaf.info.FileInfo;
-import software.coley.recaf.services.cell.ContextMenuProvider;
-import software.coley.recaf.services.cell.FileContextMenuProviderFactory;
-import software.coley.recaf.services.cell.IconProvider;
-import software.coley.recaf.services.cell.IconProviderService;
+import software.coley.recaf.services.cell.*;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -20,10 +17,13 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 @ApplicationScoped
 public class BasicFileContextMenuProviderFactory implements FileContextMenuProviderFactory {
+	private final TextProviderService textService;
 	private final IconProviderService iconService;
 
 	@Inject
-	public BasicFileContextMenuProviderFactory(@Nonnull IconProviderService iconService) {
+	public BasicFileContextMenuProviderFactory(@Nonnull TextProviderService textService,
+											   @Nonnull IconProviderService iconService) {
+		this.textService = textService;
 		this.iconService = iconService;
 	}
 
@@ -34,10 +34,10 @@ public class BasicFileContextMenuProviderFactory implements FileContextMenuProvi
 															  @Nonnull FileBundle bundle,
 															  @Nonnull FileInfo info) {
 		return () -> {
-			String name = info.getName().substring(info.getName().lastIndexOf('/') + 1); // TODO: escape name (configurable service)
+			TextProvider nameProvider = textService.getFileInfoTextProvider(workspace, resource, bundle, info);
 			IconProvider iconProvider = iconService.getFileInfoIconProvider(workspace, resource, bundle, info);
 			ContextMenu menu = new ContextMenu();
-			addHeader(menu, name, iconProvider.makeIcon());
+			addHeader(menu, nameProvider.makeText(), iconProvider.makeIcon());
 			// TODO: implement operations
 			return menu;
 		};

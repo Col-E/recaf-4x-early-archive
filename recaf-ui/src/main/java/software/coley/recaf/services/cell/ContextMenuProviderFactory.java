@@ -25,6 +25,7 @@ public interface ContextMenuProviderFactory {
 	/**
 	 * @return Context menu provider that provides {@code null}.
 	 */
+	@Nonnull
 	default ContextMenuProvider emptyProvider() {
 		return () -> null;
 	}

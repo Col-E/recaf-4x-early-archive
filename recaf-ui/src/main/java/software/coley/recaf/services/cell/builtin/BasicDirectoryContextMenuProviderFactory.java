@@ -4,10 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.scene.control.ContextMenu;
-import software.coley.recaf.services.cell.ContextMenuProvider;
-import software.coley.recaf.services.cell.DirectoryContextMenuProviderFactory;
-import software.coley.recaf.services.cell.IconProvider;
-import software.coley.recaf.services.cell.IconProviderService;
+import software.coley.recaf.services.cell.*;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -19,10 +16,13 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 @ApplicationScoped
 public class BasicDirectoryContextMenuProviderFactory implements DirectoryContextMenuProviderFactory {
+	private final TextProviderService textService;
 	private final IconProviderService iconService;
 
 	@Inject
-	public BasicDirectoryContextMenuProviderFactory(@Nonnull IconProviderService iconService) {
+	public BasicDirectoryContextMenuProviderFactory(@Nonnull TextProviderService textService,
+													@Nonnull IconProviderService iconService) {
+		this.textService = textService;
 		this.iconService = iconService;
 	}
 
@@ -33,10 +33,10 @@ public class BasicDirectoryContextMenuProviderFactory implements DirectoryContex
 															   @Nonnull FileBundle bundle,
 															   @Nonnull String directoryName) {
 		return () -> {
-			String name = directoryName.substring(directoryName.lastIndexOf('/') + 1); // TODO: escape name (configurable service)
+			TextProvider nameProvider = textService.getDirectoryTextProvider(workspace, resource, bundle, directoryName);
 			IconProvider iconProvider = iconService.getDirectoryIconProvider(workspace, resource, bundle, directoryName);
 			ContextMenu menu = new ContextMenu();
-			addHeader(menu, name, iconProvider.makeIcon());
+			addHeader(menu, nameProvider.makeText(), iconProvider.makeIcon());
 			// TODO: implement operations
 			return menu;
 		};

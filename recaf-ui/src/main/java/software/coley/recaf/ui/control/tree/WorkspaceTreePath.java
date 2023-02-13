@@ -160,9 +160,4 @@ public record WorkspaceTreePath(@Nonnull Workspace workspace,
 		}
 		return cmp;
 	}
-
-	@Override
-	public String toString() {
-		return WorkspaceTreeCell.textOf(this);
-	}
 }

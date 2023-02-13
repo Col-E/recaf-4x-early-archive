@@ -1,5 +1,6 @@
 package software.coley.recaf.services.cell;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
@@ -20,6 +21,7 @@ public interface IconProviderFactory {
 	/**
 	 * @return Icon provider that provides {@code null}.
 	 */
+	@Nonnull
 	default IconProvider emptyProvider() {
 		return () -> null;
 	}
