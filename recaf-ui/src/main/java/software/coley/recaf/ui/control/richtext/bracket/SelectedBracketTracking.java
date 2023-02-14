@@ -13,6 +13,7 @@ import software.coley.recaf.ui.control.richtext.EditorComponent;
 import software.coley.recaf.ui.control.richtext.linegraphics.BracketMatchGraphicFactory;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.IntRange;
+import software.coley.recaf.util.NumberUtil;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 
 import java.time.Duration;
@@ -108,8 +109,8 @@ public class SelectedBracketTracking implements EditorComponent, Consumer<Change
 
 		try {
 			int length = editor.getTextLength();
-			int start = Math.max(range.start(), length - 1);
-			int end = Math.max(range.end(), length - 1);
+			int start = NumberUtil.intClamp(range.start(), 0, length - 1);
+			int end = NumberUtil.intClamp(range.end(), 0, length - 1);
 
 			// Check paragraph beyond start range.
 			TwoDimensional.Position startPos = codeArea.offsetToPosition(start, TwoDimensional.Bias.Backward);

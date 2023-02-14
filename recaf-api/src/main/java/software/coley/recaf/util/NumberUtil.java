@@ -360,4 +360,22 @@ public class NumberUtil {
 		}
 		return result;
 	}
+
+	/**
+	 * @param value
+	 * 		Base value.
+	 * @param min
+	 * 		Clamp min.
+	 * @param max
+	 * 		Clamp max.
+	 *
+	 * @return Value, or min if value below min, or max if value above max.
+	 */
+	public static int intClamp(int value, int min, int max) {
+		if (value > max)
+			return max;
+		if (value < min)
+			return min;
+		return value;
+	}
 }
