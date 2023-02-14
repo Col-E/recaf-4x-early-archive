@@ -10,7 +10,7 @@ import java.util.Objects;
  * @author Matt Coley
  */
 public class BasicInnerClassInfo implements InnerClassInfo {
-	private final String getOuterDeclaringClassName; // Recaf specific, not modeling class spec
+	private final String outerDeclaringClassName; // Recaf specific, not modeling class spec
 	private final String innerClassName;
 	private final String outerClassName;
 	private final String innerName;
@@ -18,7 +18,7 @@ public class BasicInnerClassInfo implements InnerClassInfo {
 	private String simpleName;
 
 	/**
-	 * @param getOuterDeclaringClassName
+	 * @param outerDeclaringClassName
 	 * 		Declaring class name,
 	 * @param innerClassName
 	 * 		Inner name.
@@ -29,9 +29,9 @@ public class BasicInnerClassInfo implements InnerClassInfo {
 	 * @param access
 	 * 		Inner class flags originally declared.
 	 */
-	public BasicInnerClassInfo(String getOuterDeclaringClassName, String innerClassName,
+	public BasicInnerClassInfo(String outerDeclaringClassName, String innerClassName,
 							   String outerClassName, String innerName, int access) {
-		this.getOuterDeclaringClassName = getOuterDeclaringClassName;
+		this.outerDeclaringClassName = outerDeclaringClassName;
 		this.innerClassName = innerClassName;
 		this.outerClassName = outerClassName;
 		this.innerName = innerName;
@@ -46,7 +46,7 @@ public class BasicInnerClassInfo implements InnerClassInfo {
 	@Nonnull
 	@Override
 	public String getOuterDeclaringClassName() {
-		return getOuterDeclaringClassName;
+		return outerDeclaringClassName;
 	}
 
 	@Nonnull

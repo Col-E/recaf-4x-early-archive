@@ -81,17 +81,24 @@ public interface InnerClassInfo extends Accessed {
 		// Substring from outer class prefix
 		String outerDeclaringClass = getOuterDeclaringClassName();
 		String outerName = getOuterClassName();
-		int lastIndex = 0;
-		int endIndex = Math.min(outerDeclaringClass.length(), outerName.length());
-		for (; lastIndex < endIndex; lastIndex++) {
-			if (outerDeclaringClass.charAt(lastIndex) != outerName.charAt(lastIndex)) break;
+		if (outerName != null) {
+			int outerDeclaringLength = outerDeclaringClass.length();
+			int lastIndex = 0;
+			int endIndex = Math.min(outerDeclaringLength, outerName.length());
+			for (; lastIndex < endIndex; lastIndex++) {
+				if (outerDeclaringClass.charAt(lastIndex) != outerName.charAt(lastIndex)) break;
+			}
+
+			// Edge case handling with outer name
+			if (lastIndex == 0)
+				return outerName;
+			else if (outerName.startsWith("$", lastIndex))
+				lastIndex++;
+			return outerName.substring(lastIndex);
 		}
 
-		// Edge case
-		if (lastIndex == 0)
-			return outerName;
-		else if (outerName.startsWith("$", lastIndex))
-			lastIndex++;
-		return outerName.substring(lastIndex);
+		// Class entry is for anonymous class.
+		String innerClassName = getInnerClassName();
+		return "Anonymous '" + innerClassName.substring(innerClassName.lastIndexOf('$') + 1) + "'";
 	}
 }

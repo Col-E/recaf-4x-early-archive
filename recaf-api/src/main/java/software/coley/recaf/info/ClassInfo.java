@@ -129,6 +129,16 @@ public interface ClassInfo extends Info, Annotated, Accessed {
 	List<InnerClassInfo> getInnerClasses();
 
 	/**
+	 * @return {@code true} when this class is an anonymous inner class.
+	 */
+	default boolean isAnonymousInner() {
+		// Check if the 'full' name of the inner 'InnerClassName' is the current class (entry representing ourselves)
+		// Then if the 'OuterClassName' is null, this means our class does not expose a name because it is anonymous.
+		return getInnerClasses().stream()
+				.anyMatch(inner -> inner.getInnerClassName().equals(getName()) && inner.getOuterClassName() == null);
+	}
+
+	/**
 	 * @return List of declared fields.
 	 */
 	@Nonnull

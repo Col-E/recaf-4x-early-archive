@@ -242,6 +242,12 @@ class ClassInfoTest {
 	}
 
 	@Test
+	void isAnonymousInner() {
+		assertFalse(classWithAnonymousInner.isAnonymousInner());
+		assertTrue(classWithAnonymousInner$Inner.isAnonymousInner());
+	}
+
+	@Test
 	void getFields() {
 		// Normal case
 		assertEquals(5, accessibleFields.getFields().size());
