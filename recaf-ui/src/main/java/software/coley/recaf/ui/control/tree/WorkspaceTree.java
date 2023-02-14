@@ -6,7 +6,9 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.input.KeyCode;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
@@ -56,6 +58,14 @@ public class WorkspaceTree extends TreeView<WorkspaceTreePath> implements
 		setShowRoot(false);
 		setCellFactory(param -> new WorkspaceTreeCell(textService, iconService, contextService));
 		getStyleClass().addAll(Tweaks.EDGE_TO_EDGE, Styles.DENSE);
+		setOnKeyPressed(e -> {
+			KeyCode code = e.getCode();
+			if (code == KeyCode.RIGHT || code == KeyCode.KP_RIGHT) {
+				TreeItem<WorkspaceTreePath> selected = getSelectionModel().getSelectedItem();
+				if (selected != null)
+					TreeItems.recurseOpen(selected);
+			}
+		});
 	}
 
 	/**

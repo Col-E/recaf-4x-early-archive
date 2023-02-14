@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.TreeCell;
+import javafx.scene.control.TreeItem;
 import javafx.scene.input.MouseButton;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.Info;
@@ -57,10 +58,16 @@ public class WorkspaceTreeCell extends TreeCell<WorkspaceTreePath> {
 		} else {
 			setText(textOf(item));
 			setGraphic(graphicOf(item));
-			setOnMousePressed(e -> { // Lazily populate context menus
-				if (e.getButton() == MouseButton.SECONDARY && getContextMenu() == null) {
-					setContextMenu(contextMenuOf(item));
-					setOnMousePressed(null);
+			setOnMousePressed(e -> {
+				if (e.getButton() == MouseButton.SECONDARY) {
+					// Lazily populate context menus when secondary click is prompted.
+					if (getContextMenu() == null) setContextMenu(contextMenuOf(item));
+				} else {
+					// Recursive open children down if double-clicking.
+					TreeItem<WorkspaceTreePath> treeItem = getTreeItem();
+					if (!treeItem.isExpanded() && e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
+						TreeItems.recurseOpen(treeItem);
+					}
 				}
 			});
 		}
