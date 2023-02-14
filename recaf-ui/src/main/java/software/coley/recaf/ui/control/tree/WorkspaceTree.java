@@ -1,5 +1,7 @@
 package software.coley.recaf.ui.control.tree;
 
+import atlantafx.base.theme.Styles;
+import atlantafx.base.theme.Tweaks;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
@@ -53,6 +55,7 @@ public class WorkspaceTree extends TreeView<WorkspaceTreePath> implements
 						 @Nonnull ContextMenuProviderService contextService) {
 		setShowRoot(false);
 		setCellFactory(param -> new WorkspaceTreeCell(textService, iconService, contextService));
+		getStyleClass().addAll(Tweaks.EDGE_TO_EDGE, Styles.DENSE);
 	}
 
 	/**
