@@ -12,7 +12,7 @@ import software.coley.recaf.info.properties.Property;
  * @author Matt Coley
  */
 public class ThrowableProperty extends BasicProperty<Boolean> {
-	public static final String KEY = "zip-comment";
+	public static final String KEY = "is-throwable";
 
 	/**
 	 * New property value.
