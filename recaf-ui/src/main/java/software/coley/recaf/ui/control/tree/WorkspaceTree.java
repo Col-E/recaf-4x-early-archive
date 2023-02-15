@@ -83,7 +83,7 @@ public class WorkspaceTree extends TreeView<WorkspaceTreePath> implements
 			root = new WorkspaceTreeNode(workspace);
 			List<WorkspaceResource> resources = workspace.getAllResources(false);
 			for (WorkspaceResource resource : resources)
-				root.createResourceChild(resource);
+				root.getOrCreateResourceChild(resource);
 
 			// Add listeners
 			workspace.addWorkspaceModificationListener(this);
@@ -113,42 +113,13 @@ public class WorkspaceTree extends TreeView<WorkspaceTreePath> implements
 	@Override
 	public void onAddLibrary(Workspace workspace, WorkspaceResource library) {
 		if (isTarget(workspace))
-			root.createResourceChild(library);
+			root.getOrCreateResourceChild(library);
 	}
 
 	@Override
 	public void onRemoveLibrary(Workspace workspace, WorkspaceResource library) {
-		// TODO: Remove path
-	}
-
-	@Override
-	public void onNewClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo cls) {
-		// TODO: Add path
-	}
-
-	@Override
-	public void onUpdateClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo oldCls, AndroidClassInfo newCls) {
-		// TODO: Refresh path
-	}
-
-	@Override
-	public void onRemoveClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo cls) {
-		// TODO: Remove path
-	}
-
-	@Override
-	public void onNewFile(WorkspaceResource resource, FileBundle bundle, FileInfo file) {
-		// TODO: Add path
-	}
-
-	@Override
-	public void onUpdateFile(WorkspaceResource resource, FileBundle bundle, FileInfo oldFile, FileInfo newFile) {
-		// TODO: Refresh path
-	}
-
-	@Override
-	public void onRemoveFile(WorkspaceResource resource, FileBundle bundle, FileInfo file) {
-		// TODO: Remove path
+		if (isTarget(workspace))
+			root.removeNodeByPath(new WorkspaceTreePath(workspace, library, null, null, null));
 	}
 
 	@Override
@@ -163,6 +134,36 @@ public class WorkspaceTree extends TreeView<WorkspaceTreePath> implements
 
 	@Override
 	public void onRemoveClass(WorkspaceResource resource, JvmClassBundle bundle, JvmClassInfo cls) {
-		// TODO: Remove path
+		root.removeNodeByPath(new WorkspaceTreePath(workspace, resource, bundle, cls.getName(), cls));
+	}
+
+	@Override
+	public void onNewClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo cls) {
+		// TODO: Add path
+	}
+
+	@Override
+	public void onUpdateClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo oldCls, AndroidClassInfo newCls) {
+		// TODO: Refresh path
+	}
+
+	@Override
+	public void onRemoveClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo cls) {
+		root.removeNodeByPath(new WorkspaceTreePath(workspace, resource, bundle, cls.getName(), cls));
+	}
+
+	@Override
+	public void onNewFile(WorkspaceResource resource, FileBundle bundle, FileInfo file) {
+		// TODO: Add path
+	}
+
+	@Override
+	public void onUpdateFile(WorkspaceResource resource, FileBundle bundle, FileInfo oldFile, FileInfo newFile) {
+		// TODO: Refresh path
+	}
+
+	@Override
+	public void onRemoveFile(WorkspaceResource resource, FileBundle bundle, FileInfo file) {
+		root.removeNodeByPath(new WorkspaceTreePath(workspace, resource, bundle, file.getName(), file));
 	}
 }
