@@ -6,7 +6,6 @@ import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
-import software.coley.recaf.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
@@ -65,9 +64,19 @@ public interface Workspace extends Closing {
 	 */
 	@Nonnull
 	default List<WorkspaceResource> getAllResources(boolean includeInternal) {
-		List<WorkspaceResource> list = new ArrayList<>(getSupportingResources());
-		if (includeInternal) list.addAll(getInternalSupportingResources());
-		list.add(0, getPrimaryResource());
+		List<WorkspaceResource> supportingResources = getSupportingResources();
+		int supportingSize = supportingResources.size();
+		if (includeInternal) {
+			List<WorkspaceResource> internalSupportingResources = getInternalSupportingResources();
+			List<WorkspaceResource> list = new ArrayList<>(1 + supportingSize + internalSupportingResources.size());
+			list.add(getPrimaryResource());
+			list.addAll(supportingResources);
+			list.addAll(internalSupportingResources);
+			return list;
+		}
+		List<WorkspaceResource> list = new ArrayList<>(1 + supportingSize);
+		list.add(getPrimaryResource());
+		list.addAll(supportingResources);
 		return list;
 	}
 
