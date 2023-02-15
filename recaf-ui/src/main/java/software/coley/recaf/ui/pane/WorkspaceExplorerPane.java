@@ -6,6 +6,7 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.scene.layout.BorderPane;
 import software.coley.recaf.ui.control.tree.WorkspaceTree;
+import software.coley.recaf.ui.control.tree.WorkspaceTreeFilterPane;
 import software.coley.recaf.workspace.model.Workspace;
 
 /**
@@ -29,6 +30,8 @@ public class WorkspaceExplorerPane extends BorderPane {
 		setCenter(workspaceTree);
 		if (workspace != null)
 			workspaceTree.createWorkspaceRoot(workspace);
+		WorkspaceTreeFilterPane workspaceTreeFilterPane = new WorkspaceTreeFilterPane(workspaceTree);
+		setBottom(workspaceTreeFilterPane);
 	}
 
 	/**
