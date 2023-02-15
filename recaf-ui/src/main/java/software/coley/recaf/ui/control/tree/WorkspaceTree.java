@@ -99,37 +99,61 @@ public class WorkspaceTree extends TreeView<WorkspaceTreePath> implements
 	 *
 	 * @return {@code true} when it matches our current {@link #workspace}.
 	 */
-	private boolean isTarget(Workspace workspace) {
+	private boolean isTargetWorkspace(Workspace workspace) {
 		return this.workspace == workspace;
+	}
+
+	/**
+	 * @param resource
+	 * 		Resource to check.
+	 *
+	 * @return {@code true} when it belongs to the target workspace.
+	 */
+	private boolean isTargetResource(WorkspaceResource resource) {
+		if (workspace.getPrimaryResource() == resource)
+			return true;
+		for (WorkspaceResource supportingResource : workspace.getSupportingResources()) {
+			if (supportingResource == resource)
+				return true;
+		}
+		for (WorkspaceResource internalSupportingResource : workspace.getInternalSupportingResources()) {
+			if (internalSupportingResource == resource)
+				return true;
+		}
+		return false;
 	}
 
 	@Override
 	public void onWorkspaceClosed(@Nonnull Workspace workspace) {
 		// Workspace closed, disable tree.
-		if (isTarget(workspace))
+		if (isTargetWorkspace(workspace))
 			setDisable(true);
 	}
 
 	@Override
 	public void onAddLibrary(Workspace workspace, WorkspaceResource library) {
-		if (isTarget(workspace))
+		if (isTargetWorkspace(workspace))
 			root.getOrCreateResourceChild(library);
 	}
 
 	@Override
 	public void onRemoveLibrary(Workspace workspace, WorkspaceResource library) {
-		if (isTarget(workspace))
+		if (isTargetWorkspace(workspace))
 			root.removeNodeByPath(new WorkspaceTreePath(workspace, library, null, null, null));
 	}
 
 	@Override
 	public void onNewClass(WorkspaceResource resource, JvmClassBundle bundle, JvmClassInfo cls) {
-		// TODO: Add path
+		if (isTargetResource(resource))
+			root.getOrCreateNodeByPath(new WorkspaceTreePath(workspace, resource, bundle, cls.getName(), cls));
 	}
 
 	@Override
 	public void onUpdateClass(WorkspaceResource resource, JvmClassBundle bundle, JvmClassInfo oldCls, JvmClassInfo newCls) {
-		// TODO: Refresh path
+		if (isTargetResource(resource)) {
+			WorkspaceTreeNode node = root.getOrCreateNodeByPath(new WorkspaceTreePath(workspace, resource, bundle, oldCls.getName(), oldCls));
+			node.setValue(new WorkspaceTreePath(workspace, resource, bundle, newCls.getName(), newCls));
+		}
 	}
 
 	@Override
@@ -139,12 +163,16 @@ public class WorkspaceTree extends TreeView<WorkspaceTreePath> implements
 
 	@Override
 	public void onNewClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo cls) {
-		// TODO: Add path
+		if (isTargetResource(resource))
+			root.getOrCreateNodeByPath(new WorkspaceTreePath(workspace, resource, bundle, cls.getName(), cls));
 	}
 
 	@Override
 	public void onUpdateClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo oldCls, AndroidClassInfo newCls) {
-		// TODO: Refresh path
+		if (isTargetResource(resource)) {
+			WorkspaceTreeNode node = root.getOrCreateNodeByPath(new WorkspaceTreePath(workspace, resource, bundle, oldCls.getName(), oldCls));
+			node.setValue(new WorkspaceTreePath(workspace, resource, bundle, newCls.getName(), newCls));
+		}
 	}
 
 	@Override
@@ -154,12 +182,16 @@ public class WorkspaceTree extends TreeView<WorkspaceTreePath> implements
 
 	@Override
 	public void onNewFile(WorkspaceResource resource, FileBundle bundle, FileInfo file) {
-		// TODO: Add path
+		if (isTargetResource(resource))
+			root.getOrCreateNodeByPath(new WorkspaceTreePath(workspace, resource, bundle, file.getName(), file));
 	}
 
 	@Override
 	public void onUpdateFile(WorkspaceResource resource, FileBundle bundle, FileInfo oldFile, FileInfo newFile) {
-		// TODO: Refresh path
+		if (isTargetResource(resource)) {
+			WorkspaceTreeNode node = root.getOrCreateNodeByPath(new WorkspaceTreePath(workspace, resource, bundle, oldFile.getName(), oldFile));
+			node.setValue(new WorkspaceTreePath(workspace, resource, bundle, newFile.getName(), newFile));
+		}
 	}
 
 	@Override
