@@ -663,6 +663,100 @@ Text {
   -fx-scale-shape: false;
 }
 
+.text-input {
+  -color-input-bg: -color-base-3;
+  -color-input-fg: -color-fg-default;
+  -color-input-border: -color-base-9;
+  -color-input-bg-focused: -color-base-3;
+  -color-input-border-focused: -color-accent-5;
+  -color-input-bg-highlight: -color-flair-6;
+  -color-input-fg-highlight: -color-fg-default;
+  -fx-background-color: -color-input-border, -color-input-bg;
+  -fx-background-insets: 0, 1px;
+  -fx-background-radius: 1, 0px;
+  -fx-text-fill: -color-input-fg;
+  -fx-highlight-fill: -color-input-bg-highlight;
+  -fx-highlight-text-fill: -color-input-fg-highlight;
+  -fx-prompt-text-fill: -color-fg-subtle;
+  -fx-padding: 8px 12px 8px 12px;
+  -fx-cursor: text;
+}
+.text-input:focused {
+  -fx-background-color: -color-input-border-focused, -color-input-bg-focused;
+  -fx-prompt-text-fill: transparent;
+}
+.text-input:disabled {
+  -fx-opacity: 0.55;
+}
+.text-input:disabled > .scroll-pane {
+  -fx-opacity: 1;
+}
+.text-input:success {
+  -color-input-bg: -color-base-3;
+  -color-input-fg: -color-success-fg;
+  -color-input-border: -color-success-emphasis;
+  -color-input-border-focused: -color-success-emphasis;
+}
+.text-input:danger {
+  -color-input-bg: -color-base-3;
+  -color-input-fg: -color-danger-fg;
+  -color-input-border: -color-danger-emphasis;
+  -color-input-border-focused: -color-danger-emphasis;
+}
+.text-input.left-pill {
+  -fx-background-radius: 1 0 0 1, 0px 0 0 0px;
+  -fx-background-insets: 0, 1px 0 1px 1px;
+}
+.text-input.left-pill:focused {
+  -fx-background-insets: 0, 1px;
+}
+.text-input.center-pill {
+  -fx-background-radius: 0;
+  -fx-background-insets: 0, 1px 0 1px 0;
+}
+.text-input.center-pill:focused {
+  -fx-background-insets: 0, 1px;
+}
+.text-input.right-pill {
+  -fx-background-radius: 0 1 1 0, 0 0px 0px 0;
+  -fx-background-insets: 0, 1px 1px 1px 0;
+}
+.text-input.right-pill:focused {
+  -fx-background-insets: 0, 1px;
+}
+.text-input .context-menu {
+  -fx-font-size: 14px;
+  -fx-font-weight: normal;
+}
+.text-input .context-menu .menu-item {
+  -fx-cursor: default;
+}
+
+.text-field.small {
+  -fx-padding: 5.7142857143px 8.5714285714px 5.7142857143px 8.5714285714px;
+  -fx-font-size: 0.8em;
+}
+.text-field.large {
+  -fx-padding: 11.2px 16.8px 11.2px 16.8px;
+  -fx-font-size: 1.25em;
+}
+.text-field.rounded {
+  -fx-background-radius: 10em;
+}
+
+.text-area {
+  -fx-padding: 2px;
+  -fx-cursor: default;
+}
+.text-area .content {
+  -fx-cursor: text;
+  -fx-padding: 8px 12px 8px 12px;
+}
+
+.password-field {
+  -fx-text-fill: -color-fg-muted;
+}
+
 .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected,
 .tree-view > .virtual-flow > .clipped-container > .sheet > .tree-cell:filled:selected,
 .table-view > .virtual-flow > .clipped-container > .sheet > .table-row-cell:filled:selected,
@@ -3578,100 +3672,6 @@ Text {
 }
 .tab-pane.floating.dense > .tab-header-area > .headers-region > .tab > .tab-container > .tab-label {
   -fx-padding: 0.35em 0.35em 0.35em 0.35em;
-}
-
-.text-input {
-  -color-input-bg: -color-base-3;
-  -color-input-fg: -color-fg-default;
-  -color-input-border: -color-border-default;
-  -color-input-bg-focused: -color-base-3;
-  -color-input-border-focused: -color-accent-emphasis;
-  -color-input-bg-highlight: -color-accent-subtle;
-  -color-input-fg-highlight: -color-fg-default;
-  -fx-background-color: -color-input-border, -color-input-bg;
-  -fx-background-insets: 0, 1px;
-  -fx-background-radius: 1, 0px;
-  -fx-text-fill: -color-input-fg;
-  -fx-highlight-fill: -color-input-bg-highlight;
-  -fx-highlight-text-fill: -color-input-fg-highlight;
-  -fx-prompt-text-fill: -color-fg-subtle;
-  -fx-padding: 8px 12px 8px 12px;
-  -fx-cursor: text;
-}
-.text-input:focused {
-  -fx-background-color: -color-input-border-focused, -color-input-bg-focused;
-  -fx-prompt-text-fill: transparent;
-}
-.text-input:disabled {
-  -fx-opacity: 0.55;
-}
-.text-input:disabled > .scroll-pane {
-  -fx-opacity: 1;
-}
-.text-input:success {
-  -color-input-bg: -color-base-3;
-  -color-input-fg: -color-success-fg;
-  -color-input-border: -color-success-emphasis;
-  -color-input-border-focused: -color-success-emphasis;
-}
-.text-input:danger {
-  -color-input-bg: -color-base-3;
-  -color-input-fg: -color-danger-fg;
-  -color-input-border: -color-danger-emphasis;
-  -color-input-border-focused: -color-danger-emphasis;
-}
-.text-input.left-pill {
-  -fx-background-radius: 1 0 0 1, 0px 0 0 0px;
-  -fx-background-insets: 0, 1px 0 1px 1px;
-}
-.text-input.left-pill:focused {
-  -fx-background-insets: 0, 1px;
-}
-.text-input.center-pill {
-  -fx-background-radius: 0;
-  -fx-background-insets: 0, 1px 0 1px 0;
-}
-.text-input.center-pill:focused {
-  -fx-background-insets: 0, 1px;
-}
-.text-input.right-pill {
-  -fx-background-radius: 0 1 1 0, 0 0px 0px 0;
-  -fx-background-insets: 0, 1px 1px 1px 0;
-}
-.text-input.right-pill:focused {
-  -fx-background-insets: 0, 1px;
-}
-.text-input .context-menu {
-  -fx-font-size: 14px;
-  -fx-font-weight: normal;
-}
-.text-input .context-menu .menu-item {
-  -fx-cursor: default;
-}
-
-.text-field.small {
-  -fx-padding: 5.7142857143px 8.5714285714px 5.7142857143px 8.5714285714px;
-  -fx-font-size: 0.8em;
-}
-.text-field.large {
-  -fx-padding: 11.2px 16.8px 11.2px 16.8px;
-  -fx-font-size: 1.25em;
-}
-.text-field.rounded {
-  -fx-background-radius: 10em;
-}
-
-.text-area {
-  -fx-padding: 2px;
-  -fx-cursor: default;
-}
-.text-area .content {
-  -fx-cursor: text;
-  -fx-padding: 8px 12px 8px 12px;
-}
-
-.password-field {
-  -fx-text-fill: -color-fg-muted;
 }
 
 .titled-pane {
