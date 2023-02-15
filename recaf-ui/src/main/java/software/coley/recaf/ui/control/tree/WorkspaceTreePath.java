@@ -111,52 +111,131 @@ public record WorkspaceTreePath(@Nonnull Workspace workspace,
 				((isEmbeddedContainer() ? 1 : 0) << 8);
 	}
 
+	/**
+	 * @param other
+	 * 		Other path to check.
+	 *
+	 * @return {@code true} when the given path is a parent of this one
+	 * <i>(Having equal data, up to the point where is has missing fields)</i> or equal.
+	 * {@code false} when the given path has fields that differ from us and both are non-null.
+	 */
+	public boolean isDescendantOf(WorkspaceTreePath other) {
+		// Must be same workspace (never null)
+		if (workspace != other.workspace)
+			return false;
+
+		// Must be same resource (never null)
+		if (resource != other.resource)
+			return false;
+
+		// If the other has no bundle, and we do, we're a descendant.
+		// If the other has a bundle, and we do not, we're not a descendant.
+		// If we both have bundles, they must be the same.
+		if (other.bundle == null && bundle == null)
+			return true;
+		if (other.bundle == null)
+			return true;
+		if (bundle == null)
+			return false;
+		if (bundle != other.bundle)
+			return false;
+
+		// If the other has no local-path, and we do, we're a descendant.
+		// If the other has a local-path, and we do not, we're not a descendant.
+		// If we both have local-paths, they must be the same.
+		if (other.localPath == null && localPath == null)
+			return true;
+		if (other.localPath == null)
+			return true;
+		if (localPath == null)
+			return false;
+		if (!localPath.startsWith(other.localPath))
+			return false;
+
+		// If the other has no path, and we do not, we're equal.
+		// If the other has no path, and we do, we're a descendant.
+		// If the other has a path, and we do not, we're not a descendant.
+		if (other.info == null && info == null)
+			return true;
+		if (other.info == null)
+			return true;
+		if (info == null)
+			return false;
+		return info.getName().equals(other.info.getName());
+	}
+
 	@Override
 	public int compareTo(@Nonnull WorkspaceTreePath other) {
-		int cmp = 0;
+		// Show primary resource first.
+		int cmp = Boolean.compare(isPrimary(), other.isPrimary());
 
-		// Local paths, and Info
-		if (info != null) {
-			if (other.info != null) {
-				// Show local path values in order by name.
-				cmp = String.CASE_INSENSITIVE_ORDER.compare(info.getName(), other.info.getName());
-			} else {
-				// We have a file path but the other does not.
-				// This means we represent a file while the other represents a directory.
-				// Thus, we should always show last.
-				cmp = 1;
-			}
-		}
-		if (cmp == 0 && other.info != null) {
-			if (info != null) {
-				// Show local path values in order by name.
-				cmp = String.CASE_INSENSITIVE_ORDER.compare(info.getName(), other.info.getName());
-			} else {
-				// We have a local path but the other does not.
-				// This means we represent a directory while the other represents a file.
-				// Thus, we should always show first.
-				cmp = -1;
-			}
-		}
-		if (cmp == 0 && localPath != null && other.localPath != null) {
-			cmp = String.CASE_INSENSITIVE_ORDER.compare(localPath, other.localPath);
-		}
-
-		// Bundles
-		if (cmp == 0 && bundle != null && other.bundle != null) {
-			// Show bundles in order.
-			cmp = -Integer.compare(bundleMask(), other.bundleMask());
-		}
-
-		// Resources
-		if (cmp == 0 && bundle == null && other.bundle == null) {
-			// Show primary resource first.
-			cmp = Boolean.compare(isPrimary(), other.isPrimary());
-			if (cmp == 0) {
-				// Show in order as in the workspace.
+		// Show in order as in the workspace.
+		if (cmp == 0) {
+			if (resource != other.resource) {
 				List<WorkspaceResource> resources = workspace().getSupportingResources();
 				cmp = Integer.compare(resources.indexOf(resource), resources.indexOf(other.resource));
 			}
+		}
+
+		// Show bundles in order.
+		if (cmp == 0) {
+			if (bundle == null && other.bundle == null) {
+				// Both do not have paths, so must be the same.
+				return 0;
+			}
+			if (bundle == null) {
+				// We do not have a path, but the other does.
+				// Show us first.
+				return -1;
+			}
+			if (other.bundle == null) {
+				// We have a path, but the other does not.
+				// Show them first.
+				return 1;
+			}
+			cmp = -Integer.compare(bundleMask(), other.bundleMask());
+		}
+
+		// Show paths in case-insensitive order.
+		if (cmp == 0) {
+			if (localPath == null && other.localPath == null) {
+				// Both do not have paths, so must be the same.
+				return 0;
+			}
+			if (localPath == null) {
+				// We do not have a path, but the other does.
+				// Show us first.
+				return -1;
+			}
+			if (other.localPath == null) {
+				// We have a path, but the other does not.
+				// Show them first.
+				return 1;
+			}
+
+			// We both have paths, show in insensitive order (unless one of us has an info object).
+			if (info != null && other.info == null) {
+				// Info values go last.
+				return 1;
+			}
+			if (info == null && other.info != null) {
+				// Info values go last.
+				return -1;
+			}
+			cmp = String.CASE_INSENSITIVE_ORDER.compare(localPath, other.localPath);
+		}
+
+		// Show paths in case-insensitive order.
+		if (cmp == 0) {
+			String infoName = info == null ? null : info.getName();
+			String otherInfoName = other.info == null ? null : other.info.getName();
+			if (infoName == null) {
+				// Both do not have infos, so we must be the same.
+				return 0;
+			}
+
+			// We both have paths, show in insensitive order.
+			cmp = String.CASE_INSENSITIVE_ORDER.compare(infoName, otherInfoName);
 		}
 		return cmp;
 	}
