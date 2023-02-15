@@ -63,10 +63,11 @@ public class WorkspaceTreeCell extends TreeCell<WorkspaceTreePath> {
 					// Lazily populate context menus when secondary click is prompted.
 					if (getContextMenu() == null) setContextMenu(contextMenuOf(item));
 				} else {
-					// Recursive open children down if double-clicking.
-					TreeItem<WorkspaceTreePath> treeItem = getTreeItem();
-					if (!treeItem.isExpanded() && e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
-						TreeItems.recurseOpen(treeItem);
+					// Recursive open children while children list contains only one item.
+					if (e.getButton() == MouseButton.PRIMARY) {
+						TreeItem<WorkspaceTreePath> treeItem = getTreeItem();
+						if (treeItem.getChildren().size() == 1 && e.getClickCount() == 2)
+							TreeItems.recurseOpen(treeItem);
 					}
 				}
 			});
