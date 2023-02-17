@@ -10,11 +10,13 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.input.KeyCode;
 import software.coley.recaf.info.AndroidClassInfo;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.cell.ContextMenuProviderService;
 import software.coley.recaf.services.cell.IconProviderService;
 import software.coley.recaf.services.cell.TextProviderService;
+import software.coley.recaf.ui.control.tree.path.*;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.workspace.WorkspaceCloseListener;
 import software.coley.recaf.workspace.WorkspaceModificationListener;
@@ -35,10 +37,11 @@ import java.util.List;
  * @author Matt Coley
  */
 @Dependent
-public class WorkspaceTree extends TreeView<WorkspaceTreePath> implements
+public class WorkspaceTree extends TreeView<PathNode<?>> implements
 		WorkspaceModificationListener, WorkspaceCloseListener,
 		ResourceJvmClassListener, ResourceAndroidClassListener, ResourceFileListener {
 	private WorkspaceTreeNode root;
+	private WorkspacePathNode rootPath;
 	private Workspace workspace;
 
 	/**
@@ -61,7 +64,7 @@ public class WorkspaceTree extends TreeView<WorkspaceTreePath> implements
 		setOnKeyPressed(e -> {
 			KeyCode code = e.getCode();
 			if (code == KeyCode.RIGHT || code == KeyCode.KP_RIGHT) {
-				TreeItem<WorkspaceTreePath> selected = getSelectionModel().getSelectedItem();
+				TreeItem<PathNode<?>> selected = getSelectionModel().getSelectedItem();
 				if (selected != null)
 					TreeItems.recurseOpen(selected);
 			}
@@ -80,10 +83,30 @@ public class WorkspaceTree extends TreeView<WorkspaceTreePath> implements
 			root = null;
 		} else {
 			// Create root
-			root = new WorkspaceTreeNode(workspace);
+			rootPath = new WorkspacePathNode(workspace);
+			root = new WorkspaceTreeNode(rootPath);
 			List<WorkspaceResource> resources = workspace.getAllResources(false);
-			for (WorkspaceResource resource : resources)
-				root.getOrCreateResourceChild(resource);
+			for (WorkspaceResource resource : resources) {
+				ResourcePathNode resourcePath = rootPath.child(resource);
+				resource.classBundleStream().forEach(bundle -> {
+					BundlePathNode bundlePath = resourcePath.child(bundle);
+					for (ClassInfo classInfo : bundle.values()) {
+						String packageName = classInfo.getPackageName();
+						DirectoryPathNode packagePath = bundlePath.child(packageName);
+						ClassPathNode classPath = packagePath.child(classInfo);
+						root.getOrCreateNodeByPath(classPath);
+					}
+				});
+				resource.fileBundleStream().forEach(bundle -> {
+					BundlePathNode bundlePath = resourcePath.child(bundle);
+					for (FileInfo fileInfo : bundle.values()) {
+						String directoryName = fileInfo.getDirectoryName();
+						DirectoryPathNode directoryPath = bundlePath.child(directoryName);
+						FilePathNode filePath = directoryPath.child(fileInfo);
+						root.getOrCreateNodeByPath(filePath);
+					}
+				});
+			}
 
 			// Add listeners
 			workspace.addWorkspaceModificationListener(this);
@@ -133,69 +156,72 @@ public class WorkspaceTree extends TreeView<WorkspaceTreePath> implements
 	@Override
 	public void onAddLibrary(Workspace workspace, WorkspaceResource library) {
 		if (isTargetWorkspace(workspace))
-			root.getOrCreateResourceChild(library);
+			root.getOrCreateNodeByPath(rootPath.child(library));
 	}
 
 	@Override
 	public void onRemoveLibrary(Workspace workspace, WorkspaceResource library) {
 		if (isTargetWorkspace(workspace))
-			root.removeNodeByPath(new WorkspaceTreePath(workspace, library, null, null, null));
+			root.removeNodeByPath(rootPath.child(library));
 	}
 
 	@Override
 	public void onNewClass(WorkspaceResource resource, JvmClassBundle bundle, JvmClassInfo cls) {
 		if (isTargetResource(resource))
-			root.getOrCreateNodeByPath(new WorkspaceTreePath(workspace, resource, bundle, cls.getName(), cls));
+			root.getOrCreateNodeByPath(rootPath.child(resource).child(bundle).child(cls.getPackageName()).child(cls));
 	}
 
 	@Override
 	public void onUpdateClass(WorkspaceResource resource, JvmClassBundle bundle, JvmClassInfo oldCls, JvmClassInfo newCls) {
 		if (isTargetResource(resource)) {
-			WorkspaceTreeNode node = root.getOrCreateNodeByPath(new WorkspaceTreePath(workspace, resource, bundle, oldCls.getName(), oldCls));
-			node.setValue(new WorkspaceTreePath(workspace, resource, bundle, newCls.getName(), newCls));
+			WorkspaceTreeNode node = root.getOrCreateNodeByPath(rootPath.child(resource).child(bundle).child(oldCls.getPackageName()).child(oldCls));
+			node.setValue(rootPath.child(resource).child(bundle).child(newCls.getPackageName()).child(newCls));
 		}
 	}
 
 	@Override
 	public void onRemoveClass(WorkspaceResource resource, JvmClassBundle bundle, JvmClassInfo cls) {
-		root.removeNodeByPath(new WorkspaceTreePath(workspace, resource, bundle, cls.getName(), cls));
+		if (isTargetResource(resource))
+			root.removeNodeByPath(rootPath.child(resource).child(bundle).child(cls.getPackageName()).child(cls));
 	}
 
 	@Override
 	public void onNewClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo cls) {
 		if (isTargetResource(resource))
-			root.getOrCreateNodeByPath(new WorkspaceTreePath(workspace, resource, bundle, cls.getName(), cls));
+			root.getOrCreateNodeByPath(rootPath.child(resource).child(bundle).child(cls.getPackageName()).child(cls));
 	}
 
 	@Override
 	public void onUpdateClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo oldCls, AndroidClassInfo newCls) {
 		if (isTargetResource(resource)) {
-			WorkspaceTreeNode node = root.getOrCreateNodeByPath(new WorkspaceTreePath(workspace, resource, bundle, oldCls.getName(), oldCls));
-			node.setValue(new WorkspaceTreePath(workspace, resource, bundle, newCls.getName(), newCls));
+			WorkspaceTreeNode node = root.getOrCreateNodeByPath(rootPath.child(resource).child(bundle).child(oldCls.getPackageName()).child(oldCls));
+			node.setValue(rootPath.child(resource).child(bundle).child(newCls.getPackageName()).child(newCls));
 		}
 	}
 
 	@Override
 	public void onRemoveClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo cls) {
-		root.removeNodeByPath(new WorkspaceTreePath(workspace, resource, bundle, cls.getName(), cls));
+		if (isTargetResource(resource))
+			root.removeNodeByPath(rootPath.child(resource).child(bundle).child(cls.getPackageName()).child(cls));
 	}
 
 	@Override
 	public void onNewFile(WorkspaceResource resource, FileBundle bundle, FileInfo file) {
 		if (isTargetResource(resource))
-			root.getOrCreateNodeByPath(new WorkspaceTreePath(workspace, resource, bundle, file.getName(), file));
+			root.getOrCreateNodeByPath(rootPath.child(resource).child(bundle).child(file.getDirectoryName()).child(file));
 	}
 
 	@Override
 	public void onUpdateFile(WorkspaceResource resource, FileBundle bundle, FileInfo oldFile, FileInfo newFile) {
 		if (isTargetResource(resource)) {
-			WorkspaceTreeNode node = root.getOrCreateNodeByPath(new WorkspaceTreePath(workspace, resource, bundle, oldFile.getName(), oldFile));
-			node.setValue(new WorkspaceTreePath(workspace, resource, bundle, newFile.getName(), newFile));
+			WorkspaceTreeNode node = root.getOrCreateNodeByPath(rootPath.child(resource).child(bundle).child(oldFile.getDirectoryName()).child(oldFile));
+			node.setValue(rootPath.child(resource).child(bundle).child(newFile.getDirectoryName()).child(newFile));
 		}
 	}
 
 	@Override
 	public void onRemoveFile(WorkspaceResource resource, FileBundle bundle, FileInfo file) {
-		root.removeNodeByPath(new WorkspaceTreePath(workspace, resource, bundle, file.getName(), file));
+		if (isTargetResource(resource))
+			root.removeNodeByPath(rootPath.child(resource).child(bundle).child(file.getDirectoryName()).child(file));
 	}
 }

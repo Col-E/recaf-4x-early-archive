@@ -3,6 +3,10 @@ package software.coley.recaf.ui.control.tree;
 import jakarta.annotation.Nonnull;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
+import software.coley.recaf.ui.control.tree.path.ClassPathNode;
+import software.coley.recaf.ui.control.tree.path.DirectoryPathNode;
+import software.coley.recaf.ui.control.tree.path.FilePathNode;
+import software.coley.recaf.ui.control.tree.path.PathNode;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 
@@ -33,8 +37,18 @@ public class WorkspaceTreeFilterPane extends BorderPane {
 			// That will force-expand the entire workspace, which we do not want to do.
 			textField.textProperty().addListener((ob, old, cur) -> {
 				root.predicateProperty().set(item -> {
-					WorkspaceTreePath path = item.getValue();
-					return path.localPath() == null || path.localPath().contains(cur);
+					String path;
+					PathNode<?> node = item.getValue();
+					if (node instanceof DirectoryPathNode directoryNode) {
+						path = directoryNode.getValue();
+					} else if (node instanceof ClassPathNode classPathNode) {
+						path = classPathNode.getValue().getName();
+					} else if (node instanceof FilePathNode classPathNode) {
+						path = classPathNode.getValue().getName();
+					} else {
+						path = null;
+					}
+					return path == null || path.contains(cur);
 				});
 			});
 		});

@@ -6,21 +6,29 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.input.MouseButton;
+import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
-import software.coley.recaf.info.Info;
+import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.services.cell.ContextMenuProviderService;
 import software.coley.recaf.services.cell.IconProviderService;
 import software.coley.recaf.services.cell.TextProviderService;
+import software.coley.recaf.ui.control.FontIconView;
+import software.coley.recaf.ui.control.tree.path.*;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.*;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 /**
- * Cell for rendering {@link WorkspaceTreePath} items.
+ * Cell for rendering {@link PathNode} items.
  *
  * @author Matt Coley
  */
-public class WorkspaceTreeCell extends TreeCell<WorkspaceTreePath> {
+public class WorkspaceTreeCell extends TreeCell<PathNode<?>> {
+	private static final String UNKNOWN_TEXT = "[ERROR]";
+	private static final Node UNKNOWN_GRAPHIC = new FontIconView(CarbonIcons.MISUSE_ALT);
+	private static final Logger logger = Logging.get(WorkspaceTreeCell.class);
 	private final TextProviderService textService;
 	private final IconProviderService iconService;
 	private final ContextMenuProviderService contextMenuService;
@@ -42,14 +50,13 @@ public class WorkspaceTreeCell extends TreeCell<WorkspaceTreePath> {
 	}
 
 	@Override
-	protected void updateItem(WorkspaceTreePath item, boolean empty) {
+	protected void updateItem(PathNode<?> item, boolean empty) {
 		super.updateItem(item, empty);
 
 		// TODO: Abstract away to 'CellConfiguratorService' which has
 		//    - 'configure(IndexedCell)'
 		//    - 'unconfigure(IndexedCell)'
 		//  which is the same as this code. That way when we make list-cell impls we can just plug in the service.
-		//  Only problem: Abstract away 'WorkspaceTreePath' to be applicable to 'Info' types and wrapping content.
 		if (empty || item == null) {
 			setText(null);
 			setGraphic(null);
@@ -65,7 +72,7 @@ public class WorkspaceTreeCell extends TreeCell<WorkspaceTreePath> {
 				} else {
 					// Recursive open children while children list contains only one item.
 					if (e.getButton() == MouseButton.PRIMARY) {
-						TreeItem<WorkspaceTreePath> treeItem = getTreeItem();
+						TreeItem<PathNode<?>> treeItem = getTreeItem();
 						if (treeItem.getChildren().size() == 1 && e.getClickCount() == 2)
 							TreeItems.recurseOpen(treeItem);
 					}
@@ -80,35 +87,59 @@ public class WorkspaceTreeCell extends TreeCell<WorkspaceTreePath> {
 	 *
 	 * @return Text for the item represented by the path.
 	 */
-	@SuppressWarnings("all") // for the NPE, doesn't understand 'hasX' contracts.
-	private String textOf(@Nonnull WorkspaceTreePath item) {
-		Workspace workspace = item.workspace();
-		WorkspaceResource resource = item.resource();
-		Bundle<? extends Info> bundle = item.bundle();
-		if (item.hasInfo()) {
-			Info info = item.info();
-			if (info.isFile()) {
-				return textService.getFileInfoTextProvider(workspace, resource,
-						(FileBundle) bundle, info.asFile()).makeText();
-			} else if (info.isClass()) {
-				ClassInfo classInfo = info.asClass();
-				if (classInfo.isAndroidClass()) {
-					return textService.getAndroidClassInfoTextProvider(workspace, resource,
-							(AndroidClassBundle) bundle, classInfo.asAndroidClass()).makeText();
-				} else {
-					return textService.getJvmClassInfoTextProvider(workspace, resource,
-							(JvmClassBundle) bundle, classInfo.asJvmClass()).makeText();
-				}
+	@SuppressWarnings("unchecked")
+	private String textOf(@Nonnull PathNode<?> item) {
+		Workspace workspace = item.getValueOfType(Workspace.class);
+		WorkspaceResource resource = item.getValueOfType(WorkspaceResource.class);
+
+		if (workspace == null) {
+			logger.error("Path node missing workspace section: {}", item);
+			return UNKNOWN_TEXT;
+		}
+		if (resource == null) {
+			logger.error("Path node missing resource section: {}", item);
+			return UNKNOWN_TEXT;
+		}
+
+		if (item instanceof ClassPathNode classPath) {
+			ClassBundle<?> bundle = classPath.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Class path node missing bundle section: {}", item);
+				return UNKNOWN_TEXT;
 			}
-		} else if (item.hasLocalPath()) {
+
+			ClassInfo info = classPath.getValue();
+			if (info.isJvmClass()) {
+				return textService.getJvmClassInfoTextProvider(workspace, resource,
+						(JvmClassBundle) bundle, info.asJvmClass()).makeText();
+			} else if (info.isAndroidClass()) {
+				return textService.getAndroidClassInfoTextProvider(workspace, resource,
+						(AndroidClassBundle) bundle, info.asAndroidClass()).makeText();
+			}
+		} else if (item instanceof FilePathNode filePath) {
+			FileBundle bundle = filePath.getValueOfType(FileBundle.class);
+			if (bundle == null) {
+				logger.error("File path node missing bundle section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			FileInfo info = filePath.getValue();
+			return textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
+		} else if (item instanceof DirectoryPathNode directoryPath) {
+			Bundle<?> bundle = directoryPath.getValueOfType(Bundle.class);
+			if (bundle == null) {
+				logger.error("Directory/package path node missing bundle section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
 			if (bundle instanceof FileBundle fileBundle) {
-				return textService.getDirectoryTextProvider(workspace, resource, fileBundle, item.localPath()).makeText();
-			} else if (bundle instanceof ClassBundle<? extends ClassInfo> classBundle) {
-				return textService.getPackageTextProvider(workspace, resource, classBundle, item.localPath()).makeText();
+				return textService.getDirectoryTextProvider(workspace, resource, fileBundle, directoryPath.getValue()).makeText();
+			} else if (bundle instanceof ClassBundle<?> classBundle) {
+				return textService.getPackageTextProvider(workspace, resource, classBundle, directoryPath.getValue()).makeText();
 			}
-		} else if (item.hasBundle()) {
-			return textService.getBundleTextProvider(workspace, resource, bundle).makeText();
-		} else {
+		} else if (item instanceof BundlePathNode bundlePath) {
+			return textService.getBundleTextProvider(workspace, resource, bundlePath.getValue()).makeText();
+		} else if (item instanceof ResourcePathNode) {
 			return textService.getResourceTextProvider(workspace, resource).makeText();
 		}
 
@@ -122,39 +153,63 @@ public class WorkspaceTreeCell extends TreeCell<WorkspaceTreePath> {
 	 *
 	 * @return Icon for the item represented by the path.
 	 */
-	@SuppressWarnings("all") // for the NPE, doesn't understand 'hasX' contracts.
-	private Node graphicOf(@Nonnull WorkspaceTreePath item) {
-		Workspace workspace = item.workspace();
-		WorkspaceResource resource = item.resource();
-		Bundle<? extends Info> bundle = item.bundle();
-		if (item.hasInfo()) {
-			Info info = item.info();
-			if (info.isFile()) {
-				return iconService.getFileInfoIconProvider(workspace, resource,
-						(FileBundle) bundle, info.asFile()).makeIcon();
-			} else if (info.isClass()) {
-				ClassInfo classInfo = info.asClass();
-				if (classInfo.isAndroidClass()) {
-					return iconService.getAndroidClassInfoIconProvider(workspace, resource,
-							(AndroidClassBundle) bundle, classInfo.asAndroidClass()).makeIcon();
-				} else {
-					return iconService.getJvmClassInfoIconProvider(workspace, resource,
-							(JvmClassBundle) bundle, classInfo.asJvmClass()).makeIcon();
-				}
+	@SuppressWarnings("unchecked")
+	private Node graphicOf(@Nonnull PathNode<?> item) {
+		Workspace workspace = item.getValueOfType(Workspace.class);
+		WorkspaceResource resource = item.getValueOfType(WorkspaceResource.class);
+
+		if (workspace == null) {
+			logger.error("Path node missing workspace section: {}", item);
+			return UNKNOWN_GRAPHIC;
+		}
+		if (resource == null) {
+			logger.error("Path node missing resource section: {}", item);
+			return UNKNOWN_GRAPHIC;
+		}
+
+		if (item instanceof ClassPathNode classPath) {
+			ClassBundle<?> bundle = classPath.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Class path node missing bundle section: {}", item);
+				return UNKNOWN_GRAPHIC;
 			}
-		} else if (item.hasLocalPath()) {
+
+			ClassInfo info = classPath.getValue();
+			if (info.isJvmClass()) {
+				return iconService.getJvmClassInfoIconProvider(workspace, resource,
+						(JvmClassBundle) bundle, info.asJvmClass()).makeIcon();
+			} else if (info.isAndroidClass()) {
+				return iconService.getAndroidClassInfoIconProvider(workspace, resource,
+						(AndroidClassBundle) bundle, info.asAndroidClass()).makeIcon();
+			}
+		} else if (item instanceof FilePathNode filePath) {
+			FileBundle bundle = filePath.getValueOfType(FileBundle.class);
+			if (bundle == null) {
+				logger.error("File path node missing bundle section: {}", item);
+				return UNKNOWN_GRAPHIC;
+			}
+
+			FileInfo info = filePath.getValue();
+			return iconService.getFileInfoIconProvider(workspace, resource, bundle, info).makeIcon();
+		} else if (item instanceof DirectoryPathNode directoryPath) {
+			Bundle<?> bundle = directoryPath.getValueOfType(Bundle.class);
+			if (bundle == null) {
+				logger.error("Directory/package path node missing bundle section: {}", item);
+				return UNKNOWN_GRAPHIC;
+			}
+
 			if (bundle instanceof FileBundle fileBundle) {
-				return iconService.getDirectoryIconProvider(workspace, resource, fileBundle, item.localPath()).makeIcon();
-			} else if (bundle instanceof ClassBundle<? extends ClassInfo> classBundle) {
-				return iconService.getPackageIconProvider(workspace, resource, classBundle, item.localPath()).makeIcon();
+				return iconService.getDirectoryIconProvider(workspace, resource, fileBundle, directoryPath.getValue()).makeIcon();
+			} else if (bundle instanceof ClassBundle<?> classBundle) {
+				return iconService.getPackageIconProvider(workspace, resource, classBundle, directoryPath.getValue()).makeIcon();
 			}
-		} else if (item.hasBundle()) {
-			return iconService.getBundleIconProvider(workspace, resource, bundle).makeIcon();
-		} else {
+		} else if (item instanceof BundlePathNode bundlePath) {
+			return iconService.getBundleIconProvider(workspace, resource, bundlePath.getValue()).makeIcon();
+		} else if (item instanceof ResourcePathNode) {
 			return iconService.getResourceIconProvider(workspace, resource).makeIcon();
 		}
 
-		// No icon
+		// No graphic
 		return null;
 	}
 
@@ -164,37 +219,59 @@ public class WorkspaceTreeCell extends TreeCell<WorkspaceTreePath> {
 	 *
 	 * @return Context-menu for the item represented by the path.
 	 */
-	@SuppressWarnings("all") // for the NPE, doesn't understand 'hasX' contracts.
-	private ContextMenu contextMenuOf(@Nonnull WorkspaceTreePath item) {
-		Workspace workspace = item.workspace();
-		WorkspaceResource resource = item.resource();
-		Bundle<? extends Info> bundle = item.bundle();
-		if (item.hasInfo()) {
-			Info info = item.info();
-			if (info.isFile()) {
-				return contextMenuService.getFileInfoContextMenuProvider(workspace, resource,
-						(FileBundle) bundle, info.asFile()).makeMenu();
-			} else if (info.isClass()) {
-				ClassInfo classInfo = info.asClass();
-				if (classInfo.isAndroidClass()) {
-					return contextMenuService.getAndroidClassInfoContextMenuProvider(workspace, resource,
-							(AndroidClassBundle) bundle, classInfo.asAndroidClass()).makeMenu();
-				} else {
-					return contextMenuService.getJvmClassInfoContextMenuProvider(workspace, resource,
-							(JvmClassBundle) bundle, classInfo.asJvmClass()).makeMenu();
-				}
+	@SuppressWarnings("unchecked")
+	private ContextMenu contextMenuOf(@Nonnull PathNode<?> item) {
+		Workspace workspace = item.getValueOfType(Workspace.class);
+		WorkspaceResource resource = item.getValueOfType(WorkspaceResource.class);
+
+		if (workspace == null) {
+			logger.error("Path node missing workspace section: {}", item);
+			return null;
+		}
+		if (resource == null) {
+			logger.error("Path node missing resource section: {}", item);
+			return null;
+		}
+
+		if (item instanceof ClassPathNode classPath) {
+			ClassBundle<?> bundle = classPath.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Class path node missing bundle section: {}", item);
+				return null;
 			}
-		} else if (item.hasLocalPath()) {
+
+			ClassInfo info = classPath.getValue();
+			if (info.isJvmClass()) {
+				return contextMenuService.getJvmClassInfoContextMenuProvider(workspace, resource,
+						(JvmClassBundle) bundle, info.asJvmClass()).makeMenu();
+			} else if (info.isAndroidClass()) {
+				return contextMenuService.getAndroidClassInfoContextMenuProvider(workspace, resource,
+						(AndroidClassBundle) bundle, info.asAndroidClass()).makeMenu();
+			}
+		} else if (item instanceof FilePathNode filePath) {
+			FileBundle bundle = filePath.getValueOfType(FileBundle.class);
+			if (bundle == null) {
+				logger.error("File path node missing bundle section: {}", item);
+				return null;
+			}
+
+			FileInfo info = filePath.getValue();
+			return contextMenuService.getFileInfoContextMenuProvider(workspace, resource, bundle, info).makeMenu();
+		} else if (item instanceof DirectoryPathNode directoryPath) {
+			Bundle<?> bundle = directoryPath.getValueOfType(Bundle.class);
+			if (bundle == null) {
+				logger.error("Directory/package path node missing bundle section: {}", item);
+				return null;
+			}
+
 			if (bundle instanceof FileBundle fileBundle) {
-				return contextMenuService.getDirectoryContextMenuProvider(workspace, resource, fileBundle,
-						item.localPath()).makeMenu();
-			} else if (bundle instanceof ClassBundle<? extends ClassInfo> classBundle) {
-				return contextMenuService.getPackageContextMenuProvider(workspace, resource, classBundle,
-						item.localPath()).makeMenu();
+				return contextMenuService.getDirectoryContextMenuProvider(workspace, resource, fileBundle, directoryPath.getValue()).makeMenu();
+			} else if (bundle instanceof ClassBundle<?> classBundle) {
+				return contextMenuService.getPackageContextMenuProvider(workspace, resource, classBundle, directoryPath.getValue()).makeMenu();
 			}
-		} else if (item.hasBundle()) {
-			return contextMenuService.getBundleContextMenuProvider(workspace, resource, bundle).makeMenu();
-		} else {
+		} else if (item instanceof BundlePathNode bundlePath) {
+			return contextMenuService.getBundleContextMenuProvider(workspace, resource, bundlePath.getValue()).makeMenu();
+		} else if (item instanceof ResourcePathNode) {
 			return contextMenuService.getResourceContextMenuProvider(workspace, resource).makeMenu();
 		}
 

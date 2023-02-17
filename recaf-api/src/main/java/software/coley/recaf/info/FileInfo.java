@@ -1,6 +1,7 @@
 package software.coley.recaf.info;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.info.builder.FileInfoBuilder;
 
 /**
@@ -14,6 +15,18 @@ public interface FileInfo extends Info {
 	 */
 	@Nonnull
 	byte[] getRawContent();
+
+	/**
+	 * @return Directory the file resides in.
+	 * May be {@code null} for files in the root directory.
+	 */
+	@Nullable
+	default String getDirectoryName() {
+		String fileName = getName();
+		int directoryIndex = fileName.lastIndexOf('/');
+		if (directoryIndex <= 0) return null;
+		return fileName.substring(0, directoryIndex);
+	}
 
 	/**
 	 * @return New builder wrapping this file information.

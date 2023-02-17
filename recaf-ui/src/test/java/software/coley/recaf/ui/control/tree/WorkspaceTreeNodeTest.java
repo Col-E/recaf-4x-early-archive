@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.StringConsumer;
+import software.coley.recaf.ui.control.tree.path.*;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
@@ -25,11 +26,12 @@ class WorkspaceTreeNodeTest {
 	static JvmClassBundle primaryJvmBundle;
 	static JvmClassInfo primaryClassInfo;
 	// Paths
-	static WorkspaceTreePath p1;
-	static WorkspaceTreePath p2;
-	static WorkspaceTreePath p2b;
-	static WorkspaceTreePath p3;
-	static WorkspaceTreePath p4;
+	static ClassPathNode p1;
+	static DirectoryPathNode p2;
+	static DirectoryPathNode p2b;
+	static BundlePathNode p3;
+	static ResourcePathNode p4;
+	static WorkspacePathNode p5;
 
 	@BeforeAll
 	static void setup() throws IOException {
@@ -43,31 +45,33 @@ class WorkspaceTreeNodeTest {
 
 		String packageName = Objects.requireNonNull(primaryClassInfo.getPackageName());
 		String parentPackageName = packageName.substring(0, packageName.lastIndexOf('/'));
-		p1 = new WorkspaceTreePath(workspace, primaryResource, primaryJvmBundle, primaryClassInfo.getName(), primaryClassInfo);
-		p2 = new WorkspaceTreePath(workspace, primaryResource, primaryJvmBundle, packageName, null);
-		p2b = new WorkspaceTreePath(workspace, primaryResource, primaryJvmBundle, parentPackageName, null);
-		p3 = new WorkspaceTreePath(workspace, primaryResource, primaryJvmBundle, null, null);
-		p4 = new WorkspaceTreePath(workspace, primaryResource, null, null, null);
+
+		p5 = new WorkspacePathNode(workspace);
+		p4 = p5.child(primaryResource);
+		p3 = p4.child(primaryJvmBundle);
+		p2 = p3.child(packageName);
+		p2b = p3.child(parentPackageName);
+		p1 = p2.child(primaryClassInfo);
 	}
 
 	@Test
 	void removeNodeByPath() {
-		WorkspaceTreeNode root = new WorkspaceTreeNode(workspace);
-		root.getOrCreateResourceChild(primaryResource);
+		WorkspaceTreeNode root = new WorkspaceTreeNode(p5);
+		root.getOrCreateNodeByPath(p1);
 
 		// Remove the info
-		assertNotNull(root.getNodeByPath(p1), "Could not get info");
+		assertNotNull(root.getOrCreateNodeByPath(p1), "Could not get info");
 		assertTrue(root.removeNodeByPath(p1));
 		assertNull(root.getNodeByPath(p1), "Info not removed");
 
 		// Remove the package
-		assertNotNull(root.getNodeByPath(p2), "Could not get package of info");
+		assertNotNull(root.getOrCreateNodeByPath(p2), "Could not get package of info");
 		assertTrue(root.removeNodeByPath(p2));
 		assertNull(root.getNodeByPath(p2), "Package of info not removed");
 		assertNotNull(root.getNodeByPath(p2b), "Parent of that package should not have been removed");
 
 		// Remove the bundle
-		assertNotNull(root.getNodeByPath(p3), "Could not get jvm class bundle");
+		assertNotNull(root.getOrCreateNodeByPath(p3), "Could not get jvm class bundle");
 		assertTrue(root.removeNodeByPath(p3));
 		assertNull(root.getNodeByPath(p3), "Jvm class bundle not removed");
 		assertNull(root.getNodeByPath(p2b), "Child of jvm class bundle still accessible after bundle removal");
@@ -75,8 +79,8 @@ class WorkspaceTreeNodeTest {
 
 	@Test
 	void getNodeByPath() {
-		WorkspaceTreeNode root = new WorkspaceTreeNode(workspace);
-		root.getOrCreateResourceChild(primaryResource);
+		WorkspaceTreeNode root = new WorkspaceTreeNode(p5);
+		root.getOrCreateNodeByPath(p1);
 
 		// Get each node, should exist.
 		assertNotNull(root.getNodeByPath(p1), "Could not get info");
@@ -88,7 +92,7 @@ class WorkspaceTreeNodeTest {
 
 	@Test
 	void getOrCreateNodeByPath() {
-		WorkspaceTreeNode root = new WorkspaceTreeNode(workspace);
+		WorkspaceTreeNode root = new WorkspaceTreeNode(p5);
 
 		// Get or create the deepest path should create all other parent paths.
 		WorkspaceTreeNode result = root.getOrCreateNodeByPath(p1);
@@ -111,13 +115,13 @@ class WorkspaceTreeNodeTest {
 
 		// If we do repeated calls, the reference should always be the same since it acts as a getter.
 		assertSame(result, root.getOrCreateNodeByPath(p1));
-		assertSame(root.getNodeByPath(p3), root.getOrCreateNodeByPath(p3));
+		assertSame(root.getOrCreateNodeByPath(p3), root.getOrCreateNodeByPath(p3));
 	}
 
 	@Test
 	void matches() {
-		WorkspaceTreeNode root = new WorkspaceTreeNode(workspace);
-		root.getOrCreateResourceChild(primaryResource);
+		WorkspaceTreeNode root = new WorkspaceTreeNode(p5);
+		root.getOrCreateNodeByPath(p1);
 
 		// Get child-most item following the "top" of the tree.
 		// Should yield the class info node.
