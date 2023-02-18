@@ -33,7 +33,8 @@ public class BasicClassContextMenuProviderFactory implements ClassContextMenuPro
 
 	@Nonnull
 	@Override
-	public ContextMenuProvider getJvmClassInfoContextMenuProvider(@Nonnull Workspace workspace,
+	public ContextMenuProvider getJvmClassInfoContextMenuProvider(@Nonnull ContextSource source,
+																  @Nonnull Workspace workspace,
 																  @Nonnull WorkspaceResource resource,
 																  @Nonnull JvmClassBundle bundle,
 																  @Nonnull JvmClassInfo info) {
@@ -46,7 +47,8 @@ public class BasicClassContextMenuProviderFactory implements ClassContextMenuPro
 
 	@Nonnull
 	@Override
-	public ContextMenuProvider getAndroidClassInfoContextMenuProvider(@Nonnull Workspace workspace,
+	public ContextMenuProvider getAndroidClassInfoContextMenuProvider(@Nonnull ContextSource source,
+																	  @Nonnull Workspace workspace,
 																	  @Nonnull WorkspaceResource resource,
 																	  @Nonnull AndroidClassBundle bundle,
 																	  @Nonnull AndroidClassInfo info) {

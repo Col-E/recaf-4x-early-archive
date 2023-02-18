@@ -4,10 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.scene.control.ContextMenu;
-import software.coley.recaf.services.cell.ContextMenuProvider;
-import software.coley.recaf.services.cell.IconProvider;
-import software.coley.recaf.services.cell.IconProviderService;
-import software.coley.recaf.services.cell.ResourceContextMenuProviderFactory;
+import software.coley.recaf.services.cell.*;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
@@ -27,7 +24,8 @@ public class BasicResourceContextMenuProviderFactory implements ResourceContextM
 
 	@Nonnull
 	@Override
-	public ContextMenuProvider getResourceContextMenuProvider(@Nonnull Workspace workspace,
+	public ContextMenuProvider getResourceContextMenuProvider(@Nonnull ContextSource source,
+															  @Nonnull Workspace workspace,
 															  @Nonnull WorkspaceResource resource) {
 		return () -> {
 			// TODO: Need to make 'thing to string' an injectable service too.

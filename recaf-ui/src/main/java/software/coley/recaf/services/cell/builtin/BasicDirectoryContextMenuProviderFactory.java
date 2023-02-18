@@ -28,7 +28,8 @@ public class BasicDirectoryContextMenuProviderFactory implements DirectoryContex
 
 	@Nonnull
 	@Override
-	public ContextMenuProvider getDirectoryContextMenuProvider(@Nonnull Workspace workspace,
+	public ContextMenuProvider getDirectoryContextMenuProvider(@Nonnull ContextSource source,
+															   @Nonnull Workspace workspace,
 															   @Nonnull WorkspaceResource resource,
 															   @Nonnull FileBundle bundle,
 															   @Nonnull String directoryName) {

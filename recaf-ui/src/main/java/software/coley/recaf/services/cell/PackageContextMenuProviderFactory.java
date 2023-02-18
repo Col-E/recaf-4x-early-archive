@@ -4,7 +4,6 @@ import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
-import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -17,6 +16,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 public interface PackageContextMenuProviderFactory extends ContextMenuProviderFactory {
 	/**
+	 * @param source
+	 * 		Context request source.
 	 * @param workspace
 	 * 		Containing workspace.
 	 * @param resource
@@ -29,7 +30,8 @@ public interface PackageContextMenuProviderFactory extends ContextMenuProviderFa
 	 * @return Menu provider for the package.
 	 */
 	@Nonnull
-	default ContextMenuProvider getPackageContextMenuProvider(@Nonnull Workspace workspace,
+	default ContextMenuProvider getPackageContextMenuProvider(@Nonnull ContextSource source,
+															  @Nonnull Workspace workspace,
 															  @Nonnull WorkspaceResource resource,
 															  @Nonnull ClassBundle<? extends ClassInfo> bundle,
 															  @Nonnull String packageName) {

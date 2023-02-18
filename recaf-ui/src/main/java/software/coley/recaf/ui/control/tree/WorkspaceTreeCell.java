@@ -15,6 +15,7 @@ import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.cell.ContextMenuProviderService;
+import software.coley.recaf.services.cell.ContextSource;
 import software.coley.recaf.services.cell.IconProviderService;
 import software.coley.recaf.services.cell.TextProviderService;
 import software.coley.recaf.ui.control.FontIconView;
@@ -35,8 +36,10 @@ public class WorkspaceTreeCell extends TreeCell<PathNode<?>> {
 	private final TextProviderService textService;
 	private final IconProviderService iconService;
 	private final ContextMenuProviderService contextMenuService;
+	private final ContextSource source;
 
 	/**
+	 * @param source Context requester source.
 	 * @param textService
 	 * 		Service to provide text.
 	 * @param iconService
@@ -44,9 +47,11 @@ public class WorkspaceTreeCell extends TreeCell<PathNode<?>> {
 	 * @param contextMenuService
 	 * 		Service to provide context menus.
 	 */
-	public WorkspaceTreeCell(@Nonnull TextProviderService textService,
+	public WorkspaceTreeCell(@Nonnull ContextSource source,
+							 @Nonnull TextProviderService textService,
 							 @Nonnull IconProviderService iconService,
 							 @Nonnull ContextMenuProviderService contextMenuService) {
+		this.source = source;
 		this.textService = textService;
 		this.iconService = iconService;
 		this.contextMenuService = contextMenuService;
@@ -279,10 +284,10 @@ public class WorkspaceTreeCell extends TreeCell<PathNode<?>> {
 
 			ClassInfo info = classPath.getValue();
 			if (info.isJvmClass()) {
-				return contextMenuService.getJvmClassInfoContextMenuProvider(workspace, resource,
+				return contextMenuService.getJvmClassInfoContextMenuProvider(source, workspace, resource,
 						(JvmClassBundle) bundle, info.asJvmClass()).makeMenu();
 			} else if (info.isAndroidClass()) {
-				return contextMenuService.getAndroidClassInfoContextMenuProvider(workspace, resource,
+				return contextMenuService.getAndroidClassInfoContextMenuProvider(source, workspace, resource,
 						(AndroidClassBundle) bundle, info.asAndroidClass()).makeMenu();
 			}
 		} else if (item instanceof FilePathNode filePath) {
@@ -293,7 +298,7 @@ public class WorkspaceTreeCell extends TreeCell<PathNode<?>> {
 			}
 
 			FileInfo info = filePath.getValue();
-			return contextMenuService.getFileInfoContextMenuProvider(workspace, resource, bundle, info).makeMenu();
+			return contextMenuService.getFileInfoContextMenuProvider(source, workspace, resource, bundle, info).makeMenu();
 		} else if (item instanceof ClassMemberPathNode memberNode) {
 			ClassBundle<?> bundle = memberNode.getValueOfType(ClassBundle.class);
 			if (bundle == null) {
@@ -308,7 +313,7 @@ public class WorkspaceTreeCell extends TreeCell<PathNode<?>> {
 			}
 
 			ClassMember member = memberNode.getValue();
-			return contextMenuService.getClassMemberContextMenuProvider(workspace, resource, bundle, classInfo, member).makeMenu();
+			return contextMenuService.getClassMemberContextMenuProvider(source, workspace, resource, bundle, classInfo, member).makeMenu();
 		} else if (item instanceof DirectoryPathNode directoryPath) {
 			Bundle<?> bundle = directoryPath.getValueOfType(Bundle.class);
 			if (bundle == null) {
@@ -317,14 +322,14 @@ public class WorkspaceTreeCell extends TreeCell<PathNode<?>> {
 			}
 
 			if (bundle instanceof FileBundle fileBundle) {
-				return contextMenuService.getDirectoryContextMenuProvider(workspace, resource, fileBundle, directoryPath.getValue()).makeMenu();
+				return contextMenuService.getDirectoryContextMenuProvider(source, workspace, resource, fileBundle, directoryPath.getValue()).makeMenu();
 			} else if (bundle instanceof ClassBundle<?> classBundle) {
-				return contextMenuService.getPackageContextMenuProvider(workspace, resource, classBundle, directoryPath.getValue()).makeMenu();
+				return contextMenuService.getPackageContextMenuProvider(source, workspace, resource, classBundle, directoryPath.getValue()).makeMenu();
 			}
 		} else if (item instanceof BundlePathNode bundlePath) {
-			return contextMenuService.getBundleContextMenuProvider(workspace, resource, bundlePath.getValue()).makeMenu();
+			return contextMenuService.getBundleContextMenuProvider(source, workspace, resource, bundlePath.getValue()).makeMenu();
 		} else if (item instanceof ResourcePathNode) {
-			return contextMenuService.getResourceContextMenuProvider(workspace, resource).makeMenu();
+			return contextMenuService.getResourceContextMenuProvider(source, workspace, resource).makeMenu();
 		}
 
 		// No menu

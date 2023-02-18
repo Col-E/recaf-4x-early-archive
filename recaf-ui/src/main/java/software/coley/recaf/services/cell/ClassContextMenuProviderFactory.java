@@ -17,6 +17,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 public interface ClassContextMenuProviderFactory extends ContextMenuProviderFactory {
 	/**
+	 * @param source
+	 * 		Context request origin.
 	 * @param workspace
 	 * 		Containing workspace.
 	 * @param resource
@@ -29,7 +31,8 @@ public interface ClassContextMenuProviderFactory extends ContextMenuProviderFact
 	 * @return Menu provider for the class.
 	 */
 	@Nonnull
-	default ContextMenuProvider getJvmClassInfoContextMenuProvider(@Nonnull Workspace workspace,
+	default ContextMenuProvider getJvmClassInfoContextMenuProvider(@Nonnull ContextSource source,
+																   @Nonnull Workspace workspace,
 																   @Nonnull WorkspaceResource resource,
 																   @Nonnull JvmClassBundle bundle,
 																   @Nonnull JvmClassInfo info) {
@@ -37,6 +40,8 @@ public interface ClassContextMenuProviderFactory extends ContextMenuProviderFact
 	}
 
 	/**
+	 * @param source
+	 * 		Context request origin.
 	 * @param workspace
 	 * 		Containing workspace.
 	 * @param resource
@@ -49,7 +54,8 @@ public interface ClassContextMenuProviderFactory extends ContextMenuProviderFact
 	 * @return Menu provider for the class.
 	 */
 	@Nonnull
-	default ContextMenuProvider getAndroidClassInfoContextMenuProvider(@Nonnull Workspace workspace,
+	default ContextMenuProvider getAndroidClassInfoContextMenuProvider(@Nonnull ContextSource source,
+																	   @Nonnull Workspace workspace,
 																	   @Nonnull WorkspaceResource resource,
 																	   @Nonnull AndroidClassBundle bundle,
 																	   @Nonnull AndroidClassInfo info) {

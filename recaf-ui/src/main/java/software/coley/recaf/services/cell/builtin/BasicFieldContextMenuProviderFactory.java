@@ -30,7 +30,8 @@ public class BasicFieldContextMenuProviderFactory implements FieldContextMenuPro
 
 	@Nonnull
 	@Override
-	public ContextMenuProvider getFieldContextMenuProvider(@Nonnull Workspace workspace,
+	public ContextMenuProvider getFieldContextMenuProvider(@Nonnull ContextSource source,
+														   @Nonnull Workspace workspace,
 														   @Nonnull WorkspaceResource resource,
 														   @Nonnull ClassBundle<?> bundle,
 														   @Nonnull ClassInfo declaringClass,

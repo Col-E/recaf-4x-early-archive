@@ -29,7 +29,8 @@ public class BasicPackageContextMenuProviderFactory implements PackageContextMen
 
 	@Nonnull
 	@Override
-	public ContextMenuProvider getPackageContextMenuProvider(@Nonnull Workspace workspace,
+	public ContextMenuProvider getPackageContextMenuProvider(@Nonnull ContextSource source,
+															 @Nonnull Workspace workspace,
 															 @Nonnull WorkspaceResource resource,
 															 @Nonnull ClassBundle<? extends ClassInfo> bundle,
 															 @Nonnull String packageName) {

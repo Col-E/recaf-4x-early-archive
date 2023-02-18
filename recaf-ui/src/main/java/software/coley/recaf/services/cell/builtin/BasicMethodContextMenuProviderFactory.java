@@ -30,7 +30,8 @@ public class BasicMethodContextMenuProviderFactory implements MethodContextMenuP
 
 	@Nonnull
 	@Override
-	public ContextMenuProvider getMethodContextMenuProvider(@Nonnull Workspace workspace,
+	public ContextMenuProvider getMethodContextMenuProvider(@Nonnull ContextSource source,
+															@Nonnull Workspace workspace,
 															@Nonnull WorkspaceResource resource,
 															@Nonnull ClassBundle<?> bundle,
 															@Nonnull ClassInfo declaringClass,

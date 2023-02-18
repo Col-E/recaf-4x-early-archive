@@ -13,6 +13,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 public interface DirectoryContextMenuProviderFactory extends ContextMenuProviderFactory {
 	/**
+	 * @param source
+	 * 		Context request origin.
 	 * @param workspace
 	 * 		Containing workspace.
 	 * @param resource
@@ -25,7 +27,8 @@ public interface DirectoryContextMenuProviderFactory extends ContextMenuProvider
 	 * @return Menu provider for the directory.
 	 */
 	@Nonnull
-	default ContextMenuProvider getDirectoryContextMenuProvider(@Nonnull Workspace workspace,
+	default ContextMenuProvider getDirectoryContextMenuProvider(@Nonnull ContextSource source,
+																@Nonnull Workspace workspace,
 																@Nonnull WorkspaceResource resource,
 																@Nonnull FileBundle bundle,
 																@Nonnull String directoryName) {

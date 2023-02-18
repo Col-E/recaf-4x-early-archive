@@ -23,6 +23,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  * <ul>
  *     <li>{@link #setClassContextMenuProviderOverride(ClassContextMenuProviderFactory)}</li>
  *     <li>{@link #setFileContextMenuProviderOverride(FileContextMenuProviderFactory)}</li>
+ *     <li>{@link #setFieldContextMenuProviderOverride(FieldContextMenuProviderFactory)}</li>
+ *     <li>{@link #setMethodContextMenuProviderOverride(MethodContextMenuProviderFactory)}</li>
  *     <li>{@link #setPackageContextMenuProviderOverride(PackageContextMenuProviderFactory)}</li>
  *     <li>{@link #setDirectoryContextMenuProviderOverride(DirectoryContextMenuProviderFactory)}</li>
  *     <li>{@link #setBundleContextMenuProviderOverride(BundleContextMenuProviderFactory)}</li>
@@ -78,9 +80,6 @@ public class ContextMenuProviderService implements Service {
 
 		// TODO: Factories for (here and in other services)
 		//  - inner classes of ClassInfo
-
-		// TODO: Need to add parameter 'isDeclaration' to all of these.
-		//  - or some sort of context, to know where they are from.
 	}
 
 	/**
@@ -98,17 +97,20 @@ public class ContextMenuProviderService implements Service {
 	 * @return Menu provider for the class.
 	 */
 	@Nonnull
-	public ContextMenuProvider getJvmClassInfoContextMenuProvider(@Nonnull Workspace workspace,
+	public ContextMenuProvider getJvmClassInfoContextMenuProvider(@Nonnull ContextSource source,
+																  @Nonnull Workspace workspace,
 																  @Nonnull WorkspaceResource resource,
 																  @Nonnull JvmClassBundle bundle,
 																  @Nonnull JvmClassInfo info) {
 		ClassContextMenuProviderFactory factory = classContextMenuOverride != null ? classContextMenuOverride : classContextMenuDefault;
-		return factory.getJvmClassInfoContextMenuProvider(workspace, resource, bundle, info);
+		return factory.getJvmClassInfoContextMenuProvider(source, workspace, resource, bundle, info);
 	}
 
 	/**
 	 * Delegates to {@link ClassContextMenuProviderFactory}.
 	 *
+	 * @param source
+	 * 		Context request origin.
 	 * @param workspace
 	 * 		Containing workspace.
 	 * @param resource
@@ -121,17 +123,20 @@ public class ContextMenuProviderService implements Service {
 	 * @return Menu provider for the class.
 	 */
 	@Nonnull
-	public ContextMenuProvider getAndroidClassInfoContextMenuProvider(@Nonnull Workspace workspace,
+	public ContextMenuProvider getAndroidClassInfoContextMenuProvider(@Nonnull ContextSource source,
+																	  @Nonnull Workspace workspace,
 																	  @Nonnull WorkspaceResource resource,
 																	  @Nonnull AndroidClassBundle bundle,
 																	  @Nonnull AndroidClassInfo info) {
 		ClassContextMenuProviderFactory factory = classContextMenuOverride != null ? classContextMenuOverride : classContextMenuDefault;
-		return factory.getAndroidClassInfoContextMenuProvider(workspace, resource, bundle, info);
+		return factory.getAndroidClassInfoContextMenuProvider(source, workspace, resource, bundle, info);
 	}
 
 	/**
 	 * Delegates to {@link FieldContextMenuProviderFactory} and {@link MethodContextMenuProviderFactory}.
 	 *
+	 * @param source
+	 * 		Context request origin.
 	 * @param workspace
 	 * 		Containing workspace.
 	 * @param resource
@@ -146,17 +151,18 @@ public class ContextMenuProviderService implements Service {
 	 * @return Menu provider for the class member.
 	 */
 	@Nonnull
-	public ContextMenuProvider getClassMemberContextMenuProvider(@Nonnull Workspace workspace,
+	public ContextMenuProvider getClassMemberContextMenuProvider(@Nonnull ContextSource source,
+																 @Nonnull Workspace workspace,
 																 @Nonnull WorkspaceResource resource,
 																 @Nonnull ClassBundle<?> bundle,
 																 @Nonnull ClassInfo declaringClass,
 																 @Nonnull ClassMember member) {
 		if (member.isField()) {
 			FieldContextMenuProviderFactory factory = fieldContextMenuOverride != null ? fieldContextMenuOverride : fieldContextMenuDefault;
-			return factory.getFieldContextMenuProvider(workspace, resource, bundle, declaringClass, (FieldMember) member);
+			return factory.getFieldContextMenuProvider(source, workspace, resource, bundle, declaringClass, (FieldMember) member);
 		} else if (member.isMethod()) {
 			MethodContextMenuProviderFactory factory = methodContextMenuOverride != null ? methodContextMenuOverride : methodContextMenuDefault;
-			return factory.getMethodContextMenuProvider(workspace, resource, bundle, declaringClass, (MethodMember) member);
+			return factory.getMethodContextMenuProvider(source, workspace, resource, bundle, declaringClass, (MethodMember) member);
 		} else {
 			throw new IllegalStateException("Unsupported member: " + member.getClass().getName());
 		}
@@ -165,6 +171,8 @@ public class ContextMenuProviderService implements Service {
 	/**
 	 * Delegates to {@link FileContextMenuProviderFactory}.
 	 *
+	 * @param source
+	 * 		Context request origin.
 	 * @param workspace
 	 * 		Containing workspace.
 	 * @param resource
@@ -177,17 +185,20 @@ public class ContextMenuProviderService implements Service {
 	 * @return Menu provider for the file.
 	 */
 	@Nonnull
-	public ContextMenuProvider getFileInfoContextMenuProvider(@Nonnull Workspace workspace,
+	public ContextMenuProvider getFileInfoContextMenuProvider(@Nonnull ContextSource source,
+															  @Nonnull Workspace workspace,
 															  @Nonnull WorkspaceResource resource,
 															  @Nonnull FileBundle bundle,
 															  @Nonnull FileInfo info) {
 		FileContextMenuProviderFactory factory = fileContextMenuOverride != null ? fileContextMenuOverride : fileContextMenuDefault;
-		return factory.getFileInfoContextMenuProvider(workspace, resource, bundle, info);
+		return factory.getFileInfoContextMenuProvider(source, workspace, resource, bundle, info);
 	}
 
 	/**
 	 * Delegates to {@link PackageContextMenuProviderFactory}.
 	 *
+	 * @param source
+	 * 		Context request origin.
 	 * @param workspace
 	 * 		Containing workspace.
 	 * @param resource
@@ -200,17 +211,20 @@ public class ContextMenuProviderService implements Service {
 	 * @return Menu provider for the package.
 	 */
 	@Nonnull
-	public ContextMenuProvider getPackageContextMenuProvider(@Nonnull Workspace workspace,
+	public ContextMenuProvider getPackageContextMenuProvider(@Nonnull ContextSource source,
+															 @Nonnull Workspace workspace,
 															 @Nonnull WorkspaceResource resource,
 															 @Nonnull ClassBundle<? extends ClassInfo> bundle,
 															 @Nonnull String packageName) {
 		PackageContextMenuProviderFactory factory = packageContextMenuOverride != null ? packageContextMenuOverride : packageContextMenuDefault;
-		return factory.getPackageContextMenuProvider(workspace, resource, bundle, packageName);
+		return factory.getPackageContextMenuProvider(source, workspace, resource, bundle, packageName);
 	}
 
 	/**
 	 * Delegates to {@link DirectoryContextMenuProviderFactory}.
 	 *
+	 * @param source
+	 * 		Context request origin.
 	 * @param workspace
 	 * 		Containing workspace.
 	 * @param resource
@@ -223,17 +237,20 @@ public class ContextMenuProviderService implements Service {
 	 * @return Menu provider for the directory.
 	 */
 	@Nonnull
-	public ContextMenuProvider getDirectoryContextMenuProvider(@Nonnull Workspace workspace,
+	public ContextMenuProvider getDirectoryContextMenuProvider(@Nonnull ContextSource source,
+															   @Nonnull Workspace workspace,
 															   @Nonnull WorkspaceResource resource,
 															   @Nonnull FileBundle bundle,
 															   @Nonnull String directoryName) {
 		DirectoryContextMenuProviderFactory factory = directoryContextMenuOverride != null ? directoryContextMenuOverride : directoryContextMenuDefault;
-		return factory.getDirectoryContextMenuProvider(workspace, resource, bundle, directoryName);
+		return factory.getDirectoryContextMenuProvider(source, workspace, resource, bundle, directoryName);
 	}
 
 	/**
 	 * Delegates to {@link BundleContextMenuProviderFactory}.
 	 *
+	 * @param source
+	 * 		Context request origin.
 	 * @param workspace
 	 * 		Containing workspace.
 	 * @param resource
@@ -244,16 +261,19 @@ public class ContextMenuProviderService implements Service {
 	 * @return Menu provider for the bundle.
 	 */
 	@Nonnull
-	public ContextMenuProvider getBundleContextMenuProvider(@Nonnull Workspace workspace,
+	public ContextMenuProvider getBundleContextMenuProvider(@Nonnull ContextSource source,
+															@Nonnull Workspace workspace,
 															@Nonnull WorkspaceResource resource,
 															@Nonnull Bundle<? extends Info> bundle) {
 		BundleContextMenuProviderFactory factory = bundleContextMenuOverride != null ? bundleContextMenuOverride : bundleContextMenuDefault;
-		return factory.getBundleContextMenuProvider(workspace, resource, bundle);
+		return factory.getBundleContextMenuProvider(source, workspace, resource, bundle);
 	}
 
 	/**
 	 * Delegates to {@link ResourceContextMenuProviderFactory}.
 	 *
+	 * @param source
+	 * 		Context request origin.
 	 * @param workspace
 	 * 		Containing workspace.
 	 * @param resource
@@ -262,10 +282,11 @@ public class ContextMenuProviderService implements Service {
 	 * @return Menu provider for the resource.
 	 */
 	@Nonnull
-	public ContextMenuProvider getResourceContextMenuProvider(@Nonnull Workspace workspace,
+	public ContextMenuProvider getResourceContextMenuProvider(@Nonnull ContextSource source,
+															  @Nonnull Workspace workspace,
 															  @Nonnull WorkspaceResource resource) {
 		ResourceContextMenuProviderFactory factory = resourceContextMenuOverride != null ? resourceContextMenuOverride : resourceContextMenuDefault;
-		return factory.getResourceContextMenuProvider(workspace, resource);
+		return factory.getResourceContextMenuProvider(source, workspace, resource);
 	}
 
 	/**

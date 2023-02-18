@@ -15,6 +15,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 public interface FieldContextMenuProviderFactory extends ContextMenuProviderFactory {
 	/**
+	 * @param source
+	 * 		Context request origin.
 	 * @param workspace
 	 * 		Containing workspace.
 	 * @param resource
@@ -29,7 +31,8 @@ public interface FieldContextMenuProviderFactory extends ContextMenuProviderFact
 	 * @return Menu provider for the field.
 	 */
 	@Nonnull
-	default ContextMenuProvider getFieldContextMenuProvider(@Nonnull Workspace workspace,
+	default ContextMenuProvider getFieldContextMenuProvider(@Nonnull ContextSource source,
+															@Nonnull Workspace workspace,
 															@Nonnull WorkspaceResource resource,
 															@Nonnull ClassBundle<?> bundle,
 															@Nonnull ClassInfo declaringClass,

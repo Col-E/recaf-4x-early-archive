@@ -29,7 +29,8 @@ public class BasicFileContextMenuProviderFactory implements FileContextMenuProvi
 
 	@Nonnull
 	@Override
-	public ContextMenuProvider getFileInfoContextMenuProvider(@Nonnull Workspace workspace,
+	public ContextMenuProvider getFileInfoContextMenuProvider(@Nonnull ContextSource source,
+															  @Nonnull Workspace workspace,
 															  @Nonnull WorkspaceResource resource,
 															  @Nonnull FileBundle bundle,
 															  @Nonnull FileInfo info) {

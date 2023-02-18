@@ -23,6 +23,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  * <ul>
  *     <li>{@link #setClassIconProviderOverride(ClassIconProviderFactory)}</li>
  *     <li>{@link #setFileIconProviderOverride(FileIconProviderFactory)}</li>
+ *     <li>{@link #setFieldIconProviderOverride(FieldIconProviderFactory)}</li>
+ *     <li>{@link #setMethodIconProviderOverride(MethodIconProviderFactory)}</li>
  *     <li>{@link #setPackageIconProviderOverride(PackageIconProviderFactory)}</li>
  *     <li>{@link #setDirectoryIconProviderOverride(DirectoryIconProviderFactory)}</li>
  *     <li>{@link #setBundleIconProviderOverride(BundleIconProviderFactory)}</li>
@@ -164,10 +166,10 @@ public class IconProviderService implements Service {
 	 */
 	@Nonnull
 	public IconProvider getClassMemberIconProvider(@Nonnull Workspace workspace,
-																 @Nonnull WorkspaceResource resource,
-																 @Nonnull ClassBundle<?> bundle,
-																 @Nonnull ClassInfo declaringClass,
-																 @Nonnull ClassMember member) {
+												   @Nonnull WorkspaceResource resource,
+												   @Nonnull ClassBundle<?> bundle,
+												   @Nonnull ClassInfo declaringClass,
+												   @Nonnull ClassMember member) {
 		if (member.isField()) {
 			FieldIconProviderFactory factory = fieldIconOverride != null ? fieldIconOverride : fieldIconDefault;
 			return factory.getFieldMemberIconProvider(workspace, resource, bundle, declaringClass, (FieldMember) member);
@@ -340,6 +342,38 @@ public class IconProviderService implements Service {
 	 */
 	public void setFileIconProviderOverride(@Nullable FileIconProviderFactory fileIconOverride) {
 		this.fileIconOverride = fileIconOverride;
+	}
+
+	/**
+	 * @return Override factory for supplying field icon providers.
+	 */
+	@Nonnull
+	public FieldIconProviderFactory getFieldIconProviderOverride() {
+		return fieldIconOverride;
+	}
+
+	/**
+	 * @param fieldIconOverride
+	 * 		Override factory for supplying field icon providers.
+	 */
+	public void setFieldIconProviderOverride(@Nonnull FieldIconProviderFactory fieldIconOverride) {
+		this.fieldIconOverride = fieldIconOverride;
+	}
+
+	/**
+	 * @return Override factory for supplying method icon providers.
+	 */
+	@Nonnull
+	public MethodIconProviderFactory getMethodIconProviderOverride() {
+		return methodIconOverride;
+	}
+
+	/**
+	 * @param methodIconOverride
+	 * 		Override factory for supplying method icon providers.
+	 */
+	public void setMethodIconProviderOverride(@Nonnull MethodIconProviderFactory methodIconOverride) {
+		this.methodIconOverride = methodIconOverride;
 	}
 
 	/**
