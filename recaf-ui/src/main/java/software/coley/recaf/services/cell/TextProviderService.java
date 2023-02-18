@@ -86,6 +86,29 @@ public class TextProviderService implements Service {
 	 * 		Containing resource.
 	 * @param bundle
 	 * 		Containing bundle.
+	 * @param outerClass
+	 * 		Outer class.
+	 * @param inner
+	 * 		The inner class to create text for.
+	 *
+	 * @return Text provider for the inner class.
+	 */
+	@Nonnull
+	public TextProvider getInnerClassInfoTextProvider(@Nonnull Workspace workspace,
+													  @Nonnull WorkspaceResource resource,
+													  @Nonnull ClassBundle<? extends ClassInfo> bundle,
+													  @Nonnull ClassInfo outerClass,
+													  @Nonnull InnerClassInfo inner) {
+		return () -> formatConfig.filter(inner.getInnerName());
+	}
+
+	/**
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
 	 * @param declaringClass
 	 * 		Containing class.
 	 * @param field
