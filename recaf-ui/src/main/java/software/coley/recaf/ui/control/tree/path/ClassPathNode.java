@@ -3,6 +3,7 @@ package software.coley.recaf.ui.control.tree.path;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.member.ClassMember;
 
 /**
@@ -44,6 +45,17 @@ public class ClassPathNode extends AbstractPathNode<String, ClassInfo> {
 	@Nonnull
 	public ClassMemberPathNode child(@Nonnull ClassMember member) {
 		return new ClassMemberPathNode(this, member);
+	}
+
+	/**
+	 * @param innerClass
+	 * 		Inner class to wrap into node.
+	 *
+	 * @return Path node of inner class, with current class as parent.
+	 */
+	@Nonnull
+	public InnerClassPathNode child(@Nonnull InnerClassInfo innerClass) {
+		return new InnerClassPathNode(this, innerClass);
 	}
 
 	@Override
