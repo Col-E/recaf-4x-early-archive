@@ -4,6 +4,8 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.recaf.info.*;
+import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.ui.config.TextFormatConfig;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
@@ -65,7 +67,7 @@ public class TextProviderService implements Service {
 	 * @param bundle
 	 * 		Containing bundle.
 	 * @param info
-	 * 		The class to create a text for.
+	 * 		The class to create text for.
 	 *
 	 * @return Text provider for the class.
 	 */
@@ -84,8 +86,54 @@ public class TextProviderService implements Service {
 	 * 		Containing resource.
 	 * @param bundle
 	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Containing class.
+	 * @param field
+	 * 		The field to create text for.
+	 *
+	 * @return Text provider for the field.
+	 */
+	@Nonnull
+	public TextProvider getFieldMemberTextProvider(@Nonnull Workspace workspace,
+												   @Nonnull WorkspaceResource resource,
+												   @Nonnull ClassBundle<?> bundle,
+												   @Nonnull ClassInfo declaringClass,
+												   @Nonnull FieldMember field) {
+		return () -> formatConfig.filter(field.getName());
+	}
+
+	/**
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Containing class.
+	 * @param method
+	 * 		The method to create text for.
+	 *
+	 * @return Text provider for the method.
+	 */
+	@Nonnull
+	public TextProvider getMethodMemberTextProvider(@Nonnull Workspace workspace,
+													@Nonnull WorkspaceResource resource,
+													@Nonnull ClassBundle<?> bundle,
+													@Nonnull ClassInfo declaringClass,
+													@Nonnull MethodMember method) {
+		return () -> formatConfig.filter(method.getName());
+	}
+
+	/**
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
 	 * @param info
-	 * 		The file to create a text for.
+	 * 		The file to create text for.
 	 *
 	 * @return Text provider for the file.
 	 */
@@ -143,7 +191,7 @@ public class TextProviderService implements Service {
 	 * @param resource
 	 * 		Containing resource.
 	 * @param bundle
-	 * 		The bundle to create a text for.
+	 * 		The bundle to create text for.
 	 *
 	 * @return Text provider for the bundle.
 	 */
@@ -163,7 +211,7 @@ public class TextProviderService implements Service {
 	 * @param workspace
 	 * 		Containing workspace.
 	 * @param resource
-	 * 		The resource to create a text for.
+	 * 		The resource to create text for.
 	 *
 	 * @return Text provider for the resource.
 	 */

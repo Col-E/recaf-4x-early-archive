@@ -11,6 +11,9 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.cell.ContextMenuProviderService;
 import software.coley.recaf.services.cell.IconProviderService;
 import software.coley.recaf.services.cell.TextProviderService;
@@ -125,6 +128,25 @@ public class WorkspaceTreeCell extends TreeCell<PathNode<?>> {
 
 			FileInfo info = filePath.getValue();
 			return textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
+		} else if (item instanceof ClassMemberPathNode memberNode) {
+			ClassBundle<?> bundle = memberNode.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Member path node missing bundle section: {}", item);
+				return null;
+			}
+
+			ClassInfo classInfo = memberNode.getValueOfType(ClassInfo.class);
+			if (classInfo == null) {
+				logger.error("Member path node missing class section: {}", item);
+				return null;
+			}
+
+			ClassMember member = memberNode.getValue();
+			if (member instanceof FieldMember fieldMember) {
+				return textService.getFieldMemberTextProvider(workspace, resource, bundle, classInfo, fieldMember).makeText();
+			} else if (member instanceof MethodMember methodMember) {
+				return textService.getMethodMemberTextProvider(workspace, resource, bundle, classInfo, methodMember).makeText();
+			}
 		} else if (item instanceof DirectoryPathNode directoryPath) {
 			Bundle<?> bundle = directoryPath.getValueOfType(Bundle.class);
 			if (bundle == null) {
@@ -191,6 +213,21 @@ public class WorkspaceTreeCell extends TreeCell<PathNode<?>> {
 
 			FileInfo info = filePath.getValue();
 			return iconService.getFileInfoIconProvider(workspace, resource, bundle, info).makeIcon();
+		} else if (item instanceof ClassMemberPathNode memberNode) {
+			ClassBundle<?> bundle = memberNode.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Member path node missing bundle section: {}", item);
+				return null;
+			}
+
+			ClassInfo classInfo = memberNode.getValueOfType(ClassInfo.class);
+			if (classInfo == null) {
+				logger.error("Member path node missing class section: {}", item);
+				return null;
+			}
+
+			ClassMember member = memberNode.getValue();
+			return iconService.getClassMemberIconProvider(workspace, resource, bundle, classInfo, member).makeIcon();
 		} else if (item instanceof DirectoryPathNode directoryPath) {
 			Bundle<?> bundle = directoryPath.getValueOfType(Bundle.class);
 			if (bundle == null) {
@@ -257,6 +294,21 @@ public class WorkspaceTreeCell extends TreeCell<PathNode<?>> {
 
 			FileInfo info = filePath.getValue();
 			return contextMenuService.getFileInfoContextMenuProvider(workspace, resource, bundle, info).makeMenu();
+		} else if (item instanceof ClassMemberPathNode memberNode) {
+			ClassBundle<?> bundle = memberNode.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Member path node missing bundle section: {}", item);
+				return null;
+			}
+
+			ClassInfo classInfo = memberNode.getValueOfType(ClassInfo.class);
+			if (classInfo == null) {
+				logger.error("Member path node missing class section: {}", item);
+				return null;
+			}
+
+			ClassMember member = memberNode.getValue();
+			return contextMenuService.getClassMemberContextMenuProvider(workspace, resource, bundle, classInfo, member).makeMenu();
 		} else if (item instanceof DirectoryPathNode directoryPath) {
 			Bundle<?> bundle = directoryPath.getValueOfType(Bundle.class);
 			if (bundle == null) {

@@ -5,6 +5,9 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.recaf.info.*;
+import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
 import software.coley.recaf.workspace.model.Workspace;
@@ -35,6 +38,8 @@ public class IconProviderService implements Service {
 	// Defaults
 	private final ClassIconProviderFactory classIconDefault;
 	private final FileIconProviderFactory fileIconDefault;
+	private final FieldIconProviderFactory fieldIconDefault;
+	private final MethodIconProviderFactory methodIconDefault;
 	private final PackageIconProviderFactory packageIconDefault;
 	private final DirectoryIconProviderFactory directoryIconDefault;
 	private final BundleIconProviderFactory bundleIconDefault;
@@ -42,6 +47,8 @@ public class IconProviderService implements Service {
 	// Overrides
 	private ClassIconProviderFactory classIconOverride;
 	private FileIconProviderFactory fileIconOverride;
+	private FieldIconProviderFactory fieldIconOverride;
+	private MethodIconProviderFactory methodIconOverride;
 	private PackageIconProviderFactory packageIconOverride;
 	private DirectoryIconProviderFactory directoryIconOverride;
 	private BundleIconProviderFactory bundleIconOverride;
@@ -51,6 +58,8 @@ public class IconProviderService implements Service {
 	public IconProviderService(@Nonnull IconProviderServiceConfig config,
 							   @Nonnull ClassIconProviderFactory classIconDefault,
 							   @Nonnull FileIconProviderFactory fileIconDefault,
+							   @Nonnull FieldIconProviderFactory fieldIconDefault,
+							   @Nonnull MethodIconProviderFactory methodIconDefault,
 							   @Nonnull PackageIconProviderFactory packageIconDefault,
 							   @Nonnull DirectoryIconProviderFactory directoryIconDefault,
 							   @Nonnull BundleIconProviderFactory bundleIconDefault,
@@ -60,6 +69,8 @@ public class IconProviderService implements Service {
 		// Default factories
 		this.classIconDefault = classIconDefault;
 		this.fileIconDefault = fileIconDefault;
+		this.fieldIconDefault = fieldIconDefault;
+		this.methodIconDefault = methodIconDefault;
 		this.packageIconDefault = packageIconDefault;
 		this.directoryIconDefault = directoryIconDefault;
 		this.bundleIconDefault = bundleIconDefault;
@@ -133,6 +144,39 @@ public class IconProviderService implements Service {
 												@Nonnull FileInfo info) {
 		FileIconProviderFactory factory = fileIconOverride != null ? fileIconOverride : fileIconDefault;
 		return factory.getFileInfoIconProvider(workspace, resource, bundle, info);
+	}
+
+	/**
+	 * Delegates to {@link FieldContextMenuProviderFactory} and {@link MethodContextMenuProviderFactory}.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Containing class.
+	 * @param member
+	 * 		The member to create an icon for.
+	 *
+	 * @return Icon provider for the class member.
+	 */
+	@Nonnull
+	public IconProvider getClassMemberIconProvider(@Nonnull Workspace workspace,
+																 @Nonnull WorkspaceResource resource,
+																 @Nonnull ClassBundle<?> bundle,
+																 @Nonnull ClassInfo declaringClass,
+																 @Nonnull ClassMember member) {
+		if (member.isField()) {
+			FieldIconProviderFactory factory = fieldIconOverride != null ? fieldIconOverride : fieldIconDefault;
+			return factory.getFieldMemberIconProvider(workspace, resource, bundle, declaringClass, (FieldMember) member);
+		} else if (member.isMethod()) {
+			MethodIconProviderFactory factory = methodIconOverride != null ? methodIconOverride : methodIconDefault;
+			return factory.getMethodMemberIconProvider(workspace, resource, bundle, declaringClass, (MethodMember) member);
+		} else {
+			throw new IllegalStateException("Unsupported member: " + member.getClass().getName());
+		}
 	}
 
 	/**

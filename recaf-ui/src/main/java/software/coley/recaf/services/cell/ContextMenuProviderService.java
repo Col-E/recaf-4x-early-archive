@@ -5,6 +5,9 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.recaf.info.*;
+import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
 import software.coley.recaf.workspace.model.Workspace;
@@ -35,6 +38,8 @@ public class ContextMenuProviderService implements Service {
 	// Defaults
 	private final ClassContextMenuProviderFactory classContextMenuDefault;
 	private final FileContextMenuProviderFactory fileContextMenuDefault;
+	private final FieldContextMenuProviderFactory fieldContextMenuDefault;
+	private final MethodContextMenuProviderFactory methodContextMenuDefault;
 	private final PackageContextMenuProviderFactory packageContextMenuDefault;
 	private final DirectoryContextMenuProviderFactory directoryContextMenuDefault;
 	private final BundleContextMenuProviderFactory bundleContextMenuDefault;
@@ -42,6 +47,8 @@ public class ContextMenuProviderService implements Service {
 	// Overrides
 	private ClassContextMenuProviderFactory classContextMenuOverride;
 	private FileContextMenuProviderFactory fileContextMenuOverride;
+	private FieldContextMenuProviderFactory fieldContextMenuOverride;
+	private MethodContextMenuProviderFactory methodContextMenuOverride;
 	private PackageContextMenuProviderFactory packageContextMenuOverride;
 	private DirectoryContextMenuProviderFactory directoryContextMenuOverride;
 	private BundleContextMenuProviderFactory bundleContextMenuOverride;
@@ -51,6 +58,8 @@ public class ContextMenuProviderService implements Service {
 	public ContextMenuProviderService(@Nonnull ContextMenuProviderServiceConfig config,
 									  @Nonnull ClassContextMenuProviderFactory classContextMenuDefault,
 									  @Nonnull FileContextMenuProviderFactory fileContextMenuDefault,
+									  @Nonnull FieldContextMenuProviderFactory fieldContextMenuDefault,
+									  @Nonnull MethodContextMenuProviderFactory methodContextMenuDefault,
 									  @Nonnull PackageContextMenuProviderFactory packageContextMenuDefault,
 									  @Nonnull DirectoryContextMenuProviderFactory directoryContextMenuDefault,
 									  @Nonnull BundleContextMenuProviderFactory bundleContextMenuDefault,
@@ -60,6 +69,8 @@ public class ContextMenuProviderService implements Service {
 		// Default factories
 		this.classContextMenuDefault = classContextMenuDefault;
 		this.fileContextMenuDefault = fileContextMenuDefault;
+		this.fieldContextMenuDefault = fieldContextMenuDefault;
+		this.methodContextMenuDefault = methodContextMenuDefault;
 		this.packageContextMenuDefault = packageContextMenuDefault;
 		this.directoryContextMenuDefault = directoryContextMenuDefault;
 		this.bundleContextMenuDefault = bundleContextMenuDefault;
@@ -67,8 +78,9 @@ public class ContextMenuProviderService implements Service {
 
 		// TODO: Factories for (here and in other services)
 		//  - inner classes of ClassInfo
-		//  - fields of ClassInfo
-		//  - methods of ClassInfo
+
+		// TODO: Need to add parameter 'isDeclaration' to all of these.
+		//  - or some sort of context, to know where they are from.
 	}
 
 	/**
@@ -115,6 +127,39 @@ public class ContextMenuProviderService implements Service {
 																	  @Nonnull AndroidClassInfo info) {
 		ClassContextMenuProviderFactory factory = classContextMenuOverride != null ? classContextMenuOverride : classContextMenuDefault;
 		return factory.getAndroidClassInfoContextMenuProvider(workspace, resource, bundle, info);
+	}
+
+	/**
+	 * Delegates to {@link FieldContextMenuProviderFactory} and {@link MethodContextMenuProviderFactory}.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Containing class.
+	 * @param member
+	 * 		The member to create a menu for.
+	 *
+	 * @return Menu provider for the class member.
+	 */
+	@Nonnull
+	public ContextMenuProvider getClassMemberContextMenuProvider(@Nonnull Workspace workspace,
+																 @Nonnull WorkspaceResource resource,
+																 @Nonnull ClassBundle<?> bundle,
+																 @Nonnull ClassInfo declaringClass,
+																 @Nonnull ClassMember member) {
+		if (member.isField()) {
+			FieldContextMenuProviderFactory factory = fieldContextMenuOverride != null ? fieldContextMenuOverride : fieldContextMenuDefault;
+			return factory.getFieldContextMenuProvider(workspace, resource, bundle, declaringClass, (FieldMember) member);
+		} else if (member.isMethod()) {
+			MethodContextMenuProviderFactory factory = methodContextMenuOverride != null ? methodContextMenuOverride : methodContextMenuDefault;
+			return factory.getMethodContextMenuProvider(workspace, resource, bundle, declaringClass, (MethodMember) member);
+		} else {
+			throw new IllegalStateException("Unsupported member: " + member.getClass().getName());
+		}
 	}
 
 	/**
@@ -301,6 +346,38 @@ public class ContextMenuProviderService implements Service {
 	 */
 	public void setFileContextMenuProviderOverride(@Nullable FileContextMenuProviderFactory fileContextMenuOverride) {
 		this.fileContextMenuOverride = fileContextMenuOverride;
+	}
+
+	/**
+	 * @return Override factory for supplying field menu providers.
+	 */
+	@Nullable
+	public FieldContextMenuProviderFactory getFieldContextMenuProviderOverride() {
+		return fieldContextMenuOverride;
+	}
+
+	/**
+	 * @param fieldContextMenuOverride
+	 * 		Override factory for supplying field menu providers.
+	 */
+	public void setFieldContextMenuProviderOverride(@Nullable FieldContextMenuProviderFactory fieldContextMenuOverride) {
+		this.fieldContextMenuOverride = fieldContextMenuOverride;
+	}
+
+	/**
+	 * @return Override factory for supplying method menu providers.
+	 */
+	@Nullable
+	public MethodContextMenuProviderFactory getMethodContextMenuProviderOverride() {
+		return methodContextMenuOverride;
+	}
+
+	/**
+	 * @param methodContextMenuOverride
+	 * 		Override factory for supplying method menu providers.
+	 */
+	public void setMethodContextMenuProviderOverride(@Nullable MethodContextMenuProviderFactory methodContextMenuOverride) {
+		this.methodContextMenuOverride = methodContextMenuOverride;
 	}
 
 	/**
