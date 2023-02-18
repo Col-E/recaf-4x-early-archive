@@ -3,6 +3,7 @@ package software.coley.recaf.services.cell;
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
@@ -15,6 +16,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  *
  * @author Matt Coley
  * @see ClassIconProviderFactory For {@link JvmClassInfo} and {@link AndroidClassBundle} entries.
+ * @see InnerClassIconProviderFactory For {@link InnerClassInfo} entries.
  * @see FieldIconProviderFactory For {@link FieldMember} entries.
  * @see MethodIconProviderFactory For {@link MethodMember} entries.
  * @see FileIconProviderFactory For {@link FileInfo} entries.

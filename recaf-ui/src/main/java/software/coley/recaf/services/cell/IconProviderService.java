@@ -23,6 +23,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  * <ul>
  *     <li>{@link #setClassIconProviderOverride(ClassIconProviderFactory)}</li>
  *     <li>{@link #setFileIconProviderOverride(FileIconProviderFactory)}</li>
+ *     <li>{@link #setInnerClassIconProviderOverride(InnerClassIconProviderFactory)}</li>
  *     <li>{@link #setFieldIconProviderOverride(FieldIconProviderFactory)}</li>
  *     <li>{@link #setMethodIconProviderOverride(MethodIconProviderFactory)}</li>
  *     <li>{@link #setPackageIconProviderOverride(PackageIconProviderFactory)}</li>
@@ -40,6 +41,7 @@ public class IconProviderService implements Service {
 	// Defaults
 	private final ClassIconProviderFactory classIconDefault;
 	private final FileIconProviderFactory fileIconDefault;
+	private final InnerClassIconProviderFactory innerClassIconDefault;
 	private final FieldIconProviderFactory fieldIconDefault;
 	private final MethodIconProviderFactory methodIconDefault;
 	private final PackageIconProviderFactory packageIconDefault;
@@ -49,6 +51,7 @@ public class IconProviderService implements Service {
 	// Overrides
 	private ClassIconProviderFactory classIconOverride;
 	private FileIconProviderFactory fileIconOverride;
+	private InnerClassIconProviderFactory innerClassIconOverride;
 	private FieldIconProviderFactory fieldIconOverride;
 	private MethodIconProviderFactory methodIconOverride;
 	private PackageIconProviderFactory packageIconOverride;
@@ -60,6 +63,7 @@ public class IconProviderService implements Service {
 	public IconProviderService(@Nonnull IconProviderServiceConfig config,
 							   @Nonnull ClassIconProviderFactory classIconDefault,
 							   @Nonnull FileIconProviderFactory fileIconDefault,
+							   @Nonnull InnerClassIconProviderFactory innerClassIconDefault,
 							   @Nonnull FieldIconProviderFactory fieldIconDefault,
 							   @Nonnull MethodIconProviderFactory methodIconDefault,
 							   @Nonnull PackageIconProviderFactory packageIconDefault,
@@ -71,6 +75,7 @@ public class IconProviderService implements Service {
 		// Default factories
 		this.classIconDefault = classIconDefault;
 		this.fileIconDefault = fileIconDefault;
+		this.innerClassIconDefault = innerClassIconDefault;
 		this.fieldIconDefault = fieldIconDefault;
 		this.methodIconDefault = methodIconDefault;
 		this.packageIconDefault = packageIconDefault;
@@ -149,6 +154,32 @@ public class IconProviderService implements Service {
 	}
 
 	/**
+	 * Delegates to {@link InnerClassIconProviderFactory}.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param outerClass
+	 * 		Outer class.
+	 * @param inner
+	 * 		The inner class to create an icon for.
+	 *
+	 * @return Icon provider for the inner class.
+	 */
+	@Nonnull
+	public IconProvider getInnerClassInfoIconProvider(@Nonnull Workspace workspace,
+													  @Nonnull WorkspaceResource resource,
+													  @Nonnull ClassBundle<? extends ClassInfo> bundle,
+													  @Nonnull ClassInfo outerClass,
+													  @Nonnull InnerClassInfo inner) {
+		InnerClassIconProviderFactory factory = innerClassIconOverride != null ? innerClassIconOverride : innerClassIconDefault;
+		return factory.getInnerClassInfoIconProvider(workspace, resource, bundle, outerClass, inner);
+	}
+
+	/**
 	 * Delegates to {@link FieldContextMenuProviderFactory} and {@link MethodContextMenuProviderFactory}.
 	 *
 	 * @param workspace
@@ -167,7 +198,7 @@ public class IconProviderService implements Service {
 	@Nonnull
 	public IconProvider getClassMemberIconProvider(@Nonnull Workspace workspace,
 												   @Nonnull WorkspaceResource resource,
-												   @Nonnull ClassBundle<?> bundle,
+												   @Nonnull ClassBundle<? extends ClassInfo> bundle,
 												   @Nonnull ClassInfo declaringClass,
 												   @Nonnull ClassMember member) {
 		if (member.isField()) {
@@ -342,6 +373,22 @@ public class IconProviderService implements Service {
 	 */
 	public void setFileIconProviderOverride(@Nullable FileIconProviderFactory fileIconOverride) {
 		this.fileIconOverride = fileIconOverride;
+	}
+
+	/**
+	 * @return Override factory for supplying inner class icon providers.
+	 */
+	@Nullable
+	public InnerClassIconProviderFactory getInnerClassIconProviderOverride() {
+		return innerClassIconOverride;
+	}
+
+	/**
+	 * @param innerClassIconOverride
+	 * 		Override factory for supplying inner class icon providers.
+	 */
+	public void setInnerClassIconProviderOverride(@Nullable InnerClassIconProviderFactory innerClassIconOverride) {
+		this.innerClassIconOverride = innerClassIconOverride;
 	}
 
 	/**

@@ -23,6 +23,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  * <ul>
  *     <li>{@link #setClassContextMenuProviderOverride(ClassContextMenuProviderFactory)}</li>
  *     <li>{@link #setFileContextMenuProviderOverride(FileContextMenuProviderFactory)}</li>
+ *     <li>{@link #setInnerClassContextMenuProviderOverride(InnerClassContextMenuProviderFactory)}</li>
  *     <li>{@link #setFieldContextMenuProviderOverride(FieldContextMenuProviderFactory)}</li>
  *     <li>{@link #setMethodContextMenuProviderOverride(MethodContextMenuProviderFactory)}</li>
  *     <li>{@link #setPackageContextMenuProviderOverride(PackageContextMenuProviderFactory)}</li>
@@ -40,6 +41,7 @@ public class ContextMenuProviderService implements Service {
 	// Defaults
 	private final ClassContextMenuProviderFactory classContextMenuDefault;
 	private final FileContextMenuProviderFactory fileContextMenuDefault;
+	private final InnerClassContextMenuProviderFactory innerClassContextMenuDefault;
 	private final FieldContextMenuProviderFactory fieldContextMenuDefault;
 	private final MethodContextMenuProviderFactory methodContextMenuDefault;
 	private final PackageContextMenuProviderFactory packageContextMenuDefault;
@@ -49,6 +51,7 @@ public class ContextMenuProviderService implements Service {
 	// Overrides
 	private ClassContextMenuProviderFactory classContextMenuOverride;
 	private FileContextMenuProviderFactory fileContextMenuOverride;
+	private InnerClassContextMenuProviderFactory innerClassContextMenuOverride;
 	private FieldContextMenuProviderFactory fieldContextMenuOverride;
 	private MethodContextMenuProviderFactory methodContextMenuOverride;
 	private PackageContextMenuProviderFactory packageContextMenuOverride;
@@ -60,6 +63,7 @@ public class ContextMenuProviderService implements Service {
 	public ContextMenuProviderService(@Nonnull ContextMenuProviderServiceConfig config,
 									  @Nonnull ClassContextMenuProviderFactory classContextMenuDefault,
 									  @Nonnull FileContextMenuProviderFactory fileContextMenuDefault,
+									  @Nonnull InnerClassContextMenuProviderFactory innerClassContextMenuDefault,
 									  @Nonnull FieldContextMenuProviderFactory fieldContextMenuDefault,
 									  @Nonnull MethodContextMenuProviderFactory methodContextMenuDefault,
 									  @Nonnull PackageContextMenuProviderFactory packageContextMenuDefault,
@@ -71,6 +75,7 @@ public class ContextMenuProviderService implements Service {
 		// Default factories
 		this.classContextMenuDefault = classContextMenuDefault;
 		this.fileContextMenuDefault = fileContextMenuDefault;
+		this.innerClassContextMenuDefault = innerClassContextMenuDefault;
 		this.fieldContextMenuDefault = fieldContextMenuDefault;
 		this.methodContextMenuDefault = methodContextMenuDefault;
 		this.packageContextMenuDefault = packageContextMenuDefault;
@@ -133,6 +138,33 @@ public class ContextMenuProviderService implements Service {
 	}
 
 	/**
+	 * Delegates to {@link InnerClassContextMenuProviderFactory}.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param outerClass
+	 * 		Outer class.
+	 * @param inner
+	 * 		The inner class to create a menu for.
+	 *
+	 * @return Menu provider for the class.
+	 */
+	@Nonnull
+	public ContextMenuProvider getInnerClassInfoContextMenuProvider(@Nonnull ContextSource source,
+																	@Nonnull Workspace workspace,
+																	@Nonnull WorkspaceResource resource,
+																	@Nonnull ClassBundle<? extends ClassInfo> bundle,
+																	@Nonnull ClassInfo outerClass,
+																	@Nonnull InnerClassInfo inner) {
+		InnerClassContextMenuProviderFactory factory = innerClassContextMenuOverride != null ? innerClassContextMenuOverride : innerClassContextMenuDefault;
+		return factory.getInnerClassInfoContextMenuProvider(source, workspace, resource, bundle, outerClass, inner);
+	}
+
+	/**
 	 * Delegates to {@link FieldContextMenuProviderFactory} and {@link MethodContextMenuProviderFactory}.
 	 *
 	 * @param source
@@ -154,7 +186,7 @@ public class ContextMenuProviderService implements Service {
 	public ContextMenuProvider getClassMemberContextMenuProvider(@Nonnull ContextSource source,
 																 @Nonnull Workspace workspace,
 																 @Nonnull WorkspaceResource resource,
-																 @Nonnull ClassBundle<?> bundle,
+																 @Nonnull ClassBundle<? extends ClassInfo> bundle,
 																 @Nonnull ClassInfo declaringClass,
 																 @Nonnull ClassMember member) {
 		if (member.isField()) {
@@ -367,6 +399,22 @@ public class ContextMenuProviderService implements Service {
 	 */
 	public void setFileContextMenuProviderOverride(@Nullable FileContextMenuProviderFactory fileContextMenuOverride) {
 		this.fileContextMenuOverride = fileContextMenuOverride;
+	}
+
+	/**
+	 * @return Override factory for supplying inner class menu providers.
+	 */
+	@Nullable
+	public InnerClassContextMenuProviderFactory getInnerClassContextMenuProviderOverride() {
+		return innerClassContextMenuOverride;
+	}
+
+	/**
+	 * @param innerClassContextMenuOverride
+	 * 		Override factory for supplying inner class menu providers.
+	 */
+	public void setInnerClassContextMenuProviderOverride(@Nullable InnerClassContextMenuProviderFactory innerClassContextMenuOverride) {
+		this.innerClassContextMenuOverride = innerClassContextMenuOverride;
 	}
 
 	/**
