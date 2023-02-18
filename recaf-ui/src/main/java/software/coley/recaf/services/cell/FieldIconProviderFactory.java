@@ -31,7 +31,7 @@ public interface FieldIconProviderFactory extends IconProviderFactory {
 	@Nonnull
 	default IconProvider getFieldMemberIconProvider(@Nonnull Workspace workspace,
 													@Nonnull WorkspaceResource resource,
-													@Nonnull ClassBundle<?> bundle,
+													@Nonnull ClassBundle<? extends ClassInfo> bundle,
 													@Nonnull ClassInfo declaringClass,
 													@Nonnull FieldMember field) {
 		return emptyProvider();

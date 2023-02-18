@@ -33,7 +33,7 @@ public class BasicFieldContextMenuProviderFactory implements FieldContextMenuPro
 	public ContextMenuProvider getFieldContextMenuProvider(@Nonnull ContextSource source,
 														   @Nonnull Workspace workspace,
 														   @Nonnull WorkspaceResource resource,
-														   @Nonnull ClassBundle<?> bundle,
+														   @Nonnull ClassBundle<? extends ClassInfo> bundle,
 														   @Nonnull ClassInfo declaringClass,
 														   @Nonnull FieldMember field) {
 		return () -> {

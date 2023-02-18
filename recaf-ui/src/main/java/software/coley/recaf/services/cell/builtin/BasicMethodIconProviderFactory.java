@@ -30,7 +30,7 @@ public class BasicMethodIconProviderFactory implements MethodIconProviderFactory
 	@Override
 	public IconProvider getMethodMemberIconProvider(@Nonnull Workspace workspace,
 													@Nonnull WorkspaceResource resource,
-													@Nonnull ClassBundle<?> bundle,
+													@Nonnull ClassBundle<? extends ClassInfo> bundle,
 													@Nonnull ClassInfo declaringClass,
 													@Nonnull MethodMember method) {
 		return () -> methodIconProvider(method);

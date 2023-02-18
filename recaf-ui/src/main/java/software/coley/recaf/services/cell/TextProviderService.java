@@ -96,7 +96,7 @@ public class TextProviderService implements Service {
 	@Nonnull
 	public TextProvider getFieldMemberTextProvider(@Nonnull Workspace workspace,
 												   @Nonnull WorkspaceResource resource,
-												   @Nonnull ClassBundle<?> bundle,
+												   @Nonnull ClassBundle<? extends ClassInfo> bundle,
 												   @Nonnull ClassInfo declaringClass,
 												   @Nonnull FieldMember field) {
 		return () -> formatConfig.filter(field.getName());
@@ -119,7 +119,7 @@ public class TextProviderService implements Service {
 	@Nonnull
 	public TextProvider getMethodMemberTextProvider(@Nonnull Workspace workspace,
 													@Nonnull WorkspaceResource resource,
-													@Nonnull ClassBundle<?> bundle,
+													@Nonnull ClassBundle<? extends ClassInfo> bundle,
 													@Nonnull ClassInfo declaringClass,
 													@Nonnull MethodMember method) {
 		return () -> formatConfig.filter(method.getName());

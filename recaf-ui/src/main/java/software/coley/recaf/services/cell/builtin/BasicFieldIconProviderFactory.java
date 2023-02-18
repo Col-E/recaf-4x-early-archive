@@ -29,7 +29,7 @@ public class BasicFieldIconProviderFactory implements FieldIconProviderFactory {
 	@Override
 	public IconProvider getFieldMemberIconProvider(@Nonnull Workspace workspace,
 												   @Nonnull WorkspaceResource resource,
-												   @Nonnull ClassBundle<?> bundle,
+												   @Nonnull ClassBundle<? extends ClassInfo> bundle,
 												   @Nonnull ClassInfo declaringClass,
 												   @Nonnull FieldMember field) {
 		return () -> fieldIconProvider(field);

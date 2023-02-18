@@ -34,7 +34,7 @@ public interface MethodContextMenuProviderFactory extends ContextMenuProviderFac
 	default ContextMenuProvider getMethodContextMenuProvider(@Nonnull ContextSource source,
 															 @Nonnull Workspace workspace,
 															 @Nonnull WorkspaceResource resource,
-															 @Nonnull ClassBundle<?> bundle,
+															 @Nonnull ClassBundle<? extends ClassInfo> bundle,
 															 @Nonnull ClassInfo declaringClass,
 															 @Nonnull MethodMember method) {
 		return emptyProvider();
