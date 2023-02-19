@@ -3,10 +3,10 @@ package software.coley.recaf.ui.control.tree;
 import jakarta.annotation.Nonnull;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
-import software.coley.recaf.ui.control.tree.path.ClassPathNode;
-import software.coley.recaf.ui.control.tree.path.DirectoryPathNode;
-import software.coley.recaf.ui.control.tree.path.FilePathNode;
-import software.coley.recaf.ui.control.tree.path.PathNode;
+import software.coley.recaf.ui.path.ClassPathNode;
+import software.coley.recaf.ui.path.DirectoryPathNode;
+import software.coley.recaf.ui.path.FilePathNode;
+import software.coley.recaf.ui.path.PathNode;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 

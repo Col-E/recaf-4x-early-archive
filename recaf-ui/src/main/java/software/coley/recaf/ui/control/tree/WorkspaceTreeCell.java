@@ -20,6 +20,7 @@ import software.coley.recaf.services.cell.IconProviderService;
 import software.coley.recaf.services.cell.TextProviderService;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.tree.path.*;
+import software.coley.recaf.ui.path.*;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.*;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;

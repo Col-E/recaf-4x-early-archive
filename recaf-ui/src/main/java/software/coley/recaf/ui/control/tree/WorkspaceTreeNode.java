@@ -3,7 +3,7 @@ package software.coley.recaf.ui.control.tree;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.scene.control.TreeItem;
-import software.coley.recaf.ui.control.tree.path.PathNode;
+import software.coley.recaf.ui.path.PathNode;
 
 /**
  * Tree item subtype for more convenience tree building operations.

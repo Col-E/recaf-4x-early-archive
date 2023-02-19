@@ -6,6 +6,7 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.StringConsumer;
 import software.coley.recaf.ui.control.tree.path.*;
+import software.coley.recaf.ui.path.*;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
