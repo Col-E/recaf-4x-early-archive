@@ -41,7 +41,6 @@ import static software.coley.recaf.util.Lang.getBinding;
  */
 @Dependent
 public class ConfigPane extends SplitPane implements ManagedConfigListener {
-	private static final String CONF_LANG_PREFIX = "conf.";
 	private final Map<String, ConfigPage> pages = new HashMap<>();
 	private final TreeItem<String> root = new TreeItem<>("root");
 	private final TreeView<String> tree = new TreeView<>();
@@ -87,7 +86,7 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 						setGraphic(new FontIconView(icon));
 					else
 						setGraphic(null);
-					textProperty().bind(getBinding(CONF_LANG_PREFIX + item));
+					textProperty().bind(getBinding(item));
 					setOnMousePressed(e -> {
 						ConfigPage page = pages.get(item);
 						if (page != null) content.setContent(page);

@@ -15,6 +15,6 @@ import software.coley.recaf.services.ServiceConfig;
 public class TextProviderServiceConfig extends BasicConfigContainer implements ServiceConfig {
 	@Inject
 	public TextProviderServiceConfig() {
-		super(ConfigGroups.USER_INTERFACE, TextProviderService.SERVICE_ID + CONFIG_SUFFIX);
+		super(ConfigGroups.SERVICE_UI, TextProviderService.SERVICE_ID + CONFIG_SUFFIX);
 	}
 }

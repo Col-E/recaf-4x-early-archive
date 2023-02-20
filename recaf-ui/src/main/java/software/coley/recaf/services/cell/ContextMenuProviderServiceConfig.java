@@ -15,6 +15,6 @@ import software.coley.recaf.services.ServiceConfig;
 public class ContextMenuProviderServiceConfig extends BasicConfigContainer implements ServiceConfig {
 	@Inject
 	public ContextMenuProviderServiceConfig() {
-		super(ConfigGroups.USER_INTERFACE, ContextMenuProviderService.SERVICE_ID + CONFIG_SUFFIX);
+		super(ConfigGroups.SERVICE_UI, ContextMenuProviderService.SERVICE_ID + CONFIG_SUFFIX);
 	}
 }

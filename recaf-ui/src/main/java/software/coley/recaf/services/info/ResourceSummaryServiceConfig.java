@@ -15,6 +15,6 @@ import software.coley.recaf.services.ServiceConfig;
 public class ResourceSummaryServiceConfig extends BasicConfigContainer implements ServiceConfig {
 	@Inject
 	public ResourceSummaryServiceConfig() {
-		super(ConfigGroups.USER_INTERFACE, ResourceSummaryService.SERVICE_ID + CONFIG_SUFFIX);
+		super(ConfigGroups.SERVICE_UI, ResourceSummaryService.SERVICE_ID + CONFIG_SUFFIX);
 	}
 }

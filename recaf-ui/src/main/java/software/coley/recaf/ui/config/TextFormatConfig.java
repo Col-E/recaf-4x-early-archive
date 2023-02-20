@@ -25,7 +25,7 @@ public class TextFormatConfig extends BasicConfigContainer {
 
 	@Inject
 	public TextFormatConfig() {
-		super(ConfigGroups.SERVICE_IO, ID + CONFIG_SUFFIX);
+		super(ConfigGroups.SERVICE_UI, ID + CONFIG_SUFFIX);
 		// Add values
 		addValue(new BasicConfigValue<>("escape", Boolean.class, escape));
 		addValue(new BasicConfigValue<>("shorten", Boolean.class, shorten));

@@ -35,7 +35,7 @@ public class ConfigIconManager {
 		registerGroup(SERVICE_IO, CarbonIcons.ARROWS_HORIZONTAL);
 		registerGroup(SERVICE_MAPPING, CarbonIcons.MAP_BOUNDARY);
 		registerGroup(SERVICE_PLUGIN, CarbonIcons.PLUG);
-		registerGroup(USER_INTERFACE, CarbonIcons.DICOM_OVERLAY);
+		registerGroup(SERVICE_UI, CarbonIcons.DICOM_OVERLAY);
 	}
 
 	/**

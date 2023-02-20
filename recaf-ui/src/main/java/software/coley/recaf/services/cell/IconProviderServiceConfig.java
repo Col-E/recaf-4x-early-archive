@@ -15,6 +15,6 @@ import software.coley.recaf.services.ServiceConfig;
 public class IconProviderServiceConfig extends BasicConfigContainer implements ServiceConfig {
 	@Inject
 	public IconProviderServiceConfig() {
-		super(ConfigGroups.USER_INTERFACE, IconProviderService.SERVICE_ID + CONFIG_SUFFIX);
+		super(ConfigGroups.SERVICE_UI, IconProviderService.SERVICE_ID + CONFIG_SUFFIX);
 	}
 }

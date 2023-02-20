@@ -15,6 +15,6 @@ import software.coley.recaf.services.ServiceConfig;
 public class WindowFactoryConfig extends BasicConfigContainer implements ServiceConfig {
 	@Inject
 	public WindowFactoryConfig() {
-		super(ConfigGroups.USER_INTERFACE, WindowFactory.SERVICE_ID + CONFIG_SUFFIX);
+		super(ConfigGroups.SERVICE_UI, WindowFactory.SERVICE_ID + CONFIG_SUFFIX);
 	}
 }

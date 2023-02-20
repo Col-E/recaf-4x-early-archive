@@ -47,7 +47,7 @@ public final class ConfigGroups {
 	/**
 	 * Group base for UI classes.
 	 */
-	public static final String USER_INTERFACE = "ui";
+	public static final String SERVICE_UI = SERVICE + PACKAGE_SPLIT + "ui";
 
 	private ConfigGroups() {
 	}
