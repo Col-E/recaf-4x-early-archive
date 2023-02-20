@@ -105,11 +105,8 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 * 		Child class.
 	 */
 	private void populateParentToChildLookup(ClassInfo info) {
-		// Skip if already visited (since we register both ways, we want to check the child here)
 		String name = info.getName();
 		String superName = info.getSuperName();
-		if (parentToChild.containsKey(superName))
-			return;
 
 		// Add direct parent
 		populateParentToChildLookup(name, superName);
