@@ -352,6 +352,12 @@ public class InheritanceVertex {
 	 */
 	public void setValue(ClassInfo value) {
 		this.value = value;
+
+		// Reset children & parent sets
+		synchronized (this) {
+			children = null;
+			parents = null;
+		}
 	}
 
 	@Override
