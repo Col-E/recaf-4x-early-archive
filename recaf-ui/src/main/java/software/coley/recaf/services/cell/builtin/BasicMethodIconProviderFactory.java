@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.MethodMember;
@@ -37,16 +38,21 @@ public class BasicMethodIconProviderFactory implements MethodIconProviderFactory
 	}
 
 	private static Node methodIconProvider(MethodMember method) {
+		// Base
 		StackPane stack = new StackPane();
 		ObservableList<Node> children = stack.getChildren();
 		if (method.hasAbstractModifier())
 			children.add(METHOD_ABSTRACT.makeIcon());
 		else
 			children.add(METHOD.makeIcon());
+
+		// Add overlay for certain flags.
 		if (method.hasFinalModifier())
 			children.add(ACCESS_FINAL.makeIcon());
 		if (method.hasStaticModifier())
 			children.add(ACCESS_STATIC.makeIcon());
-		return stack;
+
+		// Wrap with visibility.
+		return new HBox(stack, Icons.getVisibilityIcon(method.getAccess()));
 	}
 }

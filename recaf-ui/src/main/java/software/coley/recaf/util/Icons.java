@@ -1,5 +1,6 @@
 package software.coley.recaf.util;
 
+import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
@@ -7,6 +8,7 @@ import software.coley.recaf.services.cell.IconProvider;
 import software.coley.recaf.ui.control.IconView;
 
 import java.io.InputStream;
+import java.lang.reflect.Modifier;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -221,6 +223,25 @@ public class Icons {
 			}
 		}
 		return image;
+	}
+
+	/**
+	 * Get node to represent common visibility/access modifiers. Technically works on classes too.
+	 *
+	 * @param access
+	 * 		Access modifiers.
+	 *
+	 * @return Node to represent the access modifier.
+	 */
+	public static Node getVisibilityIcon(int access) {
+		if (Modifier.isPrivate(access)) {
+			return getIconView(ACCESS_PRIVATE);
+		} else if (Modifier.isProtected(access)) {
+			return getIconView(ACCESS_PROTECTED);
+		} else if (Modifier.isPublic(access)) {
+			return getIconView(ACCESS_PUBLIC);
+		}
+		return getIconView(ACCESS_PACKAGE);
 	}
 
 	/**
