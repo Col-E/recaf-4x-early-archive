@@ -1,21 +1,40 @@
 package software.coley.recaf;
 
+import com.panemu.tiwulfx.control.dock.DetachableTab;
+import jakarta.annotation.Nonnull;
 import javafx.application.Application;
+import javafx.geometry.Orientation;
+import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.SplitPane;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.ui.RecafTheme;
+import software.coley.recaf.ui.control.FontIconView;
+import software.coley.recaf.ui.dock.RecafDockingPane;
 import software.coley.recaf.ui.menubar.MainMenu;
+import software.coley.recaf.ui.pane.LoggingPane;
+import software.coley.recaf.ui.pane.WelcomePane;
+import software.coley.recaf.ui.pane.WorkspaceRootPane;
+import software.coley.recaf.ui.window.RecafScene;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Icons;
+import software.coley.recaf.util.Lang;
+import software.coley.recaf.workspace.WorkspaceCloseListener;
+import software.coley.recaf.workspace.WorkspaceManager;
+import software.coley.recaf.workspace.WorkspaceOpenListener;
+import software.coley.recaf.workspace.model.Workspace;
 
 /**
  * JavaFX application entry point.
  *
  * @author Matt Coley
  */
-public class RecafApplication extends Application {
+public class RecafApplication extends Application implements WorkspaceOpenListener, WorkspaceCloseListener {
 	private final Recaf recaf = Bootstrap.get();
+	private final BorderPane root = new BorderPane();
 
 	@Override
 	public void start(Stage stage) {
@@ -24,15 +43,30 @@ public class RecafApplication extends Application {
 
 		// Get components
 		MainMenu menu = recaf.get(MainMenu.class);
+		WelcomePane pane = recaf.get(WelcomePane.class);
+		Node logging = createLoggingWrapper();
 
 		// Layout
-		BorderPane root = new BorderPane();
-		root.setTop(menu);
+		SplitPane splitPane = new SplitPane(root, logging);
+		SplitPane.setResizableWithParent(logging, false);
+		splitPane.setOrientation(Orientation.VERTICAL);
+		splitPane.setDividerPositions(0.21); // Behaves inverse to expectation in these specific circumstances
+		BorderPane wrapper = new BorderPane();
+		wrapper.setTop(menu);
+		wrapper.setCenter(splitPane);
+		wrapper.getStyleClass().addAll("padded", "inset");
+		root.setCenter(pane);
+
+		// Register listener
+		WorkspaceManager workspaceManager = recaf.get(WorkspaceManager.class);
+		workspaceManager.addWorkspaceOpenListener(this);
+		workspaceManager.addWorkspaceCloseListener(this);
 
 		// Display
-		stage.setMinWidth(250);
-		stage.setMinHeight(100);
-		stage.setScene(new Scene(root));
+		stage.setMinWidth(900);
+		stage.setMinHeight(600);
+		Scene value = new RecafScene(wrapper);
+		stage.setScene(value);
 		stage.getIcons().add(Icons.getImage(Icons.LOGO));
 		stage.setTitle("Recaf");
 		stage.show();
@@ -40,5 +74,33 @@ public class RecafApplication extends Application {
 		// Register main window
 		WindowManager windowManager = recaf.get(WindowManager.class);
 		windowManager.register(WindowManager.WIN_MAIN, stage);
+	}
+
+	private Node createLoggingWrapper() {
+		LoggingPane logging = recaf.get(LoggingPane.class);
+		RecafDockingPane dockingPane = new RecafDockingPane();
+		DetachableTab tab = new DetachableTab();
+		tab.textProperty().bind(Lang.getBinding("logging.title"));
+		tab.setGraphic(new FontIconView(CarbonIcons.TERMINAL));
+		tab.setContent(logging);
+		tab.setClosable(false);
+		dockingPane.getTabs().add(tab);
+		return dockingPane;
+	}
+
+	@Override
+	public void onWorkspaceClosed(@Nonnull Workspace workspace) {
+		FxThreadUtil.run(() -> {
+			WelcomePane pane = recaf.get(WelcomePane.class);
+			root.setCenter(pane);
+		});
+	}
+
+	@Override
+	public void onWorkspaceOpened(@Nonnull Workspace workspace) {
+		FxThreadUtil.run(() -> {
+			WorkspaceRootPane pane = recaf.get(WorkspaceRootPane.class);
+			root.setCenter(pane);
+		});
 	}
 }

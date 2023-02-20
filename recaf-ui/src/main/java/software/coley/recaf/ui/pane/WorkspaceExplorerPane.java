@@ -13,6 +13,7 @@ import software.coley.recaf.workspace.model.Workspace;
  * Pane to display the current workspace in a navigable tree layout.
  *
  * @author Matt Coley
+ * @see WorkspaceRootPane
  */
 @Dependent
 public class WorkspaceExplorerPane extends BorderPane {

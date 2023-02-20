@@ -1,6 +1,7 @@
 package software.coley.recaf.ui.control.tree;
 
 import jakarta.annotation.Nonnull;
+import javafx.geometry.Insets;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import software.coley.recaf.ui.path.ClassPathNode;
@@ -24,6 +25,7 @@ public class WorkspaceTreeFilterPane extends BorderPane {
 		TextField textField = new TextField();
 		textField.promptTextProperty().bind(Lang.getBinding("workspace.filter-prompt"));
 		setCenter(textField);
+		getStyleClass().add("workspace-filter-pane");
 
 		// TODO:
 		//  - option to hide supporting resources

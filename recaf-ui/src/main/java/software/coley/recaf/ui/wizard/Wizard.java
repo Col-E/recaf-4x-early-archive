@@ -165,7 +165,7 @@ public class Wizard extends VBox {
 	 * Largely lifted from AtlantaFX's widget sampler.
 	 */
 	private class WizardSteps extends HBox {
-		private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("hover");
+		private static final PseudoClass SELECTED = PseudoClass.getPseudoClass(Styles.SUCCESS);
 		private final ObjectProperty<WizardPage> selectedPage = new SimpleObjectProperty<>();
 		private final BooleanBinding canGoBack;
 		private final BooleanBinding canGoForward;

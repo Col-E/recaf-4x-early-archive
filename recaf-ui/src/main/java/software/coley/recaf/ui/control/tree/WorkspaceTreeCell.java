@@ -19,7 +19,6 @@ import software.coley.recaf.services.cell.ContextSource;
 import software.coley.recaf.services.cell.IconProviderService;
 import software.coley.recaf.services.cell.TextProviderService;
 import software.coley.recaf.ui.control.FontIconView;
-import software.coley.recaf.ui.control.tree.path.*;
 import software.coley.recaf.ui.path.*;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.*;
@@ -40,7 +39,8 @@ public class WorkspaceTreeCell extends TreeCell<PathNode<?>> {
 	private final ContextSource source;
 
 	/**
-	 * @param source Context requester source.
+	 * @param source
+	 * 		Context requester source.
 	 * @param textService
 	 * 		Service to provide text.
 	 * @param iconService

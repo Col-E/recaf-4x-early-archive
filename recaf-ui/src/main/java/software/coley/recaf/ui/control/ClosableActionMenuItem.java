@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.control;
 
+import atlantafx.base.theme.Styles;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -46,6 +47,7 @@ public class ClosableActionMenuItem extends CustomMenuItem {
 			// We can't instantly refresh the menu, so this is as good as we can do.
 			setDisable(true);
 		});
+		closeButton.getStyleClass().addAll(Styles.ROUNDED, Styles.BUTTON_OUTLINED);
 		closeButton.prefWidthProperty().bind(closeButton.heightProperty());
 
 		// Layout

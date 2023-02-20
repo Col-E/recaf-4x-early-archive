@@ -73,6 +73,7 @@ public class Main {
 		// Setup appender
 		String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 		Path logFile = directories.getBaseDirectory().resolve("log-" + date + ".txt");
+		directories.initCurrentLogPath(logFile);
 		Logging.addFileAppender(logFile);
 
 		// Set default error handler

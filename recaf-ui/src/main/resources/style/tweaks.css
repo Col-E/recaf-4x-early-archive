@@ -1,0 +1,53 @@
+/* Applies common 5px padding to component */
+.padded {
+    -fx-padding: 5px;
+}
+
+/* Fix for TiwulFX relying on Modena values while we use AtlantaFX */
+.adjacent-drop {
+	-fx-background-color: -color-flair-2;
+	-fx-border-color: -color-flair-8;
+}
+
+/* AtlantaFX tweaks to split-pane default behavior/style to fit the docking UI style more. */
+.split-pane {
+    -fx-background-color: transparent;
+    -fx-background-insets: 5px;
+}
+.split-pane > .split-pane-divider,
+.split-pane > .split-pane-divider:pressed,
+.split-pane > .split-pane-divider:pressed > .horizontal-grabber,
+.split-pane > .split-pane-divider:pressed > .vertical-grabber {
+    -fx-background-color: transparent;
+    -fx-background-insets: 6px;
+    -fx-padding: 2px;
+}
+
+/* Clearly separates filter from the workspace tree */
+.workspace-filter-pane {
+    -fx-padding: 6px 5px 5px 5px;
+    -fx-background-color: -color-border-muted, -color-bg-inset;
+    -fx-background-insets: 0, 1px 0 0 0;
+}
+
+/* Applies inset BG color */
+.inset {
+    -fx-background-color: -color-base-1;
+}
+
+/* Applies default background color */
+.background {
+    -fx-background-color: -color-bg-default;
+}
+
+/* Visual tweak to tab-pane separator */
+.tab-pane {
+    -fx-padding: 0px;
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 1px;
+    -fx-border-insets: 1px; /* removing this causes some issues with our split-pane changes */
+}
+.tab-pane.floating > .tab-header-area {
+    -fx-background-color: -color-border-muted, -color-bg-inset;
+    -fx-background-insets: 0, 0 0 1px 0;
+}

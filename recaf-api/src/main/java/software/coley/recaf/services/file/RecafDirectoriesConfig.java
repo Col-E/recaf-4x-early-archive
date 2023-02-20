@@ -30,10 +30,28 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 	private final Path pluginDirectory = resolveDirectory("plugins");
 	private final Path styleDirectory = resolveDirectory("style");
 	private final Path scriptsDirectory = resolveDirectory("scripts");
+	private Path currentLog;
 
 	@Inject
 	public RecafDirectoriesConfig() {
 		super(ConfigGroups.SERVICE_IO, "directories" + CONFIG_SUFFIX);
+	}
+
+	/**
+	 * @param currentLog
+	 * 		Path to current log-file.
+	 */
+	public void initCurrentLogPath(Path currentLog) {
+		if (this.currentLog == null) {
+			this.currentLog = currentLog;
+		}
+	}
+
+	/**
+	 * @return Path to current log-file.
+	 */
+	public Path getCurrentLogPath() {
+		return currentLog;
 	}
 
 	/**

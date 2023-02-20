@@ -67,6 +67,8 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	}
 
 	/**
+	 * Searches for a {@link WorkspaceTreeNode} item in the tree model, matching the given path.
+	 *
 	 * @param path
 	 * 		Path associated with node to look for in tree.
 	 *

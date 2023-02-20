@@ -5,9 +5,7 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
-import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.slf4j.Logger;
@@ -15,7 +13,6 @@ import software.coley.collections.observable.ObservableList;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.ui.window.IdentifiableStage;
-import software.coley.recaf.util.Icons;
 
 import java.util.*;
 
@@ -134,6 +131,14 @@ public class WindowManager implements Service {
 	@Nullable
 	public Stage getWindow(@Nonnull String id) {
 		return windowMappings.get(id);
+	}
+
+	/**
+	 * @return Window for main display.
+	 */
+	@Nonnull
+	public Stage getMainWindow() {
+		return Objects.requireNonNull(getWindow(WIN_MAIN));
 	}
 
 	/**

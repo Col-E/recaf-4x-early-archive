@@ -238,6 +238,7 @@ welcome.github.description=Check out the project page on GitHub: Source code, op
 ## Workspace
 workspace.title=Workspace
 workspace.filter-prompt=Filter: Class/file name...
+workspace.info=Information
 
 ## Attach
 attach.unsupported=Attach failed to initialize
