@@ -290,13 +290,16 @@ public class InheritanceVertex {
 	}
 
 	/**
-	 * @return All classes this extends or implements.
+	 * @return All classes extending or implementing this type.
 	 */
 	public Set<InheritanceVertex> getAllChildren() {
 		return allChildren().collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
-	private Stream<InheritanceVertex> allChildren() {
+	/**
+	 * @return Stream of all classes extending or implementing this type.
+	 */
+	public Stream<InheritanceVertex> allChildren() {
 		return Streams.recurseWithoutCycles(this, InheritanceVertex::getChildren);
 	}
 

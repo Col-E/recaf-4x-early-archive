@@ -27,7 +27,7 @@ public class ThrowablePropertyAssigning implements WorkspaceProcessor {
 
 	@Override
 	public void onWorkspaceOpened(@Nonnull Workspace workspace) {
-		graph.getVertex("java/lang/Throwable").getAllChildren().forEach(vertex -> {
+		graph.getVertex("java/lang/Throwable").allChildren().forEach(vertex -> {
 			ClassInfo classInfo = vertex.getValue();
 			ThrowableProperty.set(classInfo);
 		});
