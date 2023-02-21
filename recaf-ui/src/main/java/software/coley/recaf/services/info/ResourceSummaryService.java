@@ -5,6 +5,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import javafx.scene.control.Separator;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.ui.pane.WorkspaceInformationPane;
 import software.coley.recaf.workspace.model.Workspace;
@@ -50,7 +51,7 @@ public class ResourceSummaryService implements Service {
 		boolean lastSummarizerAppended = true;
 		for (ResourceSummarizer summarizer : summarizers) {
 			if (lastSummarizerAppended)
-				consumer.appendSummary(new Spacer());
+				consumer.appendSummary(new Separator());
 			lastSummarizerAppended = summarizer.summarize(workspace, resource, consumer);
 		}
 	}
