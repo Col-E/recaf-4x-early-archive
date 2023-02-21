@@ -3,8 +3,11 @@ package software.coley.recaf.ui.pane;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Polygon;
@@ -93,7 +96,12 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 				default -> throw new IllegalArgumentException("Unsupported logging level");
 			}
 			shape.setOpacity(0.65);
-			return shape;
+
+			// Wrap and provide right-side padding to give the indicator space between it and the line no.
+			HBox wrapper = new HBox(shape);
+			wrapper.setAlignment(Pos.CENTER);
+			wrapper.setPadding(new Insets(0, 5, 0, 0));
+			return wrapper;
 		}
 
 		@Override
