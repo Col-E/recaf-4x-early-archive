@@ -67,6 +67,9 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 		// Initial state from existing containers
 		for (ConfigContainer container : configManager.getContainers())
 			onRegister(container);
+
+		// Select first page
+		tree.getSelectionModel().select(0);
 	}
 
 	private void initialize() {

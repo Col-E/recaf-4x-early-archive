@@ -336,12 +336,14 @@ tree.hidelibs=Hide libraries
 tree.casesensitive=Filter case sensitivity
 
 ##### Services
-service=Services
+service=All services
 service.analysis=Analysis
 service.analysis.graph-calls-config=Call graph
 service.analysis.graph-calls-config.active=Enable on workspaces open
 service.analysis.graph-inheritance-config=Inheritance graph
 service.analysis.search-config=Search
+service.analysis.entry-points=Entry points
+service.analysis.entry-points.none=No entries found
 service.compile=Compilation
 service.compile.java-compiler-config=Javac
 service.debug=Attach/Debug
