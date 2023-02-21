@@ -52,13 +52,21 @@ public abstract class AbstractPathNode<P, V> implements PathNode<V> {
 	 * Otherwise {@code 0}.
 	 */
 	protected int cmpHierarchy(@Nonnull PathNode<?> path) {
-		// We are the child type, show last.
-		if (isDescendantOf(path))
-			return 1;
+		if (getValueType() != path.getValueType()) {
+			// Check direct parent (quicker validation) and then if that does not pass, a multi-level descendant test.
+			if ((parent != null && parent.getValueType() == path.getValueType()) ||
+					isDescendantOf(path)) {
+				// We are the child type, show last.
+				return 1;
+			}
 
-		// We are the parent type, show first.
-		if (path.isDescendantOf(this))
-			return -1;
+			// Check direct parent (quicker validation) and then if that does not pass, a multi-level descendant test.
+			if ((path.getParent() != null && path.getParent().getValueType() == getValueType()) ||
+					path.isDescendantOf(this)) {
+				// We are the parent type, show first.
+				return -1;
+			}
+		}
 
 		// Unknown
 		return 0;
