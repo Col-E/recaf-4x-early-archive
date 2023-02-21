@@ -6,12 +6,16 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import org.kordamp.ikonli.Ikon;
+import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigValue;
 import software.coley.recaf.services.config.ConfigManager;
@@ -23,9 +27,10 @@ import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.util.CollectionUtil;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.TreeMap;
 
 import static software.coley.recaf.config.ConfigGroups.PACKAGE_SPLIT;
 import static software.coley.recaf.config.ConfigGroups.getGroupPackages;
@@ -41,7 +46,8 @@ import static software.coley.recaf.util.Lang.getBinding;
  */
 @Dependent
 public class ConfigPane extends SplitPane implements ManagedConfigListener {
-	private final Map<String, ConfigPage> pages = new HashMap<>();
+	private final Map<String, ConfigPage> idToPage = new TreeMap<>();
+	private final Map<String, TreeItem<String>> idToTree = new TreeMap<>();
 	private final TreeItem<String> root = new TreeItem<>("root");
 	private final TreeView<String> tree = new TreeView<>();
 	private final ScrollPane content = new ScrollPane();
@@ -64,10 +70,11 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 	}
 
 	private void initialize() {
+		content.setFitToWidth(true);
 		root.setExpanded(true);
 		tree.setShowRoot(false);
 		tree.setRoot(root);
-		tree.getStyleClass().add(Tweaks.EDGE_TO_EDGE);
+		tree.getStyleClass().addAll(Tweaks.EDGE_TO_EDGE, Styles.DENSE);
 		tree.setCellFactory(param -> new TreeCell<>() {
 			@Override
 			protected void updateItem(String item, boolean empty) {
@@ -76,22 +83,21 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 				if (empty || item == null) {
 					textProperty().unbind();
 					textProperty().set(null);
-					setOnMousePressed(null);
 					setGraphic(null);
 				} else {
 					Ikon icon = iconManager.getGroupIcon(item);
 					if (icon == null)
 						icon = iconManager.getContainerIcon(item);
-					if (icon != null)
-						setGraphic(new FontIconView(icon));
-					else
-						setGraphic(null);
+					setGraphic(new FontIconView(Objects.requireNonNullElse(icon, CarbonIcons.DOT_MARK)));
 					textProperty().bind(getBinding(item));
-					setOnMousePressed(e -> {
-						ConfigPage page = pages.get(item);
-						if (page != null) content.setContent(page);
-					});
 				}
+			}
+		});
+		tree.getSelectionModel().selectedItemProperty().addListener((ob, old, cur) -> {
+			if (cur != null) {
+				ConfigPage page = idToPage.get(cur.getValue());
+				if (page != null) content.setContent(page);
+				else content.setContent(new MissingPage(cur.getValue()));
 			}
 		});
 
@@ -111,10 +117,12 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 		TreeItem<String> item = getItem(container, true);
 		if (item != null) {
 			String pageKey = item.getValue() + PACKAGE_SPLIT + container.getId();
-			item.getChildren().add(new TreeItem<>(pageKey));
+			TreeItem<String> treeItem = new TreeItem<>(pageKey);
+			item.getChildren().add(treeItem);
 
 			// Register page.
-			pages.put(pageKey, new ConfigPage(container));
+			idToPage.put(pageKey, new ConfigPage(container));
+			idToTree.put(pageKey, treeItem);
 		}
 	}
 
@@ -227,6 +235,38 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 			ColumnConstraints columnEditor = new ColumnConstraints();
 			columnEditor.setHgrow(Priority.ALWAYS);
 			getColumnConstraints().addAll(columnLabel, columnEditor);
+		}
+	}
+
+	/**
+	 * Page to show child-pages when the group itself does not have content.
+	 */
+	private class MissingPage extends VBox {
+		public MissingPage(String id) {
+			// Title
+			ObservableList<Node> children = getChildren();
+			Label title = new BoundLabel(getBinding(id));
+			title.getStyleClass().add(Styles.TITLE_4);
+			children.add(title);
+			children.add(new Separator());
+
+			// Sub-menus
+			for (String key : idToPage.keySet()) {
+				if (key.startsWith(id)) {
+					Hyperlink child = new Hyperlink();
+					child.textProperty().bind(getBinding(key));
+					child.setOnAction(e -> {
+						TreeItem<String> item = idToTree.get(key);
+						tree.getSelectionModel().select(item);
+					});
+					children.add(child);
+				}
+			}
+
+			// Layout
+			setPadding(new Insets(10));
+			setSpacing(5);
+			setFillWidth(true);
 		}
 	}
 }

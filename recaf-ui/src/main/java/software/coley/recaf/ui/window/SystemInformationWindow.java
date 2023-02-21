@@ -2,7 +2,6 @@ package software.coley.recaf.ui.window;
 
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
-import javafx.scene.Scene;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import software.coley.recaf.services.window.WindowManager;
@@ -27,6 +26,6 @@ public class SystemInformationWindow extends AbstractIdentifiableStage {
 		setMinHeight(300);
 		ScrollPane scroll = new ScrollPane(infoPane);
 		scroll.setFitToWidth(true);
-		setScene(new Scene(new BorderPane(scroll), 500, 710));
+		setScene(new RecafScene(new BorderPane(scroll), 500, 710));
 	}
 }

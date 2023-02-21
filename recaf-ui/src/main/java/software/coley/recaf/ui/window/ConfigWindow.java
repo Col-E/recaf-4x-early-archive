@@ -2,7 +2,6 @@ package software.coley.recaf.ui.window;
 
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
-import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.ui.pane.ConfigPane;
@@ -24,6 +23,6 @@ public class ConfigWindow extends AbstractIdentifiableStage {
 		titleProperty().bind(Lang.getBinding("menu.config"));
 		setMinWidth(750);
 		setMinHeight(450);
-		setScene(new Scene(new BorderPane(configPane), 750, 450));
+		setScene(new RecafScene(new BorderPane(configPane), 750, 450));
 	}
 }

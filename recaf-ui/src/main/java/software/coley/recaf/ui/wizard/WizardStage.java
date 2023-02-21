@@ -1,9 +1,9 @@
 package software.coley.recaf.ui.wizard;
 
 import jakarta.annotation.Nonnull;
-import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import software.coley.recaf.ui.window.RecafScene;
 
 import java.util.List;
 
@@ -26,6 +26,6 @@ public class WizardStage extends Stage {
 			onFinish.run();
 			hide();
 		});
-		setScene(new Scene(new BorderPane(wizard)));
+		setScene(new RecafScene(new BorderPane(wizard)));
 	}
 }

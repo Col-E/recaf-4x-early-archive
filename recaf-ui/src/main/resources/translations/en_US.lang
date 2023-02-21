@@ -455,16 +455,14 @@ service.plugin=Plugins
 service.plugin.plugin-manager-config=Plugin manager
 service.plugin.script-manager-config=Script manager
 service.plugin.script-manager-config.file-watching=Passively scan scripts directory for changes
+service.ui=User interface
 service.ui.text-format-config=Text format
 service.ui.text-format-config.escape=Enable text escapes
 service.ui.text-format-config.max-length=Maximum text display length
 service.ui.text-format-config.shorten=Enable text shortening
+service.ui.window-manager-config=Window manager
 
 ##### Config
-
-conf.ui=User interface
-conf.ui.window-manager-config=Window manager
-
 conf.display=Appearance
 conf.display.general=General
 conf.display.general.flashopentabs=Flash open tab on re-focus

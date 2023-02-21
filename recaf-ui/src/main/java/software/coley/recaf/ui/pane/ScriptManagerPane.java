@@ -22,6 +22,7 @@ import software.coley.recaf.services.script.ScriptManager;
 import software.coley.recaf.services.script.ScriptManagerConfig;
 import software.coley.recaf.services.window.WindowFactory;
 import software.coley.recaf.ui.control.ActionButton;
+import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.DesktopUtil;
 import software.coley.recaf.util.FxThreadUtil;
@@ -121,7 +122,7 @@ public class ScriptManagerPane extends BorderPane {
 				
 				System.out.println("Hello world");
 				""");
-		Scene scene = new Scene(textArea, 750, 400);
+		Scene scene = new RecafScene(textArea, 750, 400);
 		windowFactory.createAnonymousStage(scene, getBinding("menu.scripting.editor"), 750, 400).show();
 	}
 
