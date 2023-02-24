@@ -5,7 +5,10 @@ import jakarta.inject.Inject;
 import software.coley.collections.Lists;
 import software.coley.recaf.cdi.AutoRegisterWorkspaceListeners;
 import software.coley.recaf.cdi.WorkspaceScoped;
-import software.coley.recaf.info.*;
+import software.coley.recaf.info.AndroidClassInfo;
+import software.coley.recaf.info.BasicJvmClassInfo;
+import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.util.MultiMap;
@@ -105,10 +108,13 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 * 		Child class.
 	 */
 	private void populateParentToChildLookup(ClassInfo info) {
-		String name = info.getName();
-		String superName = info.getSuperName();
+		// Skip module classes
+		if (info.hasModuleModifier())
+			return;
 
 		// Add direct parent
+		String name = info.getName();
+		String superName = info.getSuperName();
 		populateParentToChildLookup(name, superName);
 
 		// Visit parent

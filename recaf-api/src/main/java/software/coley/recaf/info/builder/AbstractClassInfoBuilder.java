@@ -244,7 +244,7 @@ public abstract class AbstractClassInfoBuilder<B extends AbstractClassInfoBuilde
 	protected void verify() {
 		if (name == null)
 			throw new IllegalArgumentException("Name required");
-		if (superName == null && !access.hasAnnotationModifier() && !name.equals("java/lang/Object"))
+		if (superName == null && !access.hasModuleModifier() && !access.hasAnnotationModifier() && !name.equals("java/lang/Object"))
 			throw new IllegalArgumentException("Super-name required");
 	}
 

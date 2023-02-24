@@ -110,6 +110,13 @@ public interface Accessed {
 	}
 
 	/**
+	 * @return {@code true} when this item's access modifiers contains {@code module}.
+	 */
+	default boolean hasModuleModifier() {
+		return hasModifierMask(0x8000);
+	}
+
+	/**
 	 * @return {@code true} when this item's access modifiers contains {@code abstract}.
 	 */
 	default boolean hasAbstractModifier() {

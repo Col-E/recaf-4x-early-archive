@@ -9,10 +9,7 @@ import software.coley.recaf.util.Streams;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -160,6 +157,13 @@ public class InheritanceVertex {
 	}
 
 	/**
+	 * @return {@code true} when the current vertex represents a {@code module-info}.
+	 */
+	public boolean isModule() {
+		return getValue().hasModuleModifier() && getValue().getSuperName() == null;
+	}
+
+	/**
 	 * @param name
 	 * 		Method name.
 	 * @param desc
@@ -241,6 +245,8 @@ public class InheritanceVertex {
 	}
 
 	private void visitFamily(Set<InheritanceVertex> vertices) {
+		if (isModule())
+			return;
 		if (vertices.add(this) && !isJavaLangObject())
 			for (InheritanceVertex vertex : allDirectVertices())
 				vertex.visitFamily(vertices);
@@ -267,6 +273,11 @@ public class InheritanceVertex {
 		Set<InheritanceVertex> parents = this.parents;
 		if (parents == null) {
 			synchronized (this) {
+				if (isModule()) {
+					parents = Collections.emptySet();
+					this.parents = parents;
+					return parents;
+				}
 				parents = this.parents;
 				if (parents == null) {
 					String name = getName();
@@ -310,6 +321,11 @@ public class InheritanceVertex {
 		Set<InheritanceVertex> children = this.children;
 		if (children == null) {
 			synchronized (this) {
+				if (isModule()) {
+					children = Collections.emptySet();
+					this.children = children;
+					return children;
+				}
 				children = this.children;
 				if (children == null) {
 					String name = getName();

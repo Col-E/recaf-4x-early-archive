@@ -36,7 +36,7 @@ public interface ClassInfo extends Info, Annotated, Accessed {
 
 	/**
 	 * @return Super-name of the class.
-	 * May be {@code null} for {@link java.lang.annotation.Annotation} classes.
+	 * May be {@code null} for {@link java.lang.annotation.Annotation} and {@code module-info} classes.
 	 */
 	@Nullable
 	String getSuperName();
