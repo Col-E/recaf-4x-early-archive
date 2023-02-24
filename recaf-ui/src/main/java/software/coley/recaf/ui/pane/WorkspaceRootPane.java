@@ -1,16 +1,16 @@
 package software.coley.recaf.ui.pane;
 
 import com.panemu.tiwulfx.control.dock.DetachableTab;
-import com.panemu.tiwulfx.control.dock.DetachableTabPane;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
-import javafx.scene.control.Label;
 import javafx.scene.control.SplitPane;
 import javafx.scene.layout.BorderPane;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.ui.control.FontIconView;
-import software.coley.recaf.ui.dock.RecafDockingPane;
+import software.coley.recaf.ui.docking.DockingTab;
+import software.coley.recaf.ui.docking.DockingManager;
+import software.coley.recaf.ui.docking.DockingRegion;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -27,29 +27,24 @@ import software.coley.recaf.workspace.model.Workspace;
 @Dependent
 public class WorkspaceRootPane extends BorderPane {
 	@Inject
-	public WorkspaceRootPane(@Nonnull WorkspaceExplorerPane explorerPane,
+	public WorkspaceRootPane(@Nonnull DockingManager dockingManager,
+							 @Nonnull WorkspaceExplorerPane explorerPane,
 							 @Nonnull WorkspaceInformationPane informationPane) {
 		getStyleClass().add("inset");
 
-		// Add workspace explorer tree
-		RecafDockingPane dockTree = new RecafDockingPane();
-		dockTree.setCloseIfEmpty(false);
-		DetachableTab treeTab = new DetachableTab();
-		treeTab.setContent(explorerPane);
+		// Add workspace explorer tree.
+		DockingRegion dockTree = dockingManager.newRegion();
+		DockingTab treeTab = dockTree.createTab(Lang.getBinding("workspace.title"), explorerPane);
 		treeTab.setGraphic(new FontIconView(CarbonIcons.TREE_VIEW));
-		treeTab.textProperty().bind(Lang.getBinding("workspace.title"));
 		treeTab.setClosable(false);
 		treeTab.setDetachable(false);
-		dockTree.getTabs().add(treeTab);
 
-		// Add summary of workspace
-		RecafDockingPane dockInfo = new RecafDockingPane();
-		dockInfo.setCloseIfEmpty(true);
-		DetachableTab infoTab = new DetachableTab();
-		infoTab.setContent(informationPane);
+		// Add summary of workspace, targeting the primary region.
+		// In the UI, this region will persist and be the default location for
+		// opening most 'new' content/tabs.
+		DockingRegion dockInfo = dockingManager.getPrimaryRegion();
+		DetachableTab infoTab = dockInfo.createTab(Lang.getBinding("workspace.info"), informationPane);
 		infoTab.setGraphic(new FontIconView(CarbonIcons.INFORMATION));
-		infoTab.textProperty().bind(Lang.getBinding("workspace.info"));
-		dockInfo.getTabs().add(infoTab);
 
 		// Layout
 		SplitPane split = new SplitPane(dockTree, dockInfo);

@@ -13,7 +13,8 @@ import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.ui.RecafTheme;
 import software.coley.recaf.ui.control.FontIconView;
-import software.coley.recaf.ui.dock.RecafDockingPane;
+import software.coley.recaf.ui.docking.DockingManager;
+import software.coley.recaf.ui.docking.DockingRegion;
 import software.coley.recaf.ui.menubar.MainMenu;
 import software.coley.recaf.ui.pane.LoggingPane;
 import software.coley.recaf.ui.pane.WelcomePane;
@@ -78,7 +79,7 @@ public class RecafApplication extends Application implements WorkspaceOpenListen
 
 	private Node createLoggingWrapper() {
 		LoggingPane logging = recaf.get(LoggingPane.class);
-		RecafDockingPane dockingPane = new RecafDockingPane();
+		DockingRegion dockingPane = recaf.get(DockingManager.class).newRegion();
 		DetachableTab tab = new DetachableTab();
 		tab.textProperty().bind(Lang.getBinding("logging.title"));
 		tab.setGraphic(new FontIconView(CarbonIcons.TERMINAL));
