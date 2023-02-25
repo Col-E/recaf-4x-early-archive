@@ -17,6 +17,7 @@ import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.services.Service;
 import software.coley.recaf.ui.action.Actions;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.tree.TreeItems;
@@ -33,16 +34,20 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  * @see WorkspaceTreeCell Tree cell handling.
  */
 @ApplicationScoped
-public class CellConfigurationService {
+public class CellConfigurationService implements Service {
+	public static final String SERVICE_ID = "cell-configuration";
 	private static final String UNKNOWN_TEXT = "[ERROR]";
 	private static final Node UNKNOWN_GRAPHIC = new FontIconView(CarbonIcons.MISUSE_ALT);
 	private static final Logger logger = Logging.get(WorkspaceTreeCell.class);
+	private final CellConfigurationServiceConfig config;
 	private final TextProviderService textService;
 	private final IconProviderService iconService;
 	private final ContextMenuProviderService contextMenuService;
 	private final Actions actions;
 
 	/**
+	 * @param config
+	 * 		Service config.
 	 * @param textService
 	 * 		Service to provide text.
 	 * @param iconService
@@ -53,10 +58,12 @@ public class CellConfigurationService {
 	 * 		Action handling.
 	 */
 	@Inject
-	public CellConfigurationService(@Nonnull TextProviderService textService,
+	public CellConfigurationService(@Nonnull CellConfigurationServiceConfig config,
+									@Nonnull TextProviderService textService,
 									@Nonnull IconProviderService iconService,
 									@Nonnull ContextMenuProviderService contextMenuService,
 									@Nonnull Actions actions) {
+		this.config = config;
 		this.textService = textService;
 		this.iconService = iconService;
 		this.contextMenuService = contextMenuService;
@@ -364,5 +371,17 @@ public class CellConfigurationService {
 
 		// No menu
 		return null;
+	}
+
+	@Nonnull
+	@Override
+	public String getServiceId() {
+		return SERVICE_ID;
+	}
+
+	@Nonnull
+	@Override
+	public CellConfigurationServiceConfig getServiceConfig() {
+		return config;
 	}
 }
