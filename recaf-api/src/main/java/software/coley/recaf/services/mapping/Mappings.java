@@ -25,7 +25,7 @@ public interface Mappings {
 	 * @return Mapped name of the class, or {@code null} if no mapping exists.
 	 */
 	@Nullable
-	String getMappedClassName(String internalName);
+	String getMappedClassName(@Nonnull String internalName);
 
 	/**
 	 * @param ownerName
@@ -40,7 +40,7 @@ public interface Mappings {
 	 * @return Mapped name of the field, or {@code null} if no mapping exists.
 	 */
 	@Nullable
-	String getMappedFieldName(String ownerName, String fieldName, String fieldDesc);
+	String getMappedFieldName(@Nonnull String ownerName, @Nonnull String fieldName, @Nonnull String fieldDesc);
 
 	/**
 	 * @param ownerName
@@ -55,7 +55,7 @@ public interface Mappings {
 	 * @return Mapped name of the method, or {@code null} if no mapping exists.
 	 */
 	@Nullable
-	String getMappedMethodName(String ownerName, String methodName, String methodDesc);
+	String getMappedMethodName(@Nonnull String ownerName, @Nonnull String methodName, @Nonnull String methodDesc);
 
 	/**
 	 * @param className
@@ -74,7 +74,7 @@ public interface Mappings {
 	 * @return Mapped name of the variable, or {@code null} if no mapping exists.
 	 */
 	@Nullable
-	String getMappedVariableName(String className, String methodName, String methodDesc,
+	String getMappedVariableName(@Nonnull String className, @Nonnull String methodName, @Nonnull String methodDesc,
 								 String name, String desc, int index);
 
 	/**

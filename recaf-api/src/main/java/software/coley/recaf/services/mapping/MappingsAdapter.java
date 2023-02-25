@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceVertex;
 import software.coley.recaf.services.mapping.data.*;
+import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -30,6 +31,7 @@ public class MappingsAdapter implements Mappings {
 	private final boolean supportFieldTypeDifferentiation;
 	private final boolean supportVariableTypeDifferentiation;
 	private InheritanceGraph graph;
+	private Workspace workspace;
 
 	/**
 	 * @param supportFieldTypeDifferentiation
@@ -90,18 +92,21 @@ public class MappingsAdapter implements Mappings {
 
 	@Nullable
 	@Override
-	public String getMappedClassName(String internalName) {
+	public String getMappedClassName(@Nonnull String internalName) {
 		String mapped = mappings.get(getClassKey(internalName));
-		if (mapped == null && isInner(internalName)) {
-			// TODO: Similar to providing the 'graph' we can provide a workspace that will let us access the class's
-			//  actual attributes. We can check for inner classes that way in case an obfuscated sample disregards
-			//  the standard inner class naming convention.
-			int split = internalName.lastIndexOf("$");
-			String inner = internalName.substring(split + 1);
-			String outer = internalName.substring(0, split);
-			String outerMapped = getMappedClassName(outer);
-			if (outerMapped != null) {
-				mapped = outerMapped + "$" + inner;
+		if (mapped == null) {
+			if (workspace != null) {
+				// TODO: Similar to providing the 'graph' we can provide a workspace that will let us access the class's
+				//  actual attributes. We can check for inner classes that way in case an obfuscated sample disregards
+				//  the standard inner class naming convention.
+			} else if (isInner(internalName)) {
+				int split = internalName.lastIndexOf("$");
+				String inner = internalName.substring(split + 1);
+				String outer = internalName.substring(0, split);
+				String outerMapped = getMappedClassName(outer);
+				if (outerMapped != null) {
+					mapped = outerMapped + "$" + inner;
+				}
 			}
 		}
 		return mapped;
@@ -109,7 +114,7 @@ public class MappingsAdapter implements Mappings {
 
 	@Nullable
 	@Override
-	public String getMappedFieldName(String ownerName, String fieldName, String fieldDesc) {
+	public String getMappedFieldName(@Nonnull String ownerName, @Nonnull String fieldName, @Nonnull String fieldDesc) {
 		MappingKey key = getFieldKey(ownerName, fieldName, fieldDesc);
 		String mapped = mappings.get(key);
 		if (mapped == null && graph != null) {
@@ -120,7 +125,7 @@ public class MappingsAdapter implements Mappings {
 
 	@Nullable
 	@Override
-	public String getMappedMethodName(String ownerName, String methodName, String methodDesc) {
+	public String getMappedMethodName(@Nonnull String ownerName, @Nonnull String methodName, @Nonnull String methodDesc) {
 		MappingKey key = getMethodKey(ownerName, methodName, methodDesc);
 		String mapped = mappings.get(key);
 		if (mapped == null && graph != null) {
@@ -131,7 +136,7 @@ public class MappingsAdapter implements Mappings {
 
 	@Nullable
 	@Override
-	public String getMappedVariableName(String className, String methodName, String methodDesc,
+	public String getMappedVariableName(@Nonnull String className, @Nonnull String methodName, @Nonnull String methodDesc,
 										String name, String desc, int index) {
 		MappingKey key = getVariableKey(className, methodName, methodDesc, name, desc, index);
 		return mappings.get(key);
@@ -209,6 +214,17 @@ public class MappingsAdapter implements Mappings {
 	 */
 	public void enableHierarchyLookup(InheritanceGraph graph) {
 		this.graph = graph;
+	}
+
+	/**
+	 * Allows the mappings to use data from classes in the workspace to better handle some edge cases.
+	 * For example, inner class name handling in {@link #getMappedClassName(String)}.
+	 *
+	 * @param workspace
+	 * 		Workspace to pull from.
+	 */
+	public void enableClassLookup(Workspace workspace) {
+		this.workspace = workspace;
 	}
 
 	/**

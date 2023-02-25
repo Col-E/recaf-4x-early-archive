@@ -179,7 +179,7 @@ public class IntermediateMappings implements Mappings {
 
 	@Nullable
 	@Override
-	public String getMappedClassName(String internalName) {
+	public String getMappedClassName(@Nonnull String internalName) {
 		ClassMapping mapping = classes.get(internalName);
 		if (mapping == null)
 			return null;
@@ -188,7 +188,7 @@ public class IntermediateMappings implements Mappings {
 
 	@Nullable
 	@Override
-	public String getMappedFieldName(String ownerName, String fieldName, String fieldDesc) {
+	public String getMappedFieldName(@Nonnull String ownerName, @Nonnull String fieldName, @Nonnull String fieldDesc) {
 		List<FieldMapping> fieldInClass = getClassFieldMappings(ownerName);
 		for (FieldMapping field : fieldInClass)
 			if (Objects.equals(fieldDesc, field.getDesc()) && field.getOldName().equals(fieldName))
@@ -198,7 +198,7 @@ public class IntermediateMappings implements Mappings {
 
 	@Nullable
 	@Override
-	public String getMappedMethodName(String ownerName, String methodName, String methodDesc) {
+	public String getMappedMethodName(@Nonnull String ownerName, @Nonnull String methodName, @Nonnull String methodDesc) {
 		List<MethodMapping> methodsInClass = getClassMethodMappings(ownerName);
 		for (MethodMapping method : methodsInClass)
 			if (methodDesc.equals(method.getDesc()) && method.getOldName().equals(methodName))
@@ -208,7 +208,7 @@ public class IntermediateMappings implements Mappings {
 
 	@Nullable
 	@Override
-	public String getMappedVariableName(String className, String methodName, String methodDesc,
+	public String getMappedVariableName(@Nonnull String className, @Nonnull String methodName, @Nonnull String methodDesc,
 										String name, String desc, int index) {
 		List<VariableMapping> variablesInMethod = getMethodVariableMappings(className, methodName, methodDesc);
 		for (VariableMapping variable : variablesInMethod) {
