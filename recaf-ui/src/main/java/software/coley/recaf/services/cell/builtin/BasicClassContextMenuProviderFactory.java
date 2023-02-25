@@ -3,16 +3,22 @@ package software.coley.recaf.services.cell.builtin;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import javafx.collections.ObservableList;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.cell.*;
+import software.coley.recaf.ui.action.Actions;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
+
+import static software.coley.recaf.util.Menus.action;
 
 /**
  * Basic implementation for {@link ClassContextMenuProviderFactory}.
@@ -23,12 +29,15 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 public class BasicClassContextMenuProviderFactory implements ClassContextMenuProviderFactory {
 	private final TextProviderService textService;
 	private final IconProviderService iconService;
+	private final Actions actions;
 
 	@Inject
 	public BasicClassContextMenuProviderFactory(@Nonnull TextProviderService textService,
-												@Nonnull IconProviderService iconService) {
+												@Nonnull IconProviderService iconService,
+												@Nonnull Actions actions) {
 		this.textService = textService;
 		this.iconService = iconService;
+		this.actions = actions;
 	}
 
 	@Nonnull
@@ -115,6 +124,19 @@ public class BasicClassContextMenuProviderFactory implements ClassContextMenuPro
 								 @Nonnull JvmClassBundle bundle,
 								 @Nonnull JvmClassInfo info) {
 		// TODO: implement operations
+		//  - edit
+		//    - class assembler
+		//    - copy
+		//    - delete
+		//  - refactor
+		//    - move
+		//    - rename
+		//  - search references
+		//  - view
+		//    - class hierarchy
+		ObservableList<MenuItem> items = menu.getItems();
+		items.add(action("menu.goto.class", CarbonIcons.ARROW_RIGHT,
+				() -> actions.gotoDeclaration(workspace, resource, bundle, info)));
 	}
 
 	/**
@@ -137,5 +159,18 @@ public class BasicClassContextMenuProviderFactory implements ClassContextMenuPro
 									 @Nonnull AndroidClassBundle bundle,
 									 @Nonnull AndroidClassInfo info) {
 		// TODO: implement operations
+		//  - edit
+		//    - class assembler
+		//    - copy
+		//    - delete
+		//  - refactor
+		//    - move
+		//    - rename
+		//  - search references
+		//  - view
+		//    - class hierarchy
+		ObservableList<MenuItem> items = menu.getItems();
+		items.add(action("menu.goto.class", CarbonIcons.ARROW_RIGHT,
+				() -> actions.gotoDeclaration(workspace, resource, bundle, info)));
 	}
 }

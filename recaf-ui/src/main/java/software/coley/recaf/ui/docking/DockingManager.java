@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.docking;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.recaf.ui.docking.listener.TabClosureListener;
@@ -9,7 +10,13 @@ import software.coley.recaf.ui.docking.listener.TabSelectionListener;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
+/**
+ * Manages open docking regions and tabs.
+ *
+ * @author Matt Coley
+ */
 @ApplicationScoped
 public class DockingManager {
 	private final DockingRegionFactory factory = new DockingRegionFactory(this);
@@ -26,18 +33,6 @@ public class DockingManager {
 		primaryRegion.setCloseIfEmpty(false);
 	}
 
-	// Need to track:
-	//  - Access to all open tabs
-	//  - Access to all open regions
-	//  - Current open tabs (and which is the most recently interacted with)
-
-	// Need to do:
-	//  - Open new tab (of type, like for a class)
-	//    - Can just slap them in the default region, now that we keep that one around.
-	//    - Allow edge cases:
-	//       - SPAWN_IN_DEFAULT
-	//       - SPAWN_IN_ORIGINATOR
-
 	/**
 	 * The primary region is where tabs should open by default.
 	 * It is locked to the main window where the initial workspace info is displayed.
@@ -45,6 +40,7 @@ public class DockingManager {
 	 *
 	 * @return Primary region.
 	 */
+	@Nonnull
 	public DockingRegion getPrimaryRegion() {
 		return primaryRegion;
 	}
@@ -52,6 +48,7 @@ public class DockingManager {
 	/**
 	 * @return All current docking regions.
 	 */
+	@Nonnull
 	public List<DockingRegion> getRegions() {
 		return regions;
 	}
@@ -59,13 +56,15 @@ public class DockingManager {
 	/**
 	 * @return All current docking tabs.
 	 */
+	@Nonnull
 	public List<DockingTab> getDockTabs() {
 		return regions.stream().flatMap(r -> r.getDockTabs().stream()).toList();
 	}
 
 	/**
-	 * @return New rgion.
+	 * @return New region.
 	 */
+	@Nonnull
 	public DockingRegion newRegion() {
 		DockingRegion region = factory.create();
 		factory.init(region);
@@ -82,7 +81,7 @@ public class DockingManager {
 	 * @return {@code true} when region closure was a success.
 	 * {@code false} when a region denied closure.
 	 */
-	boolean onRegionClose(DockingRegion region) {
+	boolean onRegionClose(@Nonnull DockingRegion region) {
 		// Close any tabs that are closable.
 		// If there are tabs that cannot be closed, deny region closure.
 		boolean allowClosure = true;
@@ -106,33 +105,33 @@ public class DockingManager {
 	}
 
 	/**
-	 * Configured by {@link DockingRegion#createTab(DockingTabFactory)}, called when a tab is created.
+	 * Configured by {@link DockingRegion#createTab(Supplier)}, called when a tab is created.
 	 *
 	 * @param parent
 	 * 		Parent region.
 	 * @param tab
 	 * 		Tab created.
 	 */
-	void onTabCreate(DockingRegion parent, DockingTab tab) {
+	void onTabCreate(@Nonnull DockingRegion parent, @Nonnull DockingTab tab) {
 		for (TabCreationListener listener : tabCreationListeners)
 			listener.onCreate(parent, tab);
 	}
 
 	/**
-	 * Configured by {@link DockingRegion#createTab(DockingTabFactory)}, called when a tab is closed.
+	 * Configured by {@link DockingRegion#createTab(Supplier)}, called when a tab is closed.
 	 *
 	 * @param parent
 	 * 		Parent region.
 	 * @param tab
 	 * 		Tab created.
 	 */
-	void onTabClose(DockingRegion parent, DockingTab tab) {
+	void onTabClose(@Nonnull DockingRegion parent, @Nonnull DockingTab tab) {
 		for (TabClosureListener listener : tabClosureListeners)
 			listener.onClose(parent, tab);
 	}
 
 	/**
-	 * Configured by {@link DockingRegion#createTab(DockingTabFactory)}, called when a tab is
+	 * Configured by {@link DockingRegion#createTab(Supplier)}, called when a tab is
 	 * moved between {@link DockingRegion}s.
 	 *
 	 * @param oldRegion
@@ -142,20 +141,20 @@ public class DockingManager {
 	 * @param tab
 	 * 		Tab created.
 	 */
-	void onTabMove(DockingRegion oldRegion, DockingRegion newRegion, DockingTab tab) {
+	void onTabMove(@Nonnull DockingRegion oldRegion, @Nonnull DockingRegion newRegion, @Nonnull DockingTab tab) {
 		for (TabMoveListener listener : tabMoveListeners)
 			listener.onMove(oldRegion, newRegion, tab);
 	}
 
 	/**
-	 * Configured by {@link DockingRegion#createTab(DockingTabFactory)}, called when a tab is selected.
+	 * Configured by {@link DockingRegion#createTab(Supplier)}, called when a tab is selected.
 	 *
 	 * @param parent
 	 * 		Parent region.
 	 * @param tab
 	 * 		Tab created.
 	 */
-	void onTabSelection(DockingRegion parent, DockingTab tab) {
+	void onTabSelection(@Nonnull DockingRegion parent, @Nonnull DockingTab tab) {
 		for (TabSelectionListener listener : tabSelectionListeners)
 			listener.onSelection(parent, tab);
 	}
@@ -164,7 +163,7 @@ public class DockingManager {
 	 * @param listener
 	 * 		Listener to add.
 	 */
-	public void addTabSelectionListener(TabSelectionListener listener) {
+	public void addTabSelectionListener(@Nonnull TabSelectionListener listener) {
 		tabSelectionListeners.add(listener);
 	}
 
@@ -174,7 +173,7 @@ public class DockingManager {
 	 *
 	 * @return {@code true} upon removal. {@code false} when listener wasn't present.
 	 */
-	public boolean removeTabSelectionListener(TabSelectionListener listener) {
+	public boolean removeTabSelectionListener(@Nonnull TabSelectionListener listener) {
 		return tabSelectionListeners.remove(listener);
 	}
 
@@ -182,7 +181,7 @@ public class DockingManager {
 	 * @param listener
 	 * 		Listener to add.
 	 */
-	public void addTabCreationListener(TabCreationListener listener) {
+	public void addTabCreationListener(@Nonnull TabCreationListener listener) {
 		tabCreationListeners.add(listener);
 	}
 
@@ -192,7 +191,7 @@ public class DockingManager {
 	 *
 	 * @return {@code true} upon removal. {@code false} when listener wasn't present.
 	 */
-	public boolean removeTabCreationListener(TabCreationListener listener) {
+	public boolean removeTabCreationListener(@Nonnull TabCreationListener listener) {
 		return tabCreationListeners.remove(listener);
 	}
 
@@ -200,7 +199,7 @@ public class DockingManager {
 	 * @param listener
 	 * 		Listener to add.
 	 */
-	public void addTabClosureListener(TabClosureListener listener) {
+	public void addTabClosureListener(@Nonnull TabClosureListener listener) {
 		tabClosureListeners.add(listener);
 	}
 
@@ -210,7 +209,7 @@ public class DockingManager {
 	 *
 	 * @return {@code true} upon removal. {@code false} when listener wasn't present.
 	 */
-	public boolean removeTabClosureListener(TabClosureListener listener) {
+	public boolean removeTabClosureListener(@Nonnull TabClosureListener listener) {
 		return tabClosureListeners.remove(listener);
 	}
 
@@ -218,7 +217,7 @@ public class DockingManager {
 	 * @param listener
 	 * 		Listener to add.
 	 */
-	public void addTabMoveListener(TabMoveListener listener) {
+	public void addTabMoveListener(@Nonnull TabMoveListener listener) {
 		tabMoveListeners.add(listener);
 	}
 
@@ -228,7 +227,7 @@ public class DockingManager {
 	 *
 	 * @return {@code true} upon removal. {@code false} when listener wasn't present.
 	 */
-	public boolean removeTabMoveListener(TabMoveListener listener) {
+	public boolean removeTabMoveListener(@Nonnull TabMoveListener listener) {
 		return tabMoveListeners.remove(listener);
 	}
 }

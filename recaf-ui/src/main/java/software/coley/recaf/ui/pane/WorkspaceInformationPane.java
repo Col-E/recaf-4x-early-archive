@@ -15,6 +15,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import software.coley.recaf.services.cell.IconProviderService;
 import software.coley.recaf.services.cell.TextProviderService;
+import software.coley.recaf.services.info.ResourceSummarizer;
 import software.coley.recaf.services.info.ResourceSummaryService;
 import software.coley.recaf.services.info.SummaryConsumer;
 import software.coley.recaf.workspace.model.Workspace;
@@ -26,7 +27,8 @@ import java.util.Map;
  * Pane to display summary data about the loaded {@link Workspace} when opened.
  *
  * @author Matt Coley
- * @see WorkspaceRootPane
+ * @see WorkspaceRootPane Parent display.
+ * @see ResourceSummaryService Manages content to display here via discovered {@link ResourceSummarizer} types.
  */
 @Dependent
 public class WorkspaceInformationPane extends BorderPane {

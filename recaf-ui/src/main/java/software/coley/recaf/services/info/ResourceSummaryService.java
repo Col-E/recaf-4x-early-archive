@@ -1,6 +1,5 @@
 package software.coley.recaf.services.info;
 
-import atlantafx.base.controls.Spacer;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
@@ -29,6 +28,10 @@ public class ResourceSummaryService implements Service {
 	public ResourceSummaryService(@Nonnull ResourceSummaryServiceConfig config,
 								  @Nonnull Instance<ResourceSummarizer> summarizers) {
 		this.config = config;
+
+		// TODO: Summarizer for android
+		//  - Manifest
+		//  - Permissions
 
 		// Add discovered summarizers from classpath.
 		for (ResourceSummarizer summarizer : summarizers)

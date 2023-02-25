@@ -1,6 +1,5 @@
 package software.coley.recaf;
 
-import com.panemu.tiwulfx.control.dock.DetachableTab;
 import jakarta.annotation.Nonnull;
 import javafx.application.Application;
 import javafx.geometry.Orientation;
@@ -15,6 +14,7 @@ import software.coley.recaf.ui.RecafTheme;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingRegion;
+import software.coley.recaf.ui.docking.DockingTab;
 import software.coley.recaf.ui.menubar.MainMenu;
 import software.coley.recaf.ui.pane.LoggingPane;
 import software.coley.recaf.ui.pane.WelcomePane;
@@ -80,12 +80,9 @@ public class RecafApplication extends Application implements WorkspaceOpenListen
 	private Node createLoggingWrapper() {
 		LoggingPane logging = recaf.get(LoggingPane.class);
 		DockingRegion dockingPane = recaf.get(DockingManager.class).newRegion();
-		DetachableTab tab = new DetachableTab();
-		tab.textProperty().bind(Lang.getBinding("logging.title"));
+		DockingTab tab = dockingPane.createTab(Lang.getBinding("logging.title"), logging);
 		tab.setGraphic(new FontIconView(CarbonIcons.TERMINAL));
-		tab.setContent(logging);
 		tab.setClosable(false);
-		dockingPane.getTabs().add(tab);
 		return dockingPane;
 	}
 

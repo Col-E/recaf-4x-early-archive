@@ -5,10 +5,14 @@ import com.panemu.tiwulfx.control.dock.DetachableTabPane;
 import com.panemu.tiwulfx.control.dock.TabDropHint;
 import jakarta.annotation.Nonnull;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
+import javafx.scene.control.Tab;
 import javafx.scene.shape.*;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -19,6 +23,7 @@ import java.util.function.Supplier;
  * @author Matt Coley
  */
 public class DockingRegion extends DetachableTabPane {
+	private static final Logger logger = Logging.get(DockingRegion.class);
 	private final DockingManager manager;
 
 	DockingRegion(@Nonnull DockingManager manager) {
@@ -68,10 +73,14 @@ public class DockingRegion extends DetachableTabPane {
 
 		// Ensure we record tabs closing (and let them still declare close handlers via the factory)
 		EventHandler<Event> closeHandler = tab.getOnClosed();
-		tab.setOnClosed(e -> {
-			if (closeHandler != null)
-				closeHandler.handle(e);
-			manager.onTabClose(tab.getRegion(), tab);
+		tab.setOnCloseRequest(e -> {
+			// We use on-close-request so that 'getRegion' still has a reference to the containing tab-pane.
+			// Using on-close, the region reference is removed.
+			if (tab.isClosable()) {
+				if (closeHandler != null)
+					closeHandler.handle(e);
+				manager.onTabClose(tab.getRegion(), tab);
+			}
 		});
 
 		// Ensure the manager is aware of which tabs per region are selected.
@@ -101,7 +110,13 @@ public class DockingRegion extends DetachableTabPane {
 		});
 
 		// Add the tab.
-		getTabs().add(tab);
+		ObservableList<Tab> tabs = getTabs();
+		if (!tabs.contains(tab))
+			tabs.add(tab);
+		else
+			logger.error("Tab was already added to region, prior to 'createTab' call.\n" +
+							"Please ensure tabs are only added via 'createTab' to ensure consistent behavior.",
+					new IllegalStateException("Stack dump"));
 		manager.onTabCreate(this, tab);
 		return tab;
 	}

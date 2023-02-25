@@ -1,6 +1,5 @@
 package software.coley.recaf.ui.docking;
 
-
 import com.panemu.tiwulfx.control.dock.DetachableTab;
 import javafx.beans.value.ObservableValue;
 import javafx.event.Event;
@@ -22,7 +21,7 @@ public class DockingTab extends DetachableTab {
 	 * @param content
 	 * 		Initial tab content.
 	 */
-	public DockingTab(String title, Node content) {
+	DockingTab(String title, Node content) {
 		textProperty().setValue(title);
 		setContent(content);
 	}
@@ -49,10 +48,12 @@ public class DockingTab extends DetachableTab {
 	 * Close the current tab.
 	 */
 	public void close() {
-		TabPane tabPane = getTabPane();
-		Event.fireEvent(this, new Event(Tab.CLOSED_EVENT));
-		if (tabPane != null)
-			FxThreadUtil.run(() -> tabPane.getTabs().remove(this));
+		if (isClosable()) {
+			TabPane tabPane = getTabPane();
+			Event.fireEvent(this, new Event(Tab.CLOSED_EVENT));
+			if (tabPane != null)
+				FxThreadUtil.run(() -> tabPane.getTabs().remove(this));
+		}
 	}
 
 	/**
