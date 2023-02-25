@@ -83,7 +83,7 @@ class MappingApplierTest extends TestBase {
 		String anonymousLambdaName = AnonymousLambda.class.getName().replace('.', '/');
 
 		// Create mappings for all classes but the runner 'AnonymousLambda'
-		Mappings mappings = mappingGenerator.generate(resource, inheritanceGraph, nameGenerator, new NameGeneratorFilter(null, true) {
+		Mappings mappings = mappingGenerator.generate(workspace, resource, inheritanceGraph, nameGenerator, new NameGeneratorFilter(null, true) {
 			@Override
 			public boolean shouldMapClass(@Nonnull ClassInfo info) {
 				return !info.getName().equals(anonymousLambdaName);
@@ -133,7 +133,7 @@ class MappingApplierTest extends TestBase {
 		String dummyEnumPrinterName = DummyEnumPrinter.class.getName().replace('.', '/');
 
 		// Create mappings for all classes but the runner 'DummyEnumPrinter'
-		Mappings mappings = mappingGenerator.generate(resource, inheritanceGraph, nameGenerator, new NameGeneratorFilter(null, true) {
+		Mappings mappings = mappingGenerator.generate(workspace, resource, inheritanceGraph, nameGenerator, new NameGeneratorFilter(null, true) {
 			@Override
 			public boolean shouldMapClass(@Nonnull ClassInfo info) {
 				return !info.getName().equals(dummyEnumPrinterName);
@@ -176,7 +176,7 @@ class MappingApplierTest extends TestBase {
 		String classWithAnnotationName = ClassWithAnnotation.class.getName().replace('.', '/');
 
 		// Create mappings for all classes but the target 'ClassWithAnnotation'
-		Mappings mappings = mappingGenerator.generate(resource, inheritanceGraph, nameGenerator, new NameGeneratorFilter(null, true) {
+		Mappings mappings = mappingGenerator.generate(workspace, resource, inheritanceGraph, nameGenerator, new NameGeneratorFilter(null, true) {
 			@Override
 			public boolean shouldMapClass(@Nonnull ClassInfo info) {
 				return !info.getName().equals(classWithAnnotationName);
@@ -225,7 +225,7 @@ class MappingApplierTest extends TestBase {
 		String overlapCallerName = OverlapCaller.class.getName().replace('.', '/');
 
 		// Create mappings for all classes but the runner 'OverlapCaller'
-		Mappings mappings = mappingGenerator.generate(resource, inheritanceGraph, nameGenerator, new NameGeneratorFilter(null, true) {
+		Mappings mappings = mappingGenerator.generate(workspace, resource, inheritanceGraph, nameGenerator, new NameGeneratorFilter(null, true) {
 			@Override
 			public boolean shouldMapClass(@Nonnull ClassInfo info) {
 				return !info.getName().equals(overlapCallerName);

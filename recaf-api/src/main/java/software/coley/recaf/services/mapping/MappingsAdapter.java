@@ -2,6 +2,8 @@ package software.coley.recaf.services.mapping;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceVertex;
 import software.coley.recaf.services.mapping.data.*;
@@ -96,11 +98,21 @@ public class MappingsAdapter implements Mappings {
 		String mapped = mappings.get(getClassKey(internalName));
 		if (mapped == null) {
 			if (workspace != null) {
-				// TODO: Similar to providing the 'graph' we can provide a workspace that will let us access the class's
-				//  actual attributes. We can check for inner classes that way in case an obfuscated sample disregards
-				//  the standard inner class naming convention.
-				workspace.findAnyClass(internalName);
+				// Pull the actual outer class name from the class-info in the workspace if available.
+				ClassPathNode classPath = workspace.findAnyClass(internalName);
+				if (classPath != null) {
+					ClassInfo info = classPath.getValue();
+					String outerName = info.getOuterClassName();
+					if (outerName != null) {
+						String inner = info.getName().substring(outerName.length() + 1);
+						String outerMapped = getMappedClassName(outerName);
+						if (outerMapped != null) {
+							mapped = outerMapped + "$" + inner;
+						}
+					}
+				}
 			} else if (isInner(internalName)) {
+				// We don't have a workspace, so the best we can do is assume standard 'Outer$Inner' conventions.
 				int split = internalName.lastIndexOf("$");
 				String inner = internalName.substring(split + 1);
 				String outer = internalName.substring(0, split);

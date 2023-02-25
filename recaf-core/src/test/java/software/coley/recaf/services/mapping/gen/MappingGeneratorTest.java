@@ -70,7 +70,7 @@ public class MappingGeneratorTest extends TestBase {
 	@Test
 	void testGeneral() {
 		// Apply and assert no unexpected values exist
-		Mappings mappings = mappingGenerator.generate(resource, inheritanceGraph, nameGenerator, null);
+		Mappings mappings = mappingGenerator.generate(workspace, resource, inheritanceGraph, nameGenerator, null);
 
 		// Should not generate names for internal classes
 		assertNull(mappings.getMappedClassName("java/lang/Object"));
@@ -99,7 +99,7 @@ public class MappingGeneratorTest extends TestBase {
 			};
 
 			// Apply and assert all items are mapped
-			Mappings mappings = mappingGenerator.generate(resource, inheritanceGraph, nameGenerator, filter);
+			Mappings mappings = mappingGenerator.generate(workspace, resource, inheritanceGraph, nameGenerator, filter);
 			for (ClassInfo info : resource.getJvmClassBundle()) {
 				assertNotNull(mappings.getMappedClassName(info.getName()));
 				for (FieldMember field : info.getFields())
@@ -128,7 +128,7 @@ public class MappingGeneratorTest extends TestBase {
 			};
 
 			// Apply and assert nothing was generated
-			Mappings mappings = mappingGenerator.generate(resource, inheritanceGraph, nameGenerator, filter);
+			Mappings mappings = mappingGenerator.generate(workspace, resource, inheritanceGraph, nameGenerator, filter);
 			IntermediateMappings intermediate = mappings.exportIntermediate();
 			assertEquals(0, intermediate.getClasses().size());
 			assertEquals(0, intermediate.getFields().size());
@@ -143,7 +143,7 @@ public class MappingGeneratorTest extends TestBase {
 					new ExcludeClassNameFilter(null, "AccessibleMethods", TextMatchMode.ENDS_WITH);
 
 			// Apply and assert all items are mapped except the base classes types
-			Mappings mappings = mappingGenerator.generate(resource, inheritanceGraph, nameGenerator, filter);
+			Mappings mappings = mappingGenerator.generate(workspace, resource, inheritanceGraph, nameGenerator, filter);
 			for (ClassInfo info : resource.getJvmClassBundle()) {
 				String mappedClass = mappings.getMappedClassName(info.getName());
 

@@ -13,6 +13,7 @@ import software.coley.recaf.services.inheritance.InheritanceVertex;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.MappingsAdapter;
 import software.coley.recaf.services.mapping.gen.filter.ExcludeEnumMethodsFilter;
+import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
@@ -34,6 +35,9 @@ public class MappingGenerator implements Service {
 	}
 
 	/**
+	 * @param workspace
+	 * 		Workspace to pull class information from.
+	 * 		Can be {@code null} but some assumptions will be made about inner-class names.
 	 * @param resource
 	 * 		Resource to generate mappings for.
 	 * @param inheritanceGraph
@@ -45,14 +49,19 @@ public class MappingGenerator implements Service {
 	 *
 	 * @return Newly generated mappings.
 	 */
-	public Mappings generate(@Nonnull WorkspaceResource resource, @Nonnull InheritanceGraph inheritanceGraph,
-							 @Nonnull NameGenerator generator, @Nullable NameGeneratorFilter filter) {
+	public Mappings generate(@Nullable Workspace workspace,
+							 @Nonnull WorkspaceResource resource,
+							 @Nonnull InheritanceGraph inheritanceGraph,
+							 @Nonnull NameGenerator generator,
+							 @Nullable NameGeneratorFilter filter) {
 		// Adapt filter to handle baseline cases.
 		filter = new ExcludeEnumMethodsFilter(filter);
 
 		// Setup adapter to store our mappings in.
 		MappingsAdapter mappings = new MappingsAdapter(true, true);
 		mappings.enableHierarchyLookup(inheritanceGraph);
+		if (workspace != null)
+			mappings.enableClassLookup(workspace);
 		SortedMap<String, ClassInfo> classMap = new TreeMap<>();
 		resource.versionedJvmClassBundleStream()
 				.flatMap(Bundle::stream)
