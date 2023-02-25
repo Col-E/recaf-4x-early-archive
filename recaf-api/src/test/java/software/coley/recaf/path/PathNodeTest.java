@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.path;
+package software.coley.recaf.path;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
@@ -11,7 +11,6 @@ import software.coley.recaf.info.builder.TextFileInfoBuilder;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.StringConsumer;
 import software.coley.recaf.test.dummy.StringConsumerUser;
-import software.coley.recaf.ui.control.tree.WorkspaceTreeNode;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.*;
@@ -84,65 +83,6 @@ class PathNodeTest {
 		p2 = p3.child(packageName);
 		p2b = p3.child(parentPackageName);
 		p1 = p2.child(primaryClassInfo);
-	}
-
-	@Nested
-	class Insertion {
-		@Test
-		void insertClassGeneratesIntermediatesToWorkspaceNode() {
-			WorkspaceTreeNode workspaceNode = new WorkspaceTreeNode(p5);
-
-			// Insert the class, which should generate all paths between the class and the workspace node.
-			WorkspaceTreeNode classNode = p1.getOrInsertIntoTree(workspaceNode);
-			assertNotNull(classNode, "Class not yielded by original assert");
-
-			// Assert all package entries exist for: software.coley.recaf.test.dummy
-			WorkspaceTreeNode packageDummy = classNode.getParentNode();
-			assertNotNull(packageDummy, "Missing node for package: 'software.coley.recaf.test.dummy'");
-			WorkspaceTreeNode packageTest = packageDummy.getParentNode();
-			assertNotNull(packageTest, "Missing node for package: 'software.coley.recaf.test'");
-			WorkspaceTreeNode packageRecaf = packageTest.getParentNode();
-			assertNotNull(packageRecaf, "Missing node for package: 'software.coley.recaf'");
-			WorkspaceTreeNode packageColey = packageRecaf.getParentNode();
-			assertNotNull(packageColey, "Missing node for package: 'software.coley'");
-			WorkspaceTreeNode packageSoftware = packageColey.getParentNode();
-			assertNotNull(packageSoftware, "Missing node for package: 'software'");
-
-			// Bundle parent
-			WorkspaceTreeNode bundleNode = packageSoftware.getParentNode();
-			assertNotNull(bundleNode, "Missing bundle node");
-			assertTrue(bundleNode.getValue() instanceof BundlePathNode);
-
-			// Resource parent
-			WorkspaceTreeNode resourceNode = bundleNode.getParentNode();
-			assertNotNull(resourceNode, "Missing resource node");
-			assertTrue(resourceNode.getValue() instanceof ResourcePathNode);
-
-			// Workspace parent should be the same as the original item we had.
-			WorkspaceTreeNode workspaceNode2 = resourceNode.getParentNode();
-			assertSame(workspaceNode, workspaceNode2);
-		}
-
-		@Test
-		void duplicateInsertYieldsExistingNode() {
-			// Create workspace root
-			WorkspaceTreeNode workspaceNode = new WorkspaceTreeNode(p5);
-
-			// Insert operation
-			WorkspaceTreeNode classNode1 = p1.getOrInsertIntoTree(workspaceNode);
-			WorkspaceTreeNode classNode2 = p1.getOrInsertIntoTree(workspaceNode);
-			assertSame(classNode1, classNode2);
-		}
-
-		@Test
-		void duplicateInsertYieldsExistingNodeOnRoot() {
-			// Create workspace root
-			WorkspaceTreeNode workspaceNode = new WorkspaceTreeNode(p5);
-
-			// Insert operation, insert root value should yield self.
-			WorkspaceTreeNode workspaceNode2 = p5.getOrInsertIntoTree(workspaceNode);
-			assertSame(workspaceNode2, workspaceNode);
-		}
 	}
 
 	@Nested

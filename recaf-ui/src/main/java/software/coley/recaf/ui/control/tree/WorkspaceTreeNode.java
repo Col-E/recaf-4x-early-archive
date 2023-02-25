@@ -3,7 +3,9 @@ package software.coley.recaf.ui.control.tree;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.scene.control.TreeItem;
-import software.coley.recaf.ui.path.PathNode;
+import software.coley.recaf.path.BundlePathNode;
+import software.coley.recaf.path.DirectoryPathNode;
+import software.coley.recaf.path.PathNode;
 
 /**
  * Tree item subtype for more convenience tree building operations.
@@ -63,7 +65,7 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 			root = parentNode;
 
 		// Lookup and/or create nodes for path.
-		return path.getOrInsertIntoTree(root);
+		return getOrInsertIntoTree(root, path);
 	}
 
 	/**
@@ -113,5 +115,82 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() + "[" + getValue().toString() + "]";
+	}
+
+
+	/**
+	 * Get/insert a {@link WorkspaceTreeNode} holding the given {@link PathNode} from/to the tree model.
+	 *
+	 * @param node
+	 * 		Tree node to insert into.
+	 * @param path
+	 * 		Path to insert.
+	 *
+	 * @return Inserted node.
+	 */
+	@Nonnull
+	public static WorkspaceTreeNode getOrInsertIntoTree(WorkspaceTreeNode node, PathNode<?> path) {
+		// Edge case handling for directory nodes.
+		if (path instanceof DirectoryPathNode directoryPath) {
+			// If we have parent links in our path, insert those first.
+			// We should generate up to whatever context our parent is.
+			BundlePathNode parent = directoryPath.getParent();
+			if (parent != null)
+				node = getOrInsertIntoTree(node, parent);
+
+			// Work off of the first node that does NOT contain a directory value.
+			while (node.getValue() instanceof DirectoryPathNode) {
+				node = (WorkspaceTreeNode) node.getParent();
+			}
+
+			// Insert the directory path, separated by '/'.
+			// Update 'node' as we build/fetch the directory path items.
+			String fullDirectory = directoryPath.getValue();
+			String[] directoryParts = fullDirectory.split("/");
+			StringBuilder directoryBuilder = new StringBuilder();
+			for (String directoryPart : directoryParts) {
+				// Build up directory path.
+				directoryBuilder.append(directoryPart).append('/');
+				String directoryName = directoryBuilder.substring(0, directoryBuilder.length() - 1);
+				DirectoryPathNode localPathNode = directoryPath.withDirectory(directoryName);
+
+				// Get existing tree node, or create child if non-existant
+				WorkspaceTreeNode childNode = null;
+				for (TreeItem<PathNode<?>> child : node.getChildren())
+					if (child.getValue().equals(localPathNode)) {
+						childNode = (WorkspaceTreeNode) child;
+						break;
+					}
+				if (childNode == null) {
+					childNode = new WorkspaceTreeNode(localPathNode);
+					node.addAndSortChild(childNode);
+				}
+
+				// Prepare for next directory path entry.
+				node = childNode;
+			}
+			return node;
+		}
+
+		// If we have parent links in our path, insert those first.
+		// We should generate up to whatever context our parent is.
+		PathNode<?> parent = path.getParent();
+		if (parent != null)
+			node = getOrInsertIntoTree(node, parent);
+		else if (path.getValueType() == node.getValue().getValueType()) {
+			// We are the root link in the path. This check ensures that as the root type we do not
+			// insert a new tree-node of the same value, to the children list of the root tree node.
+			return node;
+		}
+
+		// Check if already inserted.
+		for (TreeItem<PathNode<?>> child : node.getChildren())
+			if (path.equals(child.getValue()))
+				return (WorkspaceTreeNode) child;
+
+		// Not already inserted, create a new node and insert it.
+		WorkspaceTreeNode inserted = new WorkspaceTreeNode(path);
+		node.addAndSortChild(inserted);
+		return inserted;
 	}
 }

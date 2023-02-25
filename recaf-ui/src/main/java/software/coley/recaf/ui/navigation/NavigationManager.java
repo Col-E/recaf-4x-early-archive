@@ -7,12 +7,11 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
-import software.coley.recaf.ui.control.tree.WorkspaceTreeNode;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingTab;
-import software.coley.recaf.ui.path.AbstractPathNode;
-import software.coley.recaf.ui.path.PathNode;
-import software.coley.recaf.ui.path.WorkspacePathNode;
+import software.coley.recaf.path.AbstractPathNode;
+import software.coley.recaf.path.PathNode;
+import software.coley.recaf.path.WorkspacePathNode;
 import software.coley.recaf.workspace.WorkspaceManager;
 
 import java.util.ArrayList;
@@ -109,12 +108,6 @@ public class NavigationManager implements Navigable {
 		@Override
 		public int localCompare(PathNode<?> o) {
 			return -1;
-		}
-
-		@Nonnull
-		@Override
-		public WorkspaceTreeNode getOrInsertIntoTree(WorkspaceTreeNode node) {
-			throw new IllegalStateException("Cannot do get/insert operations in initial state");
 		}
 	}
 }

@@ -4,7 +4,7 @@ import jakarta.annotation.Nonnull;
 import javafx.scene.control.TreeCell;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.cell.ContextSource;
-import software.coley.recaf.ui.path.PathNode;
+import software.coley.recaf.path.PathNode;
 
 /**
  * Cell for rendering {@link PathNode} items.

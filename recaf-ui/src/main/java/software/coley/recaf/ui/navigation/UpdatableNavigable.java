@@ -3,7 +3,7 @@ package software.coley.recaf.ui.navigation;
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.ui.pane.editing.ClassPane;
-import software.coley.recaf.ui.path.PathNode;
+import software.coley.recaf.path.PathNode;
 
 /**
  * Navigable subtype with intent for content to be updated.

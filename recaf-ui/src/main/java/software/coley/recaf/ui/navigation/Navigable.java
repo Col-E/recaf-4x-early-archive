@@ -4,7 +4,7 @@ import jakarta.annotation.Nonnull;
 import javafx.scene.layout.Pane;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.ClassMember;
-import software.coley.recaf.ui.path.PathNode;
+import software.coley.recaf.path.PathNode;
 
 import java.util.ArrayList;
 import java.util.Collection;

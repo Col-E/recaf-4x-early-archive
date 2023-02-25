@@ -99,6 +99,7 @@ public class MappingsAdapter implements Mappings {
 				// TODO: Similar to providing the 'graph' we can provide a workspace that will let us access the class's
 				//  actual attributes. We can check for inner classes that way in case an obfuscated sample disregards
 				//  the standard inner class naming convention.
+				workspace.findAnyClass(internalName);
 			} else if (isInner(internalName)) {
 				int split = internalName.lastIndexOf("$");
 				String inner = internalName.substring(split + 1);
