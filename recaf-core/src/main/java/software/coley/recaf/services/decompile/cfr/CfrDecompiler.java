@@ -8,7 +8,6 @@ import org.benf.cfr.reader.util.CfrVersionInfo;
 import org.benf.cfr.reader.util.DecompilerComment;
 import software.coley.recaf.services.decompile.AbstractJvmDecompiler;
 import software.coley.recaf.services.decompile.DecompileResult;
-import software.coley.recaf.services.decompile.DecompilerConfig;
 import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -51,12 +50,20 @@ public class CfrDecompiler extends AbstractJvmDecompiler {
 		int configHash = getConfig().getConfigHash();
 		if (decompile == null)
 			return new DecompileResult(null, sink.getException(), DecompileResult.ResultType.FAILURE, configHash);
-		return new DecompileResult(decompile, null, DecompileResult.ResultType.SUCCESS, configHash);
+		return new DecompileResult(filter(decompile), null, DecompileResult.ResultType.SUCCESS, configHash);
 	}
 
 	@Override
 	public CfrConfig getConfig() {
 		return (CfrConfig) super.getConfig();
+	}
+
+	private static String filter(String decompile) {
+		// CFR emits a 'Decompiled with CFR' header, which is annoying, so we'll remove that.
+		int commentStart = decompile.indexOf("/*\n");
+		int commentEnd = decompile.indexOf(" */\n");
+		decompile = decompile.substring(0, commentStart) + decompile.substring(commentEnd + 4);
+		return decompile;
 	}
 
 	static {

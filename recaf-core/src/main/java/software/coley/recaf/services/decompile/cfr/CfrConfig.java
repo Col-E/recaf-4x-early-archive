@@ -61,7 +61,7 @@ public class CfrConfig extends BasicConfigContainer implements DecompilerConfig 
 	private final ObservableObject<BooleanOption> sugarasserts = new ObservableObject<>(BooleanOption.DEFAULT);
 	private final ObservableObject<BooleanOption> sugarboxing = new ObservableObject<>(BooleanOption.DEFAULT);
 	private final ObservableObject<BooleanOption> sugarretrolambda = new ObservableObject<>(BooleanOption.DEFAULT);
-	private final ObservableObject<BooleanOption> showversion = new ObservableObject<>(BooleanOption.FALSE);
+	private final ObservableObject<BooleanOption> showversion = new ObservableObject<>(BooleanOption.DEFAULT);
 	private final ObservableObject<BooleanOption> decodefinally = new ObservableObject<>(BooleanOption.DEFAULT);
 	private final ObservableObject<BooleanOption> tidymonitors = new ObservableObject<>(BooleanOption.DEFAULT);
 	private final ObservableObject<BooleanOption> commentmonitors = new ObservableObject<>(BooleanOption.DEFAULT);
