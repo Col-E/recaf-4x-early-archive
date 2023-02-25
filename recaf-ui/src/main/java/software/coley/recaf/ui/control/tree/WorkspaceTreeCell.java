@@ -12,7 +12,6 @@ import software.coley.recaf.ui.path.PathNode;
  * @author Matt Coley
  */
 public class WorkspaceTreeCell extends TreeCell<PathNode<?>> {
-
 	private final ContextSource source;
 	private final CellConfigurationService configurationService;
 

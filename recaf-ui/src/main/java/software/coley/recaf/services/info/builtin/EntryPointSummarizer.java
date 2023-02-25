@@ -12,6 +12,7 @@ import software.coley.recaf.services.cell.IconProviderService;
 import software.coley.recaf.services.cell.TextProviderService;
 import software.coley.recaf.services.info.ResourceSummarizer;
 import software.coley.recaf.services.info.SummaryConsumer;
+import software.coley.recaf.ui.action.Actions;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.Workspace;
@@ -31,12 +32,15 @@ import static java.lang.reflect.Modifier.STATIC;
 public class EntryPointSummarizer implements ResourceSummarizer {
 	private final TextProviderService textService;
 	private final IconProviderService iconService;
+	private final Actions actions;
 
 	@Inject
 	public EntryPointSummarizer(@Nonnull TextProviderService textService,
-								@Nonnull IconProviderService iconService) {
+								@Nonnull IconProviderService iconService,
+								@Nonnull Actions actions) {
 		this.textService = textService;
 		this.iconService = iconService;
+		this.actions = actions;
 	}
 
 	@Override
@@ -55,9 +59,16 @@ public class EntryPointSummarizer implements ResourceSummarizer {
 						.filter(this::isJvmEntry)
 						.toList();
 				if (!entryMethods.isEmpty()) {
+					// Add entry for class
 					String classDisplay = textService.getJvmClassInfoTextProvider(workspace, resource, bundle, cls).makeText();
 					Node classIcon = iconService.getJvmClassInfoIconProvider(workspace, resource, bundle, cls).makeIcon();
-					consumer.appendSummary(new Label(classDisplay, classIcon));
+					Label classLabel = new Label(classDisplay, classIcon);
+					classLabel.setOnMouseEntered(e -> classLabel.getStyleClass().add(Styles.TEXT_UNDERLINED));
+					classLabel.setOnMouseExited(e -> classLabel.getStyleClass().remove(Styles.TEXT_UNDERLINED));
+					classLabel.setOnMouseClicked(e -> actions.gotoDeclaration(workspace, resource, bundle, cls));
+					consumer.appendSummary(classLabel);
+
+					// Add entries for methods
 					for (MethodMember method : entryMethods) {
 						String methodDisplay = textService.getMethodMemberTextProvider(workspace, resource, bundle, cls, method).makeText();
 						Node methodIcon = iconService.getClassMemberIconProvider(workspace, resource, bundle, cls, method).makeIcon();
@@ -67,7 +78,8 @@ public class EntryPointSummarizer implements ResourceSummarizer {
 						methodLabel.setOnMouseEntered(e -> methodLabel.getStyleClass().add(Styles.TEXT_UNDERLINED));
 						methodLabel.setOnMouseExited(e -> methodLabel.getStyleClass().remove(Styles.TEXT_UNDERLINED));
 						methodLabel.setOnMouseClicked(e -> {
-							// TODO: Navigate to class/method
+							// TODO: Navigate to method
+							//  - actions.gotoDeclaration(workspace, resource, bundle, cls, method);
 						});
 						consumer.appendSummary(methodLabel);
 						found[0]++;

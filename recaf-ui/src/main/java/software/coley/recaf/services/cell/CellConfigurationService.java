@@ -121,6 +121,9 @@ public class CellConfigurationService implements Service {
 	private void openPath(PathNode<?> item) {
 		if (item instanceof ClassPathNode classPathNode) {
 			actions.gotoDeclaration(classPathNode);
+		} else if (item instanceof FilePathNode filePathNode) {
+			// TODO: Action to open file
+			//   actions.gotoDeclaration(filePathNode);
 		}
 	}
 

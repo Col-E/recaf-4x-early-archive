@@ -23,8 +23,8 @@ public class JvmClassPane extends ClassPane {
 		// TODO: Side-panel system
 		//  - Optional show title or just icons to maximize space
 
-		// TODO: When the path updates, update the containing tab
-		//  - We can add a listener type to ClassPane for this
+		// TODO: When the path updates, update the containing tab graphic if necessary
+		//  - We can add a listener type to UpdatableNavigable for this (along to support file pane as well)
 	}
 
 	/**

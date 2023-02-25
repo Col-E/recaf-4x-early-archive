@@ -82,9 +82,6 @@ public class ContextMenuProviderService implements Service {
 		this.directoryContextMenuDefault = directoryContextMenuDefault;
 		this.bundleContextMenuDefault = bundleContextMenuDefault;
 		this.resourceContextMenuDefault = resourceContextMenuDefault;
-
-		// TODO: Factories for (here and in other services)
-		//  - inner classes of ClassInfo
 	}
 
 	/**

@@ -218,7 +218,13 @@ public class Actions {
 		}
 	}
 
-	private void selectTab(Navigable navigable) {
+	/**
+	 * Selects the containing {@link DockingTab} that contains the content.
+	 *
+	 * @param navigable
+	 * 		Navigable content to select in its containing {@link DockingRegion}.
+	 */
+	private static void selectTab(Navigable navigable) {
 		if (navigable instanceof Node node) {
 			while (node != null) {
 				// Get the parent of the node, skip the intermediate 'content area' from tab-pane default skin.
@@ -276,7 +282,7 @@ public class Actions {
 	 * @param currentTab
 	 * 		Current tab reference.
 	 */
-	private void addCloseActions(@Nonnull ContextMenu menu, @Nonnull DockingTab currentTab) {
+	private static void addCloseActions(@Nonnull ContextMenu menu, @Nonnull DockingTab currentTab) {
 		menu.getItems().addAll(
 				action("menu.tab.close", CarbonIcons.CLOSE, currentTab::close),
 				action("menu.tab.closeothers", CarbonIcons.CLOSE, () -> {
@@ -304,7 +310,6 @@ public class Actions {
 	 *
 	 * @return Class path node.
 	 */
-	@SuppressWarnings("unchecked")
 	private static ClassPathNode buildPath(@Nonnull Workspace workspace,
 										   @Nonnull WorkspaceResource resource,
 										   @Nonnull Bundle<?> bundle,
