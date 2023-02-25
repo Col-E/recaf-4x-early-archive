@@ -13,6 +13,8 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
@@ -29,10 +31,10 @@ import software.coley.recaf.ui.pane.editing.JvmClassPane;
 import software.coley.recaf.ui.path.ClassPathNode;
 import software.coley.recaf.ui.path.PathNode;
 import software.coley.recaf.ui.path.WorkspacePathNode;
-import software.coley.recaf.util.Menus;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.Bundle;
+import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
@@ -48,6 +50,7 @@ import static software.coley.recaf.util.Menus.*;
  */
 @ApplicationScoped
 public class Actions {
+	private static final Logger logger = Logging.get(Actions.class);
 	private final NavigationManager navigationManager;
 	private final DockingManager dockingManager;
 	private final TextProviderService textService;
@@ -68,6 +71,38 @@ public class Actions {
 		this.iconService = iconService;
 		this.jvmPaneProvider = jvmPaneProvider;
 		this.androidPaneProvider = androidPaneProvider;
+	}
+
+	/**
+	 * Automatically calls the type-specific goto-declaration handling.
+	 *
+	 * @param path
+	 * 		Path containing a class to open.
+	 */
+	public void gotoDeclaration(@Nonnull ClassPathNode path) {
+		Workspace workspace = path.getValueOfType(Workspace.class);
+		WorkspaceResource resource = path.getValueOfType(WorkspaceResource.class);
+		ClassBundle<?> bundle = path.getValueOfType(ClassBundle.class);
+		ClassInfo info = path.getValue();
+		if (workspace == null) {
+			logger.error("Cannot handle goto-declaration for class '{}', missing workspace in path", info.getName());
+			return;
+		}
+		if (resource == null) {
+			logger.error("Cannot handle goto-declaration for class '{}', missing resource in path", info.getName());
+			return;
+		}
+		if (bundle == null) {
+			logger.error("Cannot handle goto-declaration for class '{}', missing bundle in path", info.getName());
+			return;
+		}
+
+		// Handle JVM vs Android
+		if (info.isJvmClass()) {
+			gotoDeclaration(workspace, resource, (JvmClassBundle) bundle, info.asJvmClass());
+		} else if (info.isAndroidClass()) {
+			gotoDeclaration(workspace, resource, (AndroidClassBundle) bundle, info.asAndroidClass());
+		}
 	}
 
 	/**

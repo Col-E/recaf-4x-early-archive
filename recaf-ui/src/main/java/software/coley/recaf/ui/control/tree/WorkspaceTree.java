@@ -13,10 +13,8 @@ import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
-import software.coley.recaf.services.cell.ContextMenuProviderService;
+import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.cell.ContextSource;
-import software.coley.recaf.services.cell.IconProviderService;
-import software.coley.recaf.services.cell.TextProviderService;
 import software.coley.recaf.ui.path.*;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.workspace.WorkspaceCloseListener;
@@ -49,20 +47,14 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 	/**
 	 * Initialize empty tree.
 	 *
-	 * @param textService
-	 * 		Text provider for cells.
-	 * @param iconService
-	 * 		Icon provider for cells.
-	 * @param contextService
-	 * 		Context menu provider for cells.
+	 * @param configurationService
+	 * 		Service to configure cell content.
 	 */
 	@Inject
-	public WorkspaceTree(@Nonnull TextProviderService textService,
-						 @Nonnull IconProviderService iconService,
-						 @Nonnull ContextMenuProviderService contextService) {
+	public WorkspaceTree(@Nonnull CellConfigurationService configurationService) {
 		ContextSource source = this;
 		setShowRoot(false);
-		setCellFactory(param -> new WorkspaceTreeCell(source, textService, iconService, contextService));
+		setCellFactory(param -> new WorkspaceTreeCell(source, configurationService));
 		getStyleClass().addAll(Tweaks.EDGE_TO_EDGE, Styles.DENSE);
 		setOnKeyPressed(e -> {
 			KeyCode code = e.getCode();
