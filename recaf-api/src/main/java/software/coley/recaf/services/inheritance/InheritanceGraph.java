@@ -10,12 +10,13 @@ import software.coley.recaf.info.BasicJvmClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
+import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.path.ResourcePathNode;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.util.MultiMap;
 import software.coley.recaf.util.MultiMapBuilder;
 import software.coley.recaf.workspace.WorkspaceCloseListener;
 import software.coley.recaf.workspace.WorkspaceModificationListener;
-import software.coley.recaf.workspace.model.FindResult;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
@@ -234,7 +235,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 				break;
 
 			for (String parent : nextVertex.getParents().stream()
-					.map(InheritanceVertex::getName).collect(Collectors.toList())) {
+					.map(InheritanceVertex::getName).toList()) {
 				if (!parent.equals(OBJECT)) {
 					// Parent in the set of visited classes? Then its valid.
 					if (firstParents.contains(parent))
@@ -250,11 +251,13 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 
 	private Function<String, InheritanceVertex> createVertexProvider() {
 		return name -> {
-			FindResult<? extends ClassInfo> result = workspace.findAnyClass(name);
-			ClassInfo info = result.getItem();
-			if (info == null)
+			ClassPathNode result = workspace.findAnyClass(name);
+			if (result == null)
 				return STUB;
-			return new InheritanceVertex(info, this::getVertex, this::getDirectChildren, result.isPrimary());
+			ResourcePathNode resourceParent = result.getParentOfType(WorkspaceResource.class);
+			boolean isPrimary = resourceParent != null && resourceParent.isPrimary();
+			ClassInfo info = result.getValue();
+			return new InheritanceVertex(info, this::getVertex, this::getDirectChildren, isPrimary);
 		};
 	}
 

@@ -11,6 +11,7 @@ import software.coley.recaf.info.annotation.AnnotationElement;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.info.properties.builtin.OriginalClassNameProperty;
+import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
@@ -107,8 +108,9 @@ class MappingApplierTest extends TestBase {
 		assertTrue(modified.contains(anonymousLambdaName), "AnonymousLambda should have updated");
 
 		// Verify that the original name is stored as a property.
-		JvmClassInfo mappedStringSupplier = workspace.findJvmClass(mappedStringSupplierName).getItem();
-		assertNotNull(mappedStringSupplier, "Could not find mapped StringSupplier in workspace");
+		ClassPathNode classPath = workspace.findJvmClass(mappedStringSupplierName);
+		assertNotNull(classPath, "Could not find mapped StringSupplier in workspace");
+		JvmClassInfo mappedStringSupplier = classPath.getValue().asJvmClass();
 		assertEquals(stringSupplierName, OriginalClassNameProperty.get(mappedStringSupplier),
 				"Did not record original name after applying mappings");
 
@@ -203,7 +205,9 @@ class MappingApplierTest extends TestBase {
 		String annoPolicyName = mappings.getMappedMethodName(annotationName, "policy", "()Ljava/lang/annotation/Retention;");
 
 		// Assert the user class has the correct new values
-		JvmClassInfo classWithAnnotation = workspace.findJvmClass(classWithAnnotationName).getItem();
+		ClassPathNode classPath = workspace.findJvmClass(classWithAnnotationName);
+		assertNotNull(classPath, "Could not find: " + classWithAnnotationName);
+		JvmClassInfo classWithAnnotation = classPath.getValue().asJvmClass();
 		AnnotationInfo annotationInfo = classWithAnnotation.getAnnotations().get(0);
 		assertEquals("L" +mappedAnnotationName + ";", annotationInfo.getDescriptor(),
 				"AnnotationImpl not remapped in ClassWithAnnotation");

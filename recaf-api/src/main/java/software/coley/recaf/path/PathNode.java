@@ -33,6 +33,22 @@ public interface PathNode<V> extends Comparable<PathNode<?>> {
 	PathNode getParent();
 
 	/**
+	 * @param type
+	 * 		Some type contained in the full path.
+	 * 		This includes the current {@link PathNode} and any {@link #getParent() parent}.
+	 * @param <T>
+	 * 		Implied value type.
+	 * @param <I>
+	 * 		Implied path node implementation type.
+	 *
+	 * @return Node in the path holding a value of the given type.
+	 *
+	 * @see #getValueOfType(Class) Get the direct value of the parent node.
+	 */
+	@Nullable
+	<T, I extends PathNode<T>> I getParentOfType(@Nonnull Class<T> type);
+
+	/**
 	 * @return Wrapped value.
 	 */
 	@Nonnull
@@ -52,6 +68,8 @@ public interface PathNode<V> extends Comparable<PathNode<?>> {
 	 * 		Implied value type.
 	 *
 	 * @return Instance of value from the path, or {@code null} if not found in this path.
+	 *
+	 * @see #getParentOfType(Class) Get the containing {@link PathNode} instead of the direct value.
 	 */
 	@Nullable
 	<T> T getValueOfType(@Nonnull Class<T> type);

@@ -1,6 +1,7 @@
 package software.coley.recaf.services.callgraph;
 
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.function.Function;
@@ -23,6 +24,8 @@ public class ClassLookup implements Function<String, JvmClassInfo> {
 
 	@Override
 	public JvmClassInfo apply(String name) {
-		return workspace.findJvmClass(name).getItem();
+		ClassPathNode classPath = workspace.findJvmClass(name);
+		if (classPath == null) return null;
+		return classPath.getValue().asJvmClass();
 	}
 }

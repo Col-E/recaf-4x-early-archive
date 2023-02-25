@@ -89,6 +89,16 @@ public abstract class AbstractPathNode<P, V> implements PathNode<V> {
 		return parent;
 	}
 
+	@Nullable
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T, I extends PathNode<T>> I getParentOfType(@Nonnull Class<T> type) {
+		if (getValueType().isAssignableFrom(type))
+			return (I) this;
+		if (parent == null) return null;
+		return parent.getParentOfType(type);
+	}
+
 	@Nonnull
 	@Override
 	public Class<V> getValueType() {

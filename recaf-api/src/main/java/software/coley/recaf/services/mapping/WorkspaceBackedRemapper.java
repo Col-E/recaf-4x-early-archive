@@ -5,8 +5,8 @@ import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.util.Handles;
-import software.coley.recaf.workspace.model.FindResult;
 import software.coley.recaf.workspace.model.Workspace;
 
 /**
@@ -34,14 +34,14 @@ public class WorkspaceBackedRemapper extends BasicMappingsRemapper {
 	@Override
 	public String mapAnnotationAttributeName(String descriptor, String name) {
 		String annotationName = Type.getType(descriptor).getInternalName();
-		FindResult<? extends ClassInfo> classResult = workspace.findAnyClass(annotationName);
+		ClassPathNode classPath = workspace.findAnyClass(annotationName);
 
 		// Not found, probably not intended to be renamed.
-		if (classResult.isEmpty())
+		if (classPath == null)
 			return name;
 
 		// Get the declaration and, if found, treat as normal method mapping.
-		ClassInfo info = classResult.getItem();
+		ClassInfo info = classPath.getValue();
 		MethodMember attributeMethod = info.getMethods().stream()
 				.filter(method -> method.getName().equals(name))
 				.findFirst().orElse(null);

@@ -49,6 +49,15 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 		return new BundlePathNode(this, bundle);
 	}
 
+	/**
+	 * @return {@code true} when this resource node, wraps the primary resource of a workspace.
+	 */
+	public boolean isPrimary() {
+		WorkspacePathNode parent = getParent();
+		if (parent == null) return false;
+		return parent.getValue().getPrimaryResource() == getValue();
+	}
+
 	@Override
 	public WorkspacePathNode getParent() {
 		return (WorkspacePathNode) super.getParent();
@@ -65,7 +74,7 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 					return 0;
 
 				// Show in order as in the workspace.
-				List<WorkspaceResource> resources = workspace.getSupportingResources();
+				List<WorkspaceResource> resources = workspace.getAllResources(false);
 				return Integer.compare(resources.indexOf(resource), resources.indexOf(otherResource));
 			} else {
 				// Enforce some ordering. Not ideal but works.

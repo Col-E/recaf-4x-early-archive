@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import software.coley.recaf.TestBase;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.Inheritance;
 import software.coley.recaf.test.dummy.StringConsumer;
@@ -109,11 +110,12 @@ class InheritanceGraphTest extends TestBase {
 	@Test
 	void getFamilyOfThrowable() {
 		String notFoodExceptionName = Inheritance.NotFoodException.class.getName().replace('.', '/');
-		JvmClassInfo notFoodException = workspace.findJvmClass(notFoodExceptionName).getItem();
-		assertNotNull(notFoodException, "Could not find class 'NotFoodException'");
+		ClassPathNode classPath = workspace.findJvmClass(notFoodExceptionName);
+		assertNotNull(classPath, "Could not find class 'NotFoodException'");
 
 		// Assert that looking at child types of throwable finds NotFoodException.
 		// Our class extends Exception, which extends Throwable. So there should be a vertex between Throwable and our type.
+		JvmClassInfo notFoodException = classPath.getValue().asJvmClass();
 		List<ClassInfo> throwableClasses = graph.getVertex("java/lang/Throwable").getAllChildren().stream()
 				.map(InheritanceVertex::getValue)
 				.toList();

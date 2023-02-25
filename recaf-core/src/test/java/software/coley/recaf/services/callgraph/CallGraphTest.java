@@ -2,6 +2,7 @@ package software.coley.recaf.services.callgraph;
 
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.StringConsumer;
 import software.coley.recaf.test.dummy.StringConsumerUser;
@@ -22,10 +23,12 @@ class CallGraphTest {
 				StringConsumerUser.class
 		));
 
-		JvmClassInfo mainClass = workspace.findJvmClass(StringConsumerUser.class.getName().replace('.', '/')).getItem();
-		JvmClassInfo functionClass = workspace.findJvmClass(StringConsumer.class.getName().replace('.', '/')).getItem();
-		assertNotNull(mainClass, "Missing main class");
-		assertNotNull(functionClass, "Missing function class");
+		ClassPathNode pathUser = workspace.findJvmClass(StringConsumerUser.class.getName().replace('.', '/'));
+		ClassPathNode pathFunc = workspace.findJvmClass(StringConsumer.class.getName().replace('.', '/'));
+		assertNotNull(pathUser, "Missing main class");
+		assertNotNull(pathFunc, "Missing function class");
+		JvmClassInfo mainClass = pathUser.getValue().asJvmClass();
+		JvmClassInfo functionClass = pathFunc.getValue().asJvmClass();
 
 		CallGraph graph = new CallGraph(new CallGraphConfig(), workspace);
 		ClassMethodsContainer containerMain = graph.getClassMethodsContainer(mainClass);

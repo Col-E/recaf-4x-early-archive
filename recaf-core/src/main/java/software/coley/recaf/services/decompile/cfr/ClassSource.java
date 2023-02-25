@@ -4,10 +4,9 @@ import org.benf.cfr.reader.api.ClassFileSource;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
-import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.util.visitors.ClassHollowingVisitor;
 import software.coley.recaf.workspace.model.Workspace;
-import software.coley.recaf.workspace.model.FindResult;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -59,8 +58,8 @@ public class ClassSource implements ClassFileSource {
 		if (className.equals(targetClassName)) {
 			code = targetClassBytecode;
 		} else {
-			FindResult<JvmClassInfo> result = workspace.findJvmClass(className);
-			code = result.isEmpty() ? null : result.getItem().getBytecode();
+			ClassPathNode result = workspace.findJvmClass(className);
+			code = result == null ? null : result.getValue().asJvmClass().getBytecode();
 
 			// Simply CFR's work-load by gutting supporting class internals
 			if (code != null) {
