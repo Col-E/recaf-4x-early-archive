@@ -106,12 +106,14 @@ public class ScriptManager implements Service {
 	 */
 	private void onScriptUpdated(@Nonnull Path path) {
 		try {
-			logger.debug("Script updated: {}", path);
+			// Read updated script content from path.
 			ScriptFile updated = read(path);
 
-			// Replace old file wrapper with new wrapper
-			scriptFiles.removeIf(file -> path.equals(file.path()));
-			scriptFiles.add(updated);
+			// Replace old file wrapper with new wrapper.
+			// Only do so if they are not equal. There are some odd situations where you will get duplicate
+			// file-watcher events on the same file even if the contents are not modified.
+			if (scriptFiles.removeIf(file -> path.equals(file.path()) && !file.equals(updated)))
+				scriptFiles.add(updated);
 		} catch (IOException ex) {
 			logger.error("Could not load script from path: {}", path, ex);
 		}
@@ -217,10 +219,20 @@ public class ScriptManager implements Service {
 						WatchEvent.Kind<?> kind = event.kind();
 						if (Files.isRegularFile(eventPath)) {
 							try {
-								if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
-									onScriptCreate(eventPath);
-								} else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
-									onScriptUpdated(eventPath);
+								// We are only interested in 'ENTRY_MODIFY' events since that is when file content is written.
+								// A script file created via 'ENTRY_CREATE' will always be empty, so reading from it at
+								// that point would be useless.
+								if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+									Set<ScriptFile> scriptsCopy = new HashSet<>(scriptFiles);
+									Optional<ScriptFile> matchingScript = scriptsCopy.stream()
+											.filter(script -> script.path().equals(eventPath))
+											.findFirst();
+									if (matchingScript.isPresent()) {
+										scriptsCopy.remove(matchingScript.get());
+										onScriptUpdated(eventPath);
+									} else {
+										onScriptCreate(eventPath);
+									}
 								}
 							} catch (Throwable t) {
 								logger.error("Unhandled exception updating available scripts", t);
