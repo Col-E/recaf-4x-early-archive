@@ -5,6 +5,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jregex.Matcher;
 import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.compile.*;
 import software.coley.recaf.services.plugin.CdiClassAllocator;
@@ -26,7 +27,7 @@ import java.util.stream.Collectors;
  */
 @ApplicationScoped
 public class JavacScriptEngine implements ScriptEngine {
-	private static final Logger logger = Logging.get(JavacScriptEngine.class);
+	private static final DebuggingLogger logger = Logging.get(JavacScriptEngine.class);
 	private static final String SCRIPT_PACKAGE_NAME = "software.coley.recaf.generated";
 	private static final String PATTERN_PACKAGE = "package ([\\w\\.\\*]+);?";
 	private static final String PATTERN_IMPORT = "import ([\\w\\.\\*]+);?";
@@ -106,20 +107,20 @@ public class JavacScriptEngine implements ScriptEngine {
 		int hash = script.hashCode();
 		GenerateResult result;
 		if (RegexUtil.matchesAny(PATTERN_CLASS_NAME, script)) {
-			logger.info("Executing script class");
+			logger.debugging(l -> l.info("Executing script as class"));
 			result = generateResultMap.computeIfAbsent(hash, n -> generateStandardClass(script));
 		} else {
-			logger.info("Executing script");
+			logger.debugging(l -> l.info("Executing script as function"));
 			String className = "Script" + Math.abs(hash);
 			result = generateResultMap.computeIfAbsent(hash, n -> generateScriptClass(className, script));
 		}
 		if (result.cls != null) {
 			try {
-				logger.info("Allocating script instance");
+				logger.debugging(l -> l.info("Allocating script instance"));
 				Object instance = allocator.instance(result.cls);
 				Method run = instance.getClass().getDeclaredMethod("run");
 				run.invoke(instance);
-				logger.info("Successfully ran script");
+				logger.debugging(l -> l.info("Successfully ran script"));
 				return new ScriptResult(result.diagnostics);
 			} catch (Exception ex) {
 				logger.error("Failed to execute script", ex);
