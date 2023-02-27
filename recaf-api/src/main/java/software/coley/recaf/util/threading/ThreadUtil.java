@@ -205,6 +205,10 @@ public class ThreadUtil {
 
 	/**
 	 * Wrap action to handle error logging.
+	 * <br>
+	 * <b>IMPORTANT:</b> This does <i>not work</i> with {@link ThreadFactory} for all thread-pool implementations.
+	 * To support any {@link ExecutorService} type, instead wrap it with {@link ExecutorServiceDelegate} or
+	 * {@link ScheduledExecutorServiceDelegate} which will delegate passed {@link Runnable} tasks here.
 	 *
 	 * @param action
 	 * 		Action to run.
@@ -224,6 +228,10 @@ public class ThreadUtil {
 
 	/**
 	 * Wrap action to handle error logging.
+	 * <br>
+	 * <b>IMPORTANT:</b> This does <i>not work</i> with {@link ThreadFactory} for all thread-pool implementations.
+	 * To support any {@link ExecutorService} type, instead wrap it with {@link ExecutorServiceDelegate} or
+	 * {@link ScheduledExecutorServiceDelegate} which will delegate passed {@link Callable} tasks here.
 	 *
 	 * @param action
 	 * 		Action to run.
