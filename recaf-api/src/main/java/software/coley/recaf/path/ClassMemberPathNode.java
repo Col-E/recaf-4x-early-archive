@@ -3,7 +3,9 @@ package software.coley.recaf.path;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.info.member.LocalVariable;
 
 import java.util.List;
 
@@ -34,7 +36,71 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 	 * @see ClassPathNode#child(ClassMember)
 	 */
 	public ClassMemberPathNode(@Nullable ClassPathNode parent, @Nonnull ClassMember member) {
-		super(parent, ClassMember.class, member);
+		super("member", parent, ClassMember.class, member);
+	}
+
+	/**
+	 * @return {@code true} when wrapping a field.
+	 */
+	public boolean isField() {
+		return getValue().isField();
+	}
+
+	/**
+	 * @return {@code true} when wrapping a method.
+	 */
+	public boolean isMethod() {
+		return getValue().isMethod();
+	}
+
+	/**
+	 * @param thrownType
+	 * 		Thrown type to wrap into node.
+	 *
+	 * @return Path node of thrown type, with current member as parent.
+	 */
+	@Nonnull
+	public ThrowsPathNode childThrows(@Nonnull String thrownType) {
+		if (isMethod())
+			return new ThrowsPathNode(this, thrownType);
+		throw new IllegalStateException("Cannot make child for throws on non-method member");
+	}
+
+	/**
+	 * @param exceptionType
+	 * 		Thrown type to wrap into node.
+	 *
+	 * @return Path node of thrown type, with current member as parent.
+	 */
+	@Nonnull
+	public CatchPathNode childCatch(@Nonnull String exceptionType) {
+		if (isMethod())
+			return new CatchPathNode(this, exceptionType);
+		throw new IllegalStateException("Cannot make child for catch on non-method member");
+	}
+
+	/**
+	 * @param annotation
+	 * 		Annotation to wrap into node.
+	 *
+	 * @return Path node of annotation, with current member as parent.
+	 */
+	@Nonnull
+	public AnnotationPathNode childAnnotation(@Nonnull AnnotationInfo annotation) {
+		return new AnnotationPathNode(this, annotation);
+	}
+
+	/**
+	 * @param variable
+	 * 		Variable to wrap into node.
+	 *
+	 * @return Path node of local variable, with current member as parent.
+	 */
+	@Nonnull
+	public LocalVariablePathNode childVariable(LocalVariable variable) {
+		if (isMethod())
+			return new LocalVariablePathNode(this, variable);
+		throw new IllegalStateException("Cannot make child for catch on non-method member");
 	}
 
 	@Override
@@ -70,20 +136,5 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 			}
 		}
 		return 0;
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-
-		ClassMemberPathNode node = (ClassMemberPathNode) o;
-
-		return getValue().equals(node.getValue());
-	}
-
-	@Override
-	public int hashCode() {
-		return getValue().hashCode();
 	}
 }

@@ -16,9 +16,12 @@ import jakarta.annotation.Nullable;
 public abstract class AbstractPathNode<P, V> implements PathNode<V> {
 	private final PathNode<P> parent;
 	private final Class<V> valueType;
+	private final String id;
 	private final V value;
 
 	/**
+	 * @param id
+	 * 		Unique node type ID.
 	 * @param parent
 	 * 		Optional parent node.
 	 * @param valueType
@@ -26,7 +29,8 @@ public abstract class AbstractPathNode<P, V> implements PathNode<V> {
 	 * @param value
 	 * 		Value instance.
 	 */
-	protected AbstractPathNode(@Nullable PathNode<P> parent, @Nonnull Class<V> valueType, @Nonnull V value) {
+	protected AbstractPathNode(@Nullable String id, @Nullable PathNode<P> parent, @Nonnull Class<V> valueType, @Nonnull V value) {
+		this.id = id;
 		this.parent = parent;
 		this.valueType = valueType;
 		this.value = value;
@@ -54,14 +58,14 @@ public abstract class AbstractPathNode<P, V> implements PathNode<V> {
 	protected int cmpHierarchy(@Nonnull PathNode<?> path) {
 		if (getValueType() != path.getValueType()) {
 			// Check direct parent (quicker validation) and then if that does not pass, a multi-level descendant test.
-			if ((parent != null && parent.getValueType() == path.getValueType()) ||
+			if ((parent != null && parent.idMatch(path)) ||
 					isDescendantOf(path)) {
 				// We are the child type, show last.
 				return 1;
 			}
 
 			// Check direct parent (quicker validation) and then if that does not pass, a multi-level descendant test.
-			if ((path.getParent() != null && path.getParent().getValueType() == getValueType()) ||
+			if ((path.getParent() != null && idMatch(path.getParent())) ||
 					path.isDescendantOf(this)) {
 				// We are the parent type, show first.
 				return -1;
@@ -101,6 +105,12 @@ public abstract class AbstractPathNode<P, V> implements PathNode<V> {
 
 	@Nonnull
 	@Override
+	public String id() {
+		return id;
+	}
+
+	@Nonnull
+	@Override
 	public Class<V> getValueType() {
 		return valueType;
 	}
@@ -123,11 +133,13 @@ public abstract class AbstractPathNode<P, V> implements PathNode<V> {
 
 	@Override
 	public boolean isDescendantOf(@Nonnull PathNode<?> other) {
-		if (getValueType() == other.getValueType()) {
+		if (idMatch(other)) {
+			// Same id as other, so must be same type. Compare local values.
 			return localCompare(other) >= 0;
 		}
 		if (parent != null) {
-			if (parent.getValueType() == other.getValueType()) {
+			if (parent.idMatch(other)) {
+				// Parent has same id to the other, compare the parent's local values.
 				return parent.localCompare(other) >= 0;
 			}
 			return parent.isDescendantOf(other);
@@ -142,6 +154,21 @@ public abstract class AbstractPathNode<P, V> implements PathNode<V> {
 		if (cmp == 0) cmp = cmpHierarchy(o);
 		if (cmp == 0) cmp = cmpParent(o);
 		return cmp;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		PathNode<?> node = (PathNode<?>) o;
+
+		return getValue().equals(node.getValue());
+	}
+
+	@Override
+	public int hashCode() {
+		return getValue().hashCode();
 	}
 
 	@Override

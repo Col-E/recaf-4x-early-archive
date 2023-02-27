@@ -31,7 +31,18 @@ public class FilePathNode extends AbstractPathNode<String, FileInfo> {
 	 * @see DirectoryPathNode#child(FileInfo)
 	 */
 	public FilePathNode(@Nullable DirectoryPathNode parent, @Nonnull FileInfo info) {
-		super(parent, FileInfo.class, info);
+		super("file", parent, FileInfo.class, info);
+	}
+
+	/**
+	 * @param lineNo
+	 * 		Line number to wrap into node.
+	 *
+	 * @return Path node of line number, with current file as parent.
+	 */
+	@Nonnull
+	public LineNumberPathNode child(int lineNo) {
+		return new LineNumberPathNode(this, lineNo);
 	}
 
 	@Override
@@ -47,27 +58,5 @@ public class FilePathNode extends AbstractPathNode<String, FileInfo> {
 			return String.CASE_INSENSITIVE_ORDER.compare(name, otherName);
 		}
 		return 0;
-	}
-
-	@Override
-	public int compareTo(@Nonnull PathNode<?> o) {
-		int cmp = cmpParent(o);
-		if (cmp == 0) return localCompare(o);
-		return cmpHierarchy(o);
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-
-		FilePathNode node = (FilePathNode) o;
-
-		return getValue().equals(node.getValue());
-	}
-
-	@Override
-	public int hashCode() {
-		return getValue().hashCode();
 	}
 }

@@ -1,15 +1,13 @@
 package software.coley.recaf.info.builder;
 
+import jakarta.annotation.Nonnull;
 import org.objectweb.asm.*;
 import software.coley.recaf.info.BasicInnerClassInfo;
 import software.coley.recaf.info.BasicJvmClassInfo;
 import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.annotation.*;
-import software.coley.recaf.info.member.BasicFieldMember;
-import software.coley.recaf.info.member.BasicMethodMember;
-import software.coley.recaf.info.member.FieldMember;
-import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.info.member.*;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -38,7 +36,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 	 * @param classInfo
 	 * 		Class to pull data from.
 	 */
-	public JvmClassInfoBuilder(JvmClassInfo classInfo) {
+	public JvmClassInfoBuilder(@Nonnull JvmClassInfo classInfo) {
 		super(classInfo);
 		withBytecode(classInfo.getBytecode());
 		withVersion(classInfo.getVersion());
@@ -48,7 +46,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 	 * @param reader
 	 * 		ASM class reader to pull data from.
 	 */
-	public JvmClassInfoBuilder(ClassReader reader) {
+	public JvmClassInfoBuilder(@Nonnull ClassReader reader) {
 		adaptFrom(reader);
 	}
 
@@ -60,17 +58,20 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 	 *
 	 * @return Builder.
 	 */
+	@Nonnull
 	@SuppressWarnings("deprecation")
-	public JvmClassInfoBuilder adaptFrom(ClassReader reader) {
+	public JvmClassInfoBuilder adaptFrom(@Nonnull ClassReader reader) {
 		reader.accept(new ClassBuilderAppender(), 0);
 		return withBytecode(reader.b);
 	}
 
+	@Nonnull
 	public JvmClassInfoBuilder withBytecode(byte[] bytecode) {
 		this.bytecode = bytecode;
 		return this;
 	}
 
+	@Nonnull
 	public JvmClassInfoBuilder withVersion(int version) {
 		this.version = version;
 		return this;
@@ -162,7 +163,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 			if (name.equals(currentClassName)) {
 				// Only need to do this once, and some entries may not have data.
 				// Because they can be in any order we need to protect against re-assigning null.
-				if (getOuterClassName() == null  &&
+				if (getOuterClassName() == null &&
 						outerName != null &&
 						currentClassName.startsWith(outerName)) {
 					withOuterClassName(outerName);
@@ -225,6 +226,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 					anno -> fieldMember.addTypeAnnotation(anno.withTypeInfo(typeRef, typePath)));
 		}
 
+		@Nonnull
 		public BasicFieldMember getFieldMember() {
 			return fieldMember;
 		}
@@ -237,7 +239,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 									 String signature, String[] exceptions) {
 			super(getAsmVersion());
 			List<String> exceptionList = exceptions == null ? Collections.emptyList() : Arrays.asList(exceptions);
-			methodMember = new BasicMethodMember(name, descriptor, signature, access, exceptionList);
+			methodMember = new BasicMethodMember(name, descriptor, signature, access, exceptionList, new ArrayList<>());
 		}
 
 		@Override
@@ -251,6 +253,13 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 					anno -> methodMember.addTypeAnnotation(anno.withTypeInfo(typeRef, typePath)));
 		}
 
+		@Override
+		public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
+			methodMember.addLocalVariable(new BasicLocalVariable(index, name, descriptor, signature));
+			super.visitLocalVariable(name, descriptor, signature, start, end, index);
+		}
+
+		@Nonnull
 		public BasicMethodMember getMethodMember() {
 			return methodMember;
 		}

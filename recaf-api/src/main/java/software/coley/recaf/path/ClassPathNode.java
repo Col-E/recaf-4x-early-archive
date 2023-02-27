@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.InnerClassInfo;
+import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
 
 /**
@@ -33,7 +34,7 @@ public class ClassPathNode extends AbstractPathNode<String, ClassInfo> {
 	 * @see DirectoryPathNode#child(ClassInfo)
 	 */
 	public ClassPathNode(@Nullable DirectoryPathNode parent, @Nonnull ClassInfo info) {
-		super(parent, ClassInfo.class, info);
+		super("class", parent, ClassInfo.class, info);
 	}
 
 	/**
@@ -58,6 +59,17 @@ public class ClassPathNode extends AbstractPathNode<String, ClassInfo> {
 		return new InnerClassPathNode(this, innerClass);
 	}
 
+	/**
+	 * @param annotation
+	 * 		Annotation to wrap into node.
+	 *
+	 * @return Path node of annotation, with current member as parent.
+	 */
+	@Nonnull
+	public AnnotationPathNode child(@Nonnull AnnotationInfo annotation) {
+		return new AnnotationPathNode(this, annotation);
+	}
+
 	@Override
 	public DirectoryPathNode getParent() {
 		return (DirectoryPathNode) super.getParent();
@@ -71,20 +83,5 @@ public class ClassPathNode extends AbstractPathNode<String, ClassInfo> {
 			return String.CASE_INSENSITIVE_ORDER.compare(name, otherName);
 		}
 		return 0;
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-
-		ClassPathNode node = (ClassPathNode) o;
-
-		return getValue().equals(node.getValue());
-	}
-
-	@Override
-	public int hashCode() {
-		return getValue().hashCode();
 	}
 }

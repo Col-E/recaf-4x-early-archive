@@ -30,6 +30,7 @@ public interface Annotated {
 	/**
 	 * @return Stream of declared annotations.
 	 */
+	@Nonnull
 	default Stream<AnnotationInfo> annotationStream() {
 		return Stream.of(this).flatMap(self -> self.getAnnotations().stream());
 	}
@@ -37,6 +38,7 @@ public interface Annotated {
 	/**
 	 * @return Stream of type annotations.
 	 */
+	@Nonnull
 	default Stream<AnnotationInfo> typeAnnotationStream() {
 		return Stream.of(this).flatMap(self -> self.getAnnotations().stream());
 	}
@@ -44,6 +46,7 @@ public interface Annotated {
 	/**
 	 * @return Stream of both normal and type anotations.
 	 */
+	@Nonnull
 	default Stream<AnnotationInfo> allAnnotationsStream() {
 		return Stream.concat(annotationStream(), typeAnnotationStream());
 	}

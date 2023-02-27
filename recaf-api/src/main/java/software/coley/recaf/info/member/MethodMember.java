@@ -1,5 +1,6 @@
 package software.coley.recaf.info.member;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.ClassInfo;
 
 import java.util.List;
@@ -13,7 +14,14 @@ public interface MethodMember extends ClassMember {
 	/**
 	 * @return List of thrown exceptions.
 	 */
-	List<String> getExceptions();
+	@Nonnull
+	List<String> getThrownTypes();
+
+	/**
+	 * @return List of local variables.
+	 */
+	@Nonnull
+	List<LocalVariable> getLocalVariables();
 
 	@Override
 	default boolean isField() {

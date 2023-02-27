@@ -1,6 +1,8 @@
 package software.coley.recaf.info.annotation;
 
 
+import jakarta.annotation.Nonnull;
+
 import java.util.Map;
 
 /**
@@ -17,10 +19,12 @@ public interface AnnotationInfo {
 	/**
 	 * @return Annotation descriptor.
 	 */
+	@Nonnull
 	String getDescriptor();
 
 	/**
 	 * @return Annotation elements.
 	 */
+	@Nonnull
 	Map<String, AnnotationElement> getElements();
 }

@@ -55,6 +55,24 @@ public interface PathNode<V> extends Comparable<PathNode<?>> {
 	V getValue();
 
 	/**
+	 * Used to differentiate path nodes in a chain that have the same {@link #getValueType()}.
+	 *
+	 * @return String unique ID per path-node type.
+	 */
+	@Nonnull
+	String id();
+
+	/**
+	 * @param node
+	 * 		Other node to check.
+	 *
+	 * @return {@code true} when the current {@link #id()} is the same as the other's ID.
+	 */
+	default boolean idMatch(@Nonnull PathNode<?> node) {
+		return id().equals(node.id());
+	}
+
+	/**
 	 * @return The type of this path node's {@link #getValue() wrapped value}.
 	 */
 	@Nonnull

@@ -1,5 +1,7 @@
 package software.coley.recaf.info.annotation;
 
+import jakarta.annotation.Nonnull;
+
 import java.util.Objects;
 
 /**
@@ -22,11 +24,13 @@ public class BasicAnnotationElement implements AnnotationElement {
 		this.value = value;
 	}
 
+	@Nonnull
 	@Override
 	public String getElementName() {
 		return name;
 	}
 
+	@Nonnull
 	@Override
 	public Object getElementValue() {
 		return value;

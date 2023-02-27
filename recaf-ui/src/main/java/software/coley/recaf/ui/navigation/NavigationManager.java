@@ -102,7 +102,7 @@ public class NavigationManager implements Navigable {
 	 */
 	private static class DummyInitialNode extends AbstractPathNode<Object, Object> {
 		private DummyInitialNode() {
-			super(null, Object.class, new Object());
+			super("dummy", null, Object.class, new Object());
 		}
 
 		@Override

@@ -1,5 +1,7 @@
 package software.coley.recaf.info.annotation;
 
+import jakarta.annotation.Nonnull;
+
 import java.util.List;
 
 /**
@@ -11,5 +13,6 @@ public interface AnnotationArrayReference {
 	/**
 	 * @return List of values.
 	 */
+	@Nonnull
 	List<Object> getValues();
 }

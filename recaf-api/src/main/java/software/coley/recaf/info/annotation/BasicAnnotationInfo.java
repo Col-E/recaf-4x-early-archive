@@ -1,5 +1,6 @@
 package software.coley.recaf.info.annotation;
 
+import jakarta.annotation.Nonnull;
 import org.objectweb.asm.TypePath;
 
 import java.util.LinkedHashMap;
@@ -21,7 +22,7 @@ public class BasicAnnotationInfo implements AnnotationInfo {
 	 * @param descriptor
 	 * 		Annotation descriptor.
 	 */
-	public BasicAnnotationInfo(boolean visible, String descriptor) {
+	public BasicAnnotationInfo(boolean visible, @Nonnull String descriptor) {
 		this.visible = visible;
 		this.descriptor = descriptor;
 	}
@@ -33,16 +34,19 @@ public class BasicAnnotationInfo implements AnnotationInfo {
 	 * @param element
 	 * 		Element to add.
 	 */
-	public void addElement(AnnotationElement element) {
+	public void addElement(@Nonnull AnnotationElement element) {
 		elements.put(element.getElementName(), element);
 	}
 
 	/**
-	 * @param typeRef Constant denoting where the annotation is applied.
-	 * @param typePath Path to a type argument.
+	 * @param typeRef
+	 * 		Constant denoting where the annotation is applied.
+	 * @param typePath
+	 * 		Path to a type argument.
+	 *
 	 * @return Type annotation from this annotation.
 	 */
-	public BasicTypeAnnotationInfo withTypeInfo(int typeRef, TypePath typePath) {
+	public BasicTypeAnnotationInfo withTypeInfo(int typeRef, @Nonnull TypePath typePath) {
 		return new BasicTypeAnnotationInfo(typeRef, typePath, isVisible(), getDescriptor());
 	}
 
@@ -51,11 +55,13 @@ public class BasicAnnotationInfo implements AnnotationInfo {
 		return visible;
 	}
 
+	@Nonnull
 	@Override
 	public String getDescriptor() {
 		return descriptor;
 	}
 
+	@Nonnull
 	@Override
 	public Map<String, AnnotationElement> getElements() {
 		return elements;

@@ -35,7 +35,7 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 	 * @see WorkspacePathNode#child(WorkspaceResource)
 	 */
 	public ResourcePathNode(@Nullable WorkspacePathNode parent, @Nonnull WorkspaceResource resource) {
-		super(parent, WorkspaceResource.class, resource);
+		super("resource", parent, WorkspaceResource.class, resource);
 	}
 
 	/**
@@ -85,20 +85,5 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 			}
 		}
 		return 0;
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-
-		ResourcePathNode node = (ResourcePathNode) o;
-
-		return getValue() == node.getValue();
-	}
-
-	@Override
-	public int hashCode() {
-		return getValue().hashCode();
 	}
 }

@@ -17,7 +17,7 @@ public class WorkspacePathNode extends AbstractPathNode<Object, Workspace> {
 	 * 		Workspace value.
 	 */
 	public WorkspacePathNode(@Nonnull Workspace value) {
-		super(null, Workspace.class, value);
+		super("workspace", null, Workspace.class, value);
 	}
 
 	/**
@@ -34,20 +34,5 @@ public class WorkspacePathNode extends AbstractPathNode<Object, Workspace> {
 	@Override
 	public int localCompare(PathNode<?> o) {
 		return 0;
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-
-		WorkspacePathNode node = (WorkspacePathNode) o;
-
-		return getValue() == node.getValue();
-	}
-
-	@Override
-	public int hashCode() {
-		return getValue().hashCode();
 	}
 }

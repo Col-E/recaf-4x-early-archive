@@ -7,10 +7,7 @@ import org.jf.dexlib2.dexbacked.DexBackedField;
 import org.jf.dexlib2.dexbacked.DexBackedMethod;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.builder.AndroidClassInfoBuilder;
-import software.coley.recaf.info.member.BasicFieldMember;
-import software.coley.recaf.info.member.BasicMethodMember;
-import software.coley.recaf.info.member.FieldMember;
-import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.info.member.*;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.BasicAndroidClassBundle;
@@ -81,12 +78,14 @@ public class DexIOUtil {
 				String type = sb.toString();
 				String signature = null;
 				List<String> exceptions = Collections.emptyList();
+				List<LocalVariable> variables = Collections.emptyList();
 				methodMembers.add(new BasicMethodMember(
 						method.getName(),
 						type,
 						signature,
 						method.getAccessFlags(),
-						exceptions
+						exceptions,
+						variables
 				));
 			}
 			builder.withMethods(methodMembers);

@@ -23,7 +23,7 @@ public class InnerClassPathNode extends AbstractPathNode<ClassInfo, InnerClassIn
 	 */
 	public InnerClassPathNode(@Nullable ClassPathNode parent,
 							  @Nonnull InnerClassInfo innerClass) {
-		super(parent, InnerClassInfo.class, innerClass);
+		super("inner-class", parent, InnerClassInfo.class, innerClass);
 	}
 
 	@Override
@@ -39,20 +39,5 @@ public class InnerClassPathNode extends AbstractPathNode<ClassInfo, InnerClassIn
 			return String.CASE_INSENSITIVE_ORDER.compare(name, otherName);
 		}
 		return 0;
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-
-		InnerClassPathNode node = (InnerClassPathNode) o;
-
-		return getValue().equals(node.getValue());
-	}
-
-	@Override
-	public int hashCode() {
-		return getValue().hashCode();
 	}
 }

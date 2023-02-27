@@ -34,7 +34,7 @@ public class BundlePathNode extends AbstractPathNode<WorkspaceResource, Bundle> 
 	 * @see ResourcePathNode#child(Bundle)
 	 */
 	public BundlePathNode(@Nullable ResourcePathNode parent, @Nonnull Bundle<?> bundle) {
-		super(parent, Bundle.class, bundle);
+		super("bundle", parent, Bundle.class, bundle);
 	}
 
 	/**
@@ -104,20 +104,5 @@ public class BundlePathNode extends AbstractPathNode<WorkspaceResource, Bundle> 
 			return -Integer.compare(bundleMask(), bundlePathNode.bundleMask());
 		}
 		return 0;
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-
-		BundlePathNode node = (BundlePathNode) o;
-
-		return getValue() == node.getValue();
-	}
-
-	@Override
-	public int hashCode() {
-		return getValue().hashCode();
 	}
 }

@@ -34,7 +34,7 @@ public class DirectoryPathNode extends AbstractPathNode<Bundle, String> {
 	 * @see BundlePathNode#child(String)
 	 */
 	public DirectoryPathNode(@Nullable BundlePathNode parent, @Nonnull String directory) {
-		super(parent, String.class, directory);
+		super("directory", parent, String.class, directory);
 	}
 
 	/**
@@ -84,20 +84,5 @@ public class DirectoryPathNode extends AbstractPathNode<Bundle, String> {
 			return String.CASE_INSENSITIVE_ORDER.compare(name, otherName);
 		}
 		return 0;
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-
-		DirectoryPathNode node = (DirectoryPathNode) o;
-
-		return getValue().equals(node.getValue());
-	}
-
-	@Override
-	public int hashCode() {
-		return getValue().hashCode();
 	}
 }

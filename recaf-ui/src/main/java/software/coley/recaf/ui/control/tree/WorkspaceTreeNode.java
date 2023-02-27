@@ -154,7 +154,7 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 				String directoryName = directoryBuilder.substring(0, directoryBuilder.length() - 1);
 				DirectoryPathNode localPathNode = directoryPath.withDirectory(directoryName);
 
-				// Get existing tree node, or create child if non-existant
+				// Get existing tree node, or create child if non-existent
 				WorkspaceTreeNode childNode = null;
 				for (TreeItem<PathNode<?>> child : node.getChildren())
 					if (child.getValue().equals(localPathNode)) {
@@ -177,7 +177,7 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 		PathNode<?> parent = path.getParent();
 		if (parent != null)
 			node = getOrInsertIntoTree(node, parent);
-		else if (path.getValueType() == node.getValue().getValueType()) {
+		else if (path.idMatch(node.getValue())) {
 			// We are the root link in the path. This check ensures that as the root type we do not
 			// insert a new tree-node of the same value, to the children list of the root tree node.
 			return node;
