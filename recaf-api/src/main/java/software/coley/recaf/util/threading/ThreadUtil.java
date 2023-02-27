@@ -1,5 +1,6 @@
 package software.coley.recaf.util.threading;
 
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 
@@ -25,7 +26,8 @@ public class ThreadUtil {
 	 *
 	 * @return Thread future.
 	 */
-	public static CompletableFuture<?> run(Runnable action) {
+	@Nonnull
+	public static CompletableFuture<?> run(@Nonnull Runnable action) {
 		return CompletableFuture.runAsync(wrap(action), scheduledService);
 	}
 
@@ -35,7 +37,8 @@ public class ThreadUtil {
 	 *
 	 * @return Thread future.
 	 */
-	public static <T> CompletableFuture<T> run(Supplier<T> action) {
+	@Nonnull
+	public static <T> CompletableFuture<T> run(@Nonnull Supplier<T> action) {
 		return CompletableFuture.supplyAsync(action, scheduledService);
 	}
 
@@ -47,7 +50,8 @@ public class ThreadUtil {
 	 *
 	 * @return Scheduled future.
 	 */
-	public static CompletableFuture<?> runDelayed(long delayMs, Runnable action) {
+	@Nonnull
+	public static CompletableFuture<?> runDelayed(long delayMs, @Nonnull Runnable action) {
 		CompletableFuture<?> future = new CompletableFuture<>();
 		scheduledService.schedule(() -> {
 			try {
@@ -70,7 +74,7 @@ public class ThreadUtil {
 	 *
 	 * @return {@code true} When thread completed before time.
 	 */
-	public static boolean timeout(int millis, Runnable action) {
+	public static boolean timeout(int millis, @Nonnull Runnable action) {
 		try {
 			Future<?> future = run(action);
 			return timeout(millis, future);
@@ -90,7 +94,7 @@ public class ThreadUtil {
 	 *
 	 * @return {@code true} When thread completed before time.
 	 */
-	public static boolean timeout(int millis, Future<?> future) {
+	public static boolean timeout(int millis, @Nonnull Future<?> future) {
 		try {
 			future.get(millis, TimeUnit.MILLISECONDS);
 			return true;
@@ -115,7 +119,7 @@ public class ThreadUtil {
 	 * @return {@code true} when thread pool completed before time.
 	 * {@code false} when the thread pool did not finish, or was interrupted.
 	 */
-	public static boolean timeout(int millis, ExecutorService service) {
+	public static boolean timeout(int millis, @Nonnull ExecutorService service) {
 		try {
 			// Shutdown so no new tasks are completed, but existing ones will finish.
 			service.shutdown();
@@ -137,7 +141,8 @@ public class ThreadUtil {
 	 *
 	 * @return Wrapper for all futures.
 	 */
-	public static CompletableFuture<Void> allOf(CompletableFuture<?>... futures) {
+	@Nonnull
+	public static CompletableFuture<Void> allOf(@Nonnull CompletableFuture<?>... futures) {
 		AtomicBoolean thrown = new AtomicBoolean();
 		CompletableFuture<Void> allOf = CompletableFuture.allOf(futures);
 		for (CompletableFuture<?> f : futures) {
@@ -160,7 +165,7 @@ public class ThreadUtil {
 	 *
 	 * @return {@code true} on completion. {@code false} for interruption.
 	 */
-	public static boolean blockUntilComplete(Future<?> future) {
+	public static boolean blockUntilComplete(@Nonnull Future<?> future) {
 		return timeout(Integer.MAX_VALUE, future);
 	}
 
@@ -170,7 +175,7 @@ public class ThreadUtil {
 	 *
 	 * @return {@code true} on completion. {@code false} for interruption.
 	 */
-	public static boolean blockUntilComplete(ExecutorService service) {
+	public static boolean blockUntilComplete(@Nonnull ExecutorService service) {
 		return timeout(Integer.MAX_VALUE, service);
 	}
 
@@ -192,8 +197,9 @@ public class ThreadUtil {
 	 *
 	 * @see ScheduledExecutorService#scheduleAtFixedRate(Runnable, long, long, TimeUnit)
 	 */
-	public static ScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay,
-														 long period, TimeUnit unit) {
+	@Nonnull
+	public static ScheduledFuture<?> scheduleAtFixedRate(@Nonnull Runnable task, long initialDelay,
+														 long period, @Nonnull TimeUnit unit) {
 		return scheduledService.scheduleAtFixedRate(task, initialDelay, period, unit);
 	}
 
@@ -205,12 +211,13 @@ public class ThreadUtil {
 	 *
 	 * @return Wrapper runnable.
 	 */
-	public static Runnable wrap(Runnable action) {
+	@Nonnull
+	public static Runnable wrap(@Nonnull Runnable action) {
 		return () -> {
 			try {
 				action.run();
 			} catch (Throwable t) {
-				logger.error("Unhandled exception on thread: " + Thread.currentThread().getName(), t);
+				logger.error("Unhandled exception on thread '{}'", Thread.currentThread().getName(), t);
 			}
 		};
 	}
@@ -223,7 +230,8 @@ public class ThreadUtil {
 	 *
 	 * @return Wrapper callable.
 	 */
-	public static <T> Callable<T> wrap(Callable<T> action) {
+	@Nonnull
+	public static <T> Callable<T> wrap(@Nonnull Callable<T> action) {
 		return () -> {
 			try {
 				return action.call();
@@ -241,6 +249,7 @@ public class ThreadUtil {
 	 *
 	 * @see PhasingExecutorService
 	 */
+	@Nonnull
 	public static ExecutorService phasingService() {
 		return phasingService(scheduledService);
 	}
@@ -255,13 +264,15 @@ public class ThreadUtil {
 	 *
 	 * @see PhasingExecutorService
 	 */
-	public static ExecutorService phasingService(ExecutorService delegate) {
+	@Nonnull
+	public static ExecutorService phasingService(@Nonnull ExecutorService delegate) {
 		return new PhasingExecutorService(delegate);
 	}
 
 	/**
 	 * @return Backing executor.
 	 */
+	@Nonnull
 	public static ScheduledExecutorService executor() {
 		return scheduledService;
 	}
@@ -274,7 +285,8 @@ public class ThreadUtil {
 	 *
 	 * @return Future of a failed execution due to a thrown error.
 	 */
-	public static <V> CompletableFuture<V> failedFuture(Throwable t) {
+	@Nonnull
+	public static <V> CompletableFuture<V> failedFuture(@Nonnull Throwable t) {
 		CompletableFuture<V> future = new CompletableFuture<>();
 		future.completeExceptionally(t);
 		return future;

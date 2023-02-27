@@ -48,7 +48,7 @@ public class ThreadPoolFactory {
 	 * @return {@link Executors#newFixedThreadPool(int)}.
 	 */
 	public static ExecutorService newFixedThreadPool(String name, int size, boolean daemon) {
-		return Executors.newFixedThreadPool(Math.min(MAX, size), new FactoryImpl(name, daemon));
+		return new ExecutorServiceDelegate(Executors.newFixedThreadPool(Math.min(MAX, size), new FactoryImpl(name, daemon)));
 	}
 
 	/**
@@ -70,7 +70,7 @@ public class ThreadPoolFactory {
 	 * @return {@link Executors#newCachedThreadPool()}.
 	 */
 	public static ExecutorService newCachedThreadPool(String name, boolean daemon) {
-		return Executors.newCachedThreadPool(new FactoryImpl(name, daemon));
+		return new ExecutorServiceDelegate(Executors.newCachedThreadPool(new FactoryImpl(name, daemon)));
 	}
 
 	/**
@@ -92,7 +92,7 @@ public class ThreadPoolFactory {
 	 * @return {@link Executors#newSingleThreadExecutor()}.
 	 */
 	public static ExecutorService newSingleThreadExecutor(String name, boolean daemon) {
-		return Executors.newSingleThreadExecutor(new FactoryImpl(name, daemon));
+		return new ExecutorServiceDelegate(Executors.newSingleThreadExecutor(new FactoryImpl(name, daemon)));
 	}
 
 	/**
@@ -128,7 +128,7 @@ public class ThreadPoolFactory {
 	 * @return {@link Executors#newScheduledThreadPool(int)}.
 	 */
 	public static ScheduledExecutorService newScheduledThreadPool(String name, int size, boolean daemon) {
-		return Executors.newScheduledThreadPool(size, new FactoryImpl(name, daemon));
+		return new ScheduledExecutorServiceDelegate(Executors.newScheduledThreadPool(size, new FactoryImpl(name, daemon)));
 	}
 
 	private static class FactoryImpl implements ThreadFactory {
@@ -143,7 +143,7 @@ public class ThreadPoolFactory {
 
 		@Override
 		public Thread newThread(@Nonnull Runnable r) {
-			Thread thread = new Thread(ThreadUtil.wrap(r));
+			Thread thread = new Thread(r);
 			thread.setDaemon(daemon);
 			thread.setName(name + "-" + tid++);
 			return thread;
