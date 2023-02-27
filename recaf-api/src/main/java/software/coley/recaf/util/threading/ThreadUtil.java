@@ -244,7 +244,7 @@ public class ThreadUtil {
 			try {
 				return action.call();
 			} catch (Throwable t) {
-				logger.error("Unhandled exception on thread: " + Thread.currentThread().getName(), t);
+				logger.error("Unhandled exception on thread '{}'", Thread.currentThread().getName(), t);
 				throw t;
 			}
 		};
