@@ -9,10 +9,17 @@ import software.coley.recaf.RecafConstants;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.annotation.BasicAnnotationInfo;
+import software.coley.recaf.info.member.BasicLocalVariable;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.path.AnnotationPathNode;
+import software.coley.recaf.path.ClassMemberPathNode;
+import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.search.JvmClassQuery;
 import software.coley.recaf.services.search.JvmClassSearchVisitor;
-import software.coley.recaf.services.search.result.*;
+import software.coley.recaf.services.search.result.ClassReferenceResult;
+import software.coley.recaf.services.search.result.MemberReferenceResult;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.TextMatchMode;
 import software.coley.recaf.util.Types;
@@ -124,16 +131,16 @@ public class ReferenceQuery implements JvmClassQuery {
 	 */
 	private class AsmReferenceClassVisitor extends ClassVisitor {
 		private final Logger logger = Logging.get(AsmReferenceClassVisitor.class);
-		private final BiConsumer<Location, Object> resultSink;
-		private final JvmClassLocation currentLocation;
+		private final BiConsumer<PathNode<?>, Object> resultSink;
+		private final ClassPathNode classPath;
 		private final JvmClassInfo classInfo;
 
-		public AsmReferenceClassVisitor(@Nonnull BiConsumer<Location, Object> resultSink,
-										@Nonnull JvmClassLocation currentLocation,
+		public AsmReferenceClassVisitor(@Nonnull BiConsumer<PathNode<?>, Object> resultSink,
+										@Nonnull ClassPathNode classPath,
 										@Nonnull JvmClassInfo classInfo) {
 			super(RecafConstants.getAsmVersion());
 			this.resultSink = resultSink;
-			this.currentLocation = currentLocation;
+			this.classPath = classPath;
 			this.classInfo = classInfo;
 		}
 
@@ -144,14 +151,13 @@ public class ReferenceQuery implements JvmClassQuery {
 			if (methodMember != null) {
 				// Check exceptions
 				if (exceptions != null) {
-					MemberDeclarationLocation location = currentLocation.withMember(methodMember);
+					ClassMemberPathNode member = classPath.child(methodMember);
 					for (String exception : exceptions)
-						resultSink.accept(location.withThrownException(exception),
-								cref(exception));
+						resultSink.accept(member.childThrows(exception), cref(exception));
 				}
 
 				// Visit method
-				return new AsmReferenceMethodVisitor(mv, methodMember, resultSink, currentLocation);
+				return new AsmReferenceMethodVisitor(mv, methodMember, resultSink, classPath);
 			} else {
 				logger.error("Failed to lookup method for query: {}.{}{}", classInfo.getName(), name, desc);
 				return mv;
@@ -163,23 +169,23 @@ public class ReferenceQuery implements JvmClassQuery {
 	 * Visits references in methods.
 	 */
 	private class AsmReferenceMethodVisitor extends MethodVisitor {
-		private final BiConsumer<Location, Object> resultSink;
-		private final MemberDeclarationLocation currentLocation;
+		private final BiConsumer<PathNode<?>, Object> resultSink;
+		private final ClassMemberPathNode memberPath;
 
 		public AsmReferenceMethodVisitor(@Nullable MethodVisitor delegate,
 										 @Nonnull MethodMember methodMember,
-										 @Nonnull BiConsumer<Location, Object> resultSink,
-										 @Nonnull JvmClassLocation classLocation) {
+										 @Nonnull BiConsumer<PathNode<?>, Object> resultSink,
+										 @Nonnull ClassPathNode classLocation) {
 			super(RecafConstants.getAsmVersion(), delegate);
 			this.resultSink = resultSink;
-			this.currentLocation = classLocation.withMember(methodMember);
+			this.memberPath = classLocation.child(methodMember);
 		}
 
 		@Override
 		public void visitTypeInsn(int opcode, String type) {
 			if (isClassRefMatch(type)) {
 				TypeInsnNode insn = new TypeInsnNode(opcode, type);
-				resultSink.accept(currentLocation.withInstruction(insn), cref(type));
+				resultSink.accept(memberPath.childInsn(insn), cref(type));
 			}
 			super.visitTypeInsn(opcode, type);
 		}
@@ -190,12 +196,12 @@ public class ReferenceQuery implements JvmClassQuery {
 
 			// Check method ref
 			if (isMemberRefMatch(owner, name, desc))
-				resultSink.accept(currentLocation.withInstruction(insn), mref(owner, name, desc));
+				resultSink.accept(memberPath.childInsn(insn), mref(owner, name, desc));
 
 			// Check types used in ref
 			String fieldType = getInternalName(desc);
 			if (isClassRefMatch(fieldType))
-				resultSink.accept(currentLocation.withInstruction(insn), cref(fieldType));
+				resultSink.accept(memberPath.childInsn(insn), cref(fieldType));
 
 			super.visitFieldInsn(opcode, owner, name, desc);
 		}
@@ -206,16 +212,16 @@ public class ReferenceQuery implements JvmClassQuery {
 
 			// Check method ref
 			if (isMemberRefMatch(owner, name, desc))
-				resultSink.accept(currentLocation.withInstruction(insn), mref(owner, name, desc));
+				resultSink.accept(memberPath.childInsn(insn), mref(owner, name, desc));
 
 			// Check types used in ref
 			Type methodType = Type.getMethodType(desc);
 			String methodRetType = methodType.getReturnType().getInternalName();
 			if (isClassRefMatch(methodRetType))
-				resultSink.accept(currentLocation.withInstruction(insn), cref(methodRetType));
+				resultSink.accept(memberPath.childInsn(insn), cref(methodRetType));
 			for (Type argumentType : methodType.getArgumentTypes()) {
 				if (isClassRefMatch(argumentType.getInternalName()))
-					resultSink.accept(currentLocation.withInstruction(insn), cref(argumentType.getInternalName()));
+					resultSink.accept(memberPath.childInsn(insn), cref(argumentType.getInternalName()));
 			}
 
 			super.visitMethodInsn(opcode, owner, name, desc, isInterface);
@@ -233,7 +239,7 @@ public class ReferenceQuery implements JvmClassQuery {
 			if (value instanceof Handle handle) {
 				// Check handle ref
 				if (isMemberRefMatch(handle.getOwner(), handle.getName(), handle.getDesc())) {
-					resultSink.accept(currentLocation.withInstruction(insn),
+					resultSink.accept(memberPath.childInsn(insn),
 							mref(handle.getOwner(), handle.getName(), handle.getDesc()));
 				}
 
@@ -241,15 +247,15 @@ public class ReferenceQuery implements JvmClassQuery {
 				Type methodType = Type.getMethodType(handle.getDesc());
 				String methodRetType = methodType.getReturnType().getInternalName();
 				if (isClassRefMatch(methodRetType))
-					resultSink.accept(currentLocation.withInstruction(insn), cref(methodRetType));
+					resultSink.accept(memberPath.childInsn(insn), cref(methodRetType));
 				for (Type argumentType : methodType.getArgumentTypes()) {
 					if (isClassRefMatch(argumentType.getInternalName()))
-						resultSink.accept(currentLocation.withInstruction(insn), cref(argumentType.getInternalName()));
+						resultSink.accept(memberPath.childInsn(insn), cref(argumentType.getInternalName()));
 				}
 			} else if (value instanceof Type) {
 				String type = ((Type) value).getInternalName();
 				if (isClassRefMatch(type)) {
-					resultSink.accept(currentLocation.withInstruction(insn), cref(type));
+					resultSink.accept(memberPath.childInsn(insn), cref(type));
 				}
 			}
 			super.visitLdcInsn(value);
@@ -261,7 +267,7 @@ public class ReferenceQuery implements JvmClassQuery {
 				String type = getInternalName(desc);
 				if (isClassRefMatch(type)) {
 					MultiANewArrayInsnNode insn = new MultiANewArrayInsnNode(desc, numDimensions);
-					resultSink.accept(currentLocation.withInstruction(insn), cref(type));
+					resultSink.accept(memberPath.childInsn(insn), cref(type));
 				}
 			}
 			super.visitMultiANewArrayInsn(desc, numDimensions);
@@ -270,9 +276,7 @@ public class ReferenceQuery implements JvmClassQuery {
 		@Override
 		public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
 			if (isClassRefMatch(type)) {
-				TryCatchBlockNode catchBlock
-						= new TryCatchBlockNode(new LabelNode(start), new LabelNode(end), new LabelNode(handler), type);
-				resultSink.accept(currentLocation.withCatchBlock(catchBlock), cref(type));
+				resultSink.accept(memberPath.childCatch(type), cref(type));
 			}
 			super.visitTryCatchBlock(start, end, handler, type);
 		}
@@ -282,9 +286,8 @@ public class ReferenceQuery implements JvmClassQuery {
 			if (Types.isValidDesc(desc) && !Types.isPrimitive(desc)) {
 				String type = getInternalName(desc);
 				if (isClassRefMatch(type)) {
-					LocalVariableNode variable = new LocalVariableNode(name, desc, signature,
-							new LabelNode(start), new LabelNode(end), index);
-					resultSink.accept(currentLocation.withLocalVariable(variable), cref(type));
+					LocalVariable variable = new BasicLocalVariable(index, name, desc, signature);
+					resultSink.accept(memberPath.childVariable(variable), cref(type));
 				}
 			}
 			super.visitLocalVariable(name, desc, signature, start, end, index);
@@ -293,7 +296,7 @@ public class ReferenceQuery implements JvmClassQuery {
 
 		@Override
 		public AnnotationVisitor visitAnnotationDefault() {
-			return new AnnotationReferenceVisitor(super.visitAnnotationDefault(), true, resultSink, currentLocation);
+			return new AnnotationReferenceVisitor(super.visitAnnotationDefault(), true, resultSink, memberPath);
 		}
 
 		@Override
@@ -301,10 +304,10 @@ public class ReferenceQuery implements JvmClassQuery {
 			// Match annotation
 			String type = getInternalName(desc);
 			if (isClassRefMatch(type))
-				resultSink.accept(currentLocation, cref(type));
+				resultSink.accept(memberPath, cref(type));
 
 			AnnotationVisitor av = super.visitAnnotation(desc, visible);
-			return new AnnotationReferenceVisitor(av, visible, resultSink, currentLocation);
+			return new AnnotationReferenceVisitor(av, visible, resultSink, memberPath);
 
 		}
 
@@ -313,10 +316,10 @@ public class ReferenceQuery implements JvmClassQuery {
 			// Match annotation
 			String type = getInternalName(desc);
 			if (isClassRefMatch(type))
-				resultSink.accept(currentLocation, cref(type));
+				resultSink.accept(memberPath, cref(type));
 
 			AnnotationVisitor av = super.visitTypeAnnotation(typeRef, typePath, desc, visible);
-			return new AnnotationReferenceVisitor(av, visible, resultSink, currentLocation);
+			return new AnnotationReferenceVisitor(av, visible, resultSink, memberPath);
 		}
 
 		@Override
@@ -324,10 +327,10 @@ public class ReferenceQuery implements JvmClassQuery {
 			// Match annotation
 			String type = getInternalName(desc);
 			if (isClassRefMatch(type))
-				resultSink.accept(currentLocation, cref(type));
+				resultSink.accept(memberPath, cref(type));
 
 			AnnotationVisitor av = super.visitParameterAnnotation(parameter, desc, visible);
-			return new AnnotationReferenceVisitor(av, visible, resultSink, currentLocation);
+			return new AnnotationReferenceVisitor(av, visible, resultSink, memberPath);
 		}
 
 		@Override
@@ -335,10 +338,10 @@ public class ReferenceQuery implements JvmClassQuery {
 			// Match annotation
 			String type = getInternalName(desc);
 			if (isClassRefMatch(type))
-				resultSink.accept(currentLocation, cref(type));
+				resultSink.accept(memberPath, cref(type));
 
 			AnnotationVisitor av = super.visitInsnAnnotation(typeRef, typePath, desc, visible);
-			return new AnnotationReferenceVisitor(av, visible, resultSink, currentLocation);
+			return new AnnotationReferenceVisitor(av, visible, resultSink, memberPath);
 		}
 
 		@Override
@@ -346,10 +349,10 @@ public class ReferenceQuery implements JvmClassQuery {
 			// Match annotation
 			String type = getInternalName(desc);
 			if (isClassRefMatch(type))
-				resultSink.accept(currentLocation, cref(type));
+				resultSink.accept(memberPath, cref(type));
 
 			AnnotationVisitor av = super.visitTryCatchAnnotation(typeRef, typePath, desc, visible);
-			return new AnnotationReferenceVisitor(av, visible, resultSink, currentLocation);
+			return new AnnotationReferenceVisitor(av, visible, resultSink, memberPath);
 		}
 
 		@Override
@@ -357,10 +360,10 @@ public class ReferenceQuery implements JvmClassQuery {
 			// Match annotation
 			String type = getInternalName(desc);
 			if (isClassRefMatch(type))
-				resultSink.accept(currentLocation, cref(type));
+				resultSink.accept(memberPath, cref(type));
 
 			AnnotationVisitor av = super.visitLocalVariableAnnotation(typeRef, typePath, start, end, index, desc, visible);
-			return new AnnotationReferenceVisitor(av, visible, resultSink, currentLocation);
+			return new AnnotationReferenceVisitor(av, visible, resultSink, memberPath);
 		}
 	}
 
@@ -368,14 +371,14 @@ public class ReferenceQuery implements JvmClassQuery {
 	 * Visits references in annotations.
 	 */
 	private class AnnotationReferenceVisitor extends AnnotationVisitor {
-		private final BiConsumer<Location, Object> resultSink;
-		private final AnnotatableLocation currentAnnoLocation;
+		private final BiConsumer<PathNode<?>, Object> resultSink;
+		private final PathNode<?> currentAnnoLocation;
 		private final boolean visible;
 
 		public AnnotationReferenceVisitor(@Nullable AnnotationVisitor delegate,
 										  boolean visible,
-										  @Nonnull BiConsumer<Location, Object> resultSink,
-										  @Nonnull AnnotatableLocation currentAnnoLocation) {
+										  @Nonnull BiConsumer<PathNode<?>, Object> resultSink,
+										  @Nonnull PathNode<?> currentAnnoLocation) {
 			super(RecafConstants.getAsmVersion(), delegate);
 			this.visible = visible;
 			this.resultSink = resultSink;
@@ -392,8 +395,18 @@ public class ReferenceQuery implements JvmClassQuery {
 				resultSink.accept(currentAnnoLocation, cref(type));
 
 			// Visit sub-annotation
-			return new AnnotationReferenceVisitor(av, visible, resultSink,
-					currentAnnoLocation.withAnnotation(new BasicAnnotationInfo(visible, descriptor)));
+			if (currentAnnoLocation instanceof ClassPathNode classPath) {
+				return new AnnotationReferenceVisitor(av, visible, resultSink,
+						classPath.child(new BasicAnnotationInfo(visible, descriptor)));
+			} else if (currentAnnoLocation instanceof ClassMemberPathNode memberPath) {
+				return new AnnotationReferenceVisitor(av, visible, resultSink,
+						memberPath.childAnnotation(new BasicAnnotationInfo(visible, descriptor)));
+			} else if (currentAnnoLocation instanceof AnnotationPathNode annotationPath) {
+				return new AnnotationReferenceVisitor(av, visible, resultSink,
+						annotationPath.child(new BasicAnnotationInfo(visible, descriptor)));
+			} else {
+				throw new IllegalStateException("Unsupported non-annotatable path: " + currentAnnoLocation);
+			}
 		}
 
 		@Override

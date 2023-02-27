@@ -1,23 +1,24 @@
 package software.coley.recaf.services.search.result;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.path.PathNode;
 
 import java.util.Objects;
 
 /**
- * The base result contains location information of the matched value.
+ * The base result contains path information of the matched value.
  *
  * @author Matt Coley
  */
 public abstract class Result<T> implements Comparable<Result<?>> {
-	private final Location location;
+	private final PathNode<?> path;
 
 	/**
-	 * @param location
-	 * 		Result location.
+	 * @param path
+	 * 		Path to item containing the result.
 	 */
-	public Result(@Nonnull Location location) {
-		this.location = location;
+	public Result(@Nonnull PathNode<?> path) {
+		this.path = path;
 	}
 
 	/**
@@ -27,11 +28,11 @@ public abstract class Result<T> implements Comparable<Result<?>> {
 	protected abstract T getValue();
 
 	/**
-	 * @return Location of result.
+	 * @return Path to item containing the result.
 	 */
 	@Nonnull
-	public Location getLocation() {
-		return location;
+	public PathNode<?> getPath() {
+		return path;
 	}
 
 	@Override
@@ -39,10 +40,10 @@ public abstract class Result<T> implements Comparable<Result<?>> {
 		if (o == this)
 			return 0;
 
-		// Base comparison by location.
-		int cmp = location.compareTo(o.location);
+		// Base comparison by path.
+		int cmp = path.compareTo(o.path);
 
-		// Disambiguate if location is the same, but values differ.
+		// Disambiguate if path is the same, but values differ.
 		if (cmp == 0)
 			cmp = Integer.compare(getValue().hashCode(), o.getValue().hashCode());
 
@@ -51,7 +52,7 @@ public abstract class Result<T> implements Comparable<Result<?>> {
 
 	@Override
 	public String toString() {
-		return "Result{value=" + getValue() + ", Location=" + location + '}';
+		return "Result{value=" + getValue() + ", path=" + path + '}';
 	}
 
 	@Override
@@ -59,13 +60,13 @@ public abstract class Result<T> implements Comparable<Result<?>> {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		Result<?> result = (Result<?>) o;
-		return Objects.equals(location, result.location) &&
+		return Objects.equals(path, result.path) &&
 				Objects.equals(getValue(), result.getValue());
 	}
 
 	@Override
 	public int hashCode() {
-		int result = location.hashCode();
+		int result = path.hashCode();
 		result = 31 * result + Objects.hashCode(getValue());
 		return result;
 	}

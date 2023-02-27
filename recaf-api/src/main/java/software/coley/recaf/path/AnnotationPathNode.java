@@ -31,10 +31,22 @@ public class AnnotationPathNode extends AbstractPathNode<Object, AnnotationInfo>
 	 *
 	 * @see ClassMemberPathNode#childAnnotation(AnnotationInfo)
 	 * @see ClassPathNode#child(AnnotationInfo)
+	 * @see AnnotationPathNode#child(AnnotationInfo)
 	 */
 	@SuppressWarnings("unchecked")
 	public AnnotationPathNode(@Nullable PathNode<?> parent, @Nonnull AnnotationInfo annotation) {
 		super("annotation", (PathNode<Object>) parent, AnnotationInfo.class, annotation);
+	}
+
+	/**
+	 * @param annotation
+	 * 		Annotation to wrap into node.
+	 *
+	 * @return Path node of annotation, with current annotation as parent.
+	 */
+	@Nonnull
+	public AnnotationPathNode child(@Nonnull AnnotationInfo annotation) {
+		return new AnnotationPathNode(this, annotation);
 	}
 
 	@Override

@@ -1,6 +1,7 @@
 package software.coley.recaf.services.search.result;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.path.PathNode;
 
 /**
  * Result of a class reference match.
@@ -11,8 +12,8 @@ public class MemberReferenceResult extends Result<MemberReferenceResult.MemberRe
 	private final MemberReference ref;
 
 	/**
-	 * @param location
-	 * 		Result location.
+	 * @param path
+	 * 		Path to item containing the result.
 	 * @param owner
 	 * 		Name of class declaring the member.
 	 * @param name
@@ -20,19 +21,19 @@ public class MemberReferenceResult extends Result<MemberReferenceResult.MemberRe
 	 * @param desc
 	 * 		Member descriptor.
 	 */
-	public MemberReferenceResult(@Nonnull Location location,
+	public MemberReferenceResult(@Nonnull PathNode<?> path,
 								 @Nonnull String owner, @Nonnull String name, @Nonnull String desc) {
-		this(location, new MemberReference(owner, name, desc));
+		this(path, new MemberReference(owner, name, desc));
 	}
 
 	/**
-	 * @param location
-	 * 		Result location.
+	 * @param path
+	 * 		Path to item containing the result.
 	 * @param ref
 	 * 		Member reference.
 	 */
-	public MemberReferenceResult(@Nonnull Location location, @Nonnull MemberReference ref) {
-		super(location);
+	public MemberReferenceResult(@Nonnull PathNode<?> path, @Nonnull MemberReference ref) {
+		super(path);
 		this.ref = ref;
 	}
 

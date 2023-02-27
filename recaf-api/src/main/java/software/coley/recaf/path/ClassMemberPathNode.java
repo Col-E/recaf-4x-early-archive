@@ -2,6 +2,7 @@ package software.coley.recaf.path;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import org.objectweb.asm.tree.AbstractInsnNode;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
@@ -101,6 +102,19 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 		if (isMethod())
 			return new LocalVariablePathNode(this, variable);
 		throw new IllegalStateException("Cannot make child for catch on non-method member");
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to wrap into node.
+	 *
+	 * @return Path node of instruction, with current member as parent.
+	 */
+	@Nonnull
+	public InstructionPathNode childInsn(AbstractInsnNode insn) {
+		if (isMethod())
+			return new InstructionPathNode(this, insn);
+		throw new IllegalStateException("Cannot make child for insn on non-method member");
 	}
 
 	@Override

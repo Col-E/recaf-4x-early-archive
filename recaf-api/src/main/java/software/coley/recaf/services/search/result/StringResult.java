@@ -1,6 +1,7 @@
 package software.coley.recaf.services.search.result;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.path.PathNode;
 
 /**
  * Result of a string match.
@@ -11,13 +12,13 @@ public class StringResult extends Result<String> {
 	private final String value;
 
 	/**
-	 * @param location
-	 * 		Result location.
+	 * @param path
+	 * 		Path to item containing the result.
 	 * @param value
 	 * 		Matched value.
 	 */
-	public StringResult(@Nonnull Location location, @Nonnull String value) {
-		super(location);
+	public StringResult(@Nonnull PathNode<?> path, @Nonnull String value) {
+		super(path);
 		this.value = value;
 	}
 

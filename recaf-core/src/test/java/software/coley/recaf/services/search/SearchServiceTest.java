@@ -8,6 +8,7 @@ import software.coley.recaf.info.BasicTextFileInfo;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.builder.TextFileInfoBuilder;
 import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.path.*;
 import software.coley.recaf.services.search.builtin.NumberQuery;
 import software.coley.recaf.services.search.builtin.ReferenceQuery;
 import software.coley.recaf.services.search.builtin.StringQuery;
@@ -111,36 +112,37 @@ public class SearchServiceTest extends TestBase {
 		}
 
 		@Test
-		void testFieldLocation() {
+		void testFieldPath() {
 			// Used only in constant-value attribute for field 'CONSTANT_FIELD'
 			Results results = searchService.search(classesWorkspace, new NumberQuery(NumberMatchMode.EQUALS, 16));
 			for (Result<?> result : results) {
-				if (result.getLocation() instanceof MemberDeclarationLocation location) {
-					ClassMember declaredMember = location.getDeclaredMember();
+				if (result.getPath() instanceof ClassMemberPathNode memberPath) {
+					ClassMember declaredMember = memberPath.getValue();
 					assertTrue(declaredMember.isField());
 					assertEquals("CONSTANT_FIELD", declaredMember.getName());
 					assertEquals("I", declaredMember.getDescriptor());
 				} else {
-					fail("Value[16] found in not CONSTANT_FIELD location");
+					fail("Value[16] found in not CONSTANT_FIELD path");
 				}
 			}
 		}
 
 		@Test
-		void testMethodLocation() {
+		void testMethodPath() {
 			// 31 is used in generated hashCode() implementations
 			Results results = searchService.search(classesWorkspace, new NumberQuery(NumberMatchMode.EQUALS, 31));
 			for (Result<?> result : results) {
-				if (result.getLocation() instanceof InstructionLocation location) {
-					assertEquals(BIPUSH, location.getInstruction().getOpcode());
+				if (result.getPath() instanceof InstructionPathNode instructionPath) {
+					assertEquals(BIPUSH, instructionPath.getValue().getOpcode());
 
-					MemberDeclarationLocation parentLocation = location.getDeclaringMethod();
-					ClassMember declaredMember = parentLocation.getDeclaredMember();
+					ClassMemberPathNode parentOfType = instructionPath.getParentOfType(ClassMember.class);
+					assertNotNull(parentOfType);
+					ClassMember declaredMember = parentOfType.getValue();
 					assertTrue(declaredMember.isMethod());
 					assertEquals("hashCode", declaredMember.getName());
 					assertEquals("()I", declaredMember.getDescriptor());
 				} else {
-					fail("Value[31] found in not hashCode() location");
+					fail("Value[31] found in not hashCode() path");
 				}
 			}
 		}
@@ -155,9 +157,9 @@ public class SearchServiceTest extends TestBase {
 			assertEquals(1, results.size());
 
 			Result<?> result = results.iterator().next();
-			Location location = result.getLocation();
-			if (location instanceof AnnotationLocation annotationLocation) {
-				AnnotationInfo declaredAnnotation = annotationLocation.getDeclaredAnnotation();
+			PathNode<?> path = result.getPath();
+			if (path instanceof AnnotationPathNode annotationPath) {
+				AnnotationInfo declaredAnnotation = annotationPath.getValue();
 				assertTrue(declaredAnnotation.isVisible());
 				assertEquals("L" + AnnotationImpl.class.getName().replace('.', '/') + ";",
 						declaredAnnotation.getDescriptor());
@@ -176,9 +178,9 @@ public class SearchServiceTest extends TestBase {
 			assertEquals(1, results.size());
 
 			Result<?> result = results.iterator().next();
-			Location location = result.getLocation();
-			if (location instanceof AnnotationLocation annotationLocation) {
-				AnnotationInfo declaredAnnotation = annotationLocation.getDeclaredAnnotation();
+			PathNode<?> path = result.getPath();
+			if (path instanceof AnnotationPathNode annotationPath) {
+				AnnotationInfo declaredAnnotation = annotationPath.getValue();
 				assertTrue(declaredAnnotation.isVisible());
 				assertEquals("L" + TypeAnnotationImpl.class.getName().replace('.', '/') + ";",
 						declaredAnnotation.getDescriptor());
@@ -226,25 +228,25 @@ public class SearchServiceTest extends TestBase {
 
 			// Thrown type on method declaration
 			Set<Result<?>> throwsMatches = results.stream()
-					.filter(r -> r.getLocation() instanceof ThrowsLocation)
+					.filter(r -> r.getPath() instanceof ThrowsPathNode)
 					.collect(Collectors.toSet());
 			assertEquals(1, throwsMatches.size());
 
 			// NEW instruction is used to create a NFE
 			Set<Result<?>> insnMatches = results.stream()
-					.filter(r -> r.getLocation() instanceof InstructionLocation)
+					.filter(r -> r.getPath() instanceof InstructionPathNode)
 					.collect(Collectors.toSet());
 			assertEquals(1, insnMatches.size());
 
 			// Type of catch block
 			Set<Result<?>> catchMatches = results.stream()
-					.filter(r -> r.getLocation() instanceof CatchBlockLocation)
+					.filter(r -> r.getPath() instanceof CatchPathNode)
 					.collect(Collectors.toSet());
 			assertEquals(1, catchMatches.size());
 
 			// Catch block has local variable
 			Set<Result<?>> varMatches = results.stream()
-					.filter(r -> r.getLocation() instanceof LocalVariableLocation)
+					.filter(r -> r.getPath() instanceof LocalVariablePathNode)
 					.collect(Collectors.toSet());
 			assertEquals(1, varMatches.size());
 		}

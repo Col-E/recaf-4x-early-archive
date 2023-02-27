@@ -3,9 +3,9 @@ package software.coley.recaf.services.search.builtin;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.path.FilePathNode;
+import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.search.FileSearchVisitor;
-import software.coley.recaf.services.search.result.FileLocation;
-import software.coley.recaf.services.search.result.Location;
 import software.coley.recaf.util.TextMatchMode;
 
 import java.util.function.BiConsumer;
@@ -58,10 +58,10 @@ public class StringQuery extends AbstractValueQuery {
 		}
 
 		@Override
-		public void visit(@Nonnull BiConsumer<Location, Object> resultSink,
-						  @Nonnull FileLocation currentLocation,
+		public void visit(@Nonnull BiConsumer<PathNode<?>, Object> resultSink,
+						  @Nonnull FilePathNode filePath,
 						  @Nonnull FileInfo fileInfo) {
-			if (delegate != null) delegate.visit(resultSink, currentLocation, fileInfo);
+			if (delegate != null) delegate.visit(resultSink, filePath, fileInfo);
 
 			// Search text files text content on a line by line basis
 			if (fileInfo.isTextFile()) {
@@ -72,7 +72,7 @@ public class StringQuery extends AbstractValueQuery {
 				for (int i = 0; i < lines.length; i++) {
 					String lineText = lines[i];
 					if (isMatch(lineText))
-						resultSink.accept(currentLocation.withTextLineNumber(i + 1), lineText);
+						resultSink.accept(filePath.child(i + 1), lineText);
 				}
 			}
 		}

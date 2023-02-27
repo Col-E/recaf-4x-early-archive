@@ -2,8 +2,8 @@ package software.coley.recaf.services.search;
 
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.FileInfo;
-import software.coley.recaf.services.search.result.FileLocation;
-import software.coley.recaf.services.search.result.Location;
+import software.coley.recaf.path.FilePathNode;
+import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.search.result.Results;
 
 import java.util.function.BiConsumer;
@@ -19,12 +19,12 @@ public interface FileSearchVisitor extends SearchVisitor {
 	 *
 	 * @param resultSink
 	 * 		Consumer to feed result values into, typically populating a {@link Results} instance.
-	 * @param currentLocation
-	 * 		Additional information about the current location.
+	 * @param filePath
+	 * 		Path to file being visited.
 	 * @param fileInfo
 	 * 		File to visit.
 	 */
-	void visit(@Nonnull BiConsumer<Location, Object> resultSink,
-			   @Nonnull FileLocation currentLocation,
+	void visit(@Nonnull BiConsumer<PathNode<?>, Object> resultSink,
+			   @Nonnull FilePathNode filePath,
 			   @Nonnull FileInfo fileInfo);
 }

@@ -14,13 +14,13 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.annotation.BasicAnnotationInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.path.AnnotationPathNode;
+import software.coley.recaf.path.ClassMemberPathNode;
+import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.search.FileQuery;
 import software.coley.recaf.services.search.JvmClassQuery;
 import software.coley.recaf.services.search.JvmClassSearchVisitor;
-import software.coley.recaf.services.search.result.AnnotatableLocation;
-import software.coley.recaf.services.search.result.JvmClassLocation;
-import software.coley.recaf.services.search.result.Location;
-import software.coley.recaf.services.search.result.MemberDeclarationLocation;
 
 import java.util.function.BiConsumer;
 
@@ -63,12 +63,12 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 		}
 
 		@Override
-		public void visit(@Nonnull BiConsumer<Location, Object> resultSink,
-						  @Nonnull JvmClassLocation currentLocation,
+		public void visit(@Nonnull BiConsumer<PathNode<?>, Object> resultSink,
+						  @Nonnull ClassPathNode classPath,
 						  @Nonnull JvmClassInfo classInfo) {
-			if (delegate != null) delegate.visit(resultSink, currentLocation, classInfo);
+			if (delegate != null) delegate.visit(resultSink, classPath, classInfo);
 
-			classInfo.getClassReader().accept(new AsmClassValueVisitor(resultSink, currentLocation, classInfo), 0);
+			classInfo.getClassReader().accept(new AsmClassValueVisitor(resultSink, classPath, classInfo), 0);
 		}
 	}
 
@@ -77,16 +77,16 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 	 */
 	private class AsmClassValueVisitor extends ClassVisitor {
 		private final Logger logger = Logging.get(AsmClassValueVisitor.class);
-		private final BiConsumer<Location, Object> resultSink;
-		private final JvmClassLocation currentLocation;
+		private final BiConsumer<PathNode<?>, Object> resultSink;
+		private final ClassPathNode classPath;
 		private final JvmClassInfo classInfo;
 
-		protected AsmClassValueVisitor(@Nonnull BiConsumer<Location, Object> resultSink,
-									   @Nonnull JvmClassLocation currentLocation,
+		protected AsmClassValueVisitor(@Nonnull BiConsumer<PathNode<?>, Object> resultSink,
+									   @Nonnull ClassPathNode classPath,
 									   @Nonnull JvmClassInfo classInfo) {
 			super(RecafConstants.getAsmVersion());
 			this.resultSink = resultSink;
-			this.currentLocation = currentLocation;
+			this.classPath = classPath;
 			this.classInfo = classInfo;
 		}
 
@@ -96,8 +96,8 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 			FieldMember fieldMember = classInfo.getDeclaredField(name, desc);
 			if (fieldMember != null) {
 				if (isMatch(value))
-					resultSink.accept(currentLocation.withMember(fieldMember), value);
-				return new AsmFieldValueVisitor(fv, fieldMember, resultSink, currentLocation);
+					resultSink.accept(classPath.child(fieldMember), value);
+				return new AsmFieldValueVisitor(fv, fieldMember, resultSink, classPath);
 			} else {
 				logger.error("Failed to lookup field for query: {}.{} {}", classInfo.getName(), name, desc);
 				return fv;
@@ -109,7 +109,7 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 			MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 			MethodMember methodMember = classInfo.getDeclaredMethod(name, desc);
 			if (methodMember != null) {
-				return new AsmMethodValueVisitor(mv, methodMember, resultSink, currentLocation);
+				return new AsmMethodValueVisitor(mv, methodMember, resultSink, classPath);
 			} else {
 				logger.error("Failed to lookup method for query: {}.{}{}", classInfo.getName(), name, desc);
 				return mv;
@@ -120,14 +120,15 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 		public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
 			AnnotationVisitor av = super.visitAnnotation(desc, visible);
 			return new AnnotationValueVisitor(av, visible, resultSink,
-					currentLocation.withAnnotation(new BasicAnnotationInfo(visible, desc)));
+					classPath.child(new BasicAnnotationInfo(visible, desc)));
 		}
 
 		@Override
 		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
 			AnnotationVisitor av = super.visitTypeAnnotation(typeRef, typePath, desc, visible);
 			return new AnnotationValueVisitor(av, visible, resultSink,
-					currentLocation.withAnnotation(new BasicAnnotationInfo(visible, desc)));
+					classPath.child(new BasicAnnotationInfo(visible, desc)
+							.withTypeInfo(typeRef, typePath)));
 		}
 	}
 
@@ -135,30 +136,31 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 	 * Visits values in fields.
 	 */
 	private class AsmFieldValueVisitor extends FieldVisitor {
-		private final BiConsumer<Location, Object> resultSink;
-		private final MemberDeclarationLocation currentLocation;
+		private final BiConsumer<PathNode<?>, Object> resultSink;
+		private final ClassMemberPathNode memberPath;
 
 		public AsmFieldValueVisitor(@Nullable FieldVisitor delegate,
 									@Nonnull FieldMember fieldMember,
-									@Nonnull BiConsumer<Location, Object> resultSink,
-									@Nonnull JvmClassLocation classLocation) {
+									@Nonnull BiConsumer<PathNode<?>, Object> resultSink,
+									@Nonnull ClassPathNode classLocation) {
 			super(RecafConstants.getAsmVersion(), delegate);
 			this.resultSink = resultSink;
-			this.currentLocation = classLocation.withMember(fieldMember);
+			this.memberPath = classLocation.child(fieldMember);
 		}
 
 		@Override
 		public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
 			AnnotationVisitor av = super.visitAnnotation(desc, visible);
 			return new AnnotationValueVisitor(av, visible, resultSink,
-					currentLocation.withAnnotation(new BasicAnnotationInfo(visible, desc)));
+					memberPath.childAnnotation(new BasicAnnotationInfo(visible, desc)));
 		}
 
 		@Override
 		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
 			AnnotationVisitor av = super.visitTypeAnnotation(typeRef, typePath, desc, visible);
 			return new AnnotationValueVisitor(av, visible, resultSink,
-					currentLocation.withAnnotation(new BasicAnnotationInfo(visible, desc)));
+					memberPath.childAnnotation(new BasicAnnotationInfo(visible, desc)
+							.withTypeInfo(typeRef, typePath)));
 		}
 	}
 
@@ -166,16 +168,16 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 	 * Visits values in methods.
 	 */
 	private class AsmMethodValueVisitor extends MethodVisitor {
-		private final BiConsumer<Location, Object> resultSink;
-		private final MemberDeclarationLocation currentLocation;
+		private final BiConsumer<PathNode<?>, Object> resultSink;
+		private final ClassMemberPathNode memberPath;
 
 		public AsmMethodValueVisitor(@Nullable MethodVisitor delegate,
 									 @Nonnull MethodMember methodMember,
-									 @Nonnull BiConsumer<Location, Object> resultSink,
-									 @Nonnull JvmClassLocation classLocation) {
+									 @Nonnull BiConsumer<PathNode<?>, Object> resultSink,
+									 @Nonnull ClassPathNode classLocation) {
 			super(RecafConstants.getAsmVersion(), delegate);
 			this.resultSink = resultSink;
-			this.currentLocation = classLocation.withMember(methodMember);
+			this.memberPath = classLocation.child(methodMember);
 		}
 
 		@Override
@@ -185,7 +187,7 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 			for (Object bsmArg : bsmArgs) {
 				if (isMatch(bsmArg)) {
 					InvokeDynamicInsnNode indy = new InvokeDynamicInsnNode(name, desc, bsmHandle, bsmArgs);
-					resultSink.accept(currentLocation.withInstruction(indy), bsmArg);
+					resultSink.accept(memberPath.childInsn(indy), bsmArg);
 				}
 			}
 		}
@@ -196,7 +198,7 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 			if (opcode >= Opcodes.ICONST_M1 && opcode <= Opcodes.DCONST_1) {
 				Number value = OP_TO_VALUE[opcode];
 				if (isMatch(value))
-					resultSink.accept(currentLocation.withInstruction(new InsnNode(opcode)), value);
+					resultSink.accept(memberPath.childInsn(new InsnNode(opcode)), value);
 			}
 		}
 
@@ -204,48 +206,50 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 		public void visitIntInsn(int opcode, int operand) {
 			super.visitIntInsn(opcode, operand);
 			if (opcode != Opcodes.NEWARRAY && isMatch(operand))
-				resultSink.accept(currentLocation.withInstruction(new IntInsnNode(opcode, operand)), operand);
+				resultSink.accept(memberPath.childInsn(new IntInsnNode(opcode, operand)), operand);
 		}
 
 		@Override
 		public void visitLdcInsn(Object value) {
 			super.visitLdcInsn(value);
 			if (isMatch(value))
-				resultSink.accept(currentLocation.withInstruction(new LdcInsnNode(value)), value);
+				resultSink.accept(memberPath.childInsn(new LdcInsnNode(value)), value);
 		}
 
 		@Override
 		public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
 			AnnotationVisitor av = super.visitAnnotation(desc, visible);
 			return new AnnotationValueVisitor(av, visible, resultSink,
-					currentLocation.withAnnotation(new BasicAnnotationInfo(visible, desc)));
+					memberPath.childAnnotation(new BasicAnnotationInfo(visible, desc)));
 		}
 
 		@Override
 		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
 			AnnotationVisitor av = super.visitTypeAnnotation(typeRef, typePath, desc, visible);
 			return new AnnotationValueVisitor(av, visible, resultSink,
-					currentLocation.withAnnotation(new BasicAnnotationInfo(visible, desc)));
+					memberPath.childAnnotation(new BasicAnnotationInfo(visible, desc)
+							.withTypeInfo(typeRef, typePath)));
 		}
 
 		@Override
 		public AnnotationVisitor visitAnnotationDefault() {
 			AnnotationVisitor av = super.visitAnnotationDefault();
-			return new AnnotationValueVisitor(av, true, resultSink, currentLocation);
+			return new AnnotationValueVisitor(av, true, resultSink, memberPath);
 		}
 
 		@Override
 		public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
 			AnnotationVisitor av = super.visitParameterAnnotation(parameter, desc, visible);
 			return new AnnotationValueVisitor(av, visible, resultSink,
-					currentLocation.withAnnotation(new BasicAnnotationInfo(visible, desc)));
+					memberPath.childAnnotation(new BasicAnnotationInfo(visible, desc)));
 		}
 
 		@Override
 		public AnnotationVisitor visitInsnAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
 			AnnotationVisitor av = super.visitInsnAnnotation(typeRef, typePath, desc, visible);
 			return new AnnotationValueVisitor(av, visible, resultSink,
-					currentLocation.withAnnotation(new BasicAnnotationInfo(visible, desc)));
+					memberPath.childAnnotation(new BasicAnnotationInfo(visible, desc)
+							.withTypeInfo(typeRef, typePath)));
 		}
 
 		@Override
@@ -253,7 +257,8 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 														 boolean visible) {
 			AnnotationVisitor av = super.visitTryCatchAnnotation(typeRef, typePath, desc, visible);
 			return new AnnotationValueVisitor(av, visible, resultSink,
-					currentLocation.withAnnotation(new BasicAnnotationInfo(visible, desc)));
+					memberPath.childAnnotation(new BasicAnnotationInfo(visible, desc)
+							.withTypeInfo(typeRef, typePath)));
 		}
 
 		@Override
@@ -263,7 +268,8 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 			AnnotationVisitor av = super.visitLocalVariableAnnotation(typeRef, typePath, start, end,
 					index, desc, visible);
 			return new AnnotationValueVisitor(av, visible, resultSink,
-					currentLocation.withAnnotation(new BasicAnnotationInfo(visible, desc)));
+					memberPath.childAnnotation(new BasicAnnotationInfo(visible, desc)
+							.withTypeInfo(typeRef, typePath)));
 		}
 	}
 
@@ -271,14 +277,14 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 	 * Visits values in annotations.
 	 */
 	private class AnnotationValueVisitor extends AnnotationVisitor {
-		private final BiConsumer<Location, Object> resultSink;
-		private final AnnotatableLocation currentAnnoLocation;
+		private final BiConsumer<PathNode<?>, Object> resultSink;
+		private final PathNode<?> currentAnnoLocation;
 		private final boolean visible;
 
 		public AnnotationValueVisitor(@Nullable AnnotationVisitor delegate,
 									  boolean visible,
-									  @Nonnull BiConsumer<Location, Object> resultSink,
-									  @Nonnull AnnotatableLocation currentAnnoLocation) {
+									  @Nonnull BiConsumer<PathNode<?>, Object> resultSink,
+									  @Nonnull PathNode<?> currentAnnoLocation) {
 			super(RecafConstants.getAsmVersion(), delegate);
 			this.visible = visible;
 			this.resultSink = resultSink;
@@ -288,8 +294,18 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 		@Override
 		public AnnotationVisitor visitAnnotation(String name, String descriptor) {
 			AnnotationVisitor av = super.visitAnnotation(name, descriptor);
-			return new AnnotationValueVisitor(av, visible, resultSink,
-					currentAnnoLocation.withAnnotation(new BasicAnnotationInfo(visible, descriptor)));
+			if (currentAnnoLocation instanceof ClassPathNode classPath) {
+				return new AnnotationValueVisitor(av, visible, resultSink,
+						classPath.child(new BasicAnnotationInfo(visible, descriptor)));
+			} else if (currentAnnoLocation instanceof ClassMemberPathNode memberPath) {
+				return new AnnotationValueVisitor(av, visible, resultSink,
+						memberPath.childAnnotation(new BasicAnnotationInfo(visible, descriptor)));
+			} else if (currentAnnoLocation instanceof AnnotationPathNode annotationPath) {
+				return new AnnotationValueVisitor(av, visible, resultSink,
+						annotationPath.child(new BasicAnnotationInfo(visible, descriptor)));
+			} else {
+				throw new IllegalStateException("Unsupported non-annotatable path: " + currentAnnoLocation);
+			}
 		}
 
 		@Override

@@ -1,6 +1,7 @@
 package software.coley.recaf.services.search.result;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.path.PathNode;
 
 /**
  * Result of a class reference match.
@@ -11,23 +12,23 @@ public class ClassReferenceResult extends Result<ClassReferenceResult.ClassRefer
 	private final ClassReference ref;
 
 	/**
-	 * @param location
-	 * 		Result location.
+	 * @param path
+	 * 		Path to item containing the result.
 	 * @param name
 	 * 		Class name.
 	 */
-	public ClassReferenceResult(@Nonnull Location location, @Nonnull String name) {
-		this(location, new ClassReference(name));
+	public ClassReferenceResult(@Nonnull PathNode<?> path, @Nonnull String name) {
+		this(path, new ClassReference(name));
 	}
 
 	/**
-	 * @param location
-	 * 		Result location.
+	 * @param path
+	 * 		Path to item containing the result.
 	 * @param ref
 	 * 		Class reference.
 	 */
-	public ClassReferenceResult(@Nonnull Location location, @Nonnull ClassReference ref) {
-		super(location);
+	public ClassReferenceResult(@Nonnull PathNode<?> path, @Nonnull ClassReference ref) {
+		super(path);
 		this.ref = ref;
 	}
 

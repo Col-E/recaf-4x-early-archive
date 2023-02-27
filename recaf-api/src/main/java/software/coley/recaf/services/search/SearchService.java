@@ -6,6 +6,7 @@ import jakarta.inject.Inject;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.path.*;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.search.builtin.NumberQuery;
 import software.coley.recaf.services.search.builtin.ReferenceQuery;
@@ -85,14 +86,19 @@ public class SearchService implements Service {
 
 		// Run visitors on contents of workspace
 		ExecutorService service = ThreadPoolFactory.newFixedThreadPool(SERVICE_ID + ":" + queries.hashCode());
+		WorkspacePathNode workspaceNode = new WorkspacePathNode(workspace);
 		for (WorkspaceResource resource : workspace.getAllResources(false)) {
+			ResourcePathNode resourceNode = workspaceNode.child(resource);
 			// Visit android content
 			if (androidClassVisitor != null) {
 				for (AndroidClassBundle bundle : resource.getAndroidClassBundles().values()) {
+					BundlePathNode bundleNode = resourceNode.child(bundle);
 					for (AndroidClassInfo classInfo : bundle) {
+						ClassPathNode classPath = bundleNode
+								.child(classInfo.getPackageName())
+								.child(classInfo);
 						service.submit(() -> {
-							AndroidClassLocation currentLocation = new BasicAndroidClassLocation(workspace, resource, bundle, classInfo);
-							androidClassVisitor.visit((location, value) -> results.add(createResult(location, value)), currentLocation, classInfo);
+							androidClassVisitor.visit((path, value) -> results.add(createResult(path, value)), classPath, classInfo);
 						});
 					}
 				}
@@ -101,17 +107,23 @@ public class SearchService implements Service {
 			// Visit JVM content
 			if (jvmClassVisitor != null) {
 				JvmClassBundle primaryBundle = resource.getJvmClassBundle();
+				BundlePathNode primaryBundleNode = resourceNode.child(primaryBundle);
 				for (JvmClassInfo classInfo : primaryBundle) {
+					ClassPathNode classPath = primaryBundleNode
+							.child(classInfo.getPackageName())
+							.child(classInfo);
 					service.submit(() -> {
-						JvmClassLocation currentLocation = new BasicJvmClassLocation(workspace, resource, primaryBundle, classInfo);
-						jvmClassVisitor.visit((location, value) -> results.add(createResult(location, value)), currentLocation, classInfo);
+						jvmClassVisitor.visit((path, value) -> results.add(createResult(path, value)), classPath, classInfo);
 					});
 				}
 				for (JvmClassBundle bundle : resource.getVersionedJvmClassBundles().values()) {
+					BundlePathNode bundleNode = resourceNode.child(bundle);
 					for (JvmClassInfo classInfo : bundle) {
+						ClassPathNode classPath = bundleNode
+								.child(classInfo.getPackageName())
+								.child(classInfo);
 						service.submit(() -> {
-							JvmClassLocation currentLocation = new BasicJvmClassLocation(workspace, resource, primaryBundle, classInfo);
-							jvmClassVisitor.visit((location, value) -> results.add(createResult(location, value)), currentLocation, classInfo);
+							jvmClassVisitor.visit((path, value) -> results.add(createResult(path, value)), classPath, classInfo);
 						});
 					}
 				}
@@ -120,10 +132,13 @@ public class SearchService implements Service {
 			// Visit file content
 			if (fileVisitor != null) {
 				FileBundle fileBundle = resource.getFileBundle();
+				BundlePathNode bundleNode = resourceNode.child(fileBundle);
 				for (FileInfo fileInfo : fileBundle) {
+					FilePathNode filePath = bundleNode
+							.child(fileInfo.getDirectoryName())
+							.child(fileInfo);
 					service.submit(() -> {
-						FileLocation currentLocation = new BasicFileLocation(workspace, resource, fileBundle, fileInfo);
-						fileVisitor.visit((location, value) -> results.add(createResult(location, value)), currentLocation, fileInfo);
+						fileVisitor.visit((path, value) -> results.add(createResult(path, value)), filePath, fileInfo);
 					});
 				}
 			}
@@ -133,15 +148,15 @@ public class SearchService implements Service {
 		return results;
 	}
 
-	private static Result<?> createResult(@Nonnull Location location, @Nonnull Object value) {
+	private static Result<?> createResult(@Nonnull PathNode<?> path, @Nonnull Object value) {
 		if (value instanceof Number)
-			return new NumberResult(location, (Number) value);
+			return new NumberResult(path, (Number) value);
 		if (value instanceof String)
-			return new StringResult(location, (String) value);
+			return new StringResult(path, (String) value);
 		if (value instanceof ClassReferenceResult.ClassReference)
-			return new ClassReferenceResult(location, (ClassReferenceResult.ClassReference) value);
+			return new ClassReferenceResult(path, (ClassReferenceResult.ClassReference) value);
 		if (value instanceof MemberReferenceResult.MemberReference)
-			return new MemberReferenceResult(location, (MemberReferenceResult.MemberReference) value);
+			return new MemberReferenceResult(path, (MemberReferenceResult.MemberReference) value);
 
 		// Unknown value type
 		throw new UnsupportedOperationException("Unsupported search result value type: " + value.getClass().getName());

@@ -4,9 +4,9 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jregex.Matcher;
 import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.path.FilePathNode;
+import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.search.FileSearchVisitor;
-import software.coley.recaf.services.search.result.FileLocation;
-import software.coley.recaf.services.search.result.Location;
 import software.coley.recaf.util.NumberMatchMode;
 import software.coley.recaf.util.NumberUtil;
 
@@ -62,10 +62,10 @@ public class NumberQuery extends AbstractValueQuery {
 		}
 
 		@Override
-		public void visit(@Nonnull BiConsumer<Location, Object> resultSink,
-						  @Nonnull FileLocation currentLocation,
+		public void visit(@Nonnull BiConsumer<PathNode<?>, Object> resultSink,
+						  @Nonnull FilePathNode filePath,
 						  @Nonnull FileInfo fileInfo) {
-			if (delegate != null) delegate.visit(resultSink, currentLocation, fileInfo);
+			if (delegate != null) delegate.visit(resultSink, filePath, fileInfo);
 
 			// Search text files text content on a line by line basis
 			if (fileInfo.isTextFile()) {
@@ -83,7 +83,7 @@ public class NumberQuery extends AbstractValueQuery {
 						try {
 							Number value = NumberUtil.parse(group);
 							if (isMatch(value))
-								resultSink.accept(currentLocation.withTextLineNumber(i + 1), value);
+								resultSink.accept(filePath.child(i + 1), value);
 						} catch (NumberFormatException ignored) {
 							// Invalid match
 						}
