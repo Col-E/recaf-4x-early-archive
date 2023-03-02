@@ -73,6 +73,15 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 	 * 		Workspace to represent.
 	 */
 	public void createWorkspaceRoot(@Nullable Workspace workspace) {
+		Workspace oldWorkspace = this.workspace;
+		if (oldWorkspace != null) {
+			// Remove listeners on old workspace
+			oldWorkspace.removeWorkspaceModificationListener(this);
+			for (WorkspaceResource resource : oldWorkspace.getAllResources(false))
+				resource.removeListener(this);
+		}
+
+		// Update workspace reference & populate root.
 		this.workspace = workspace;
 		if (workspace == null) {
 			root = null;
