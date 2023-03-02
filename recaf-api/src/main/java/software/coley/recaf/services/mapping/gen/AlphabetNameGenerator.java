@@ -1,13 +1,11 @@
 package software.coley.recaf.services.mapping.gen;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
-import software.coley.recaf.util.NumberUtil;
 import software.coley.recaf.util.StringUtil;
-
-import java.util.Random;
 
 /**
  * Basic name generator using a given alphabet of characters to generate pseudo-random names with.
@@ -17,8 +15,7 @@ import java.util.Random;
  */
 public class AlphabetNameGenerator implements NameGenerator {
 	private final String alphabet;
-	private final int boundsMin;
-	private final int boundsMax;
+	private final int length;
 
 	/**
 	 * @param alphabet
@@ -28,28 +25,17 @@ public class AlphabetNameGenerator implements NameGenerator {
 	 */
 	public AlphabetNameGenerator(@Nonnull String alphabet, int length) {
 		this.alphabet = alphabet;
-
-		// Create bounds range to generate names of the desired length
-		int alphabetSize = alphabet.length();
-		int sum = 0;
-		int lastCount = 0;
-		for (int i = 0; i < length; i++) {
-			int count = NumberUtil.intPow(alphabetSize, i + 1);
-			sum += count;
-			lastCount = count;
-		}
-		boundsMin = sum - lastCount;
-		boundsMax = sum;
+		this.length = length;
 	}
 
-	private String name(String original) {
-		Random random = new Random(original.hashCode());
-		return StringUtil.generateName(alphabet, random.nextInt(boundsMin, boundsMax));
+	@Nonnull
+	private String name(@Nullable String original) {
+		int seed = original == null ? alphabet.hashCode() : original.hashCode();
+		return StringUtil.generateName(alphabet, length, seed);
 	}
 
 	@Nonnull
 	@Override
-	@SuppressWarnings("DataFlowIssue")
 	public String mapClass(@Nonnull ClassInfo info) {
 		if (info.isInDefaultPackage())
 			return name(info.getName());
@@ -61,12 +47,12 @@ public class AlphabetNameGenerator implements NameGenerator {
 	@Nonnull
 	@Override
 	public String mapField(@Nonnull ClassInfo owner, @Nonnull FieldMember field) {
-		return name(owner.getName() + field.getName());
+		return name(owner.getName() + "#" + field.getName());
 	}
 
 	@Nonnull
 	@Override
 	public String mapMethod(@Nonnull ClassInfo owner, @Nonnull MethodMember method) {
-		return name(owner.getName() + method.getName());
+		return name(owner.getName() + "#" + method.getName());
 	}
 }

@@ -78,6 +78,15 @@ class MappingApplierTest extends TestBase {
 	}
 
 	@Test
+	void longName() {
+		String alphabet = "abcdefghijklmnopqrstuvwxyz";
+		AlphabetNameGenerator longNameGenerator = new AlphabetNameGenerator(alphabet, 2048);
+		workspace.getPrimaryResource().getJvmClassBundle().forEach(cls -> {
+			assertDoesNotThrow(() -> longNameGenerator.mapClass(cls));
+		});
+	}
+
+	@Test
 	void applyAnonymousLambda() {
 		String stringSupplierName = StringSupplier.class.getName().replace('.', '/');
 		String anonymousLambdaName = AnonymousLambda.class.getName().replace('.', '/');

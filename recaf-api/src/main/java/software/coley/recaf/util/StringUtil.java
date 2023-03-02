@@ -16,6 +16,7 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Random;
 import java.util.function.Consumer;
 
 /**
@@ -442,8 +443,7 @@ public class StringUtil {
 	 *
 	 * @return Generated String
 	 */
-	public static String generateName(String alphabet, int index) {
-		// String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	public static String generateIncrementingName(String alphabet, int index) {
 		char[] charz = alphabet.toCharArray();
 		int alphabetLength = charz.length;
 		int length = 8;
@@ -457,6 +457,27 @@ public class StringUtil {
 		}
 		array[offset] = charz[index];
 		return new String(array, offset, length - offset);
+	}
+
+	/**
+	 * Creates pseudo-random names of the desired length.
+	 * Repeated calls with the same input yield the same value.
+	 *
+	 * @param alphabet
+	 * 		The alphabet to pull from.
+	 * @param length
+	 * 		Desired length of generated string.
+	 * @param seed
+	 * 		Input seed.
+	 *
+	 * @return Generated name.
+	 */
+	public static String generateName(String alphabet, int length, int seed) {
+		Random r = new Random(seed);
+		StringBuilder sb = new StringBuilder();
+		while (sb.length() < length)
+			sb.append(alphabet.charAt(r.nextInt(alphabet.length())));
+		return sb.toString();
 	}
 
 	/**
