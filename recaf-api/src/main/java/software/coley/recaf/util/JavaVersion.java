@@ -2,6 +2,7 @@ package software.coley.recaf.util;
 
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.info.JvmClassInfo;
 
 /**
  * Supported Java version of the current JVM.
@@ -47,5 +48,18 @@ public class JavaVersion {
 			return FALLBACK_VERSION;
 		}
 		return version;
+	}
+
+	/**
+	 * Adapts the class file spec version to the familiar release versions.
+	 * For example, 52 becomes Java 8.
+	 *
+	 * @param version
+	 * 		Class file version, such as from {@link JvmClassInfo#getVersion()}.
+	 *
+	 * @return Version.
+	 */
+	public static int adaptFromClassFileVersion(int version) {
+		return version - VERSION_OFFSET;
 	}
 }

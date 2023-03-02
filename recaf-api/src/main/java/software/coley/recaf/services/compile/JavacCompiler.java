@@ -7,7 +7,6 @@ import jakarta.inject.Inject;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.Service;
-import software.coley.recaf.services.ServiceConfig;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
