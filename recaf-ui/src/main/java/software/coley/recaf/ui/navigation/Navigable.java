@@ -37,6 +37,11 @@ public interface Navigable {
 	void requestFocus();
 
 	/**
+	 * Disables this navigable component.
+	 */
+	void disable();
+
+	/**
 	 * Searches for {@link Navigable} child components in the component model.
 	 * The model can be thought of as a tree, where child nodes are represented by {@link #getNavigableChildren()}.
 	 * <br>

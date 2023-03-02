@@ -133,6 +133,12 @@ public class Actions {
 
 			// Build the tab.
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
+			content.addPathUpdateListener(updatedPath -> {
+				// Update tab graphic in case backing class details change.
+				JvmClassInfo updatedInfo = updatedPath.getValue().asJvmClass();
+				Node updatedGraphic = iconService.getJvmClassInfoIconProvider(workspace, resource, bundle, updatedInfo).makeIcon();
+				tab.setGraphic(updatedGraphic);
+			});
 			ContextMenu menu = new ContextMenu();
 			ObservableList<MenuItem> items = menu.getItems();
 			Menu mode = menu("menu.mode", CarbonIcons.VIEW);
@@ -183,6 +189,12 @@ public class Actions {
 
 			// Build the tab.
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
+			content.addPathUpdateListener(updatedPath -> {
+				// Update tab graphic in case backing class details change.
+				AndroidClassInfo updatedInfo = updatedPath.getValue().asAndroidClass();
+				Node updatedGraphic = iconService.getAndroidClassInfoIconProvider(workspace, resource, bundle, updatedInfo).makeIcon();
+				tab.setGraphic(updatedGraphic);
+			});
 			ContextMenu menu = new ContextMenu();
 			ObservableList<MenuItem> items = menu.getItems();
 			items.add(action("menu.tab.copypath", () -> {

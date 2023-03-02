@@ -5,14 +5,15 @@ import javafx.scene.layout.BorderPane;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
-import software.coley.recaf.ui.navigation.Navigable;
-import software.coley.recaf.ui.navigation.UpdatableNavigable;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
+import software.coley.recaf.ui.navigation.Navigable;
+import software.coley.recaf.ui.navigation.UpdatableNavigable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Common outline for displaying {@link ClassInfo} content.
@@ -22,6 +23,7 @@ import java.util.List;
  * @see AndroidClassPane For {@link AndroidClassInfo}.
  */
 public abstract class ClassPane extends BorderPane implements UpdatableNavigable {
+	private final List<Consumer<ClassPathNode>> pathUpdateListeners = new ArrayList<>();
 	protected final List<Navigable> children = new ArrayList<>();
 	private ClassPathNode path;
 
@@ -42,20 +44,30 @@ public abstract class ClassPane extends BorderPane implements UpdatableNavigable
 	 */
 	protected abstract void generateDisplay();
 
+	/**
+	 * @param listener Listener to add.
+	 */
+	public void addPathUpdateListener(Consumer<ClassPathNode> listener) {
+		  pathUpdateListeners.add(listener);
+	}
+
 	@Override
 	public void onUpdatePath(@Nonnull PathNode<?> path) {
 		// Update if class has changed.
-		if (path instanceof ClassPathNode classPath)
+		if (path instanceof ClassPathNode classPath) {
 			this.path = classPath;
+			pathUpdateListeners.forEach(listener -> listener.accept(classPath));
 
-		// Notify children of change.
-		getNavigableChildren().forEach(child -> {
-			if (child instanceof UpdatableNavigable updatable)
-				updatable.onUpdatePath(path);
-		});
+			// Initialize UI if it has not been done yet.
+			if (getCenter() == null)
+				generateDisplay();
 
-		// Update UI.
-		generateDisplay();
+			// Notify children of change.
+			getNavigableChildren().forEach(child -> {
+				if (child instanceof UpdatableNavigable updatable)
+					updatable.onUpdatePath(path);
+			});
+		}
 	}
 
 	@Nonnull
@@ -68,5 +80,11 @@ public abstract class ClassPane extends BorderPane implements UpdatableNavigable
 	@Override
 	public Collection<Navigable> getNavigableChildren() {
 		return children;
+	}
+
+	@Override
+	public void disable() {
+		pathUpdateListeners.clear();
+		setDisable(true);
 	}
 }
