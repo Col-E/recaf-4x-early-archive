@@ -9,6 +9,7 @@ import javafx.scene.control.SplitPane;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import software.coley.recaf.cdi.UiInitializationEvent;
 import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.ui.RecafTheme;
 import software.coley.recaf.ui.control.FontIconView;
@@ -75,6 +76,9 @@ public class RecafApplication extends Application implements WorkspaceOpenListen
 		// Register main window
 		WindowManager windowManager = recaf.get(WindowManager.class);
 		windowManager.register(WindowManager.WIN_MAIN, stage);
+
+		// Publish UI init event
+		recaf.getContainer().getBeanContainer().getEvent().fire(new UiInitializationEvent());
 	}
 
 	private Node createLoggingWrapper() {

@@ -18,7 +18,8 @@ import java.util.List;
  */
 public class EagerInitializationExtension implements Extension {
 	private static final EagerInitializationExtension INSTANCE = new EagerInitializationExtension();
-	private static final List<Bean<?>> applicationScopedEagerBeans = new ArrayList<>();
+	private static final List<Bean<?>> applicationScopedEagerBeansForDeploy = new ArrayList<>();
+	private static final List<Bean<?>> applicationScopedEagerBeansForUi = new ArrayList<>();
 	private static final List<Bean<?>> workspaceScopedEagerBeans = new ArrayList<>();
 	private static BeanManager beanManager;
 
@@ -35,8 +36,8 @@ public class EagerInitializationExtension implements Extension {
 	/**
 	 * @return Application scoped {@link EagerInitialization} beans.
 	 */
-	public static List<Bean<?>> getApplicationScopedEagerBeans() {
-		return applicationScopedEagerBeans;
+	public static List<Bean<?>> getApplicationScopedEagerBeansForDeploy() {
+		return applicationScopedEagerBeansForDeploy;
 	}
 
 	/**
@@ -55,17 +56,20 @@ public class EagerInitializationExtension implements Extension {
 	 */
 	public void onProcessBean(@Observes ProcessBean<?> event) {
 		Annotated annotated = event.getAnnotated();
-		if (annotated.isAnnotationPresent(EagerInitialization.class)) {
-			if (annotated.isAnnotationPresent(ApplicationScoped.class))
-				applicationScopedEagerBeans.add(event.getBean());
-			else if (annotated.isAnnotationPresent(WorkspaceScoped.class))
+		EagerInitialization eager = annotated.getAnnotation(EagerInitialization.class);
+		if (eager != null) {
+			if (annotated.isAnnotationPresent(ApplicationScoped.class)) {
+				if (eager.value() == InitializationStage.CONTAINER_DEPLOY)
+					applicationScopedEagerBeansForDeploy.add(event.getBean());
+				else if (eager.value() == InitializationStage.UI_INITIALIZE)
+					applicationScopedEagerBeansForUi.add(event.getBean());
+			} else if (annotated.isAnnotationPresent(WorkspaceScoped.class))
 				workspaceScopedEagerBeans.add(event.getBean());
 		}
 	}
 
 	/**
-	 * Called when the CDI container deploys. Here we can initialize any {@link ApplicationScoped} beans since
-	 * their lifecycle is the duration of the application.
+	 * Called when the CDI container deploys.
 	 *
 	 * @param event
 	 * 		CDI deploy event.
@@ -74,11 +78,26 @@ public class EagerInitializationExtension implements Extension {
 	 */
 	public void onDeploy(@Observes AfterDeploymentValidation event, BeanManager beanManager) {
 		EagerInitializationExtension.beanManager = beanManager;
-		for (Bean<?> bean : applicationScopedEagerBeans)
+		for (Bean<?> bean : applicationScopedEagerBeansForDeploy)
 			create(bean);
 	}
 
-	public static void create(Bean<?> bean) {
+	/**
+	 * Called when the UI is populated.
+	 * This obviously means that this only gets called when running from the UI module.
+	 *
+	 * @param event
+	 * 		UI initialization event.
+	 * @param beanManager
+	 * 		CDI bean manager.
+	 */
+	public void onUiInitialize(@Observes UiInitializationEvent event, BeanManager beanManager) {
+		EagerInitializationExtension.beanManager = beanManager;
+		for (Bean<?> bean : applicationScopedEagerBeansForUi)
+			create(bean);
+	}
+
+	private static void create(Bean<?> bean) {
 		// NOTE: Calling toString() triggers the bean's proxy to the real implementation to initialize it.
 		beanManager.getReference(bean, bean.getBeanClass(), beanManager.createCreationalContext(bean)).toString();
 	}
