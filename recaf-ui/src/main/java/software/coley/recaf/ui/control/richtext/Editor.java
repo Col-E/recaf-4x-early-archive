@@ -45,7 +45,6 @@ import java.util.function.Supplier;
  */
 public class Editor extends StackPane {
 	public static final int SHORT_DELAY_MS = 150;
-	private static final String styleSheetPath;
 	private final CodeArea codeArea = new CodeArea();
 	private final VirtualFlow<?, ?> virtualFlow;
 	private final ExecutorService syntaxPool = ThreadPoolFactory.newSingleThreadExecutor("syntax-highlight");
@@ -54,15 +53,11 @@ public class Editor extends StackPane {
 	private SyntaxHighlighter syntaxHighlighter;
 	private SelectedBracketTracking selectedBracketTracking;
 
-	static {
-		styleSheetPath = Editor.class.getResource("/style/code-editor.css").toExternalForm();
-	}
-
 	/**
 	 * New editor instance.
 	 */
 	public Editor() {
-		getStylesheets().add(styleSheetPath);
+		getStylesheets().add("/style/code-editor.css");
 		getChildren().add(new VirtualizedScrollPane<>(codeArea));
 		virtualFlow = Unchecked.get(() -> ReflectUtil.quietGet(codeArea, GenericStyledArea.class.getDeclaredField("virtualFlow")));
 
@@ -151,13 +146,6 @@ public class Editor extends StackPane {
 			codeArea.appendText(text);
 		} else {
 			codeArea.replaceText(text);
-		}
-
-		// Schedule syntax highlight for complete document
-		if (syntaxHighlighter != null) {
-			String textCopy = text;
-			schedule(syntaxPool, () -> syntaxHighlighter.createStyleSpans(textCopy, 0, textCopy.length()),
-					style -> codeArea.setStyleSpans(0, style));
 		}
 	}
 
