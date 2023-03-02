@@ -49,8 +49,12 @@ public class DockingTab extends DetachableTab {
 	 */
 	public void close() {
 		if (isClosable()) {
+			// It is important that this event is the same as the one that the containing DockingRegion registers
+			// a listener for. We use close requests instead of direct closes.
+			Event.fireEvent(this, new Event(Tab.TAB_CLOSE_REQUEST_EVENT));
+
+			// Remove from containing tab-pane.
 			TabPane tabPane = getTabPane();
-			Event.fireEvent(this, new Event(Tab.CLOSED_EVENT));
 			if (tabPane != null)
 				FxThreadUtil.run(() -> tabPane.getTabs().remove(this));
 		}
