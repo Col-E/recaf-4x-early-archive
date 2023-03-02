@@ -104,7 +104,7 @@ public class CellConfigurationService implements Service {
 	public void configure(@Nonnull Cell<?> cell, @Nonnull PathNode<?> item, @Nonnull ContextSource source) {
 		cell.setText(textOf(item));
 		cell.setGraphic(graphicOf(item));
-		cell.setOnMousePressed(e -> {
+		cell.setOnMouseClicked(e -> {
 			if (e.getButton() == MouseButton.SECONDARY) {
 				// Lazily populate context menus when secondary click is prompted.
 				if (cell.getContextMenu() == null) cell.setContextMenu(contextMenuOf(source, item));
@@ -118,7 +118,7 @@ public class CellConfigurationService implements Service {
 						if (e.getClickCount() == 2)
 							if (treeItem.isLeaf())
 								openPath(item);
-							else
+							else if (treeItem.isExpanded()) // Looks odd, but results in less rapid re-closures
 								TreeItems.recurseOpen(treeItem);
 					}
 				}
