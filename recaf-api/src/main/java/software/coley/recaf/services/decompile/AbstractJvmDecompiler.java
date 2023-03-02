@@ -38,8 +38,13 @@ public abstract class AbstractJvmDecompiler extends AbstractDecompiler implement
 		// Check for cached result, returning the cached result if found
 		// and only if the current config matches the one that yielded the cached result.
 		DecompileResult cachedResult = CachedDecompileProperty.get(classInfo, this);
-		if (cachedResult != null && cachedResult.getConfigHash() == getConfig().getConfigHash())
-			return cachedResult;
+		if (cachedResult != null) {
+			if (cachedResult.getConfigHash() == getConfig().getConfigHash())
+				return cachedResult;
+
+			// Config changed, void the cache.
+			CachedDecompileProperty.remove(classInfo);
+		}
 
 		// Get bytecode and run through filters.
 		byte[] bytecode = classInfo.getBytecode();
