@@ -26,7 +26,7 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 	 * @param rootRule
 	 * 		Root rule, constituting a language by its sub-rules.
 	 */
-	public RegexSyntaxHighlighter(RegexRule rootRule) {
+	public RegexSyntaxHighlighter(@Nonnull RegexRule rootRule) {
 		this.rootRule = rootRule;
 	}
 
