@@ -21,7 +21,7 @@ public class CompilerResult {
 	 * 		Error thrown when attempting to compile.
 	 */
 	public CompilerResult(@Nonnull Throwable exception) {
-		this(null, Collections.emptyList(), exception);
+		this(new CompileMap(Collections.emptyMap()), Collections.emptyList(), exception);
 	}
 
 	/**
@@ -34,7 +34,7 @@ public class CompilerResult {
 		this(compileMap, diagnostics, null);
 	}
 
-	private CompilerResult(@Nullable CompileMap compilations,
+	private CompilerResult(@Nonnull CompileMap compilations,
 						   @Nonnull List<CompilerDiagnostic> diagnostics,
 						   @Nullable Throwable exception) {
 		this.compilations = compilations;
@@ -54,25 +54,25 @@ public class CompilerResult {
 
 	/**
 	 * @return Compilation results.
-	 * May be {@code null} when there are is an {@link #getException()}.
+	 * Empty when there are is an {@link #getException()}.
 	 */
-	@Nullable
+	@Nonnull
 	public CompileMap getCompilations() {
 		return compilations;
 	}
 
 	/**
 	 * @return Compilation problem diagnostics.
-	 * May be {@code null} when there are is an {@link #getException()}.
+	 * Empty when {@link #wasSuccess()}.
 	 */
-	@Nullable
+	@Nonnull
 	public List<CompilerDiagnostic> getDiagnostics() {
 		return diagnostics;
 	}
 
 	/**
 	 * @return Error thrown when attempting to compile.
-	 * May be {@code null} when compilation was a success.
+	 * {@code null} when compilation was a success.
 	 */
 	@Nullable
 	public Throwable getException() {
