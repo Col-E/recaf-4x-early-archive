@@ -46,7 +46,8 @@ public class CompilerResult {
 	 * @return {@code true} when there are compilations, and no errors thrown.
 	 */
 	public boolean wasSuccess() {
-		return compilations.size() > 0 &&
+		return compilations != null &&
+				compilations.size() > 0 &&
 				exception == null &&
 				diagnostics.stream().noneMatch(d -> d.getLevel() == CompilerDiagnostic.Level.ERROR);
 	}
