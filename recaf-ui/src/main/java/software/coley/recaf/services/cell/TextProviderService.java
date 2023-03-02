@@ -99,7 +99,7 @@ public class TextProviderService implements Service {
 													  @Nonnull ClassBundle<? extends ClassInfo> bundle,
 													  @Nonnull ClassInfo outerClass,
 													  @Nonnull InnerClassInfo inner) {
-		return () -> formatConfig.filter(inner.getInnerName());
+		return () -> formatConfig.filter(inner.getSimpleName());
 	}
 
 	/**

@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
@@ -68,6 +69,17 @@ public class CellConfigurationService implements Service {
 		this.iconService = iconService;
 		this.contextMenuService = contextMenuService;
 		this.actions = actions;
+
+		// TODO: Handle new path types
+		//  (ANNOTATABLE - CLASS/FIELD/METHOD, other locations don't matter as much)
+		//   - AnnotationPathNode
+		//  (FILE)
+		//   - LineNumberPathNode
+		//  (METHOD)
+		//   - CatchPathNode
+		//   - InstructionPathNode
+		//   - LocalVariablePathNode
+		//   - ThrowsPathNode
 	}
 
 	/**
@@ -134,7 +146,7 @@ public class CellConfigurationService implements Service {
 	 * @return Text for the item represented by the path.
 	 */
 	@SuppressWarnings("unchecked")
-	private String textOf(@Nonnull PathNode<?> item) {
+	public String textOf(@Nonnull PathNode<?> item) {
 		Workspace workspace = item.getValueOfType(Workspace.class);
 		WorkspaceResource resource = item.getValueOfType(WorkspaceResource.class);
 
@@ -202,6 +214,22 @@ public class CellConfigurationService implements Service {
 			} else if (bundle instanceof ClassBundle<?> classBundle) {
 				return textService.getPackageTextProvider(workspace, resource, classBundle, directoryPath.getValue()).makeText();
 			}
+		} else if (item instanceof InnerClassPathNode innerClassPath) {
+			ClassBundle<? extends ClassInfo> bundle = innerClassPath.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Inner class path node missing bundle section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			ClassInfo outerClass = innerClassPath.getValueOfType(ClassInfo.class);
+			if (outerClass == null) {
+				logger.error("Inner class path node missing outer class section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			InnerClassInfo innerClass = innerClassPath.getValue();
+			return textService.getInnerClassInfoTextProvider(workspace, resource,
+					bundle, outerClass.asJvmClass(), innerClass).makeText();
 		} else if (item instanceof BundlePathNode bundlePath) {
 			return textService.getBundleTextProvider(workspace, resource, bundlePath.getValue()).makeText();
 		} else if (item instanceof ResourcePathNode) {
@@ -219,7 +247,7 @@ public class CellConfigurationService implements Service {
 	 * @return Icon for the item represented by the path.
 	 */
 	@SuppressWarnings("unchecked")
-	private Node graphicOf(@Nonnull PathNode<?> item) {
+	public Node graphicOf(@Nonnull PathNode<?> item) {
 		Workspace workspace = item.getValueOfType(Workspace.class);
 		WorkspaceResource resource = item.getValueOfType(WorkspaceResource.class);
 
@@ -283,6 +311,22 @@ public class CellConfigurationService implements Service {
 			} else if (bundle instanceof ClassBundle<?> classBundle) {
 				return iconService.getPackageIconProvider(workspace, resource, classBundle, directoryPath.getValue()).makeIcon();
 			}
+		} else if (item instanceof InnerClassPathNode innerClassPath) {
+			ClassBundle<? extends ClassInfo> bundle = innerClassPath.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Inner class path node missing bundle section: {}", item);
+				return UNKNOWN_GRAPHIC;
+			}
+
+			ClassInfo outerClass = innerClassPath.getValueOfType(ClassInfo.class);
+			if (outerClass == null) {
+				logger.error("Inner class path node missing outer class section: {}", item);
+				return UNKNOWN_GRAPHIC;
+			}
+
+			InnerClassInfo innerClass = innerClassPath.getValue();
+			return iconService.getInnerClassInfoIconProvider(workspace, resource,
+					bundle, outerClass.asJvmClass(), innerClass).makeIcon();
 		} else if (item instanceof BundlePathNode bundlePath) {
 			return iconService.getBundleIconProvider(workspace, resource, bundlePath.getValue()).makeIcon();
 		} else if (item instanceof ResourcePathNode) {
@@ -302,7 +346,7 @@ public class CellConfigurationService implements Service {
 	 * @return Context-menu for the item represented by the path.
 	 */
 	@SuppressWarnings("unchecked")
-	private ContextMenu contextMenuOf(@Nonnull ContextSource source, @Nonnull PathNode<?> item) {
+	public ContextMenu contextMenuOf(@Nonnull ContextSource source, @Nonnull PathNode<?> item) {
 		Workspace workspace = item.getValueOfType(Workspace.class);
 		WorkspaceResource resource = item.getValueOfType(WorkspaceResource.class);
 
@@ -366,6 +410,22 @@ public class CellConfigurationService implements Service {
 			} else if (bundle instanceof ClassBundle<?> classBundle) {
 				return contextMenuService.getPackageContextMenuProvider(source, workspace, resource, classBundle, directoryPath.getValue()).makeMenu();
 			}
+		} else if (item instanceof InnerClassPathNode innerClassPath) {
+			ClassBundle<? extends ClassInfo> bundle = innerClassPath.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Inner class path node missing bundle section: {}", item);
+				return null;
+			}
+
+			ClassInfo outerClass = innerClassPath.getValueOfType(ClassInfo.class);
+			if (outerClass == null) {
+				logger.error("Inner class path node missing outer class section: {}", item);
+				return null;
+			}
+
+			InnerClassInfo innerClass = innerClassPath.getValue();
+			return contextMenuService.getInnerClassInfoContextMenuProvider(source, workspace, resource,
+					bundle, outerClass.asJvmClass(), innerClass).makeMenu();
 		} else if (item instanceof BundlePathNode bundlePath) {
 			return contextMenuService.getBundleContextMenuProvider(source, workspace, resource, bundlePath.getValue()).makeMenu();
 		} else if (item instanceof ResourcePathNode) {
