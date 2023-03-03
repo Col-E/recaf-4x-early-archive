@@ -180,7 +180,7 @@ public class IntermediateMappings implements Mappings {
 	@Nullable
 	@Override
 	public String getMappedClassName(@Nonnull String internalName) {
-		ClassMapping mapping = classes.get(internalName);
+		ClassMapping mapping = getClassMapping(internalName);
 		if (mapping == null)
 			return null;
 		return mapping.getNewName();
@@ -191,7 +191,8 @@ public class IntermediateMappings implements Mappings {
 	public String getMappedFieldName(@Nonnull String ownerName, @Nonnull String fieldName, @Nonnull String fieldDesc) {
 		List<FieldMapping> fieldInClass = getClassFieldMappings(ownerName);
 		for (FieldMapping field : fieldInClass)
-			if (Objects.equals(fieldDesc, field.getDesc()) && field.getOldName().equals(fieldName))
+			// Some mapping formats exclude descriptors (which sucks) so we bypass the desc check if that is the case.
+			if ((field.getDesc() == null || Objects.equals(fieldDesc, field.getDesc())) && field.getOldName().equals(fieldName))
 				return field.getNewName();
 		return null;
 	}

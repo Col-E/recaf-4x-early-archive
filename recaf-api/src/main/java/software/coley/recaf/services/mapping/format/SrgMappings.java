@@ -1,9 +1,11 @@
 package software.coley.recaf.services.mapping.format;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import org.objectweb.asm.commons.Remapper;
 import org.slf4j.Logger;
+import software.coley.collections.tuple.Pair;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.mapping.BasicMappingsRemapper;
 import software.coley.recaf.services.mapping.IntermediateMappings;
@@ -12,6 +14,9 @@ import software.coley.recaf.services.mapping.data.ClassMapping;
 import software.coley.recaf.services.mapping.data.FieldMapping;
 import software.coley.recaf.services.mapping.data.MethodMapping;
 import software.coley.recaf.util.StringUtil;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The MCP SRG format.
@@ -32,7 +37,8 @@ public class SrgMappings extends AbstractMappingFileFormat {
 
 	@Override
 	public IntermediateMappings parse(@Nonnull String mappingText) {
-		IntermediateMappings mappings = new IntermediateMappings();
+		List<Pair<String, String>> packages = new ArrayList<>();
+		IntermediateMappings mappings = new SrgIntermediateMappings(packages);
 		String[] lines = StringUtil.splitNewline(mappingText);
 		int line = 0;
 		for (String lineStr : lines) {
@@ -41,15 +47,17 @@ public class SrgMappings extends AbstractMappingFileFormat {
 			String type = args[0];
 			try {
 				switch (type) {
-					case "PK:":
-						// Ignore package entries
-						break;
-					case "CL:":
+					case "PK:" -> {
+						String obfPackage = args[1];
+						String renamedPackage = args[2];
+						packages.add(new Pair<>(obfPackage, renamedPackage));
+					}
+					case "CL:" -> {
 						String obfClass = args[1];
 						String renamedClass = args[2];
 						mappings.addClass(obfClass, renamedClass);
-						break;
-					case "FD:": {
+					}
+					case "FD:" -> {
 						String obfKey = args[1];
 						int splitPos = obfKey.lastIndexOf('/');
 						String obfOwner = obfKey.substring(0, splitPos);
@@ -58,9 +66,8 @@ public class SrgMappings extends AbstractMappingFileFormat {
 						splitPos = renamedKey.lastIndexOf('/');
 						String renamedName = renamedKey.substring(splitPos + 1);
 						mappings.addField(obfOwner, null, obfName, renamedName);
-						break;
 					}
-					case "MD:": {
+					case "MD:" -> {
 						String obfKey = args[1];
 						int splitPos = obfKey.lastIndexOf('/');
 						String obfOwner = obfKey.substring(0, splitPos);
@@ -70,11 +77,8 @@ public class SrgMappings extends AbstractMappingFileFormat {
 						splitPos = renamedKey.lastIndexOf('/');
 						String renamedName = renamedKey.substring(splitPos + 1);
 						mappings.addMethod(obfOwner, obfDesc, obfName, renamedName);
-						break;
 					}
-					default:
-						logger.trace("Unknown SRG mappings line type: \"{}\" @line {}", type, line);
-						break;
+					default -> logger.trace("Unknown SRG mappings line type: \"{}\" @line {}", type, line);
 				}
 			} catch (IndexOutOfBoundsException ex) {
 				throw new IllegalArgumentException("Failed parsing line " + line, ex);
@@ -123,5 +127,33 @@ public class SrgMappings extends AbstractMappingFileFormat {
 			}
 		}
 		return sb.toString();
+	}
+
+	/**
+	 * Extension of intermediate mappings to support {@code PK} entries in the mapping file.
+	 */
+	private static class SrgIntermediateMappings extends IntermediateMappings {
+		private final List<Pair<String, String>> packageMappings;
+
+		public SrgIntermediateMappings(List<Pair<String, String>> packageMappings) {
+			super();
+			this.packageMappings = packageMappings;
+		}
+
+		@Nullable
+		@Override
+		public ClassMapping getClassMapping(String name) {
+			ClassMapping classMapping = super.getClassMapping(name);
+			if (classMapping == null && !packageMappings.isEmpty()) {
+				for (Pair<String, String> packageMapping : packageMappings) {
+					String oldPackage = packageMapping.getLeft();
+					if (name.startsWith(oldPackage)) {
+						String newPackage = packageMapping.getRight();
+						return new ClassMapping(name, newPackage + name.substring(oldPackage.length()));
+					}
+				}
+			}
+			return classMapping;
+		}
 	}
 }

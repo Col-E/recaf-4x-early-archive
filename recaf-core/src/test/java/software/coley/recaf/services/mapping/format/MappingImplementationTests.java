@@ -37,6 +37,27 @@ public class MappingImplementationTests {
 	}
 
 	@Test
+	void testSrg() {
+		String mappingsText = """
+				CL: test/Greetings rename/Hello
+				FD: test/Greetings/oldField newField
+				MD: test/Greetings/say ()V speak""";
+		MappingFileFormat format = new SrgMappings();
+		IntermediateMappings mappings = format.parse(mappingsText);
+		assertInheritMap(mappings);
+	}
+
+	@Test
+	void testSrgPackageMapping() {
+		String mappingsText = """
+				PK: test rename
+				""";
+		MappingFileFormat format = new SrgMappings();
+		IntermediateMappings mappings = format.parse(mappingsText);
+		assertEquals("rename/Greetings", mappings.getMappedClassName("test/Greetings"));
+	}
+
+	@Test
 	void testProguard() {
 		String mappingsText = """
 				# Backwards format because proguard mappings are intended to be undone, not applied
