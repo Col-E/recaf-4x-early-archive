@@ -59,9 +59,9 @@ public class EagerInitializationExtension implements Extension {
 		EagerInitialization eager = annotated.getAnnotation(EagerInitialization.class);
 		if (eager != null) {
 			if (annotated.isAnnotationPresent(ApplicationScoped.class)) {
-				if (eager.value() == InitializationStage.CONTAINER_DEPLOY)
+				if (eager.value() == InitializationStage.IMMEDIATE)
 					applicationScopedEagerBeansForDeploy.add(event.getBean());
-				else if (eager.value() == InitializationStage.UI_INITIALIZE)
+				else if (eager.value() == InitializationStage.AFTER_UI_INIT)
 					applicationScopedEagerBeansForUi.add(event.getBean());
 			} else if (annotated.isAnnotationPresent(WorkspaceScoped.class))
 				workspaceScopedEagerBeans.add(event.getBean());

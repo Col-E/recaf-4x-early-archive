@@ -122,3 +122,26 @@ UI classes like JavaFX's `Menu` often have methods marked as `final` to prevent 
 The `Menu` class's `List<T> getItems()` is one of these methods. This prevents any `Menu` type being marked as a scope
 like `@ApplicationScoped` since our CDI implementation heavily relies on proxies for scope management.
 When a class is `@Dependent` that means it effectively has no scope, so there is no need to wrap it in a proxy.
+
+## When are components created?
+
+CDI instantiates components when they are first used. If you declare an `@ApplicationScoped` component, but it is never
+used anywhere, it will never be initialized.
+
+If you want or need something to be initialized immediately when Recaf launches add the extra annotation `@EagerInitialization`.
+Any component that has this will be initialized at the moment defined by the `value()` in `EagerInitialization`.
+This annotation can be used in conjunction with `@ApplicationScoped` or `@WorkspaceScoped`.
+
+There are two options:
+
+**`IMMEDIATE`**: The component is initialized as soon as possible. 
+
+- For `@ApplicationScoped` this occurs right after the CDI container is created.
+- For `@WorkspaceScoped` this occurs right after a workspace is opened.
+
+**`AFTER_UI_INIT`**: The component is initialized after the UI platform is initialized. 
+
+- For `@ApplicationScoped` this occurs right after the UI platform is initialized, as expected.
+- For `@WorkspaceScoped` this occurs right after a workspace is opened, with the assumption the UI is already initialized.
+
+Be aware that any component annotated with this annotation forces all of its dependency components to also be initialized eagerly.

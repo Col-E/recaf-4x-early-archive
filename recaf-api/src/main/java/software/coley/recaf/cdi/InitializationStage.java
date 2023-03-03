@@ -8,11 +8,11 @@ package software.coley.recaf.cdi;
  */
 public enum InitializationStage {
 	/**
-	 * Occurs after the CDI container is created.
+	 * Occurs as soon as possible.
 	 */
-	CONTAINER_DEPLOY,
+	IMMEDIATE,
 	/**
-	 * Occurs after the UI is populated.
+	 * Occurs after the UI is initialized.
 	 */
-	UI_INITIALIZE
+	AFTER_UI_INIT
 }
