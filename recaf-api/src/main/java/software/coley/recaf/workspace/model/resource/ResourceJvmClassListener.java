@@ -1,5 +1,6 @@
 package software.coley.recaf.workspace.model.resource;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
@@ -18,7 +19,7 @@ public interface ResourceJvmClassListener {
 	 * @param cls
 	 * 		The new class.
 	 */
-	void onNewClass(WorkspaceResource resource, JvmClassBundle bundle, JvmClassInfo cls);
+	void onNewClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls);
 
 	/**
 	 * @param resource
@@ -30,7 +31,8 @@ public interface ResourceJvmClassListener {
 	 * @param newCls
 	 * 		The new class value.
 	 */
-	void onUpdateClass(WorkspaceResource resource, JvmClassBundle bundle, JvmClassInfo oldCls, JvmClassInfo newCls);
+	void onUpdateClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
+					   @Nonnull JvmClassInfo oldCls, @Nonnull JvmClassInfo newCls);
 
 	/**
 	 * @param resource
@@ -40,5 +42,5 @@ public interface ResourceJvmClassListener {
 	 * @param cls
 	 * 		The removed class.
 	 */
-	void onRemoveClass(WorkspaceResource resource, JvmClassBundle bundle, JvmClassInfo cls);
+	void onRemoveClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls);
 }

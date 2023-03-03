@@ -33,6 +33,7 @@ public class ThrowablePropertyAssigning implements WorkspaceProcessor {
 		});
 	}
 
+	@Nonnull
 	@Override
 	public String name() {
 		return "Mark throwable types";

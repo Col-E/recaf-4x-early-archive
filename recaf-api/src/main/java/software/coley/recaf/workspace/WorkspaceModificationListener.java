@@ -1,5 +1,6 @@
 package software.coley.recaf.workspace;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.cdi.AutoRegisterWorkspaceListeners;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -17,7 +18,7 @@ public interface WorkspaceModificationListener {
 	 * @param library
 	 * 		Library added to the workspace.
 	 */
-	void onAddLibrary(Workspace workspace, WorkspaceResource library);
+	void onAddLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library);
 
 	/**
 	 * @param workspace
@@ -25,5 +26,5 @@ public interface WorkspaceModificationListener {
 	 * @param library
 	 * 		Library removed from the workspace.
 	 */
-	void onRemoveLibrary(Workspace workspace, WorkspaceResource library);
+	void onRemoveLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library);
 }

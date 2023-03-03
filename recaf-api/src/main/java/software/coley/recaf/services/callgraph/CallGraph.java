@@ -260,7 +260,7 @@ public class CallGraph implements Service, WorkspaceModificationListener, Resour
 	}
 
 	@Override
-	public void onAddLibrary(Workspace workspace, WorkspaceResource library) {
+	public void onAddLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
 		// Visit all library classes
 		Stream.concat(library.jvmClassBundleStream(),
 				library.getVersionedJvmClassBundles().values().stream()).forEach(bundle -> {
@@ -271,7 +271,7 @@ public class CallGraph implements Service, WorkspaceModificationListener, Resour
 	}
 
 	@Override
-	public void onRemoveLibrary(Workspace workspace, WorkspaceResource library) {
+	public void onRemoveLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
 		// Remove all vertices from library
 		Stream.concat(library.jvmClassBundleStream(),
 				library.getVersionedJvmClassBundles().values().stream()).forEach(bundle -> {
@@ -282,18 +282,18 @@ public class CallGraph implements Service, WorkspaceModificationListener, Resour
 	}
 
 	@Override
-	public void onNewClass(WorkspaceResource resource, JvmClassBundle bundle, JvmClassInfo cls) {
+	public void onNewClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls) {
 		visit(cls);
 	}
 
 	@Override
-	public void onUpdateClass(WorkspaceResource resource, JvmClassBundle bundle, JvmClassInfo oldCls, JvmClassInfo newCls) {
+	public void onUpdateClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo oldCls, @Nonnull JvmClassInfo newCls) {
 		onRemoveClass(resource, bundle, oldCls);
 		onNewClass(resource, bundle, newCls);
 	}
 
 	@Override
-	public void onRemoveClass(WorkspaceResource resource, JvmClassBundle bundle, JvmClassInfo cls) {
+	public void onRemoveClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls) {
 		// Prune vertex connections of all methods within the class
 		ClassMethodsContainer container = getClassMethodsContainer(cls);
 		Set<MethodRef> unresolvedWithinOwner = unresolvedCalls.get(cls.getName());

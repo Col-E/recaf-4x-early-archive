@@ -21,5 +21,6 @@ public interface WorkspaceProcessor {
 	/**
 	 * @return Post processing task name.
 	 */
+	@Nonnull
 	String name();
 }

@@ -1,5 +1,6 @@
 package software.coley.recaf.workspace.model.resource;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 
@@ -18,7 +19,7 @@ public interface ResourceFileListener {
 	 * @param file
 	 * 		The new file.
 	 */
-	void onNewFile(WorkspaceResource resource, FileBundle bundle, FileInfo file);
+	void onNewFile(@Nonnull WorkspaceResource resource, @Nonnull FileBundle bundle, @Nonnull FileInfo file);
 
 	/**
 	 * @param resource
@@ -30,7 +31,8 @@ public interface ResourceFileListener {
 	 * @param newFile
 	 * 		The new file value.
 	 */
-	void onUpdateFile(WorkspaceResource resource, FileBundle bundle, FileInfo oldFile, FileInfo newFile);
+	void onUpdateFile(@Nonnull WorkspaceResource resource, @Nonnull FileBundle bundle,
+					  @Nonnull FileInfo oldFile, @Nonnull FileInfo newFile);
 
 	/**
 	 * @param resource
@@ -40,5 +42,5 @@ public interface ResourceFileListener {
 	 * @param file
 	 * 		The removed file.
 	 */
-	void onRemoveFile(WorkspaceResource resource, FileBundle bundle, FileInfo file);
+	void onRemoveFile(@Nonnull WorkspaceResource resource, @Nonnull FileBundle bundle, @Nonnull FileInfo file);
 }

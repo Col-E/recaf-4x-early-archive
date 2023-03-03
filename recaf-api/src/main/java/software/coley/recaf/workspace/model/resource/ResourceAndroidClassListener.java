@@ -1,5 +1,6 @@
 package software.coley.recaf.workspace.model.resource;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 
@@ -18,7 +19,7 @@ public interface ResourceAndroidClassListener {
 	 * @param cls
 	 * 		The new class.
 	 */
-	void onNewClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo cls);
+	void onNewClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo cls);
 
 	/**
 	 * @param resource
@@ -30,7 +31,8 @@ public interface ResourceAndroidClassListener {
 	 * @param newCls
 	 * 		The new class value.
 	 */
-	void onUpdateClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo oldCls, AndroidClassInfo newCls);
+	void onUpdateClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle,
+					   @Nonnull AndroidClassInfo oldCls, @Nonnull AndroidClassInfo newCls);
 
 	/**
 	 * @param resource
@@ -40,5 +42,5 @@ public interface ResourceAndroidClassListener {
 	 * @param cls
 	 * 		The removed class.
 	 */
-	void onRemoveClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo cls);
+	void onRemoveClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo cls);
 }

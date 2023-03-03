@@ -295,7 +295,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 
 
 	@Override
-	public void onNewClass(WorkspaceResource resource, JvmClassBundle bundle, JvmClassInfo cls) {
+	public void onNewClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls) {
 		populateParentToChildLookup(cls);
 	}
 
@@ -305,7 +305,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	}
 
 	@Override
-	public void onUpdateClass(WorkspaceResource resource, JvmClassBundle bundle, JvmClassInfo oldCls, JvmClassInfo newCls) {
+	public void onUpdateClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo oldCls, @Nonnull JvmClassInfo newCls) {
 		onUpdateClassImpl(oldCls, newCls);
 	}
 
@@ -315,7 +315,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	}
 
 	@Override
-	public void onRemoveClass(WorkspaceResource resource, JvmClassBundle bundle, JvmClassInfo cls) {
+	public void onRemoveClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls) {
 		removeParentToChildLookup(cls);
 	}
 
@@ -325,12 +325,12 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	}
 
 	@Override
-	public void onAddLibrary(Workspace workspace, WorkspaceResource library) {
+	public void onAddLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
 		refreshChildLookup();
 	}
 
 	@Override
-	public void onRemoveLibrary(Workspace workspace, WorkspaceResource library) {
+	public void onRemoveLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
 		// no-op
 	}
 

@@ -158,25 +158,25 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 	}
 
 	@Override
-	public void onAddLibrary(Workspace workspace, WorkspaceResource library) {
+	public void onAddLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
 		if (isTargetWorkspace(workspace))
 			root.getOrCreateNodeByPath(rootPath.child(library));
 	}
 
 	@Override
-	public void onRemoveLibrary(Workspace workspace, WorkspaceResource library) {
+	public void onRemoveLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
 		if (isTargetWorkspace(workspace))
 			root.removeNodeByPath(rootPath.child(library));
 	}
 
 	@Override
-	public void onNewClass(WorkspaceResource resource, JvmClassBundle bundle, JvmClassInfo cls) {
+	public void onNewClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls) {
 		if (isTargetResource(resource))
 			root.getOrCreateNodeByPath(rootPath.child(resource).child(bundle).child(cls.getPackageName()).child(cls));
 	}
 
 	@Override
-	public void onUpdateClass(WorkspaceResource resource, JvmClassBundle bundle, JvmClassInfo oldCls, JvmClassInfo newCls) {
+	public void onUpdateClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo oldCls, @Nonnull JvmClassInfo newCls) {
 		if (isTargetResource(resource)) {
 			WorkspaceTreeNode node = root.getOrCreateNodeByPath(rootPath.child(resource).child(bundle).child(oldCls.getPackageName()).child(oldCls));
 			node.setValue(rootPath.child(resource).child(bundle).child(newCls.getPackageName()).child(newCls));
@@ -184,7 +184,7 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 	}
 
 	@Override
-	public void onRemoveClass(WorkspaceResource resource, JvmClassBundle bundle, JvmClassInfo cls) {
+	public void onRemoveClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls) {
 		if (isTargetResource(resource))
 			root.removeNodeByPath(rootPath.child(resource).child(bundle).child(cls.getPackageName()).child(cls));
 	}
@@ -210,13 +210,13 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 	}
 
 	@Override
-	public void onNewFile(WorkspaceResource resource, FileBundle bundle, FileInfo file) {
+	public void onNewFile(@Nonnull WorkspaceResource resource, @Nonnull FileBundle bundle, @Nonnull FileInfo file) {
 		if (isTargetResource(resource))
 			root.getOrCreateNodeByPath(rootPath.child(resource).child(bundle).child(file.getDirectoryName()).child(file));
 	}
 
 	@Override
-	public void onUpdateFile(WorkspaceResource resource, FileBundle bundle, FileInfo oldFile, FileInfo newFile) {
+	public void onUpdateFile(@Nonnull WorkspaceResource resource, @Nonnull FileBundle bundle, @Nonnull FileInfo oldFile, @Nonnull FileInfo newFile) {
 		if (isTargetResource(resource)) {
 			WorkspaceTreeNode node = root.getOrCreateNodeByPath(rootPath.child(resource).child(bundle).child(oldFile.getDirectoryName()).child(oldFile));
 			node.setValue(rootPath.child(resource).child(bundle).child(newFile.getDirectoryName()).child(newFile));
@@ -224,7 +224,7 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 	}
 
 	@Override
-	public void onRemoveFile(WorkspaceResource resource, FileBundle bundle, FileInfo file) {
+	public void onRemoveFile(@Nonnull WorkspaceResource resource, @Nonnull FileBundle bundle, @Nonnull FileInfo file) {
 		if (isTargetResource(resource))
 			root.removeNodeByPath(rootPath.child(resource).child(bundle).child(file.getDirectoryName()).child(file));
 	}
