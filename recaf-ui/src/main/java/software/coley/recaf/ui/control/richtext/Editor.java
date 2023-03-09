@@ -10,12 +10,14 @@ import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.GenericStyledArea;
 import org.fxmisc.richtext.model.PlainTextChange;
+import org.fxmisc.richtext.model.ReadOnlyStyledDocument;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.reactfx.Change;
 import org.reactfx.EventStream;
 import org.reactfx.EventStreams;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
 import software.coley.recaf.ui.control.richtext.linegraphics.RootLineGraphicFactory;
+import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.syntax.StyleResult;
 import software.coley.recaf.ui.control.richtext.syntax.SyntaxHighlighter;
 import software.coley.recaf.ui.control.richtext.syntax.SyntaxUtil;
@@ -50,8 +52,10 @@ public class Editor extends StackPane {
 	private final ExecutorService syntaxPool = ThreadPoolFactory.newSingleThreadExecutor("syntax-highlight");
 	private final RootLineGraphicFactory rootLineGraphicFactory = new RootLineGraphicFactory(this);
 	private final EventStream<Change<Integer>> caretPosEventStream;
+	private ReadOnlyStyledDocument<Collection<String>, String, Collection<String>> lastDocumentSnapshot;
 	private SyntaxHighlighter syntaxHighlighter;
 	private SelectedBracketTracking selectedBracketTracking;
+	private ProblemTracking problemTracking;
 
 	/**
 	 * New editor instance.
@@ -79,6 +83,7 @@ public class Editor extends StackPane {
 		codeArea.plainTextChanges()
 				.successionEnds(Duration.ofMillis(SHORT_DELAY_MS))
 				.addObserver(changes -> {
+					// Pass to highlighter.
 					if (syntaxHighlighter != null) {
 						schedule(syntaxPool, () -> {
 							IntRange range = SyntaxUtil.getRangeForRestyle(getText(), getStyleSpans(),
@@ -88,10 +93,21 @@ public class Editor extends StackPane {
 							return new StyleResult(syntaxHighlighter.createStyleSpans(getText(), start, end), start);
 						}, result -> codeArea.setStyleSpans(result.position(), result.spans()));
 					}
+
+					// Pass to problem tracking.
+					if (problemTracking != null) {
+						problemTracking.accept(changes);
+					}
+
+					// Record content of area.
+					lastDocumentSnapshot = codeArea.getContent().snapshot();
 				});
 
 		// Create event-streams for various events.
 		caretPosEventStream = EventStreams.changesOf(codeArea.caretPositionProperty());
+
+		// Initial snapshot state.
+		lastDocumentSnapshot = ReadOnlyStyledDocument.from(codeArea.getDocument());
 	}
 
 	/**
@@ -126,6 +142,14 @@ public class Editor extends StackPane {
 	@Nonnull
 	public String getText() {
 		return Objects.requireNonNullElse(codeArea.getText(), "");
+	}
+
+	/**
+	 * @return The prior document state, from the last {@link #getTextChangeEventStream() text change event}.
+	 */
+	@Nonnull
+	public ReadOnlyStyledDocument<Collection<String>, String, Collection<String>> getLastDocumentSnapshot() {
+		return lastDocumentSnapshot;
 	}
 
 	/**
@@ -235,6 +259,30 @@ public class Editor extends StackPane {
 	@Nullable
 	public SelectedBracketTracking getSelectedBracketTracking() {
 		return selectedBracketTracking;
+	}
+
+	/**
+	 * @param problemTracking
+	 * 		Problem tracking implementation.
+	 */
+	public void setProblemTracking(@Nullable ProblemTracking problemTracking) {
+		// Uninstall prior.
+		ProblemTracking previousProblemTracking = this.problemTracking;
+		if (previousProblemTracking != null)
+			previousProblemTracking.uninstall(this);
+
+		// Set and install new instance.
+		this.problemTracking = problemTracking;
+		if (problemTracking != null)
+			problemTracking.install(this);
+	}
+
+	/**
+	 * @return Problem tracking implementation.
+	 */
+	@Nullable
+	public ProblemTracking getProblemTracking() {
+		return problemTracking;
 	}
 
 	/**

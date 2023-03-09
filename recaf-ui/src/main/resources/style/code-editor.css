@@ -92,21 +92,8 @@ Consider the following case:
 The caret is next to the brace opener on line 2, which is closed on line 4.
 Thus, lines [2-4] will be matched lines, and 1, 5+ will be unmatched.
 */
-.code-area .matched-brace-line,
-.code-area .unmatched-brace-line {
-    -fx-padding: 0;
-}
 .code-area .matched-brace-line .line {
     -fx-border-color: transparent transparent transparent -color-flair-9;
-    -fx-border-insets: -1px 0 -1px 4px;
     -fx-border-width: 0 0 0 2px;
-    -fx-padding: 0;
-    -fx-pref-width: 1;
-}
-.code-area .unmatched-brace-line .line {
-    -fx-border-color: transparent transparent transparent transparent;
-    -fx-border-insets: 0 0 0 4px;
-    -fx-border-width: 0 0 0 2px;
-    -fx-padding: 0;
     -fx-pref-width: 1;
 }

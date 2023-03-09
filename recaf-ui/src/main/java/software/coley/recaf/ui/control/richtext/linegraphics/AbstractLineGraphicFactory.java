@@ -11,6 +11,7 @@ public abstract class AbstractLineGraphicFactory implements LineGraphicFactory {
 	/**
 	 * @param priority
 	 * 		Priority dictating the order of graphics displayed in {@link RootLineGraphicFactory}.
+	 * 		See {@link LineGraphicFactory} for constants.
 	 */
 	protected AbstractLineGraphicFactory(int priority) {
 		this.priority = priority;

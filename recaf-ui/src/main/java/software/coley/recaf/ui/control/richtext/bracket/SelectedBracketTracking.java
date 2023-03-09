@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
-import software.coley.recaf.ui.control.richtext.linegraphics.BracketMatchGraphicFactory;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.IntRange;
 import software.coley.recaf.util.NumberUtil;
@@ -114,12 +113,12 @@ public class SelectedBracketTracking implements EditorComponent, Consumer<Change
 
 			// Check paragraph beyond start range.
 			TwoDimensional.Position startPos = codeArea.offsetToPosition(start, TwoDimensional.Bias.Backward);
-			int startParagraph = startPos.getMajor() - 1; // Position uses line numbers. Offset to paragraph index.
+			int startParagraph = startPos.getMajor();
 			if (paragraph < startParagraph) return false;
 
 			// Check paragraph before end range.
 			TwoDimensional.Position endPos = codeArea.offsetToPosition(end, TwoDimensional.Bias.Forward);
-			int endParagraph = endPos.getMajor() - 1; // Position uses line numbers. Offset to paragraph index.
+			int endParagraph = endPos.getMajor();
 			return paragraph <= endParagraph;
 		} catch (Exception ex) {
 			// Some potential edge cases in 'offsetToPosition' we'll want to look out for.

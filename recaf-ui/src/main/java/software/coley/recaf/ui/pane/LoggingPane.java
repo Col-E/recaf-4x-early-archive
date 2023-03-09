@@ -18,6 +18,7 @@ import software.coley.recaf.analytics.logging.LogConsumer;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
+import software.coley.recaf.ui.control.richtext.linegraphics.LineContainer;
 import software.coley.recaf.ui.control.richtext.linegraphics.LineGraphicFactory;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.StringUtil;
@@ -70,11 +71,12 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 	}
 
 	private class LoggingLineFactory implements LineGraphicFactory {
-		private static final double size = 4;
+		private static final Insets PADDING = new Insets(0, 5, 0, 0);
+		private static final double SIZE = 4;
 		private static final double[] TRIANGLE = {
-				size / 2, 0,
-				size, size,
-				0, size
+				SIZE / 2, 0,
+				SIZE, SIZE,
+				0, SIZE
 		};
 
 		@Override
@@ -83,16 +85,16 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 		}
 
 		@Override
-		public Node apply(int paragraph) {
+		public void apply(@Nonnull LineContainer container, int paragraph) {
 			LogCallInfo info = infos.get(paragraph);
 			Shape shape;
 			switch (info.level) {
 				case ERROR -> shape = info.throwable == null ?
-						new Circle(size, Color.RED) : new Polygon(TRIANGLE);
-				case WARN -> shape = new Circle(size, Color.YELLOW);
-				case INFO -> shape = new Circle(size, Color.LIGHTBLUE);
-				case DEBUG -> shape = new Circle(size, Color.CORNFLOWERBLUE);
-				case TRACE -> shape = new Circle(size, Color.DODGERBLUE);
+						new Circle(SIZE, Color.RED) : new Polygon(TRIANGLE);
+				case WARN -> shape = new Circle(SIZE, Color.YELLOW);
+				case INFO -> shape = new Circle(SIZE, Color.LIGHTBLUE);
+				case DEBUG -> shape = new Circle(SIZE, Color.CORNFLOWERBLUE);
+				case TRACE -> shape = new Circle(SIZE, Color.DODGERBLUE);
 				default -> throw new IllegalArgumentException("Unsupported logging level");
 			}
 			shape.setOpacity(0.65);
@@ -100,8 +102,8 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 			// Wrap and provide right-side padding to give the indicator space between it and the line no.
 			HBox wrapper = new HBox(shape);
 			wrapper.setAlignment(Pos.CENTER);
-			wrapper.setPadding(new Insets(0, 5, 0, 0));
-			return wrapper;
+			wrapper.setPadding(PADDING);
+			container.addHorizontal(wrapper);
 		}
 
 		@Override

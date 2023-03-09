@@ -1,16 +1,13 @@
 package software.coley.recaf.ui.control.richtext.linegraphics;
 
 import jakarta.annotation.Nonnull;
-import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
 import software.coley.recaf.ui.control.richtext.Editor;
 
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.function.IntFunction;
 
 /**
  * Graphic factory for {@link Editor}.
@@ -19,10 +16,7 @@ import java.util.TreeSet;
  *
  * @author Matt Coley
  */
-public class RootLineGraphicFactory extends AbstractLineGraphicFactory {
-	private static final int LINE_V_PADDING = 1;
-	private static final int LINE_H_PADDING = 5;
-	private static final Insets PADDING = new Insets(LINE_V_PADDING, LINE_H_PADDING, LINE_V_PADDING, LINE_H_PADDING);
+public class RootLineGraphicFactory extends AbstractLineGraphicFactory implements IntFunction<Node> {
 	private final SortedSet<LineGraphicFactory> factories = new TreeSet<>();
 	private final Editor editor;
 
@@ -37,8 +31,18 @@ public class RootLineGraphicFactory extends AbstractLineGraphicFactory {
 	}
 
 	/**
+	 * @param factories
+	 * 		Graphic factories to add.
+	 */
+	public void addLineGraphicFactories(LineGraphicFactory... factories) {
+		for (LineGraphicFactory factory : factories) {
+			addLineGraphicFactory(factory);
+		}
+	}
+
+	/**
 	 * @param factory
-	 * 		Graphic factory to remove.
+	 * 		Graphic factory to add.
 	 */
 	public void addLineGraphicFactory(LineGraphicFactory factory) {
 		factories.add(factory);
@@ -60,19 +64,19 @@ public class RootLineGraphicFactory extends AbstractLineGraphicFactory {
 	}
 
 	@Override
-	public Node apply(int line) {
+	public void apply(@Nonnull LineContainer container, int paragraph) {
+		// no-op, this method is implemented by line-graphic factory children.
+	}
+
+	@Override
+	public Node apply(int paragraph) {
 		// Add all sub-factories in sorted order.
-		HBox box = new HBox();
-		box.setAlignment(Pos.CENTER_LEFT);
-		box.setPadding(PADDING);
-		ObservableList<Node> children = box.getChildren();
-		for (LineGraphicFactory factory : factories) {
-			Node child = factory.apply(line);
-			if (child != null) children.add(child);
-		}
+		LineContainer lineContainer = new LineContainer();
+		for (LineGraphicFactory factory : factories)
+			factory.apply(lineContainer, paragraph);
 
 		// Wrap so the padding of the HBox expands the space of the 'lineno'.
-		BorderPane wrapper = new BorderPane(box);
+		BorderPane wrapper = new BorderPane(lineContainer);
 		wrapper.getStyleClass().add("lineno");
 		return wrapper;
 	}

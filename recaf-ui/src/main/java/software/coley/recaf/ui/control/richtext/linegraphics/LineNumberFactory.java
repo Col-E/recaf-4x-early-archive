@@ -3,6 +3,8 @@ package software.coley.recaf.ui.control.richtext.linegraphics;
 import jakarta.annotation.Nonnull;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import org.fxmisc.richtext.CodeArea;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.util.StringUtil;
@@ -33,13 +35,19 @@ public class LineNumberFactory extends AbstractLineGraphicFactory {
 	}
 
 	@Override
-	public Node apply(int line) {
-		if (codeArea == null) return null;
-		return new Label(format(line, codeArea.getParagraphs().size()));
+	public void apply(@Nonnull LineContainer container, int paragraph) {
+		if (codeArea == null) return;
+
+		Label label = new Label(format(paragraph + 1, computeDigits(codeArea.getParagraphs().size())));
+		HBox.setHgrow(label, Priority.ALWAYS);
+		container.addHorizontal(label);
 	}
 
-	private static String format(int line, int max) {
-		int digits = (int) Math.floor(Math.log10(max)) + 1;
+	private static String format(int line, int digits) {
 		return String.format(StringUtil.fillLeft(digits, " ", String.valueOf(line)));
+	}
+
+	private static int computeDigits(int size) {
+		return (int) Math.floor(Math.log10(size)) + 1;
 	}
 }

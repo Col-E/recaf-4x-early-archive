@@ -1,7 +1,10 @@
 package software.coley.recaf.ui.control.richtext.linegraphics;
 
+import jakarta.annotation.Nonnull;
 import javafx.scene.Node;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
+import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
+import software.coley.recaf.ui.control.richtext.problem.ProblemGraphicFactory;
 
 import java.util.function.IntFunction;
 
@@ -17,11 +20,15 @@ import java.util.function.IntFunction;
  * @see AbstractLineGraphicFactory Base implementation of this type.
  * @see RootLineGraphicFactory The root implementation which managed displaying other {@link LineGraphicFactory} instances in order.
  */
-public interface LineGraphicFactory extends EditorComponent, IntFunction<Node>, Comparable<LineGraphicFactory> {
+public interface LineGraphicFactory extends EditorComponent, Comparable<LineGraphicFactory> {
 	/**
 	 * Priority for {@link LineNumberFactory}.
 	 */
 	int P_LINE_NUMBERS = 0;
+	/**
+	 * Priority for {@link ProblemGraphicFactory}.
+	 */
+	int P_LINE_PROBLEMS = 100;
 	/**
 	 * Priority for {@link BracketMatchGraphicFactory}.
 	 */
@@ -31,6 +38,16 @@ public interface LineGraphicFactory extends EditorComponent, IntFunction<Node>, 
 	 * @return Order priority for sorting in {@link RootLineGraphicFactory}. Lower values appear first.
 	 */
 	int priority();
+
+	/**
+	 * @param container
+	 * 		Container to add nodes to if a graphic needs to be generated.
+	 * 		Use {@link LineContainer#addHorizontal(Node)} and {@link LineContainer#addTopLayer(Node)}.
+	 * @param paragraph
+	 * 		Current paragraph index.
+	 * 		Line would be {@code paragraph + 1}.
+	 */
+	void apply(@Nonnull LineContainer container, int paragraph);
 
 	@Override
 	default int compareTo(LineGraphicFactory o) {
