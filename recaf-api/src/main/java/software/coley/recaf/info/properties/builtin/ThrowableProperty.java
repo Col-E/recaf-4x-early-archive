@@ -21,6 +21,11 @@ public class ThrowableProperty extends BasicProperty<Boolean> {
 		super(KEY, true);
 	}
 
+	@Override
+	public boolean persistent() {
+		return false;
+	}
+
 	/**
 	 * @param info
 	 * 		Class info instance

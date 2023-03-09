@@ -231,6 +231,34 @@ public class InheritanceVertex {
 	}
 
 	/**
+	 * @param name
+	 * 		Name of parent type.
+	 *
+	 * @return {@code true} when this vertex has the given parent.
+	 */
+	public boolean hasParent(@Nonnull String name) {
+		for (InheritanceVertex parent : getAllParents())
+			if (name.equals(parent.getName()))
+				return true;
+
+		return false;
+	}
+
+	/**
+	 * @param name
+	 * 		Name of child type.
+	 *
+	 * @return {@code true} when this vertex has the given child.
+	 */
+	public boolean hasChild(@Nonnull String name) {
+		for (InheritanceVertex child : getAllChildren())
+			if (name.equals(child.getName()))
+				return true;
+
+		return false;
+	}
+
+	/**
 	 * @param includeObject
 	 *        {@code true} to include {@link Object} as a vertex.
 	 *
