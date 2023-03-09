@@ -59,10 +59,40 @@ public final class ByteDataSource implements ByteSource, AutoCloseable {
 	private static final class ByteDataInputStream extends InputStream {
 		private final ByteData data;
 		private long read;
+		private long markedOffset = -1;
+		private long markedLimit;
 		private volatile boolean closed;
 
 		ByteDataInputStream(ByteData data) {
 			this.data = data;
+		}
+
+		private void checkMarkLimit() {
+			if (markedOffset > -1) {
+				// Discard if we passed the read limit for our mark
+				long diff = read - markedOffset;
+				if (diff > markedLimit) {
+					markedOffset = -1;
+				}
+			}
+		}
+
+		@Override
+		public boolean markSupported() {
+			return true;
+		}
+
+		@Override
+		public synchronized void mark(int limit) {
+			// Record current position and read-limit
+			markedOffset = read;
+			markedLimit = limit;
+		}
+
+		@Override
+		public synchronized void reset() {
+			// Revert read to marked position.
+			read = markedOffset;
 		}
 
 		@Override
@@ -72,7 +102,9 @@ public final class ByteDataSource implements ByteSource, AutoCloseable {
 			if (read >= data.length()) {
 				return -1;
 			}
-			return data.get(read++);
+			byte b = data.get(read++);
+			checkMarkLimit();
+			return b;
 		}
 
 		@Override
@@ -88,6 +120,7 @@ public final class ByteDataSource implements ByteSource, AutoCloseable {
 			len = (int) Math.min(remaining, len);
 			data.get(read, b, off, len);
 			this.read += len;
+			checkMarkLimit();
 			return len;
 		}
 
@@ -105,6 +138,7 @@ public final class ByteDataSource implements ByteSource, AutoCloseable {
 			byte[] buf = new byte[len];
 			data.get(read, buf, 0, len);
 			this.read += len;
+			checkMarkLimit();
 			return buf;
 		}
 
@@ -119,6 +153,7 @@ public final class ByteDataSource implements ByteSource, AutoCloseable {
 			}
 			n = Math.min(n, length - read);
 			this.read += n;
+			checkMarkLimit();
 			return n;
 		}
 
@@ -161,6 +196,7 @@ public final class ByteDataSource implements ByteSource, AutoCloseable {
 			long remaining = length - read;
 			data.transferTo(out, ThreadLocals.getByteBuffer());
 			this.read = length;
+			checkMarkLimit();
 			return remaining;
 		}
 
