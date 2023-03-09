@@ -11,19 +11,23 @@ import java.util.Objects;
  */
 public class CompilerDiagnostic {
 	private final int line;
+	private final int column;
 	private final String message;
 	private final Level level;
 
 	/**
 	 * @param line
 	 * 		Line the message applies to.
+	 * @param column
+	 * 		Column the message applies to within the line.
 	 * @param message
 	 * 		Message detailing the problem.
 	 * @param level
 	 * 		Diagnostic problem level.
 	 */
-	public CompilerDiagnostic(int line, @Nonnull String message, @Nonnull Level level) {
+	public CompilerDiagnostic(int line, int column, @Nonnull String message, @Nonnull Level level) {
 		this.line = line;
+		this.column = column;
 		this.message = message;
 		this.level = level;
 	}
@@ -33,6 +37,13 @@ public class CompilerDiagnostic {
 	 */
 	public int getLine() {
 		return line;
+	}
+
+	/**
+	 * @return Column the message applies to within the line.
+	 */
+	public int getColumn() {
+		return column;
 	}
 
 	/**
@@ -64,6 +75,7 @@ public class CompilerDiagnostic {
 		CompilerDiagnostic other = (CompilerDiagnostic) o;
 
 		if (line != other.line) return false;
+		if (column != other.column) return false;
 		if (!Objects.equals(message, other.message)) return false;
 		return level == other.level;
 	}
@@ -71,6 +83,7 @@ public class CompilerDiagnostic {
 	@Override
 	public int hashCode() {
 		int result = line;
+		result = 31 * result + column;
 		result = 31 * result + message.hashCode();
 		result = 31 * result + level.hashCode();
 		return result;

@@ -131,6 +131,7 @@ public class JavacCompiler implements Service {
 				if (diagnostic.getKind() == Diagnostic.Kind.ERROR) {
 					diagnostics.add(new CompilerDiagnostic(
 							(int) diagnostic.getLineNumber(),
+							(int) diagnostic.getColumnNumber(),
 							diagnostic.getMessage(Locale.getDefault()),
 							mapKind(diagnostic.getKind())
 					));
