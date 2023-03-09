@@ -7,12 +7,24 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
+import software.coley.recaf.cdi.EagerInitialization;
+import software.coley.recaf.cdi.InitializationStage;
+import software.coley.recaf.info.AndroidClassInfo;
+import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.path.*;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingTab;
-import software.coley.recaf.path.AbstractPathNode;
-import software.coley.recaf.path.PathNode;
-import software.coley.recaf.path.WorkspacePathNode;
 import software.coley.recaf.workspace.WorkspaceManager;
+import software.coley.recaf.workspace.WorkspaceModificationListener;
+import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
+import software.coley.recaf.workspace.model.bundle.FileBundle;
+import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.workspace.model.resource.ResourceAndroidClassListener;
+import software.coley.recaf.workspace.model.resource.ResourceFileListener;
+import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
+import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,16 +40,18 @@ import java.util.List;
  *
  * @author Matt Coley
  */
+@EagerInitialization(InitializationStage.AFTER_UI_INIT)
 @ApplicationScoped
 public class NavigationManager implements Navigable {
 	private final List<Navigable> children = new ArrayList<>();
+	private final Forwarding forwarding = new Forwarding();
+	private final NavigableSpy spy = new NavigableSpy();
 	private PathNode<?> path = new DummyInitialNode();
 
 	@Inject
 	public NavigationManager(@Nonnull DockingManager dockingManager,
 							 @Nonnull WorkspaceManager workspaceManager) {
 		// Track what navigable content is available.
-		NavigableSpy spy = new NavigableSpy();
 		dockingManager.addTabCreationListener((parent, tab) -> {
 			ObjectProperty<Node> contentProperty = tab.contentProperty();
 
@@ -56,7 +70,30 @@ public class NavigationManager implements Navigable {
 		}));
 
 		// Track current workspace so that we are navigable ourselves.
-		workspaceManager.addWorkspaceOpenListener(workspace -> path = new WorkspacePathNode(workspace));
+		workspaceManager.addWorkspaceOpenListener(workspace -> {
+			WorkspacePathNode workspacePath = new WorkspacePathNode(workspace);
+			path = workspacePath;
+
+			// Update forwarding's path.
+			forwarding.workspacePath = workspacePath;
+		});
+
+		// Setup forwarding workspace updates to children.
+		workspaceManager.addDefaultWorkspaceModificationListeners(new WorkspaceModificationListener() {
+			@Override
+			public void onAddLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
+				library.addListener(forwarding);
+			}
+
+			@Override
+			public void onRemoveLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
+				library.removeListener(forwarding);
+			}
+		});
+		workspaceManager.addWorkspaceOpenListener(workspace -> {
+			for (WorkspaceResource resource : workspace.getAllResources(false))
+				resource.addListener(forwarding);
+		});
 	}
 
 	@Nonnull
@@ -73,6 +110,11 @@ public class NavigationManager implements Navigable {
 
 	@Override
 	public void requestFocus() {
+		// no-op
+	}
+
+	@Override
+	public void disable() {
 		// no-op
 	}
 
@@ -94,6 +136,76 @@ public class NavigationManager implements Navigable {
 		void remove(Node value) {
 			if (value instanceof Navigable navigable)
 				children.remove(navigable);
+		}
+	}
+
+	/**
+	 * Listener to forward updates in the workspace to {@link #getNavigableChildren() navigable components}.
+	 */
+	private class Forwarding implements ResourceJvmClassListener, ResourceAndroidClassListener, ResourceFileListener {
+		private WorkspacePathNode workspacePath;
+
+		@Override
+		public void onNewClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls) {
+			// no-op
+		}
+
+		@Override
+		public void onUpdateClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo oldCls, @Nonnull JvmClassInfo newCls) {
+			BundlePathNode bundlePath = workspacePath.child(resource).child(bundle);
+			ClassPathNode path = bundlePath.child(oldCls.getPackageName()).child(oldCls);
+			for (Navigable navigable : getNavigableChildrenByPath(path))
+				if (navigable instanceof UpdatableNavigable updatable)
+					updatable.onUpdatePath(bundlePath.child(newCls.getPackageName()).child(newCls));
+		}
+
+		@Override
+		public void onRemoveClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls) {
+			ClassPathNode path = workspacePath.child(resource).child(bundle).child(cls.getPackageName()).child(cls);
+			for (Navigable navigable : getNavigableChildrenByPath(path))
+				navigable.disable();
+		}
+
+		@Override
+		public void onNewClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo cls) {
+			// no-op
+		}
+
+		@Override
+		public void onUpdateClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo oldCls, AndroidClassInfo newCls) {
+			BundlePathNode bundlePath = workspacePath.child(resource).child(bundle);
+			ClassPathNode path = bundlePath.child(oldCls.getPackageName()).child(oldCls);
+			for (Navigable navigable : getNavigableChildrenByPath(path))
+				if (navigable instanceof UpdatableNavigable updatable)
+					updatable.onUpdatePath(bundlePath.child(newCls.getPackageName()).child(newCls));
+		}
+
+		@Override
+		public void onRemoveClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo cls) {
+			ClassPathNode path = workspacePath.child(resource).child(bundle).child(cls.getPackageName()).child(cls);
+			for (Navigable navigable : getNavigableChildrenByPath(path))
+				navigable.disable();
+		}
+
+		@Override
+		public void onNewFile(@Nonnull WorkspaceResource resource, @Nonnull FileBundle bundle, @Nonnull FileInfo file) {
+			// no-op
+		}
+
+		@Override
+		public void onUpdateFile(@Nonnull WorkspaceResource resource, @Nonnull FileBundle bundle, @Nonnull FileInfo oldFile, @Nonnull FileInfo newFile) {
+			BundlePathNode bundlePath = workspacePath.child(resource).child(bundle);
+			FilePathNode path = bundlePath.child(oldFile.getDirectoryName()).child(oldFile);
+			for (Navigable navigable : getNavigableChildrenByPath(path))
+				if (navigable instanceof UpdatableNavigable updatable)
+					updatable.onUpdatePath(bundlePath.child(newFile.getDirectoryName()).child(newFile));
+		}
+
+		@Override
+		public void onRemoveFile(@Nonnull WorkspaceResource resource, @Nonnull FileBundle bundle, @Nonnull FileInfo file) {
+			FilePathNode path = workspacePath.child(resource).child(bundle).child(file.getDirectoryName()).child(file);
+			for (Navigable navigable : getNavigableChildrenByPath(path))
+				navigable.disable();
 		}
 	}
 
