@@ -2,10 +2,12 @@ package software.coley.recaf.ui.pane.editing;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.scene.control.Label;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.ui.config.ClassEditingConfig;
+import software.coley.recaf.ui.pane.editing.jvm.JvmDecompilerPane;
 
 /**
  * Displays {@link JvmClassInfo} in a configurable manner.
@@ -14,17 +16,16 @@ import software.coley.recaf.ui.config.ClassEditingConfig;
  */
 @Dependent
 public class JvmClassPane extends ClassPane {
+	private final Instance<JvmDecompilerPane> decompilerProvider;
 	private JvmClassEditorType editorType;
 
 	@Inject
-	public JvmClassPane(@Nonnull ClassEditingConfig config) {
+	public JvmClassPane(@Nonnull ClassEditingConfig config, @Nonnull Instance<JvmDecompilerPane> decompilerProvider) {
 		editorType = config.getDefaultJvmEditor().getValue();
+		this.decompilerProvider = decompilerProvider;
 
 		// TODO: Side-panel system
 		//  - Optional show title or just icons to maximize space
-
-		// TODO: When the path updates, update the containing tab graphic if necessary
-		//  - We can add a listener type to UpdatableNavigable for this (along to support file pane as well)
 	}
 
 	/**
@@ -57,22 +58,11 @@ public class JvmClassPane extends ClassPane {
 			return;
 
 		// Update content in pane.
+		// We do not need to pass the path along to it here, since the calling context should do that.
 		JvmClassEditorType type = getEditorType();
 		switch (type) {
-			case DECOMPILE -> {
-				// TODO: Create 'Editor' set-up for class content
-				//  - Decompile the class from the path
-				//  - Having to pass 'DecompileManager' into JvmClassPane constructor would suck
-				//    can we make use of Instance<T> somehow to get injection support?
-				//      - If we exclude 'ClassPathNode' from the constructor, we can make our own ClassPane @Inject-able
-				Label decompile = new Label("TODO: Decompile");
-				setCenter(decompile);
-			}
-			case HEX -> {
-				// TODO: Hex UI
-				Label hex = new Label("TODO: Hex");
-				setCenter(hex);
-			}
+			case DECOMPILE -> setDisplay(decompilerProvider.get());
+			case HEX -> setDisplay(new Label("TODO: Hex")); // TODO: Implement hex UI component
 			default -> throw new IllegalStateException("Unknown editor type: " + type.name());
 		}
 	}

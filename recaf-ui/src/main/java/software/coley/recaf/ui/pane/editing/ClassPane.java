@@ -1,6 +1,7 @@
 package software.coley.recaf.ui.pane.editing;
 
 import jakarta.annotation.Nonnull;
+import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
@@ -40,15 +41,35 @@ public abstract class ClassPane extends BorderPane implements UpdatableNavigable
 	}
 
 	/**
+	 * @param node
+	 * 		Node to display.
+	 */
+	protected void setDisplay(Node node) {
+		// Remove old navigable child.
+		Node old = getCenter();
+		if (old instanceof Navigable navigableOld)
+			children.remove(navigableOld);
+
+		// Add navigable child.
+		if (node instanceof Navigable navigableNode)
+			children.add(navigableNode);
+
+		// Set display node.
+		setCenter(node);
+	}
+
+	/**
 	 * Generate display for the class denoted by {@link #getPath() the class path node}.
+	 * Children implementing this should call {@link #setDisplay(Node)}.
 	 */
 	protected abstract void generateDisplay();
 
 	/**
-	 * @param listener Listener to add.
+	 * @param listener
+	 * 		Listener to add.
 	 */
 	public void addPathUpdateListener(Consumer<ClassPathNode> listener) {
-		  pathUpdateListeners.add(listener);
+		pathUpdateListeners.add(listener);
 	}
 
 	@Override
