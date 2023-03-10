@@ -64,11 +64,20 @@ public class BasicWorkspace implements Workspace {
 	@Override
 	public void addSupportingResource(@Nonnull WorkspaceResource resource) {
 		supporting.add(resource);
+		for (WorkspaceModificationListener listener : modificationListeners) {
+			listener.onAddLibrary(this, resource);
+		}
 	}
 
 	@Override
 	public boolean removeSupportingResource(@Nonnull WorkspaceResource resource) {
-		return supporting.remove(resource);
+		boolean remove = supporting.remove(resource);
+		if (remove) {
+			for (WorkspaceModificationListener listener : modificationListeners) {
+				listener.onRemoveLibrary(this, resource);
+			}
+		}
+		return remove;
 	}
 
 	@Nonnull
