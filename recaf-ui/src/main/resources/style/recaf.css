@@ -1570,6 +1570,139 @@ Text {
   -fx-background-insets: 0, 1px 0 0 0;
 }
 
+.tab-pane > .tab-header-area {
+  -fx-background-insets: 0;
+  -fx-background-color: -color-base-2;
+  -fx-alignment: CENTER;
+}
+.tab-pane > .tab-header-area > .tab-header-background {
+  -fx-background-insets: 0 0 0 0, 0 0 1px 0;
+  -fx-background-color: -color-accent-3, -color-base-2;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab {
+  -fx-background-insets: 0 0 0 0, 0 0 1px 0;
+  -fx-background-color: transparent, transparent;
+  -fx-padding: 0.3em 0.6em 0.3em 0.6em;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab > .tab-container > .tab-label {
+  -fx-alignment: CENTER;
+  -fx-text-fill: -color-fg-default;
+  -fx-padding: 0.4em 0.4em 0.4em 0.4em;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab > .tab-container > .tab-label > * {
+  -fx-fill: -color-fg-default;
+  -fx-icon-color: -color-fg-default;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab > .tab-container > .tab-close-button {
+  -fx-background-color: -color-fg-default;
+  -fx-shape: "M 0,0 H1 L 4,3 7,0 H8 V1 L 5,4 8,7 V8 H7 L 4,5 1,8 H0 V7 L 3,4 0,1 Z";
+  -fx-scale-shape: false;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab:hover {
+  -fx-background-color: -color-border-default, -color-bg-subtle;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab:top:selected, .tab-pane > .tab-header-area > .headers-region > .tab:bottom:selected {
+  -fx-background-color: -color-flair-9, -color-bg-default;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab:top:selected > .tab-container > .tab-label, .tab-pane > .tab-header-area > .headers-region > .tab:bottom:selected > .tab-container > .tab-label {
+  -fx-fill: -color-fg-default;
+  -fx-text-fill: -color-fg-default;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab:top:selected > .tab-container > .tab-label > *, .tab-pane > .tab-header-area > .headers-region > .tab:bottom:selected > .tab-container > .tab-label > * {
+  -fx-fill: -color-fg-default;
+  -fx-icon-color: -color-fg-default;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab:top:selected > .tab-container > .tab-close-button, .tab-pane > .tab-header-area > .headers-region > .tab:bottom:selected > .tab-container > .tab-close-button {
+  -fx-background-color: -color-fg-default;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab:disabled {
+  -fx-background-color: -color-accent-3, -color-base-2;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab:disabled > .tab-container {
+  -fx-opacity: 0.55;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab:left > .tab-container > .tab-label, .tab-pane > .tab-header-area > .headers-region > .tab:right > .tab-container > .tab-label {
+  -fx-padding: 0.2em 0.4em 0.2em 0.4em;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab:left:hover, .tab-pane > .tab-header-area > .headers-region > .tab:right:hover {
+  -fx-background-color: -color-border-default, -color-bg-subtle;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab:left:hover > .tab-container > .tab-label, .tab-pane > .tab-header-area > .headers-region > .tab:right:hover > .tab-container > .tab-label {
+  -fx-text-fill: -color-fg-default;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab:left:hover > .tab-container > .tab-close-button, .tab-pane > .tab-header-area > .headers-region > .tab:right:hover > .tab-container > .tab-close-button {
+  -fx-background-color: -color-fg-default;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab:left:selected, .tab-pane > .tab-header-area > .headers-region > .tab:right:selected {
+  -fx-background-color: -color-flair-9, -color-base-7;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab:left:selected > .tab-container > .tab-label, .tab-pane > .tab-header-area > .headers-region > .tab:right:selected > .tab-container > .tab-label {
+  -fx-text-fill: -color-fg-default;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab:left:selected > .tab-container > .tab-close-button, .tab-pane > .tab-header-area > .headers-region > .tab:right:selected > .tab-container > .tab-close-button {
+  -fx-background-color: -color-fg-default;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab:left:disabled, .tab-pane > .tab-header-area > .headers-region > .tab:right:disabled {
+  -fx-background-color: transparent;
+}
+.tab-pane > .tab-header-area > .control-buttons-tab > .container > .tab-down-button {
+  -fx-padding: 1em;
+}
+.tab-pane > .tab-header-area > .control-buttons-tab > .container > .tab-down-button:disabled {
+  -fx-opacity: 0.55;
+}
+.tab-pane > .tab-header-area > .control-buttons-tab > .container > .tab-down-button > .arrow {
+  -fx-shape: "M7 10l5 5 5-5z";
+  -fx-scale-shape: false;
+  -fx-background-color: -color-fg-default;
+}
+.tab-pane.dense > .tab-header-area > .headers-region > .tab {
+  -fx-padding: 0.2em 0.3em 0.2em 0.3em;
+}
+.tab-pane.dense > .tab-header-area > .headers-region > .tab > .tab-container > .tab-label {
+  -fx-padding: 0.2em 0.2em 0.2em 0.2em;
+}
+.tab-pane.dense > .tab-header-area > .headers-region > .tab:left > .tab-container > .tab-label, .tab-pane.dense > .tab-header-area > .headers-region > .tab:right > .tab-container > .tab-label {
+  -fx-padding: 0.15em 0.3em 0.15em 0.3em;
+}
+.tab-pane.floating > .tab-header-area {
+  -fx-background-color: -color-border-default, -color-bg-inset;
+  -fx-background-insets: 0, 0 0 1px 0;
+}
+.tab-pane.floating > .tab-header-area > .headers-region > .tab {
+  -fx-background-insets: 0;
+  -fx-background-color: transparent;
+  -fx-padding: 0.3em 0 0.3em 3px;
+}
+.tab-pane.floating > .tab-header-area > .headers-region > .tab > .tab-container {
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-background-radius: 1;
+  -fx-border-radius: 1;
+  -fx-border-width: 1px, 0 3px 0 0;
+  -fx-border-color: transparent, transparent;
+}
+.tab-pane.floating > .tab-header-area > .headers-region > .tab > .tab-container > .tab-label {
+  -fx-padding: 0.55em 0.55em 0.55em 0.55em;
+  -fx-min-width: 150px;
+  -fx-pref-width: 150px;
+  -fx-alignment: CENTER_LEFT;
+}
+.tab-pane.floating > .tab-header-area > .headers-region > .tab:hover > .tab-container {
+  -fx-background-color: -color-bg-inset;
+  -fx-border-color: -color-border-default, transparent;
+}
+.tab-pane.floating > .tab-header-area > .headers-region > .tab:selected > .tab-container {
+  -fx-background-color: -color-bg-default;
+  -fx-border-color: -color-flair-9, transparent;
+}
+.tab-pane.floating.dense > .tab-header-area > .headers-region > .tab {
+  -fx-padding: 0.2em 0 0.2em 3px;
+}
+.tab-pane.floating.dense > .tab-header-area > .headers-region > .tab > .tab-container > .tab-label {
+  -fx-padding: 0.35em 0.35em 0.35em 0.35em;
+}
+
 .toggle-switch {
   -fx-thumb-move-animation-time: 200;
 }
@@ -3539,139 +3672,6 @@ Text {
 }
 .split-pane > .split-pane-divider:disabled {
   -fx-opacity: 0.25;
-}
-
-.tab-pane > .tab-header-area {
-  -fx-background-insets: 0;
-  -fx-background-color: -color-base-2;
-  -fx-alignment: CENTER;
-}
-.tab-pane > .tab-header-area > .tab-header-background {
-  -fx-background-insets: 0 0 0 0, 0 0 1px 0;
-  -fx-background-color: -color-border-default, -color-base-2;
-}
-.tab-pane > .tab-header-area > .headers-region > .tab {
-  -fx-background-insets: 0 0 0 0, 0 0 1px 0;
-  -fx-background-color: transparent, transparent;
-  -fx-padding: 0.3em 0.6em 0.3em 0.6em;
-}
-.tab-pane > .tab-header-area > .headers-region > .tab > .tab-container > .tab-label {
-  -fx-alignment: CENTER;
-  -fx-text-fill: -color-fg-default;
-  -fx-padding: 0.4em 0.4em 0.4em 0.4em;
-}
-.tab-pane > .tab-header-area > .headers-region > .tab > .tab-container > .tab-label > * {
-  -fx-fill: -color-fg-default;
-  -fx-icon-color: -color-fg-default;
-}
-.tab-pane > .tab-header-area > .headers-region > .tab > .tab-container > .tab-close-button {
-  -fx-background-color: -color-fg-default;
-  -fx-shape: "M 0,0 H1 L 4,3 7,0 H8 V1 L 5,4 8,7 V8 H7 L 4,5 1,8 H0 V7 L 3,4 0,1 Z";
-  -fx-scale-shape: false;
-}
-.tab-pane > .tab-header-area > .headers-region > .tab:hover {
-  -fx-background-color: -color-border-default, -color-bg-subtle;
-}
-.tab-pane > .tab-header-area > .headers-region > .tab:top:selected, .tab-pane > .tab-header-area > .headers-region > .tab:bottom:selected {
-  -fx-background-color: -color-flair-9, -color-bg-default;
-}
-.tab-pane > .tab-header-area > .headers-region > .tab:top:selected > .tab-container > .tab-label, .tab-pane > .tab-header-area > .headers-region > .tab:bottom:selected > .tab-container > .tab-label {
-  -fx-fill: -color-fg-default;
-  -fx-text-fill: -color-fg-default;
-}
-.tab-pane > .tab-header-area > .headers-region > .tab:top:selected > .tab-container > .tab-label > *, .tab-pane > .tab-header-area > .headers-region > .tab:bottom:selected > .tab-container > .tab-label > * {
-  -fx-fill: -color-fg-default;
-  -fx-icon-color: -color-fg-default;
-}
-.tab-pane > .tab-header-area > .headers-region > .tab:top:selected > .tab-container > .tab-close-button, .tab-pane > .tab-header-area > .headers-region > .tab:bottom:selected > .tab-container > .tab-close-button {
-  -fx-background-color: -color-fg-default;
-}
-.tab-pane > .tab-header-area > .headers-region > .tab:disabled {
-  -fx-background-color: -color-border-default, -color-base-2;
-}
-.tab-pane > .tab-header-area > .headers-region > .tab:disabled > .tab-container {
-  -fx-opacity: 0.55;
-}
-.tab-pane > .tab-header-area > .headers-region > .tab:left > .tab-container > .tab-label, .tab-pane > .tab-header-area > .headers-region > .tab:right > .tab-container > .tab-label {
-  -fx-padding: 0.2em 0.4em 0.2em 0.4em;
-}
-.tab-pane > .tab-header-area > .headers-region > .tab:left:hover, .tab-pane > .tab-header-area > .headers-region > .tab:right:hover {
-  -fx-background-color: -color-border-default, -color-bg-subtle;
-}
-.tab-pane > .tab-header-area > .headers-region > .tab:left:hover > .tab-container > .tab-label, .tab-pane > .tab-header-area > .headers-region > .tab:right:hover > .tab-container > .tab-label {
-  -fx-text-fill: -color-fg-default;
-}
-.tab-pane > .tab-header-area > .headers-region > .tab:left:hover > .tab-container > .tab-close-button, .tab-pane > .tab-header-area > .headers-region > .tab:right:hover > .tab-container > .tab-close-button {
-  -fx-background-color: -color-fg-default;
-}
-.tab-pane > .tab-header-area > .headers-region > .tab:left:selected, .tab-pane > .tab-header-area > .headers-region > .tab:right:selected {
-  -fx-background-color: -color-flair-9, -color-base-7;
-}
-.tab-pane > .tab-header-area > .headers-region > .tab:left:selected > .tab-container > .tab-label, .tab-pane > .tab-header-area > .headers-region > .tab:right:selected > .tab-container > .tab-label {
-  -fx-text-fill: -color-fg-default;
-}
-.tab-pane > .tab-header-area > .headers-region > .tab:left:selected > .tab-container > .tab-close-button, .tab-pane > .tab-header-area > .headers-region > .tab:right:selected > .tab-container > .tab-close-button {
-  -fx-background-color: -color-fg-default;
-}
-.tab-pane > .tab-header-area > .headers-region > .tab:left:disabled, .tab-pane > .tab-header-area > .headers-region > .tab:right:disabled {
-  -fx-background-color: transparent;
-}
-.tab-pane > .tab-header-area > .control-buttons-tab > .container > .tab-down-button {
-  -fx-padding: 1em;
-}
-.tab-pane > .tab-header-area > .control-buttons-tab > .container > .tab-down-button:disabled {
-  -fx-opacity: 0.55;
-}
-.tab-pane > .tab-header-area > .control-buttons-tab > .container > .tab-down-button > .arrow {
-  -fx-shape: "M7 10l5 5 5-5z";
-  -fx-scale-shape: false;
-  -fx-background-color: -color-fg-default;
-}
-.tab-pane.dense > .tab-header-area > .headers-region > .tab {
-  -fx-padding: 0.2em 0.3em 0.2em 0.3em;
-}
-.tab-pane.dense > .tab-header-area > .headers-region > .tab > .tab-container > .tab-label {
-  -fx-padding: 0.2em 0.2em 0.2em 0.2em;
-}
-.tab-pane.dense > .tab-header-area > .headers-region > .tab:left > .tab-container > .tab-label, .tab-pane.dense > .tab-header-area > .headers-region > .tab:right > .tab-container > .tab-label {
-  -fx-padding: 0.15em 0.3em 0.15em 0.3em;
-}
-.tab-pane.floating > .tab-header-area {
-  -fx-background-color: -color-border-default, -color-bg-inset;
-  -fx-background-insets: 0, 0 0 1px 0;
-}
-.tab-pane.floating > .tab-header-area > .headers-region > .tab {
-  -fx-background-insets: 0;
-  -fx-background-color: transparent;
-  -fx-padding: 0.3em 0 0.3em 3px;
-}
-.tab-pane.floating > .tab-header-area > .headers-region > .tab > .tab-container {
-  -fx-background-color: transparent;
-  -fx-background-insets: 0;
-  -fx-background-radius: 1;
-  -fx-border-radius: 1;
-  -fx-border-width: 1px, 0 3px 0 0;
-  -fx-border-color: transparent, transparent;
-}
-.tab-pane.floating > .tab-header-area > .headers-region > .tab > .tab-container > .tab-label {
-  -fx-padding: 0.55em 0.55em 0.55em 0.55em;
-  -fx-min-width: 150px;
-  -fx-pref-width: 150px;
-  -fx-alignment: CENTER_LEFT;
-}
-.tab-pane.floating > .tab-header-area > .headers-region > .tab:hover > .tab-container {
-  -fx-background-color: -color-bg-inset;
-  -fx-border-color: -color-border-default, transparent;
-}
-.tab-pane.floating > .tab-header-area > .headers-region > .tab:selected > .tab-container {
-  -fx-background-color: -color-bg-default;
-  -fx-border-color: -color-flair-9, transparent;
-}
-.tab-pane.floating.dense > .tab-header-area > .headers-region > .tab {
-  -fx-padding: 0.2em 0 0.2em 3px;
-}
-.tab-pane.floating.dense > .tab-header-area > .headers-region > .tab > .tab-container > .tab-label {
-  -fx-padding: 0.35em 0.35em 0.35em 0.35em;
 }
 
 .titled-pane {
