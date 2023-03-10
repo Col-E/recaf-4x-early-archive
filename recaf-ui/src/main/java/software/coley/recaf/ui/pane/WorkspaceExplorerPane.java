@@ -9,6 +9,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.ui.config.WorkspaceExplorerConfig;
 import software.coley.recaf.ui.control.tree.WorkspaceTree;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeFilterPane;
 import software.coley.recaf.ui.dnd.DragAndDrop;
@@ -30,8 +31,10 @@ import java.util.List;
 @Dependent
 public class WorkspaceExplorerPane extends BorderPane implements FileDropListener {
 	private static final Logger logger = Logging.get(WorkspaceExplorerPane.class);
+	private final WorkspaceExplorerConfig config;
 	private final PathLoadingManager pathLoadingManager;
 	private final WorkspaceTree workspaceTree;
+	private final Workspace workspace;
 
 	/**
 	 * @param workspace
@@ -40,11 +43,14 @@ public class WorkspaceExplorerPane extends BorderPane implements FileDropListene
 	 * 		Tree to display workspace with.
 	 */
 	@Inject
-	public WorkspaceExplorerPane(@Nonnull PathLoadingManager pathLoadingManager,
+	public WorkspaceExplorerPane(@Nonnull WorkspaceExplorerConfig config,
+								 @Nonnull PathLoadingManager pathLoadingManager,
 								 @Nullable Workspace workspace,
 								 @Nonnull WorkspaceTree workspaceTree) {
 		this.pathLoadingManager = pathLoadingManager;
 		this.workspaceTree = workspaceTree;
+		this.workspace = workspace;
+		this.config = config;
 		setCenter(workspaceTree);
 		if (workspace != null)
 			workspaceTree.createWorkspaceRoot(workspace);
@@ -66,17 +72,18 @@ public class WorkspaceExplorerPane extends BorderPane implements FileDropListene
 		// Sanity check input
 		if (files.isEmpty()) return;
 
-		// Create new workspace from files
-		Path primary = files.get(0);
-		List<Path> supporting = files.size() > 1 ? files.subList(1, files.size()) : Collections.emptyList();
-		pathLoadingManager.asyncNewWorkspace(primary, supporting, err -> {
-			logger.error("Failed to create new workspace from dropped files", err);
-		});
-
-		// TODO: Config to determine what drag-drop operation does (new workspace, append to current)
-		//  // Append files to current workspace
-		//  pathLoadingManager.asyncAddSupportingResourcesToWorkspace(workspace, files, err -> {
-		//  	logger.error("Failed to add supporting resources from dropped files", err);
-		//  });
+		if (config.createOnDragDrop()) {
+			// Create new workspace from files
+			Path primary = files.get(0);
+			List<Path> supporting = files.size() > 1 ? files.subList(1, files.size()) : Collections.emptyList();
+			pathLoadingManager.asyncNewWorkspace(primary, supporting, err -> {
+				logger.error("Failed to create new workspace from dropped files", err);
+			});
+		} else if (workspace != null && config.appendOnDragDrop()) {
+			// Append files to current workspace
+			pathLoadingManager.asyncAddSupportingResourcesToWorkspace(workspace, files, err -> {
+				logger.error("Failed to add supporting resources from dropped files", err);
+			});
+		}
 	}
 }

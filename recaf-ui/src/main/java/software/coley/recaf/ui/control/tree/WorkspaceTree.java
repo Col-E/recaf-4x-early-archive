@@ -90,27 +90,8 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 			rootPath = new WorkspacePathNode(workspace);
 			root = new WorkspaceTreeNode(rootPath);
 			List<WorkspaceResource> resources = workspace.getAllResources(false);
-			for (WorkspaceResource resource : resources) {
-				ResourcePathNode resourcePath = rootPath.child(resource);
-				resource.classBundleStream().forEach(bundle -> {
-					BundlePathNode bundlePath = resourcePath.child(bundle);
-					for (ClassInfo classInfo : bundle.values()) {
-						String packageName = classInfo.getPackageName();
-						DirectoryPathNode packagePath = bundlePath.child(packageName);
-						ClassPathNode classPath = packagePath.child(classInfo);
-						root.getOrCreateNodeByPath(classPath);
-					}
-				});
-				resource.fileBundleStream().forEach(bundle -> {
-					BundlePathNode bundlePath = resourcePath.child(bundle);
-					for (FileInfo fileInfo : bundle.values()) {
-						String directoryName = fileInfo.getDirectoryName();
-						DirectoryPathNode directoryPath = bundlePath.child(directoryName);
-						FilePathNode filePath = directoryPath.child(fileInfo);
-						root.getOrCreateNodeByPath(filePath);
-					}
-				});
-			}
+			for (WorkspaceResource resource : resources)
+				createResourceSubTree(resource);
 
 			// Add listeners
 			workspace.addWorkspaceModificationListener(this);
@@ -118,6 +99,35 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 				resource.addListener(this);
 		}
 		FxThreadUtil.run(() -> setRoot(root));
+	}
+
+	/**
+	 * Adds the given resource to the tree.
+	 * All paths to items contained by the resource are generated <i>(classes, files, etc)</i>.
+	 *
+	 * @param resource
+	 * 		Resource to add to the tree.
+	 */
+	private void createResourceSubTree(WorkspaceResource resource) {
+		ResourcePathNode resourcePath = rootPath.child(resource);
+		resource.classBundleStream().forEach(bundle -> {
+			BundlePathNode bundlePath = resourcePath.child(bundle);
+			for (ClassInfo classInfo : bundle.values()) {
+				String packageName = classInfo.getPackageName();
+				DirectoryPathNode packagePath = bundlePath.child(packageName);
+				ClassPathNode classPath = packagePath.child(classInfo);
+				root.getOrCreateNodeByPath(classPath);
+			}
+		});
+		resource.fileBundleStream().forEach(bundle -> {
+			BundlePathNode bundlePath = resourcePath.child(bundle);
+			for (FileInfo fileInfo : bundle.values()) {
+				String directoryName = fileInfo.getDirectoryName();
+				DirectoryPathNode directoryPath = bundlePath.child(directoryName);
+				FilePathNode filePath = directoryPath.child(fileInfo);
+				root.getOrCreateNodeByPath(filePath);
+			}
+		});
 	}
 
 	/**
@@ -160,7 +170,7 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 	@Override
 	public void onAddLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
 		if (isTargetWorkspace(workspace))
-			root.getOrCreateNodeByPath(rootPath.child(library));
+			createResourceSubTree(library);
 	}
 
 	@Override
