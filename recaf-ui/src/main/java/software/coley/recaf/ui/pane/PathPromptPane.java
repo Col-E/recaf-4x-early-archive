@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.pane;
 
+import atlantafx.base.controls.CustomTextField;
 import atlantafx.base.controls.Spacer;
 import atlantafx.base.controls.ToggleSwitch;
 import atlantafx.base.theme.Styles;
@@ -11,8 +12,6 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -44,14 +43,13 @@ public class PathPromptPane extends BorderPane {
 		// Graphic to indicate if input path is a file or directory.
 		FontIconView iconFile = new FontIconView(CarbonIcons.DOCUMENT);
 		FontIconView iconDirectory = new FontIconView(CarbonIcons.FOLDER);
-		Label inputType = new Label("", iconFile);
-		inputType.getStyleClass().add(Styles.LEFT_PILL);
-		inputType.graphicProperty().bind(isFile.map(is -> is ? iconFile : iconDirectory));
 
 		// Text to show the current file name.
-		TextField pathField = new TextField(null);
+		CustomTextField pathField = new CustomTextField(null);
+		pathField.leftProperty().bind(isFile.map(is -> is ? iconFile : iconDirectory));
 		pathField.promptTextProperty().bind(Lang.getBinding("dialog.file.nothing"));
 		pathField.setEditable(false);
+		pathField.setMouseTransparent(true);
 		pathField.setFocusTraversable(false);
 		pathField.getStyleClass().add(Styles.RIGHT);
 		pathField.textProperty().bind(path.map(p -> p == null ? null : p.getFileName().toString()));
@@ -100,7 +98,7 @@ public class PathPromptPane extends BorderPane {
 		rightWrapper.setSpacing(16);
 
 		// Layout
-		HBox wrapper = new HBox(inputType, pathField, new Spacer(50), rightWrapper);
+		HBox wrapper = new HBox(pathField, new Spacer(50), rightWrapper);
 		HBox.setHgrow(pathField, Priority.ALWAYS);
 		wrapper.setFillHeight(false);
 		wrapper.setAlignment(Pos.TOP_LEFT);

@@ -202,15 +202,22 @@ public class Wizard extends VBox {
 				// Create graphic to represent the page in the ordered list
 				String indexName = String.valueOf(i + 1);
 				Label indexTitle = new BoundLabel(page.getName());
+				int j = i;
 				selectedPage.addListener((obs, old, val) -> {
 					Node indexGraphic; // Hack to make the 'current' location more visible with default theme
 					if (val == page) {
 						indexGraphic = new Button(indexName);
-						indexGraphic.getStyleClass().addAll("rounded");
+						indexGraphic.getStyleClass().addAll(Styles.ROUNDED);
 					} else {
-						indexGraphic = new Label(indexName);
-						indexGraphic.getStyleClass().addAll("text-input", "button", "rounded");
+						indexGraphic = new Button(indexName);
+						indexGraphic.getStyleClass().addAll(Styles.ROUNDED);
 					}
+
+					// Fill the button if the page is 'done'
+					if (j < pages.indexOf(selectedPage.get())) {
+						indexGraphic.getStyleClass().addAll(Styles.ACCENT, Styles.SUCCESS);
+					}
+
 					indexGraphic.setMouseTransparent(true);
 					indexGraphic.setFocusTraversable(false);
 					indexTitle.setGraphic(indexGraphic);
