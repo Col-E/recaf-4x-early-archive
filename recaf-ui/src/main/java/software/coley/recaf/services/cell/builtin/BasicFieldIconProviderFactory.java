@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
@@ -36,13 +37,18 @@ public class BasicFieldIconProviderFactory implements FieldIconProviderFactory {
 	}
 
 	private static Node fieldIconProvider(FieldMember field) {
+		// Base
 		StackPane stack = new StackPane();
 		ObservableList<Node> children = stack.getChildren();
 		children.add(FIELD.makeIcon());
+
+		// Add overlay for certain flags.
 		if (field.hasFinalModifier())
 			children.add(ACCESS_FINAL.makeIcon());
 		if (field.hasStaticModifier())
 			children.add(ACCESS_STATIC.makeIcon());
-		return stack;
+
+		// Wrap with visibility.
+		return new HBox(stack, Icons.getVisibilityIcon(field.getAccess()));
 	}
 }
