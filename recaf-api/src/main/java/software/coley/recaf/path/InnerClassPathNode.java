@@ -38,6 +38,15 @@ public class InnerClassPathNode extends AbstractPathNode<ClassInfo, InnerClassIn
 			String otherName = innerClassPathNode.getValue().getInnerClassName();
 			return String.CASE_INSENSITIVE_ORDER.compare(name, otherName);
 		}
+
+		// Show before members
+		if (o instanceof ClassMemberPathNode)
+			return -1;
+
+		// Show after annos
+		if (o instanceof AnnotationPathNode)
+			return 1;
+
 		return 0;
 	}
 }

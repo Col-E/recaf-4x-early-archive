@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.LocalVariable;
@@ -149,6 +150,11 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 				return String.CASE_INSENSITIVE_ORDER.compare(key, otherKey);
 			}
 		}
+
+		// Show after inner classes & annotations
+		if (o instanceof InnerClassPathNode || o instanceof AnnotationPathNode)
+			return 1;
+
 		return 0;
 	}
 }

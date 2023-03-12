@@ -2,6 +2,7 @@ package software.coley.recaf.path;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 
@@ -54,6 +55,11 @@ public class AnnotationPathNode extends AbstractPathNode<Object, AnnotationInfo>
 		if (o instanceof AnnotationPathNode node) {
 			return getValue().getDescriptor().compareTo(node.getValue().getDescriptor());
 		}
+
+		// Show before inner classes & annotations
+		if (o instanceof InnerClassPathNode || o instanceof ClassMemberPathNode)
+			return 1;
+
 		return 0;
 	}
 }
