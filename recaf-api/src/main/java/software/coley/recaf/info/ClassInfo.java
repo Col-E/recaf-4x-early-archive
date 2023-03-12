@@ -20,7 +20,7 @@ import java.util.stream.Stream;
  * @see JvmClassInfo For JVM classes.
  * @see AndroidClassInfo For Android classes.
  */
-public interface ClassInfo extends Info, Annotated, Accessed {
+public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	/**
 	 * @return Name of the source file the class was compiled from.
 	 * May be {@code null} when there is no debug data attached to the class.

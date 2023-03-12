@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.Accessed;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.Named;
 import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.properties.PropertyContainer;
 
@@ -12,7 +13,7 @@ import software.coley.recaf.info.properties.PropertyContainer;
  *
  * @author Matt Coley
  */
-public interface ClassMember extends PropertyContainer, Annotated, Accessed {
+public interface ClassMember extends PropertyContainer, Annotated, Accessed, Named {
 	/**
 	 * @return Member name.
 	 */

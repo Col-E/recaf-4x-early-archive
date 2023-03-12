@@ -13,7 +13,13 @@ import jakarta.annotation.Nullable;
  * @author Matt Coley
  * @author Amejonah
  */
-public interface InnerClassInfo extends Accessed {
+public interface InnerClassInfo extends Accessed, Named {
+	@Nonnull
+	@Override
+	default String getName() {
+		return getInnerClassName();
+	}
+
 	/**
 	 * @return The name of the outer declaring class for this inner class.
 	 */
@@ -60,6 +66,17 @@ public interface InnerClassInfo extends Accessed {
 	 */
 	@Nullable
 	String getInnerName();
+
+	/**
+	 * There are some wierd cases where there can be inner-class entries of classes defined by other classes.
+	 * You can use this to filter those cases out.
+	 *
+	 * @return {@code true} when this inner-class entry denotes an inner-class
+	 * reference to a class defined in another class.
+	 */
+	default boolean isExternalReference() {
+		return !getInnerClassName().startsWith(getOuterDeclaringClassName());
+	}
 
 	/**
 	 * @return The access modifiers of the inner class as originally declared in the enclosing class.
