@@ -57,6 +57,9 @@ public class WorkspaceExplorerPane extends BorderPane implements FileDropListene
 		WorkspaceTreeFilterPane workspaceTreeFilterPane = new WorkspaceTreeFilterPane(workspaceTree);
 		setBottom(workspaceTreeFilterPane);
 		DragAndDrop.installFileSupport(this, this);
+
+		// TODO: When user starts typing in tree, goto filter and begin typing
+		// TODO: In filter, when user presses arrow keys, goto tree
 	}
 
 	/**
