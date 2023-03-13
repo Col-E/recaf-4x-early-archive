@@ -110,10 +110,13 @@ public class InheritancePane extends StackPane implements ContextSource, Updatab
 		for (InheritanceVertex parentVertex : vertex.getParents()) {
 			if (parentVertex.isJavaLangObject())
 				continue;
-			WorkspaceTreeNode subItem = new WorkspaceTreeNode(workspace.findAnyClass(parentVertex.getName()));
-			if (noLoops(node, subItem)) {
-				node.addAndSortChild(subItem);
-				createParents(subItem, parentVertex);
+			ClassPathNode parentPath = workspace.findAnyClass(parentVertex.getName());
+			if (parentPath != null) {
+				WorkspaceTreeNode subItem = new WorkspaceTreeNode(parentPath);
+				if (noLoops(node, subItem)) {
+					node.addAndSortChild(subItem);
+					createParents(subItem, parentVertex);
+				}
 			}
 		}
 	}
@@ -129,10 +132,13 @@ public class InheritancePane extends StackPane implements ContextSource, Updatab
 	private void createChildren(@Nonnull WorkspaceTreeNode node, @Nonnull InheritanceVertex vertex) {
 		node.setExpanded(true);
 		for (InheritanceVertex childVertex : vertex.getChildren()) {
-			WorkspaceTreeNode subItem = new WorkspaceTreeNode(workspace.findAnyClass(childVertex.getName()));
-			if (noLoops(node, subItem)) {
-				node.addAndSortChild(subItem);
-				createChildren(subItem, childVertex);
+			ClassPathNode childPath = workspace.findAnyClass(childVertex.getName());
+			if (childPath != null) {
+				WorkspaceTreeNode subItem = new WorkspaceTreeNode(childPath);
+				if (noLoops(node, subItem)) {
+					node.addAndSortChild(subItem);
+					createChildren(subItem, childVertex);
+				}
 			}
 		}
 	}
