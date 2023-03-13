@@ -115,7 +115,7 @@ public class CellConfigurationService implements Service {
 						// Double-clicking leafs should 'open' their content.
 						// Branches should recursively open.
 						TreeItem<?> treeItem = treeCell.getTreeItem();
-						if (e.getClickCount() == 2)
+						if (e.getClickCount() == 2 && treeItem != null)
 							if (treeItem.isLeaf())
 								openPath(item);
 							else if (treeItem.isExpanded()) // Looks odd, but results in less rapid re-closures
