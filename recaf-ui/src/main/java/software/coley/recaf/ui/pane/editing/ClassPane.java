@@ -2,6 +2,7 @@ package software.coley.recaf.ui.pane.editing;
 
 import jakarta.annotation.Nonnull;
 import javafx.scene.Node;
+import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
@@ -26,6 +27,7 @@ import java.util.function.Consumer;
 public abstract class ClassPane extends BorderPane implements UpdatableNavigable {
 	private final List<Consumer<ClassPathNode>> pathUpdateListeners = new ArrayList<>();
 	protected final List<Navigable> children = new ArrayList<>();
+	private SideTabs sideTabs;
 	private ClassPathNode path;
 
 	/**
@@ -63,6 +65,22 @@ public abstract class ClassPane extends BorderPane implements UpdatableNavigable
 	 * Children implementing this should call {@link #setDisplay(Node)}.
 	 */
 	protected abstract void generateDisplay();
+
+	/**
+	 * @param tab
+	 * 		Tab to add to the side panel.
+	 */
+	protected void addSideTab(Tab tab) {
+		// Lazily create/add side-tabs to UI.
+		if (sideTabs == null) {
+			sideTabs = new SideTabs();
+			children.add(sideTabs);
+			setRight(sideTabs);
+		}
+
+		// Add the given tab.
+		sideTabs.getTabs().add(tab);
+	}
 
 	/**
 	 * @param listener

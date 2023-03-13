@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.control.tree;
 
+import jakarta.annotation.Nonnull;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -14,6 +15,7 @@ import software.coley.recaf.util.ReflectUtil;
 
 import java.lang.reflect.Field;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -54,6 +56,12 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 		setUnderlyingChildren(filteredChildren);
 	}
 
+	@Override
+	@Deprecated(since = "Use FilterableTreeItem dedicated methods for interacting with children")
+	public ObservableList<TreeItem<T>> getChildren() {
+		return super.getChildren();
+	}
+
 	/**
 	 * @return {@code true} when the item MUST be shown.
 	 */
@@ -69,7 +77,7 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	 * @param matched
 	 * 		Match status.
 	 */
-	protected void onMatchResult(TreeItem<T> child, boolean matched) {
+	protected void onMatchResult(@Nonnull TreeItem<T> child, boolean matched) {
 		// Expand items that match, hide those that do not.
 		if (matched) {
 			TreeItems.expandParents(this);
@@ -93,7 +101,7 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	 * 		Children list.
 	 */
 	@SuppressWarnings("unchecked")
-	private void setUnderlyingChildren(ObservableList<TreeItem<T>> list) {
+	private void setUnderlyingChildren(@Nonnull ObservableList<TreeItem<T>> list) {
 		Field childrenListenerField = CHILDREN_LISTENER_FIELD;
 		if (childrenListenerField == null) {
 			// See static block below.
@@ -117,7 +125,7 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	 * 		Child item to add.
 	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public void addAndSortChild(TreeItem<T> item) {
+	public void addAndSortChild(@Nonnull TreeItem<T> item) {
 		synchronized (sourceChildren) {
 			int index = Collections.binarySearch((List) getChildren(), item);
 			if (index < 0)
@@ -135,15 +143,27 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	 * @return {@code true} when child removed.
 	 * {@code false} when there was no item removed.
 	 */
-	public boolean removeSourceChild(TreeItem<T> child) {
+	public boolean removeSourceChild(@Nonnull TreeItem<T> child) {
 		synchronized (sourceChildren) {
 			return sourceChildren.remove(child);
 		}
 	}
 
 	/**
+	 * @param comparator
+	 * 		Comparator to run to handle child sorting.
+	 */
+	@SuppressWarnings("unchecked")
+	public <I extends TreeItem<T>> void sortChildren(@Nonnull Comparator<I> comparator) {
+		synchronized (sourceChildren) {
+			sourceChildren.sort((Comparator<TreeItem<T>>) comparator);
+		}
+	}
+
+	/**
 	 * @return Predicate property.
 	 */
+	@Nonnull
 	public ObjectProperty<Predicate<TreeItem<T>>> predicateProperty() {
 		return predicate;
 	}

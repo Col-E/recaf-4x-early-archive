@@ -129,6 +129,7 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	 * @return Inserted node.
 	 */
 	@Nonnull
+	@SuppressWarnings("deprecation")
 	public static WorkspaceTreeNode getOrInsertIntoTree(WorkspaceTreeNode node, PathNode<?> path) {
 		// Edge case handling for directory nodes.
 		if (path instanceof DirectoryPathNode directoryPath) {
