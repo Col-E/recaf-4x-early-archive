@@ -25,9 +25,12 @@
 
 /* Clearly separates filter from the workspace tree */
 .workspace-filter-pane {
-    -fx-padding: 6px 5px 5px 5px;
-    -fx-background-color: -color-border-muted, -color-bg-inset;
-    -fx-background-insets: 0, 1px 0 0 0;
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 1px 0 0 0;
+}
+.workspace-filter-text {
+    -fx-border-width: 0;
+    -fx-background-insets: 0;
 }
 
 /* Applies inset BG color */

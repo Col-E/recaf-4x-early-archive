@@ -26,6 +26,7 @@ public class WorkspaceTreeFilterPane extends BorderPane {
 		textField.promptTextProperty().bind(Lang.getBinding("workspace.filter-prompt"));
 		setCenter(textField);
 		getStyleClass().add("workspace-filter-pane");
+		textField.getStyleClass().add("workspace-filter-text");
 
 		// TODO:
 		//  - option to hide supporting resources
