@@ -36,6 +36,15 @@ public class DecompilerManager implements Service {
 	private final ObservableObject<JvmDecompiler> targetJvmDecompiler;
 	private final ObservableObject<AndroidDecompiler> targetAndroidDecompiler;
 
+	// TODO: Maintain a list of JvmInputFilters
+	//  - Add to existing decompilers
+	//  - Add to anything that gets added later
+	//  - Support removal
+	//  We can have a UI module that maps a Config<Boolean> to including filters such as:
+	//  - illegal signature stripping
+	//  - bogus annotation stripping
+	//  while maintaining the content in the actual class.
+
 	/**
 	 * @param config
 	 * 		Config to pull values from.
