@@ -11,6 +11,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.scene.Node;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
@@ -32,6 +33,7 @@ import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.cell.ContextSource;
 import software.coley.recaf.ui.control.BoundMultiToggleIcon;
 import software.coley.recaf.ui.control.BoundToggleIcon;
+import software.coley.recaf.ui.control.tree.TreeFiltering;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeNode;
 import software.coley.recaf.ui.navigation.Navigable;
@@ -161,19 +163,7 @@ public class FieldsAndMethodsPane extends BorderPane implements ContextSource, U
 		filter.promptTextProperty().bind(Lang.getBinding("fieldsandmethods.filter.prompt"));
 		filter.getStyleClass().add("filter-field");
 		filter.setMaxWidth(Integer.MAX_VALUE);
-		NodeEvents.addKeyPressHandler(filter, e -> {
-			if (e.getCode() == KeyCode.ESCAPE) {
-				filter.clear();
-			}
-		});
-		NodeEvents.addKeyPressHandler(tree, e -> {
-			String text = e.getText();
-			if (text != null && !text.isEmpty()) {
-				filter.requestFocus();
-			} else if (e.getCode() == KeyCode.ESCAPE) {
-				filter.clear();
-			}
-		});
+		TreeFiltering.install(filter, tree);
 		nameFilter.bind(filter.textProperty());
 		filter.textProperty().addListener((observable, oldValue, newValue) -> {
 			refreshTreeFilter();

@@ -16,12 +16,13 @@ import software.coley.recaf.util.Lang;
  * @author Matt Coley
  */
 public class WorkspaceTreeFilterPane extends BorderPane {
+	private final TextField textField = new TextField();
+
 	/**
 	 * @param tree
 	 * 		Tree to filter.
 	 */
 	public WorkspaceTreeFilterPane(@Nonnull WorkspaceTree tree) {
-		TextField textField = new TextField();
 		textField.promptTextProperty().bind(Lang.getBinding("workspace.filter-prompt"));
 		setCenter(textField);
 		getStyleClass().add("workspace-filter-pane");
@@ -33,10 +34,10 @@ public class WorkspaceTreeFilterPane extends BorderPane {
 		// Setup tree item predicate property on FX thread.
 		// The root is assigned on the FX thread, it won't be available if we call it immediately.
 		FxThreadUtil.run(() -> {
-			WorkspaceTreeNode root = (WorkspaceTreeNode) tree.getRoot();
 			// We're not binding from the root's property since that will trigger immediately.
 			// That will force-expand the entire workspace, which we do not want to do.
 			textField.textProperty().addListener((ob, old, cur) -> {
+				WorkspaceTreeNode root = (WorkspaceTreeNode) tree.getRoot();
 				root.predicateProperty().set(item -> {
 					String path;
 					PathNode<?> node = item.getValue();
@@ -53,5 +54,13 @@ public class WorkspaceTreeFilterPane extends BorderPane {
 				});
 			});
 		});
+	}
+
+	/**
+	 * @return Text field for filtering by path names.
+	 */
+	@Nonnull
+	public TextField getTextField() {
+		return textField;
 	}
 }

@@ -10,6 +10,7 @@ import javafx.scene.layout.Region;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.ui.config.WorkspaceExplorerConfig;
+import software.coley.recaf.ui.control.tree.TreeFiltering;
 import software.coley.recaf.ui.control.tree.WorkspaceTree;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeFilterPane;
 import software.coley.recaf.ui.dnd.DragAndDrop;
@@ -51,15 +52,20 @@ public class WorkspaceExplorerPane extends BorderPane implements FileDropListene
 		this.workspaceTree = workspaceTree;
 		this.workspace = workspace;
 		this.config = config;
+
+		// Add filter pane, and hook up key-events so the user can easily
+		// navigate between the tree and the filter.
+		WorkspaceTreeFilterPane workspaceTreeFilterPane = new WorkspaceTreeFilterPane(workspaceTree);
+		TreeFiltering.install(workspaceTreeFilterPane.getTextField(), workspaceTree);
+
+		// Initialize drag-drop support.
+		DragAndDrop.installFileSupport(this, this);
+
+		// Layout
 		setCenter(workspaceTree);
 		if (workspace != null)
 			workspaceTree.createWorkspaceRoot(workspace);
-		WorkspaceTreeFilterPane workspaceTreeFilterPane = new WorkspaceTreeFilterPane(workspaceTree);
 		setBottom(workspaceTreeFilterPane);
-		DragAndDrop.installFileSupport(this, this);
-
-		// TODO: When user starts typing in tree, goto filter and begin typing
-		// TODO: In filter, when user presses arrow keys, goto tree
 	}
 
 	/**
