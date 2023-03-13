@@ -226,7 +226,7 @@ java.decompiling=Klasse wird dekompiliert...
 java.unparsable=JavaParser konnte die Quelle nicht interpretieren, Kontextaktionen sind nur auf dem "Felder und Methoden"-Tab verfügbar
 
 ## Outline
-outline.title=Felder und Methoden
+fieldsandmethods.title=Felder und Methoden
 
 ## Hierarchy
 hierarchy.title=Hieararchie
@@ -328,16 +328,16 @@ conf.editor.general.filemode=Dateimodus
 conf.editor.general.errorindicatorpos=Fehlerindikator-Position
 conf.editor.assoc=Dateiendungs-Assoziationen
 conf.editor.assoc.fileextassociations=Dateiendungs-Assoziationen
-conf.editor.outline=Klassen-Outline
-conf.editor.outline.showoutlinedtypes=Zeige Outline-Typen
-conf.editor.outline.showoutlinedsynths=Synthetische (vom Compiler generierte) Typen anzeigen
-conf.editor.outline.showoutlinedvisibility=Nach Member-Sichtbarkeit filtern
-conf.editor.outline.showoutlinedmembertype=Nach Member-Typ filtern
-conf.editor.outline.outlinedvisibilityiconposition=Sichtbarkeitssymbol-Position
-conf.editor.outline.sortalphabetically=Alphabetisch sortieren
-conf.editor.outline.sortbyvisibility=Nach Sichbarkeit sortieren
-conf.editor.outline.filter.casesensitive=Groß- und Kleinschreibung beachten
-conf.editor.outline.filter.prompt=Filter: Feld-/Methodename...
+fieldsandmethods.title=Klassen-Outline
+fieldsandmethods.showoutlinedtypes=Zeige Outline-Typen
+fieldsandmethods.showoutlinedsynths=Synthetische (vom Compiler generierte) Typen anzeigen
+fieldsandmethods.showoutlinedvisibility=Nach Member-Sichtbarkeit filtern
+fieldsandmethods.showoutlinedmembertype=Nach Member-Typ filtern
+fieldsandmethods.outlinedvisibilityiconposition=Sichtbarkeitssymbol-Position
+fieldsandmethods.sortalphabetically=Alphabetisch sortieren
+fieldsandmethods.sortbyvisibility=Nach Sichbarkeit sortieren
+fieldsandmethods.filter.casesensitive=Groß- und Kleinschreibung beachten
+fieldsandmethods.filter.prompt=Filter: Feld-/Methodename...
 conf.editor.text=Texteditor
 conf.editor.text.showbracketfolds=Zeige Einzugsfächer für Klammern
 conf.editor.hex=Hex-Editor

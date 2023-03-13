@@ -224,7 +224,7 @@ java.decompiling=反编译类中...
 java.unparsable=JavaParser failed to interpret source, context actions only available 'Fields & Methods' tab
 
 ## Outline
-outline.title=字段&方法
+fieldsandmethods.title=字段&方法
 
 ## Hierarchy
 hierarchy.title=继承
@@ -323,15 +323,15 @@ conf.editor.general.filemode=默认文件视图
 conf.editor.general.errorindicatorpos=错误指示器位置
 conf.editor.assoc=文件扩展名关联
 conf.editor.assoc.fileextassociations=关联
-conf.editor.outline=类概述
-conf.editor.outline.showoutlinedtypes=显示成员类型
-conf.editor.outline.showoutlinedsynths=显示synthetic成员(通常由编译器自动生成)
-conf.editor.outline.showoutlinedvisibility=按成员可见性筛选
-conf.editor.outline.showoutlinedmembertype=按成员类型筛选
-conf.editor.outline.outlinedvisibilityiconposition=可见性图标位置
-conf.editor.outline.sortalphabetically=按字母顺序排序
-conf.editor.outline.sortbyvisibility=按可见性排序
-conf.editor.outline.filter.casesensitive=大小写敏感
+fieldsandmethods.title=类概述
+fieldsandmethods.showoutlinedtypes=显示成员类型
+fieldsandmethods.showoutlinedsynths=显示synthetic成员(通常由编译器自动生成)
+fieldsandmethods.showoutlinedvisibility=按成员可见性筛选
+fieldsandmethods.showoutlinedmembertype=按成员类型筛选
+fieldsandmethods.outlinedvisibilityiconposition=可见性图标位置
+fieldsandmethods.sortalphabetically=按字母顺序排序
+fieldsandmethods.sortbyvisibility=按可见性排序
+fieldsandmethods.filter.casesensitive=大小写敏感
 conf.editor.text=文本编辑器
 conf.editor.text.showbracketfolds=显示括号折叠
 conf.editor.hex=十六进制编辑器

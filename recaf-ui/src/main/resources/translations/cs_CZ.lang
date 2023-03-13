@@ -223,7 +223,7 @@ java.decompiling=Dekompiluji třídu...
 java.unparsable=JavaParser nedokázal interpretovat zdroj, kontextové akce jsou dostupné pouze na kartě 'Pole a metody'
 
 ## Outline
-outline.title=Pole a metody
+fieldsandmethods.title=Pole a metody
 
 ## Hierarchy
 hierarchy.title=Rodokmen
@@ -320,9 +320,9 @@ conf.editor.general.filemode=Výchozí zobrazení souboru
 conf.editor.general.errorindicatorpos=Poloha chybového indikátoru
 conf.editor.assoc=Přidružení přípon souborů
 conf.editor.assoc.fileextassociations=Přidružení
-conf.editor.outline=Osnova třídy
-conf.editor.outline.showoutlinedtypes=Zobrazit typy členů
-conf.editor.outline.showoutlinedsynths=Zobrazit syntetické (kompilátorem generované) členy
+fieldsandmethods.title=Osnova třídy
+fieldsandmethods.showoutlinedtypes=Zobrazit typy členů
+fieldsandmethods.showoutlinedsynths=Zobrazit syntetické (kompilátorem generované) členy
 conf.editor.text=Textový editor
 conf.editor.text.showbracketfolds=Zobrazit záhyby závorek
 conf.editor.hex=Hex editor

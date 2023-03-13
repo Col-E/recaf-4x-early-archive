@@ -259,8 +259,17 @@ modifications.title=Modifications
 java.decompiling=Decompiling class...
 java.unparsable=JavaParser failed to interpret source, context actions only available 'Fields & Methods' tab
 
-## Outline
-outline.title=Fields & methods
+## Fields and methods
+fieldsandmethods.title=Fields & methods
+fieldsandmethods.showoutlinedtypes=Show member types
+fieldsandmethods.showoutlinedsynths=Show synthetic (compiler-generated) members
+fieldsandmethods.showoutlinedvisibility=Filter by member visibility
+fieldsandmethods.showoutlinedmembertype=Filter by member type
+fieldsandmethods.outlinedvisibilityiconposition=Visibility icon position
+fieldsandmethods.sortalphabetically=Sort alphabetically
+fieldsandmethods.sortbyvisibility=Sort by visibility
+fieldsandmethods.filter.casesensitive=Case sensitive
+fieldsandmethods.filter.prompt=Filter: Field/Method name...
 
 ## Hierarchy
 hierarchy.title=Inheritance
@@ -496,16 +505,6 @@ conf.editor.general.filemode=Default file view
 conf.editor.general.errorindicatorpos=Error indicator position
 conf.editor.assoc=File extension associations
 conf.editor.assoc.fileextassociations=Associations
-conf.editor.outline=Class outline
-conf.editor.outline.showoutlinedtypes=Show member types
-conf.editor.outline.showoutlinedsynths=Show synthetic (compiler-generated) members
-conf.editor.outline.showoutlinedvisibility=Filter by member visibility
-conf.editor.outline.showoutlinedmembertype=Filter by member type
-conf.editor.outline.outlinedvisibilityiconposition=Visibility icon position
-conf.editor.outline.sortalphabetically=Sort alphabetically
-conf.editor.outline.sortbyvisibility=Sort by visibility
-conf.editor.outline.filter.casesensitive=Case sensitive
-conf.editor.outline.filter.prompt=Filter: Field/Method name...
 conf.editor.text=Text editor
 conf.editor.text.showbracketfolds=Show bracket folds
 conf.editor.hex=Hex editor
