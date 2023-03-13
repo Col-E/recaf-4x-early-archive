@@ -52,10 +52,12 @@ public class TreeFiltering {
 		});
 		NodeEvents.addKeyPressHandler(tree, e -> {
 			String text = e.getText();
-			if (text != null && !text.isEmpty()) {
-				filter.requestFocus();
-			} else if (e.getCode() == KeyCode.ESCAPE) {
+			if (e.getCode() == KeyCode.ESCAPE) {
 				filter.clear();
+			} else if (e.getCode() == KeyCode.ENTER) {
+				// no-op, allow tree may have key-bind action for 'enter'
+			} else if (text != null && !text.isEmpty()) {
+				filter.requestFocus();
 			}
 		});
 	}

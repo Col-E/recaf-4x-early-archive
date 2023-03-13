@@ -63,9 +63,11 @@ public class WorkspaceExplorerPane extends BorderPane implements FileDropListene
 
 		// Layout
 		setCenter(workspaceTree);
+		setBottom(workspaceTreeFilterPane);
+
+		// Populate tree
 		if (workspace != null)
 			workspaceTree.createWorkspaceRoot(workspace);
-		setBottom(workspaceTreeFilterPane);
 	}
 
 	/**
