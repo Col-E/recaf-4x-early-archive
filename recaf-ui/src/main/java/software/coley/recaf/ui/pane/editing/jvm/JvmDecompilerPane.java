@@ -82,7 +82,7 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 				// TODO: Run on background thread
 				String infoName = info.getName();
 				JavacArgumentsBuilder builder = new JavacArgumentsBuilder()
-						.withVersionTarget(JavaVersion.adaptFromClassFileVersion(info.getVersion()))
+						.withVersionTarget(JavaVersion.adaptFromClassFileVersion(info.getVersion())) // TODO: configurable
 						.withClassSource(editor.getText())
 						.withClassName(infoName);
 				CompilerResult result = javac.compile(builder.build(), workspace, null);
@@ -188,6 +188,9 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 							editor.setText("/*\nDecompile failed, but no trace was attached:\n*/");
 					}
 				}
+
+				// Prevent undo from reverting to empty state.
+				editor.getCodeArea().getUndoManager().forgetHistory();
 			}, FxThreadUtil.executor());
 		}
 	}
