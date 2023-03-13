@@ -12,7 +12,10 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
-import software.coley.recaf.services.compile.*;
+import software.coley.recaf.services.compile.CompileMap;
+import software.coley.recaf.services.compile.CompilerDiagnostic;
+import software.coley.recaf.services.compile.JavacArgumentsBuilder;
+import software.coley.recaf.services.compile.JavacCompiler;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
@@ -29,12 +32,15 @@ import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.JavaVersion;
 import software.coley.recaf.util.StringUtil;
+import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -45,6 +51,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Dependent
 public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable {
 	private static final Logger logger = Logging.get(JvmDecompilerPane.class);
+	private static final ExecutorService compilePool = ThreadPoolFactory.newSingleThreadExecutor("recompile");
 	private final AtomicBoolean updateLock = new AtomicBoolean();
 	private final ProblemTracking problemTracking = new ProblemTracking();
 	private final DecompilerManager decompilerManager;
@@ -79,75 +86,77 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 				problemTracking.removeByPhase(ProblemPhase.BUILD);
 
 				// Invoke compiler with data.
-				// TODO: Run on background thread
 				String infoName = info.getName();
-				JavacArgumentsBuilder builder = new JavacArgumentsBuilder()
-						.withVersionTarget(JavaVersion.adaptFromClassFileVersion(info.getVersion())) // TODO: configurable
-						.withClassSource(editor.getText())
-						.withClassName(infoName);
-				CompilerResult result = javac.compile(builder.build(), workspace, null);
-
-				// Handle results.
-				//  - Success --> Update content in the containing bundle
-				//  - Failure --> Show error + diagnostics to user
-				if (result.wasSuccess()) {
-					// Renaming is not allowed. Tell the user to use mapping operations.
-					// This should usually be caught by javac, but we're double-checking here.
-					// We *could* have some hacky code to work around the rename being done outside the dedicated API,
-					// but it would be ugly. Find the new name for the class and any inners, copy over properties from
-					// the old names, apply mapping operations to patch broken references, etc.
-					CompileMap compilations = result.getCompilations();
-					boolean wasClassRenamed = !compilations.containsKey(infoName) || info.getInnerClasses().stream()
-							.anyMatch(inner -> !compilations.containsKey(inner.getInnerClassName()));
-					if (wasClassRenamed) {
-						logger.warn("Please only rename classes via mapping operations.");
-						Animations.animateWarn(this, 1000);
-						return;
-					}
-
-					// Compilation map has contents, update the workspace.
-					Animations.animateSuccess(this, 1000);
-					updateLock.set(true);
-					compilations.forEach((name, bytecode) -> {
-						JvmClassInfo newInfo;
-						if (infoName.equals(name)) {
-							// Adapt from existing.
-							newInfo = info.toBuilder()
-									.adaptFrom(new ClassReader(bytecode))
-									.build();
-						} else {
-							// Handle inner classes.
-							JvmClassInfo originalClass = bundle.get(name);
-							if (originalClass != null) {
-								// Adapt from existing.
-								newInfo = originalClass
-										.toBuilder()
-										.adaptFrom(new ClassReader(bytecode))
-										.build();
-								bundle.put(newInfo);
-							} else {
-								// Class is new.
-								newInfo = new JvmClassInfoBuilder(new ClassReader(bytecode)).build();
-							}
+				CompletableFuture.supplyAsync(() -> {
+					// TODO: allow user to manually change version target (should config be local? global?)
+					JavacArgumentsBuilder builder = new JavacArgumentsBuilder()
+							.withVersionTarget(JavaVersion.adaptFromClassFileVersion(info.getVersion()))
+							.withClassSource(editor.getText())
+							.withClassName(infoName);
+					return javac.compile(builder.build(), workspace, null);
+				}, compilePool).whenCompleteAsync((result, throwable) -> {
+					// Handle results.
+					//  - Success --> Update content in the containing bundle
+					//  - Failure --> Show error + diagnostics to user
+					if (result != null && result.wasSuccess()) {
+						// Renaming is not allowed. Tell the user to use mapping operations.
+						// This should usually be caught by javac, but we're double-checking here.
+						// We *could* have some hacky code to work around the rename being done outside the dedicated API,
+						// but it would be ugly. Find the new name for the class and any inners, copy over properties from
+						// the old names, apply mapping operations to patch broken references, etc.
+						CompileMap compilations = result.getCompilations();
+						boolean wasClassRenamed = !compilations.containsKey(infoName) || info.getInnerClasses().stream()
+								.anyMatch(inner -> !compilations.containsKey(inner.getInnerClassName()));
+						if (wasClassRenamed) {
+							logger.warn("Please only rename classes via mapping operations.");
+							Animations.animateWarn(this, 1000);
+							return;
 						}
 
-						// Update the class in the bundle.
-						bundle.put(newInfo);
-					});
-					updateLock.set(false);
-				} else {
-					Throwable compileException = result.getException();
-					if (compileException != null) {
-						logger.error("Compilation encountered an error on class '{}'", infoName, compileException);
-					} else {
-						for (CompilerDiagnostic diagnostic : result.getDiagnostics())
-							problemTracking.add(Problem.fromDiagnostic(diagnostic));
-					}
-					Animations.animateFailure(this, 1000);
-				}
+						// Compilation map has contents, update the workspace.
+						Animations.animateSuccess(this, 1000);
+						updateLock.set(true);
+						compilations.forEach((name, bytecode) -> {
+							JvmClassInfo newInfo;
+							if (infoName.equals(name)) {
+								// Adapt from existing.
+								newInfo = info.toBuilder()
+										.adaptFrom(new ClassReader(bytecode))
+										.build();
+							} else {
+								// Handle inner classes.
+								JvmClassInfo originalClass = bundle.get(name);
+								if (originalClass != null) {
+									// Adapt from existing.
+									newInfo = originalClass
+											.toBuilder()
+											.adaptFrom(new ClassReader(bytecode))
+											.build();
+									bundle.put(newInfo);
+								} else {
+									// Class is new.
+									newInfo = new JvmClassInfoBuilder(new ClassReader(bytecode)).build();
+								}
+							}
 
-				// Redraw paragraph graphics to update things like in-line problem graphics.
-				editor.redrawParagraphGraphics();
+							// Update the class in the bundle.
+							bundle.put(newInfo);
+						});
+						updateLock.set(false);
+					} else {
+						// Handle compile-result failure, or uncaught thrown exception.
+						if (result != null) {
+							for (CompilerDiagnostic diagnostic : result.getDiagnostics())
+								problemTracking.add(Problem.fromDiagnostic(diagnostic));
+						} else {
+							logger.error("Compilation encountered an error on class '{}'", infoName, throwable);
+						}
+						Animations.animateFailure(this, 1000);
+					}
+
+					// Redraw paragraph graphics to update things like in-line problem graphics.
+					editor.redrawParagraphGraphics();
+				}, FxThreadUtil.executor());
 			}
 		});
 	}
