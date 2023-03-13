@@ -24,6 +24,16 @@ public class ActionButton extends Button {
 	}
 
 	/**
+	 * @param icon
+	 * 		Button display icon.
+	 * @param action
+	 * 		Action to run on-click.
+	 */
+	public ActionButton(Ikon icon, Runnable action) {
+		this(new FontIconView(icon), action);
+	}
+
+	/**
 	 * @param graphic
 	 * 		Button display graphic.
 	 * @param action

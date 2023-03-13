@@ -13,6 +13,7 @@ import software.coley.recaf.ui.control.richtext.EditorComponent;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * Tracking for problems to display in an {@link Editor}.
@@ -21,6 +22,7 @@ import java.util.function.Consumer;
  */
 public class ProblemTracking implements EditorComponent, Consumer<PlainTextChange> {
 	private static final DebuggingLogger logger = Logging.get(ProblemTracking.class);
+	private final List<ProblemInvalidationListener> listeners = new ArrayList<>();
 	private final NavigableMap<Integer, Problem> problems = new TreeMap<>();
 	private Editor editor;
 
@@ -41,6 +43,7 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 */
 	public void add(@Nonnull Problem problem) {
 		problems.put(problem.getLine(), problem);
+		listeners.forEach(ProblemInvalidationListener::onProblemInvalidation);
 	}
 
 	/**
@@ -51,7 +54,10 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 * {@code false} when the problem instance was not contained in the problems map.
 	 */
 	public boolean removeByInstance(@Nonnull Problem problem) {
-		return problems.entrySet().removeIf(p -> p.getValue() == problem);
+		boolean updated = problems.entrySet().removeIf(p -> p.getValue() == problem);
+		if (updated)
+			listeners.forEach(ProblemInvalidationListener::onProblemInvalidation);
+		return updated;
 	}
 
 	/**
@@ -62,7 +68,10 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 * {@code false} when there was no problem at the line.
 	 */
 	public boolean removeByLine(int line) {
-		return problems.remove(line) != null;
+		boolean updated = problems.remove(line) != null;
+		if (updated)
+			listeners.forEach(ProblemInvalidationListener::onProblemInvalidation);
+		return updated;
 	}
 
 	/**
@@ -72,7 +81,10 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 * @return {@code true} when one or more problems matching the phase were removed.
 	 */
 	public boolean removeByPhase(@Nonnull ProblemPhase phase) {
-		return problems.entrySet().removeIf(e -> e.getValue().getPhase() == phase);
+		boolean updated = problems.entrySet().removeIf(e -> e.getValue().getPhase() == phase);
+		if (updated)
+			listeners.forEach(ProblemInvalidationListener::onProblemInvalidation);
+		return updated;
 	}
 
 	/**
@@ -80,6 +92,39 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 */
 	public void clear() {
 		problems.clear();
+		listeners.forEach(ProblemInvalidationListener::onProblemInvalidation);
+	}
+
+	/**
+	 * @param listener
+	 * 		Listener to add.
+	 */
+	public void addListener(ProblemInvalidationListener listener) {
+		listeners.add(listener);
+	}
+
+	/**
+	 * @param listener
+	 * 		Listener to remove.
+	 *
+	 * @return {@code true} when listener was removed.
+	 * {@code false} when listener was not present to begin with.
+	 */
+	public boolean removeListener(ProblemInvalidationListener listener) {
+		return listeners.remove(listener);
+	}
+
+	/**
+	 * @param filter
+	 * 		Filter to pass problems through.
+	 *
+	 * @return List of problems matching the filter.
+	 */
+	@Nonnull
+	public List<Problem> getProblems(Predicate<Problem> filter) {
+		return getProblems().values().stream()
+				.filter(filter)
+				.toList();
 	}
 
 	/**

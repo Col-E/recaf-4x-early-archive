@@ -21,6 +21,7 @@ import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.syntax.StyleResult;
 import software.coley.recaf.ui.control.richtext.syntax.SyntaxHighlighter;
 import software.coley.recaf.ui.control.richtext.syntax.SyntaxUtil;
+import software.coley.recaf.ui.pane.editing.ProblemOverlay;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.IntRange;
 import software.coley.recaf.util.ReflectUtil;
@@ -56,6 +57,7 @@ public class Editor extends StackPane {
 	private SyntaxHighlighter syntaxHighlighter;
 	private SelectedBracketTracking selectedBracketTracking;
 	private ProblemTracking problemTracking;
+	private ProblemOverlay problemOverlay;
 
 	/**
 	 * New editor instance.
@@ -270,11 +272,16 @@ public class Editor extends StackPane {
 		ProblemTracking previousProblemTracking = this.problemTracking;
 		if (previousProblemTracking != null)
 			previousProblemTracking.uninstall(this);
+		if (problemOverlay != null)
+			problemOverlay = null;
 
 		// Set and install new instance.
 		this.problemTracking = problemTracking;
-		if (problemTracking != null)
+		if (problemTracking != null) {
 			problemTracking.install(this);
+			problemOverlay = new ProblemOverlay();
+			problemOverlay.install(this);
+		}
 	}
 
 	/**
