@@ -51,3 +51,20 @@
     -fx-background-color: -color-border-muted, -color-bg-inset;
     -fx-background-insets: 0, 0 0 1px 0;
 }
+
+/* Custom tab-pane for display in editor views */
+.side-tab-pane {
+    -fx-background-color: -color-base-2;
+    -fx-border-color: -color-accent-3;
+    -fx-border-width: 0 0 0 1px;
+}
+.side-tab-content {
+    -fx-background-color: -color-base-2;
+    -fx-border-color: -color-accent-3;
+    -fx-border-width: 0 0 0 1px;
+}
+.side-tab-grip {
+    -fx-background-color: -color-bg-inset;
+    -fx-border-color: -color-accent-3;
+    -fx-border-width: 0 0 0 1px;
+}
