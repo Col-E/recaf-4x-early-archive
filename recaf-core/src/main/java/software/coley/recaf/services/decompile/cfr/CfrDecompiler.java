@@ -62,7 +62,8 @@ public class CfrDecompiler extends AbstractJvmDecompiler {
 		// CFR emits a 'Decompiled with CFR' header, which is annoying, so we'll remove that.
 		int commentStart = decompile.indexOf("/*\n");
 		int commentEnd = decompile.indexOf(" */\n");
-		decompile = decompile.substring(0, commentStart) + decompile.substring(commentEnd + 4);
+		if (commentStart >= 0 && commentEnd > commentStart)
+			decompile = decompile.substring(0, commentStart) + decompile.substring(commentEnd + 4);
 		return decompile;
 	}
 
