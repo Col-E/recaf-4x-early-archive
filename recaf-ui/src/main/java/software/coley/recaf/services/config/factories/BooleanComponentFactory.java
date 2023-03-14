@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.config.factories;
+package software.coley.recaf.services.config.factories;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -7,7 +7,7 @@ import javafx.scene.control.CheckBox;
 import software.coley.observables.AbstractObservable;
 import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigValue;
-import software.coley.recaf.ui.config.TypedConfigComponentFactory;
+import software.coley.recaf.services.config.TypedConfigComponentFactory;
 import software.coley.recaf.util.Lang;
 
 /**

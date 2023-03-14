@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.action;
+package software.coley.recaf.services.navigation;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -18,19 +18,18 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.path.PathNode;
+import software.coley.recaf.path.WorkspacePathNode;
+import software.coley.recaf.services.Service;
 import software.coley.recaf.services.cell.IconProviderService;
 import software.coley.recaf.services.cell.TextProviderService;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingRegion;
 import software.coley.recaf.ui.docking.DockingTab;
-import software.coley.recaf.ui.navigation.Navigable;
-import software.coley.recaf.ui.navigation.NavigationManager;
 import software.coley.recaf.ui.pane.editing.AndroidClassPane;
 import software.coley.recaf.ui.pane.editing.JvmClassEditorType;
 import software.coley.recaf.ui.pane.editing.JvmClassPane;
-import software.coley.recaf.path.ClassPathNode;
-import software.coley.recaf.path.PathNode;
-import software.coley.recaf.path.WorkspacePathNode;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.Bundle;
@@ -49,7 +48,8 @@ import static software.coley.recaf.util.Menus.*;
  * @author Matt Coley
  */
 @ApplicationScoped
-public class Actions {
+public class Actions implements Service {
+	public static final String ID = "actions";
 	private static final Logger logger = Logging.get(Actions.class);
 	private final NavigationManager navigationManager;
 	private final DockingManager dockingManager;
@@ -57,14 +57,17 @@ public class Actions {
 	private final IconProviderService iconService;
 	private final Instance<JvmClassPane> jvmPaneProvider;
 	private final Instance<AndroidClassPane> androidPaneProvider;
+	private final ActionsConfig config;
 
 	@Inject
-	public Actions(@Nonnull NavigationManager navigationManager,
+	public Actions(@Nonnull ActionsConfig config,
+				   @Nonnull NavigationManager navigationManager,
 				   @Nonnull DockingManager dockingManager,
 				   @Nonnull TextProviderService textService,
 				   @Nonnull IconProviderService iconService,
 				   @Nonnull Instance<JvmClassPane> jvmPaneProvider,
 				   @Nonnull Instance<AndroidClassPane> androidPaneProvider) {
+		this.config = config;
 		this.navigationManager = navigationManager;
 		this.dockingManager = dockingManager;
 		this.textService = textService;
@@ -331,5 +334,17 @@ public class Actions {
 				.child(bundle)
 				.child(info.getPackageName())
 				.child(info);
+	}
+
+	@Nonnull
+	@Override
+	public String getServiceId() {
+		return ID;
+	}
+
+	@Nonnull
+	@Override
+	public ActionsConfig getServiceConfig() {
+		return config;
 	}
 }

@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.navigation;
+package software.coley.recaf.services.navigation;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -13,6 +13,7 @@ import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.*;
+import software.coley.recaf.services.Service;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingTab;
 import software.coley.recaf.workspace.WorkspaceManager;
@@ -42,15 +43,20 @@ import java.util.List;
  */
 @EagerInitialization(InitializationStage.AFTER_UI_INIT)
 @ApplicationScoped
-public class NavigationManager implements Navigable {
+public class NavigationManager implements Navigable, Service {
+	public static final String ID = "navigation";
 	private final List<Navigable> children = new ArrayList<>();
 	private final Forwarding forwarding = new Forwarding();
 	private final NavigableSpy spy = new NavigableSpy();
+	private final NavigationManagerConfig config;
 	private PathNode<?> path = new DummyInitialNode();
 
 	@Inject
-	public NavigationManager(@Nonnull DockingManager dockingManager,
+	public NavigationManager(@Nonnull NavigationManagerConfig config,
+							 @Nonnull DockingManager dockingManager,
 							 @Nonnull WorkspaceManager workspaceManager) {
+		this.config = config;
+
 		// Track what navigable content is available.
 		dockingManager.addTabCreationListener((parent, tab) -> {
 			ObjectProperty<Node> contentProperty = tab.contentProperty();
@@ -118,6 +124,18 @@ public class NavigationManager implements Navigable {
 		// no-op
 	}
 
+	@Nonnull
+	@Override
+	public String getServiceId() {
+		return ID;
+	}
+
+	@Nonnull
+	@Override
+	public NavigationManagerConfig getServiceConfig() {
+		return config;
+	}
+
 	/**
 	 * Listener to update {@link #children}.
 	 */
@@ -167,12 +185,12 @@ public class NavigationManager implements Navigable {
 		}
 
 		@Override
-		public void onNewClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo cls) {
+		public void onNewClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo cls) {
 			// no-op
 		}
 
 		@Override
-		public void onUpdateClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo oldCls, AndroidClassInfo newCls) {
+		public void onUpdateClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo oldCls, @Nonnull AndroidClassInfo newCls) {
 			BundlePathNode bundlePath = workspacePath.child(resource).child(bundle);
 			ClassPathNode path = bundlePath.child(oldCls.getPackageName()).child(oldCls);
 			for (Navigable navigable : getNavigableChildrenByPath(path))
@@ -181,7 +199,7 @@ public class NavigationManager implements Navigable {
 		}
 
 		@Override
-		public void onRemoveClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo cls) {
+		public void onRemoveClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo cls) {
 			ClassPathNode path = workspacePath.child(resource).child(bundle).child(cls.getPackageName()).child(cls);
 			for (Navigable navigable : getNavigableChildrenByPath(path))
 				navigable.disable();

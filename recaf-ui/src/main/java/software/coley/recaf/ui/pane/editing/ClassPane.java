@@ -9,8 +9,8 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
-import software.coley.recaf.ui.navigation.Navigable;
-import software.coley.recaf.ui.navigation.UpdatableNavigable;
+import software.coley.recaf.services.navigation.Navigable;
+import software.coley.recaf.services.navigation.UpdatableNavigable;
 
 import java.util.ArrayList;
 import java.util.Collection;

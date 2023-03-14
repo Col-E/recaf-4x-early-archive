@@ -200,13 +200,13 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 	}
 
 	@Override
-	public void onNewClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo cls) {
+	public void onNewClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo cls) {
 		if (isTargetResource(resource))
 			root.getOrCreateNodeByPath(rootPath.child(resource).child(bundle).child(cls.getPackageName()).child(cls));
 	}
 
 	@Override
-	public void onUpdateClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo oldCls, AndroidClassInfo newCls) {
+	public void onUpdateClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo oldCls, @Nonnull AndroidClassInfo newCls) {
 		if (isTargetResource(resource)) {
 			WorkspaceTreeNode node = root.getOrCreateNodeByPath(rootPath.child(resource).child(bundle).child(oldCls.getPackageName()).child(oldCls));
 			node.setValue(rootPath.child(resource).child(bundle).child(newCls.getPackageName()).child(newCls));
@@ -214,7 +214,7 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 	}
 
 	@Override
-	public void onRemoveClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo cls) {
+	public void onRemoveClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo cls) {
 		if (isTargetResource(resource))
 			root.removeNodeByPath(rootPath.child(resource).child(bundle).child(cls.getPackageName()).child(cls));
 	}

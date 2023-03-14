@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.navigation;
+package software.coley.recaf.services.navigation;
 
 import jakarta.annotation.Nonnull;
 import javafx.scene.layout.Pane;

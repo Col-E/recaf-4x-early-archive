@@ -22,8 +22,8 @@ import javafx.scene.text.Text;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.path.PathNode;
-import software.coley.recaf.ui.navigation.Navigable;
-import software.coley.recaf.ui.navigation.UpdatableNavigable;
+import software.coley.recaf.services.navigation.Navigable;
+import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.util.NodeEvents;
 
 import java.util.Collection;

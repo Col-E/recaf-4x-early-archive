@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.navigation;
+package software.coley.recaf.services.navigation;
 
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.member.ClassMember;

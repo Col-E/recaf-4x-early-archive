@@ -49,8 +49,10 @@ public class ScriptManagerPane extends BorderPane {
 	private final WindowFactory windowFactory;
 
 	@Inject
-	public ScriptManagerPane(ScriptManagerConfig config, ScriptManager scriptManager, ScriptEngine engine,
-							 WindowFactory windowFactory) {
+	public ScriptManagerPane(@Nonnull ScriptManagerConfig config,
+							 @Nonnull ScriptManager scriptManager,
+							 @Nonnull ScriptEngine engine,
+							 @Nonnull WindowFactory windowFactory) {
 		this.windowFactory = windowFactory;
 		this.scriptManager = scriptManager;
 		this.config = config;
@@ -135,6 +137,10 @@ public class ScriptManagerPane extends BorderPane {
 		} catch (IOException ex) {
 			logger.error("Failed to show scripts directory", ex);
 		}
+	}
+
+	private class ScriptEditor extends BorderPane {
+
 	}
 
 	private class ScriptEntry extends BorderPane {

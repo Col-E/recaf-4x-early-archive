@@ -300,7 +300,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	}
 
 	@Override
-	public void onNewClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo cls) {
+	public void onNewClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo cls) {
 		populateParentToChildLookup(cls);
 	}
 
@@ -310,7 +310,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	}
 
 	@Override
-	public void onUpdateClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo oldCls, AndroidClassInfo newCls) {
+	public void onUpdateClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo oldCls, @Nonnull AndroidClassInfo newCls) {
 		onUpdateClassImpl(oldCls, newCls);
 	}
 
@@ -320,7 +320,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	}
 
 	@Override
-	public void onRemoveClass(WorkspaceResource resource, AndroidClassBundle bundle, AndroidClassInfo cls) {
+	public void onRemoveClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo cls) {
 		removeParentToChildLookup(cls);
 	}
 

@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.config;
+package software.coley.recaf.services.config;
 
 import javafx.scene.Node;
 import software.coley.recaf.config.ConfigContainer;

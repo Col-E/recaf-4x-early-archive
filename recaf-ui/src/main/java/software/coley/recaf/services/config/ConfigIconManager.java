@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.config;
+package software.coley.recaf.services.config;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
@@ -7,11 +7,13 @@ import jakarta.inject.Inject;
 import org.kordamp.ikonli.Ikon;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.config.ConfigContainer;
-import  static software.coley.recaf.config.ConfigGroups.*;
 import software.coley.recaf.config.ConfigValue;
+import software.coley.recaf.services.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static software.coley.recaf.config.ConfigGroups.*;
 
 /**
  * Manages icons to display for {@link ConfigContainer} and {@link ConfigValue} entries when displayed in the UI.
@@ -19,13 +21,17 @@ import java.util.Map;
  * @author Matt Coley
  */
 @ApplicationScoped
-public class ConfigIconManager {
+public class ConfigIconManager implements Service {
+	public static final String ID = "config-icons";
 	private final Map<String, Ikon> valueIcons = new HashMap<>();
 	private final Map<String, Ikon> containerIcons = new HashMap<>();
 	private final Map<String, Ikon> groupIcons = new HashMap<>();
+	private final ConfigIconManagerConfig config;
 
 	@Inject
-	public ConfigIconManager() {
+	public ConfigIconManager(@Nonnull ConfigIconManagerConfig config) {
+		this.config = config;
+
 		// Add defaults
 		registerGroup(SERVICE, CarbonIcons.DATA_CLASS);
 		registerGroup(SERVICE_ANALYSIS, CarbonIcons.COGNITIVE);
@@ -132,5 +138,17 @@ public class ConfigIconManager {
 	@Nullable
 	public Ikon getGroupIcon(@Nonnull String group) {
 		return groupIcons.get(group);
+	}
+
+	@Nonnull
+	@Override
+	public String getServiceId() {
+		return ID;
+	}
+
+	@Nonnull
+	@Override
+	public ConfigIconManagerConfig getServiceConfig() {
+		return config;
 	}
 }

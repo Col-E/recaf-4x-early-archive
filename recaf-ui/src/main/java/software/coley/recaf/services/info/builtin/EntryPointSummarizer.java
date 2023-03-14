@@ -12,7 +12,7 @@ import software.coley.recaf.services.cell.IconProviderService;
 import software.coley.recaf.services.cell.TextProviderService;
 import software.coley.recaf.services.info.ResourceSummarizer;
 import software.coley.recaf.services.info.SummaryConsumer;
-import software.coley.recaf.ui.action.Actions;
+import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.Workspace;

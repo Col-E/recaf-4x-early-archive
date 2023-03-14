@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.config;
+package software.coley.recaf.services.config;
 
 import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
@@ -9,6 +9,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigValue;
+import software.coley.recaf.services.Service;
 import software.coley.recaf.ui.pane.ConfigPane;
 
 import java.util.HashMap;
@@ -23,7 +24,8 @@ import java.util.Map;
  * @see ConfigComponentFactory Factory base.
  */
 @ApplicationScoped
-public class ConfigComponentManager {
+public class ConfigComponentManager implements Service {
+	public static final String ID = "config-components";
 	private final ConfigComponentFactory<Object> DEFAULT_FACTORY = new ConfigComponentFactory<>(false) {
 		@Override
 		public Node create(ConfigContainer container, ConfigValue<Object> value) {
@@ -34,10 +36,14 @@ public class ConfigComponentManager {
 	};
 	private final Map<String, ConfigComponentFactory<?>> keyToConfigurator = new HashMap<>();
 	private final Map<Class<?>, ConfigComponentFactory<?>> typeToConfigurator = new HashMap<>();
+	private final ConfigComponentManagerConfig config;
 
 	@Inject
-	public ConfigComponentManager(Instance<KeyedConfigComponentFactory<?>> keyedFactories,
-								  Instance<TypedConfigComponentFactory<?>> typedFactories) {
+	public ConfigComponentManager(@Nonnull ConfigComponentManagerConfig config,
+								  @Nonnull Instance<KeyedConfigComponentFactory<?>> keyedFactories,
+								  @Nonnull Instance<TypedConfigComponentFactory<?>> typedFactories) {
+		this.config = config;
+
 		// Register implementations
 		for (KeyedConfigComponentFactory<?> factory : keyedFactories)
 			register(factory.getId(), factory);
@@ -95,5 +101,17 @@ public class ConfigComponentManager {
 
 		// Fallback factory.
 		return (ConfigComponentFactory<T>) DEFAULT_FACTORY;
+	}
+
+	@Nonnull
+	@Override
+	public String getServiceId() {
+		return ID;
+	}
+
+	@Nonnull
+	@Override
+	public ConfigComponentManagerConfig getServiceConfig() {
+		return config;
 	}
 }

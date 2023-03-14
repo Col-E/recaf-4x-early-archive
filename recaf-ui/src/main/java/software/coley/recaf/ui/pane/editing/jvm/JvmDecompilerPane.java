@@ -26,8 +26,8 @@ import software.coley.recaf.ui.control.richtext.problem.ProblemPhase;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
-import software.coley.recaf.ui.navigation.Navigable;
-import software.coley.recaf.ui.navigation.UpdatableNavigable;
+import software.coley.recaf.services.navigation.Navigable;
+import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.JavaVersion;
@@ -70,6 +70,7 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 				new BracketMatchGraphicFactory(),
 				new ProblemGraphicFactory()
 		);
+		// TODO: Hook up AST analysis for contextual right-click actions
 		setCenter(editor);
 
 		// TODO: Keybinding config
@@ -181,6 +182,8 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 			// Schedule decompilation task, update the editor's text asynchronously on the JavaFX UI thread when complete.
 			Workspace workspace = classPathNode.getValueOfType(Workspace.class);
 			JvmClassInfo classInfo = classPathNode.getValue().asJvmClass();
+
+			// TODO: Configurable timeout + option to have infinite timeout
 			decompilerManager.decompile(workspace, classInfo).whenCompleteAsync((result, throwable) -> {
 				if (throwable != null) {
 					editor.setText("/*\nUncaught exception when decompiling:\n" + StringUtil.traceToString(throwable) + "\n*/");
