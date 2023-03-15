@@ -3,7 +3,7 @@ package software.coley.recaf.ui.control;
 import jakarta.annotation.Nonnull;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.SingleSelectionModel;
-import software.coley.observables.AbstractObservable;
+import software.coley.observables.Observable;
 import software.coley.observables.ObservableObject;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class ObservableComboBox<T> extends ComboBox<T> {
 	 * @param values
 	 * 		Available options.
 	 */
-	public ObservableComboBox(@Nonnull AbstractObservable<T> value, @Nonnull List<T> values) {
+	public ObservableComboBox(@Nonnull Observable<T> value, @Nonnull List<T> values) {
 		getItems().addAll(values);
 		getSelectionModel().select(value.getValue());
 		SingleSelectionModel<T> model = getSelectionModel();

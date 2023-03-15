@@ -4,7 +4,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.scene.Node;
 import javafx.scene.control.CheckBox;
-import software.coley.observables.AbstractObservable;
+import software.coley.observables.Observable;
 import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigValue;
 import software.coley.recaf.services.config.TypedConfigComponentFactory;
@@ -24,7 +24,7 @@ public class BooleanComponentFactory extends TypedConfigComponentFactory<Boolean
 
 	@Override
 	public Node create(ConfigContainer container, ConfigValue<Boolean> value) {
-		AbstractObservable<Boolean> observable = value.getObservable();
+		Observable<Boolean> observable = value.getObservable();
 		String translationKey = container.getScopedId(value);
 
 		// Create the component.

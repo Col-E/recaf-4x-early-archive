@@ -1,6 +1,6 @@
 package software.coley.recaf.config;
 
-import software.coley.observables.AbstractObservable;
+import software.coley.observables.ObservableCollection;
 
 import java.util.Collection;
 
@@ -18,7 +18,7 @@ public class BasicCollectionConfigValue<T, C extends Collection<T>> implements C
 	private final String key;
 	private final Class<C> collectionType;
 	private final Class<T> itemType;
-	private final AbstractObservable<C> observable;
+	private final ObservableCollection<T, C> observable;
 
 	/**
 	 * @param key
@@ -32,7 +32,7 @@ public class BasicCollectionConfigValue<T, C extends Collection<T>> implements C
 	public BasicCollectionConfigValue(String key,
 									  Class<? extends Collection> type,
 									  Class<T> itemType,
-									  AbstractObservable<C> observable) {
+									  ObservableCollection<T, C> observable) {
 		this.key = key;
 		this.collectionType = (Class<C>) type;
 		this.itemType = itemType;
@@ -55,7 +55,7 @@ public class BasicCollectionConfigValue<T, C extends Collection<T>> implements C
 	}
 
 	@Override
-	public AbstractObservable<C> getObservable() {
+	public ObservableCollection<T, C> getObservable() {
 		return observable;
 	}
 

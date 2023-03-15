@@ -27,7 +27,7 @@ project.ext {
     docking = 'com.github.Col-E:tiwulfx-dock:1.2.3'
 
     extra_collections = 'com.github.Col-E:ExtraCollections:1.2.1'
-    extra_observables = 'com.github.Col-E:ExtraObservables:1.1.2'
+    extra_observables = 'com.github.Col-E:ExtraObservables:1.2.1'
 
     gson = 'com.google.code.gson:gson:2.10.1'
 

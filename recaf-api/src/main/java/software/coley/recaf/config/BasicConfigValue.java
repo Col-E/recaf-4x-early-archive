@@ -1,6 +1,6 @@
 package software.coley.recaf.config;
 
-import software.coley.observables.AbstractObservable;
+import software.coley.observables.Observable;
 
 /**
  * Basic implementation of {@link ConfigValue}.
@@ -13,7 +13,7 @@ import software.coley.observables.AbstractObservable;
 public class BasicConfigValue<T> implements ConfigValue<T> {
 	private final String key;
 	private final Class<T> type;
-	private final AbstractObservable<T> observable;
+	private final Observable<T> observable;
 
 	/**
 	 * @param key
@@ -23,7 +23,7 @@ public class BasicConfigValue<T> implements ConfigValue<T> {
 	 * @param observable
 	 * 		Observable of value.
 	 */
-	public BasicConfigValue(String key, Class<T> type, AbstractObservable<T> observable) {
+	public BasicConfigValue(String key, Class<T> type, Observable<T> observable) {
 		this.key = key;
 		this.type = type;
 		this.observable = observable;
@@ -40,7 +40,7 @@ public class BasicConfigValue<T> implements ConfigValue<T> {
 	}
 
 	@Override
-	public AbstractObservable<T> getObservable() {
+	public Observable<T> getObservable() {
 		return observable;
 	}
 

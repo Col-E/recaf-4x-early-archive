@@ -1,6 +1,6 @@
 package software.coley.recaf.config;
 
-import software.coley.observables.AbstractObservable;
+import software.coley.observables.Observable;
 
 /**
  * An option stored in a {@link ConfigContainer} object.
@@ -24,7 +24,7 @@ public interface ConfigValue<T> {
 	/**
 	 * @return Observable of value.
 	 */
-	AbstractObservable<T> getObservable();
+	Observable<T> getObservable();
 
 	/**
 	 * @param value

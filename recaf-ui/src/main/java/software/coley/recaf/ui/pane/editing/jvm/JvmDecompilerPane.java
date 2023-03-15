@@ -17,6 +17,9 @@ import software.coley.recaf.services.compile.CompilerDiagnostic;
 import software.coley.recaf.services.compile.JavacArgumentsBuilder;
 import software.coley.recaf.services.compile.JavacCompiler;
 import software.coley.recaf.services.decompile.DecompilerManager;
+import software.coley.recaf.services.navigation.Navigable;
+import software.coley.recaf.services.navigation.UpdatableNavigable;
+import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
@@ -26,8 +29,6 @@ import software.coley.recaf.ui.control.richtext.problem.ProblemPhase;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
-import software.coley.recaf.services.navigation.Navigable;
-import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.JavaVersion;
@@ -59,7 +60,9 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 	private ClassPathNode path;
 
 	@Inject
-	public JvmDecompilerPane(@Nonnull DecompilerManager decompilerManager, @Nonnull JavacCompiler javac) {
+	public JvmDecompilerPane(@Nonnull KeybindingConfig keys,
+							 @Nonnull DecompilerManager decompilerManager,
+							 @Nonnull JavacCompiler javac) {
 		this.decompilerManager = decompilerManager;
 		editor = new Editor();
 		editor.getStylesheets().add("/syntax/java.css");
@@ -70,12 +73,12 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 				new BracketMatchGraphicFactory(),
 				new ProblemGraphicFactory()
 		);
+		// TODO: Find search bar component for editor
 		// TODO: Hook up AST analysis for contextual right-click actions
 		setCenter(editor);
 
-		// TODO: Keybinding config
 		setOnKeyPressed(e -> {
-			if (e.getCode() == KeyCode.S && e.isControlDown()) {
+			if (keys.getSave().match(e)) {
 				// Pull data from path.
 				JvmClassInfo info = path.getValue().asJvmClass();
 				Workspace workspace = path.getValueOfType(Workspace.class);

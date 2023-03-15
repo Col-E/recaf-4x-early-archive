@@ -77,6 +77,7 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	 * @return Node containing the path in the tree.
 	 */
 	@Nullable
+	@SuppressWarnings("deprecation")
 	public WorkspaceTreeNode getNodeByPath(@Nonnull PathNode<?> path) {
 		PathNode<?> value = getValue();
 		if (path.equals(value))
