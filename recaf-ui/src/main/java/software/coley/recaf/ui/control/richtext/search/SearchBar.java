@@ -150,6 +150,8 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			);
 			inputToggles.setAlignment(Pos.CENTER_RIGHT);
 			searchInput.setRight(inputToggles);
+			caseSensitivity.addListener((ob, old, cur) -> refreshResults());
+			regex.addListener((ob, old, cur) -> refreshResults());
 
 			// Create label to display number of results.
 			Label resultCount = new Label();
@@ -460,7 +462,7 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 				//  - N: group N's text
 				Matcher matcher = RegexUtil.getMatcher("(?<!\\\\)(?:(\\\\\\\\)*)\\$\\d+", replacement);
 				while (matcher.find()) {
-					int groupId = Integer.parseInt(matcher.group(0).substring(1));
+					int groupId = Integer.parseInt(matcher.group(0).replaceAll("\\D+", ""));
 					if (groupId < groups.length) {
 						String groupText = groups[groupId];
 						replacement = replacement.replace("$" + groupId, groupText);
