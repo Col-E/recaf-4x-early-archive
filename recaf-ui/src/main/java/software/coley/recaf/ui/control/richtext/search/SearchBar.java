@@ -222,6 +222,33 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 				while (pastReplaces.size() > MAX_HISTORY)
 					pastReplaces.remove(pastReplaces.size() - 1);
 			});
+			replaceInput.setOnKeyReleased(e -> {
+				// We do this in on-release so the replacement input text value is up-to-date in this event processing.
+				// Show a preview of the replacement for regex matches when it has regex group replacement.
+				// For non-regex or simple replacements, we don't need to show anything.
+				if (isVisible() && regex.get()) {
+					int resultIndex = lastResultIndex.get();
+					Popover popoverPreview;
+					if (resultIndex == -1) {
+						popoverPreview = null;
+					} else {
+						String replacement = getReplacement(resultIndex);
+						if (!replacement.equals(replaceInput.getText())) {
+							popoverPreview = new Popover(new Label(replacement));
+							popoverPreview.setHeaderAlwaysVisible(true);
+							popoverPreview.setTitle("Replacement text");
+							popoverPreview.show(replaceInput);
+						} else {
+							popoverPreview = null;
+						}
+					}
+
+					// Hide the prior popover if any exists.
+					Object old = searchInput.getProperties().put("regex-preview", popoverPreview);
+					if (old instanceof Popover oldPopover)
+						oldPopover.hide();
+				}
+			});
 
 			// When past searches list is modified, update old search menu.
 			pastSearches.addListener((ListChangeListener<String>) c -> {
@@ -350,6 +377,8 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 					rangeIndex = 0;
 				lastResultIndex.set(rangeIndex);
 
+				// Only update selection when the search inputs are focused.
+				// We can re-compute due to the editor's text changing. So if a user is typing in there, this would be annoying.
 				if (inputsAreFocused()) {
 					IntRange targetRange = resultRanges.get(rangeIndex).range();
 					area.selectRange(targetRange.start(), targetRange.end());
@@ -365,10 +394,9 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			recordSearch();
 
 			// No ranges for current search query, so do nothing.
-			if (resultRanges.isEmpty()) {
-				lastResultIndex.set(-1);
+			lastResultIndex.set(-1);
+			if (resultRanges.isEmpty())
 				return;
-			}
 
 			// Get the next range index by doing a search starting from the current caret position + 1.
 			CodeArea area = editor.getCodeArea();
@@ -379,11 +407,9 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 
 			// Set index & select the range.
 			lastResultIndex.set(rangeIndex);
-			if (inputsAreFocused()) {
-				IntRange range = resultRanges.get(rangeIndex).range();
-				area.selectRange(range.start(), range.end());
-				area.showParagraphAtCenter(area.getCurrentParagraph());
-			}
+			IntRange range = resultRanges.get(rangeIndex).range();
+			area.selectRange(range.start(), range.end());
+			area.showParagraphAtCenter(area.getCurrentParagraph());
 		}
 
 		/**
@@ -393,10 +419,9 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			recordSearch();
 
 			// No ranges for current search query, so do nothing.
-			if (resultRanges.isEmpty()) {
-				lastResultIndex.set(-1);
+			lastResultIndex.set(-1);
+			if (resultRanges.isEmpty())
 				return;
-			}
 
 			// Get the previous range index by doing a search starting from the current selection position in the text,
 			// then go back by one position, wrapping around if necessary.
@@ -408,11 +433,9 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 
 			// Set index & select the range.
 			lastResultIndex.set(rangeIndex);
-			if (inputsAreFocused()) {
-				IntRange range = resultRanges.get(rangeIndex).range();
-				area.selectRange(range.start(), range.end());
-				area.showParagraphAtCenter(area.getCurrentParagraph());
-			}
+			IntRange range = resultRanges.get(rangeIndex).range();
+			area.selectRange(range.start(), range.end());
+			area.showParagraphAtCenter(area.getCurrentParagraph());
 		}
 
 		/**
@@ -447,9 +470,22 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 		}
 
 		/**
-		 * Replaces the range in the {@link #resultRanges} at the given {@code index} with the text of {@link #replaceInput}.
-		 * However, if {@link #regex} is {@code true}, then transformations are made on the replacement text to support
-		 * regex groups.
+		 * Replaces the range in the {@link #resultRanges} at the given {@code index} with the text of {@link #getReplacement(int)}.
+		 *
+		 * @param index
+		 * 		Index in {@link #resultRanges} to replace.
+		 */
+		private void replaceResult(int index) {
+			String replacement = getReplacement(index);
+			CodeArea area = editor.getCodeArea();
+			Match match = resultRanges.get(index);
+			IntRange range = match.range();
+			area.replaceText(range.start(), range.end(), replacement);
+		}
+
+		/**
+		 * if {@link #regex} is {@code true}, then transformations are made on the replacement text from
+		 * {@link #replaceInput} to support regex groups.
 		 * <br>
 		 * For example:
 		 * <ul>
@@ -460,10 +496,11 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 		 *
 		 * @param index
 		 * 		Index in {@link #resultRanges} to replace.
+		 *
+		 * @return Replacement for the given range.
 		 */
-		private void replaceResult(int index) {
+		private String getReplacement(int index) {
 			String replacement = replaceInput.getText();
-			CodeArea area = editor.getCodeArea();
 			Match match = resultRanges.get(index);
 			String[] groups = match.groups();
 			if (groups != null) {
@@ -479,8 +516,7 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 					}
 				}
 			}
-			IntRange range = match.range();
-			area.replaceText(range.start(), range.end(), replacement);
+			return replacement;
 		}
 
 		/**
