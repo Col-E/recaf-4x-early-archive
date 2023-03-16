@@ -293,7 +293,6 @@ tree.classes=Třídy
 tree.files=Soubory
 tree.prompt=Sem přetáhněte své soubory
 tree.hidelibs=Skrýt knihovny
-tree.casesensitive=Filtrovat citlivost na velká a malá písmena
 
 ##### Config
 conf.display=Vzhled

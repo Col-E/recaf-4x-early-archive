@@ -294,7 +294,6 @@ tree.classes=类
 tree.files=文件
 tree.prompt=将您的文件拖到此处
 tree.hidelibs=隐藏库
-tree.casesensitive=过滤区分大小写
 
 ##### Config
 conf.display=外观与行为
@@ -331,7 +330,6 @@ fieldsandmethods.showoutlinedmembertype=按成员类型筛选
 fieldsandmethods.outlinedvisibilityiconposition=可见性图标位置
 fieldsandmethods.sortalphabetically=按字母顺序排序
 fieldsandmethods.sortbyvisibility=按可见性排序
-fieldsandmethods.filter.casesensitive=大小写敏感
 conf.editor.text=文本编辑器
 conf.editor.text.showbracketfolds=显示括号折叠
 conf.editor.hex=十六进制编辑器
@@ -433,6 +431,7 @@ conf.undefined=未定义
 
 misc.all=全部
 misc.none=无
+misc.casesensitive=大小写敏感
 misc.member.field=字段
 misc.member.method=方法
 misc.member.field_n_method=字段和方法
@@ -455,4 +454,4 @@ misc.position.bottom=底部
 misc.position.left=左侧
 misc.position.right=右侧
 misc.position.center=中心
-misc.position.middle=中间
+misc.position.middle=中间0

@@ -268,7 +268,6 @@ fieldsandmethods.showoutlinedmembertype=Filter by member type
 fieldsandmethods.outlinedvisibilityiconposition=Visibility icon position
 fieldsandmethods.sortalphabetically=Sort alphabetically
 fieldsandmethods.sortbyvisibility=Sort by visibility
-fieldsandmethods.filter.casesensitive=Case sensitive
 fieldsandmethods.filter.prompt=Filter: Field/Method name...
 
 ## Hierarchy
@@ -342,7 +341,6 @@ tree.classes=Classes
 tree.files=Files
 tree.prompt=Drag your files here
 tree.hidelibs=Hide libraries
-tree.casesensitive=Filter case sensitivity
 
 ##### Services
 service=All services
@@ -467,6 +465,8 @@ service.plugin.plugin-manager-config=Plugin manager
 service.plugin.script-manager-config=Script manager
 service.plugin.script-manager-config.file-watching=Passively scan scripts directory for changes
 service.ui=User interface
+service.ui.bind-config=Key bindings
+service.ui.bind-config.bundle=Binding map bundle
 service.ui.class-editing-config=Class editing
 service.ui.class-editing-config.default-android-editor=Default editor for Android classes
 service.ui.class-editing-config.default-jvm-editor=Default editor for JVM classes
@@ -606,6 +606,8 @@ conf.undefined=Undefined
 
 misc.all=All
 misc.none=None
+misc.casesensitive=Case sensitive
+misc.regex=Regex
 misc.member.field=Field
 misc.member.method=Method
 misc.member.field_n_method=Field and method

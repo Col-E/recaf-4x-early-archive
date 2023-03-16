@@ -1,14 +1,13 @@
 package software.coley.recaf.util;
 
+import jakarta.annotation.Nonnull;
 import jregex.Matcher;
 import jregex.Pattern;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Some common regular expression functions and cache for compiled patterns.
@@ -17,9 +16,32 @@ import java.util.Set;
  */
 public class RegexUtil {
 	private static final Logger logger = Logging.get(RegexUtil.class);
-	private static final Set<String> FAILED_PATTERNS = new HashSet<>();
+	private static final Map<String, RegexValidation> FAILED_PATTERNS = new HashMap<>();
 	private static final Map<String, ThreadLocalPattern> PATTERNS = new HashMap<>();
 	private static final ThreadLocalPattern INVALID_PATTERN = new ThreadLocalPattern(new Pattern("^$"));
+
+	/**
+	 * @param pattern
+	 * 		Pattern to check.
+	 *
+	 * @return {@code true} when valid. {@code false} otherwise.
+	 */
+	@Nonnull
+	public static RegexValidation validate(String pattern) {
+		// Check prior failed patterns
+		RegexValidation result = FAILED_PATTERNS.get(pattern);
+		if (result == null) {
+			try {
+				new Pattern(pattern);
+				result = RegexValidation.VALID;
+			} catch (Throwable t) {
+				// Record new invalid pattern.
+				result = new RegexValidation(false, t.getMessage());
+				FAILED_PATTERNS.put(pattern, result);
+			}
+		}
+		return result;
+	}
 
 	/**
 	 * @param pattern
@@ -92,19 +114,23 @@ public class RegexUtil {
 	 * @return Compiled pattern, or {@link #INVALID_PATTERN} if the pattern is invalid.
 	 */
 	private static ThreadLocalPattern generate(String regex) {
-		if (FAILED_PATTERNS.contains(regex))
+		if (FAILED_PATTERNS.containsKey(regex))
 			return INVALID_PATTERN;
 		try {
 			return new ThreadLocalPattern(new Pattern(regex));
 		} catch (Throwable t) {
-			FAILED_PATTERNS.add(regex);
+			FAILED_PATTERNS.put(regex, new RegexValidation(false, t.getMessage()));
 			logger.error("Invalid regex pattern", t);
 			return INVALID_PATTERN;
 		}
 	}
 
-	private static final class ThreadLocalPattern {
+	public record RegexValidation(boolean valid, String message) {
 
+		public static final RegexValidation VALID = new RegexValidation(true, null);
+	}
+
+	private static final class ThreadLocalPattern {
 		final ThreadLocal<Matcher> matcher = new ThreadLocal<>();
 		final Pattern pattern;
 

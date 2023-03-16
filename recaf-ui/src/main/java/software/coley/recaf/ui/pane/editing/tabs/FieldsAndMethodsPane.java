@@ -167,7 +167,7 @@ public class FieldsAndMethodsPane extends BorderPane implements ContextSource, U
 		});
 		HBox box = new HBox(
 				filter,
-				new BoundToggleIcon(Icons.CASE_SENSITIVITY, nameFilterCaseSensitivity).withTooltip("fieldsandmethods.filter.casesensitive")
+				new BoundToggleIcon(Icons.CASE_SENSITIVITY, nameFilterCaseSensitivity).withTooltip("misc.casesensitive")
 		);
 		HBox.setHgrow(filter, Priority.ALWAYS);
 		box.setMaxWidth(Integer.MAX_VALUE);

@@ -27,6 +27,7 @@ import software.coley.recaf.ui.control.richtext.problem.Problem;
 import software.coley.recaf.ui.control.richtext.problem.ProblemGraphicFactory;
 import software.coley.recaf.ui.control.richtext.problem.ProblemPhase;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
+import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
 import software.coley.recaf.util.Animations;
@@ -61,6 +62,7 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 
 	@Inject
 	public JvmDecompilerPane(@Nonnull KeybindingConfig keys,
+							 @Nonnull SearchBar searchBar,
 							 @Nonnull DecompilerManager decompilerManager,
 							 @Nonnull JavacCompiler javac) {
 		this.decompilerManager = decompilerManager;
@@ -73,7 +75,7 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 				new BracketMatchGraphicFactory(),
 				new ProblemGraphicFactory()
 		);
-		// TODO: Find search bar component for editor
+		searchBar.install(editor);
 		// TODO: Hook up AST analysis for contextual right-click actions
 		setCenter(editor);
 

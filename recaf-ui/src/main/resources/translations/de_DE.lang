@@ -299,7 +299,6 @@ tree.classes=Klassen
 tree.files=Dateien
 tree.prompt=Dateien hier ablegen
 tree.hidelibs=Bibliotheken ausblenden
-tree.casesensitive=Groß-/Kleinschreibung beachten
 
 ##### Config
 conf.display=Darstellung
@@ -336,7 +335,6 @@ fieldsandmethods.showoutlinedmembertype=Nach Member-Typ filtern
 fieldsandmethods.outlinedvisibilityiconposition=Sichtbarkeitssymbol-Position
 fieldsandmethods.sortalphabetically=Alphabetisch sortieren
 fieldsandmethods.sortbyvisibility=Nach Sichbarkeit sortieren
-fieldsandmethods.filter.casesensitive=Groß- und Kleinschreibung beachten
 fieldsandmethods.filter.prompt=Filter: Feld-/Methodename...
 conf.editor.text=Texteditor
 conf.editor.text.showbracketfolds=Zeige Einzugsfächer für Klammern
@@ -439,6 +437,7 @@ conf.undefined=Undefiniert
 
 misc.all=Alle
 misc.none=Keine
+misc.casesensitive=Groß- und Kleinschreibung beachten
 misc.member.field=Feld
 misc.member.method=Methode
 misc.member.field_n_method=Feld und Methode

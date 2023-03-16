@@ -23,6 +23,15 @@
     -fx-padding: 2px;
 }
 
+/* AtlantaFX tweaks to allow borderless text-fields */
+.text-field.accent {
+    -fx-background-insets: 0;
+    -fx-background-color: -color-input-bg;
+}
+.text-field.accent:focused {
+    -fx-background-color: -color-input-bg;
+}
+
 /* Clearly separates filter from the workspace tree */
 .workspace-filter-pane {
     -fx-border-color: -color-border-muted;
@@ -70,4 +79,15 @@
     -fx-background-color: -color-bg-inset;
     -fx-border-color: -color-accent-3;
     -fx-border-width: 0 0 0 1px;
+}
+
+/* Used at top of editor control */
+.search-bar {
+    -fx-background-color: -color-bg-inset;
+    -fx-border-color: -color-accent-3;
+    -fx-border-width: 0 0 1px 0;
+}
+.search-bar .text-field {
+    -fx-border-color: -color-accent-3;
+    -fx-border-width: 0 1px 0 0;
 }

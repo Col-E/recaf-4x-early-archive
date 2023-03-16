@@ -4,6 +4,8 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.scene.control.ScrollBar;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.flowless.VirtualizedScrollPane;
@@ -46,9 +48,12 @@ import java.util.function.Supplier;
  *
  * @author Matt Coley
  */
-public class Editor extends StackPane {
+public class Editor extends BorderPane {
 	public static final int SHORT_DELAY_MS = 150;
+	private final StackPane stackPane = new StackPane();
 	private final CodeArea codeArea = new CodeArea();
+	private final ScrollBar horizontalScrollbar;
+	private final ScrollBar verticalScrollbar;
 	private final VirtualFlow<?, ?> virtualFlow;
 	private final ExecutorService syntaxPool = ThreadPoolFactory.newSingleThreadExecutor("syntax-highlight");
 	private final RootLineGraphicFactory rootLineGraphicFactory = new RootLineGraphicFactory(this);
@@ -63,9 +68,17 @@ public class Editor extends StackPane {
 	 * New editor instance.
 	 */
 	public Editor() {
-		getStylesheets().add("/style/code-editor.css");
-		getChildren().add(new VirtualizedScrollPane<>(codeArea));
+		// Get the reflection hacks out of the way first.
+		//  - Want to have access to scrollbars & the internal 'virtualFlow'
+		VirtualizedScrollPane<CodeArea> scrollPane = new VirtualizedScrollPane<>(codeArea);
+		horizontalScrollbar = Unchecked.get(() -> ReflectUtil.quietGet(scrollPane, VirtualizedScrollPane.class.getDeclaredField("hbar")));
+		verticalScrollbar = Unchecked.get(() -> ReflectUtil.quietGet(scrollPane, VirtualizedScrollPane.class.getDeclaredField("vbar")));
 		virtualFlow = Unchecked.get(() -> ReflectUtil.quietGet(codeArea, GenericStyledArea.class.getDeclaredField("virtualFlow")));
+
+		// Initial layout / style.
+		getStylesheets().add("/style/code-editor.css");
+		setCenter(stackPane);
+		stackPane.getChildren().add(scrollPane);
 
 		// Do not want text wrapping in a code editor.
 		codeArea.setWrapText(false);
@@ -110,6 +123,16 @@ public class Editor extends StackPane {
 
 		// Initial snapshot state.
 		lastDocumentSnapshot = ReadOnlyStyledDocument.from(codeArea.getDocument());
+	}
+
+	/**
+	 * The editor is a {@link BorderPane} layout. The sides can be used to toggle "drawers" of sorts.
+	 * The center is home to the primary component, the {@link #getCodeArea() code-area}.
+	 *
+	 * @return The {@link StackPane} present in the {@link #getCenter() center} of the editor.
+	 */
+	public StackPane getPrimaryStack() {
+		return stackPane;
 	}
 
 	/**
@@ -298,6 +321,22 @@ public class Editor extends StackPane {
 	@Nonnull
 	public CodeArea getCodeArea() {
 		return codeArea;
+	}
+
+	/**
+	 * @return {@link #getCodeArea() Code area's} horizontal scrollbar.
+	 */
+	@Nonnull
+	public ScrollBar getHorizontalScrollbar() {
+		return horizontalScrollbar;
+	}
+
+	/**
+	 * @return {@link #getCodeArea() Code area's} vertical scrollbar.
+	 */
+	@Nonnull
+	public ScrollBar getVerticalScrollbar() {
+		return verticalScrollbar;
 	}
 
 	/**

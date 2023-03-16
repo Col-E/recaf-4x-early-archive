@@ -7,6 +7,8 @@ import software.coley.observables.ObservableMap;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicMapConfigValue;
 import software.coley.recaf.config.ConfigGroups;
+import software.coley.recaf.ui.control.richtext.Editor;
+import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.pane.editing.ClassPane;
 
 import java.util.*;
@@ -17,7 +19,7 @@ import static javafx.scene.input.KeyCode.*;
 import static software.coley.recaf.ui.config.Binding.newBind;
 
 /**
- * Config for various keybinds.
+ * Config for various keybindings.
  *
  * @author Matt Coley
  */
@@ -41,11 +43,12 @@ public class KeybindingConfig extends BasicConfigContainer {
 	}
 
 	/**
-	 * @return Keybinding for opening find.
+	 * @return Keybinding for opening find operations.
+	 *
+	 * @see SearchBar Used for {@link Editor}.
 	 */
 	@Nonnull
 	public Binding getFind() {
-		// TODO: Update javadocs to @link to component when made
 		return Objects.requireNonNull(bundle.get(ID_FIND));
 	}
 

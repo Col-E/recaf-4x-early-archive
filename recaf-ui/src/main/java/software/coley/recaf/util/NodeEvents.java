@@ -1,5 +1,7 @@
 package software.coley.recaf.util;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
@@ -27,11 +29,24 @@ public class NodeEvents {
 	 */
 	public static void addKeyPressHandler(Node node, EventHandler<? super KeyEvent> handler) {
 		EventHandler<? super KeyEvent> oldHandler = node.getOnKeyPressed();
-		node.setOnKeyPressed(e -> {
-			if (oldHandler != null)
-				oldHandler.handle(e);
-			handler.handle(e);
-		});
+		node.setOnKeyPressed(new KeyPressWrapper(handler, oldHandler));
+	}
+
+	/**
+	 * @param node
+	 * 		Node to remove from.
+	 * @param handler
+	 * 		Handler to remove.
+	 */
+	public static void removeKeyPressHandler(Node node, EventHandler<? super KeyEvent> handler) {
+		EventHandler<? super KeyEvent> currentHandler = node.getOnKeyPressed();
+		if (currentHandler instanceof KeyPressWrapper keyPressWrapper) {
+			if (keyPressWrapper.current == handler)
+				node.setOnKeyPressed(keyPressWrapper.next);
+			else
+				keyPressWrapper.remove(handler);
+		} else if (currentHandler == handler)
+			node.setOnKeyPressed(null);
 	}
 
 	/**
@@ -111,5 +126,46 @@ public class NodeEvents {
 		 * 		The new value.
 		 */
 		boolean changed(ObservableValue<? extends T> observable, T oldValue, T newValue);
+	}
+
+	/**
+	 * Key-press handler to simplify {@link #addKeyPressHandler(Node, EventHandler)} and
+	 * {@link #removeKeyPressHandler(Node, EventHandler)}.
+	 *
+	 * @author Matt Coley
+	 */
+	private static class KeyPressWrapper implements EventHandler<KeyEvent> {
+		private final EventHandler<? super KeyEvent> current;
+		private EventHandler<? super KeyEvent> next;
+
+		/**
+		 * @param current
+		 * 		Handler to invoke.
+		 * @param next
+		 * 		Next in the chain to invoke.
+		 */
+		private KeyPressWrapper(@Nonnull EventHandler<? super KeyEvent> current,
+								@Nullable EventHandler<? super KeyEvent> next) {
+			this.current = current;
+			this.next = next;
+		}
+
+		@Override
+		public void handle(KeyEvent event) {
+			if (next != null)
+				next.handle(event);
+			current.handle(event);
+		}
+
+		/**
+		 * @param handler
+		 * 		Handler to remove from the wrapper chain.
+		 */
+		public void remove(EventHandler<? super KeyEvent> handler) {
+			if (next == handler)
+				next = null;
+			else if (next instanceof KeyPressWrapper nextWrapper)
+				nextWrapper.remove(handler);
+		}
 	}
 }
