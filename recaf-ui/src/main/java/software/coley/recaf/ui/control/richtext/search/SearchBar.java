@@ -349,8 +349,12 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 				if (rangeIndex >= resultRanges.size())
 					rangeIndex = 0;
 				lastResultIndex.set(rangeIndex);
-				IntRange targetRange = resultRanges.get(rangeIndex).range();
-				area.selectRange(targetRange.start(), targetRange.end());
+
+				if (inputsAreFocused()) {
+					IntRange targetRange = resultRanges.get(rangeIndex).range();
+					area.selectRange(targetRange.start(), targetRange.end());
+					area.showParagraphAtCenter(area.getCurrentParagraph());
+				}
 			}
 		}
 
@@ -375,8 +379,11 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 
 			// Set index & select the range.
 			lastResultIndex.set(rangeIndex);
-			IntRange range = resultRanges.get(rangeIndex).range();
-			area.selectRange(range.start(), range.end());
+			if (inputsAreFocused()) {
+				IntRange range = resultRanges.get(rangeIndex).range();
+				area.selectRange(range.start(), range.end());
+				area.showParagraphAtCenter(area.getCurrentParagraph());
+			}
 		}
 
 		/**
@@ -401,8 +408,11 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 
 			// Set index & select the range.
 			lastResultIndex.set(rangeIndex);
-			IntRange range = resultRanges.get(rangeIndex).range();
-			area.selectRange(range.start(), range.end());
+			if (inputsAreFocused()) {
+				IntRange range = resultRanges.get(rangeIndex).range();
+				area.selectRange(range.start(), range.end());
+				area.showParagraphAtCenter(area.getCurrentParagraph());
+			}
 		}
 
 		/**
@@ -494,6 +504,13 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			String replacement = replaceInput.getText();
 			pastReplaces.remove(replacement);
 			pastReplaces.add(0, replacement);
+		}
+
+		/**
+		 * @return {@code true} when either the search or replace inputs are focused.
+		 */
+		private boolean inputsAreFocused() {
+			return searchInput.isFocused() || replaceInput.isFocused();
 		}
 
 		/**
