@@ -27,6 +27,7 @@ import static software.coley.recaf.ui.config.Binding.newBind;
 public class KeybindingConfig extends BasicConfigContainer {
 	public static final String ID = "bind";
 	private static final String ID_FIND = "editor.find";
+	private static final String ID_REPLACE = "editor.replace";
 	private static final String ID_SAVE = "editor.save";
 	private final BindingBundle bundle;
 
@@ -37,6 +38,7 @@ public class KeybindingConfig extends BasicConfigContainer {
 		// We will only be storing one 'value' so that the UI can treat it as a singular element.
 		bundle = new BindingBundle(Arrays.asList(
 				newBind(ID_FIND, CONTROL, F),
+				newBind(ID_REPLACE, CONTROL, R),
 				newBind(ID_SAVE, CONTROL, S)
 		));
 		addValue(new BasicMapConfigValue<>("bundle", Map.class, String.class, Binding.class, bundle));
@@ -50,6 +52,16 @@ public class KeybindingConfig extends BasicConfigContainer {
 	@Nonnull
 	public Binding getFind() {
 		return Objects.requireNonNull(bundle.get(ID_FIND));
+	}
+
+	/**
+	 * @return Keybinding for opening replace operations.
+	 *
+	 * @see SearchBar Used for {@link Editor}.
+	 */
+	@Nonnull
+	public Binding getReplace() {
+		return Objects.requireNonNull(bundle.get(ID_REPLACE));
 	}
 
 	/**

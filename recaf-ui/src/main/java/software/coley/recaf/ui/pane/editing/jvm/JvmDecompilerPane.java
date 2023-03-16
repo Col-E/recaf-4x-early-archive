@@ -189,6 +189,7 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 			JvmClassInfo classInfo = classPathNode.getValue().asJvmClass();
 
 			// TODO: Configurable timeout + option to have infinite timeout
+			//  - 'java.decompiling' bind overlay when waiting
 			decompilerManager.decompile(workspace, classInfo).whenCompleteAsync((result, throwable) -> {
 				if (throwable != null) {
 					editor.setText("/*\nUncaught exception when decompiling:\n" + StringUtil.traceToString(throwable) + "\n*/");

@@ -24,10 +24,7 @@ import software.coley.recaf.ui.control.richtext.syntax.StyleResult;
 import software.coley.recaf.ui.control.richtext.syntax.SyntaxHighlighter;
 import software.coley.recaf.ui.control.richtext.syntax.SyntaxUtil;
 import software.coley.recaf.ui.pane.editing.ProblemOverlay;
-import software.coley.recaf.util.FxThreadUtil;
-import software.coley.recaf.util.IntRange;
-import software.coley.recaf.util.ReflectUtil;
-import software.coley.recaf.util.Unchecked;
+import software.coley.recaf.util.*;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 
 import java.time.Duration;
@@ -123,6 +120,31 @@ public class Editor extends BorderPane {
 
 		// Initial snapshot state.
 		lastDocumentSnapshot = ReadOnlyStyledDocument.from(codeArea.getDocument());
+	}
+
+	/**
+	 * The passed inputs for the position will be modified as per
+	 * {@link SyntaxUtil#getRangeForRestyle(String, StyleSpans, SyntaxHighlighter, PlainTextChange)}.
+	 * For this reason, you do not have to be super exact with the given values.
+	 *
+	 * @param position
+	 * 		Start position to begin the restyling at.
+	 * @param length
+	 * 		Length of the restyled range.
+	 *
+	 * @return Restyle future.
+	 */
+	public CompletableFuture<Void> restyleAtPosition(int position, int length) {
+		if (syntaxHighlighter != null) {
+			return schedule(syntaxPool, () -> {
+				IntRange range = SyntaxUtil.getRangeForRestyle(getText(), getStyleSpans(),
+						syntaxHighlighter, new PlainTextChange(position, "", StringUtil.repeat(".", length)));
+				int start = range.start();
+				int end = range.end();
+				return new StyleResult(syntaxHighlighter.createStyleSpans(getText(), start, end), start);
+			}, result -> codeArea.setStyleSpans(result.position(), result.spans()));
+		}
+		return CompletableFuture.completedFuture(null);
 	}
 
 	/**
@@ -348,10 +370,12 @@ public class Editor extends BorderPane {
 	 * 		Value consumer, run on the JavaFX UI thread.
 	 * @param <T>
 	 * 		Value type.
+	 *
+	 * @return Future of consumer completion.
 	 */
-	public <T> void schedule(@Nonnull ExecutorService supplierService,
-							 @Nonnull Supplier<T> supplier, @Nonnull Consumer<T> consumer) {
-		CompletableFuture.supplyAsync(supplier, supplierService)
+	public <T> CompletableFuture<Void> schedule(@Nonnull ExecutorService supplierService,
+												@Nonnull Supplier<T> supplier, @Nonnull Consumer<T> consumer) {
+		return CompletableFuture.supplyAsync(supplier, supplierService)
 				.thenAcceptAsync(consumer, FxThreadUtil.executor());
 	}
 

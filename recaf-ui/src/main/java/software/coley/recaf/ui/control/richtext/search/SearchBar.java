@@ -15,6 +15,7 @@ import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
@@ -22,7 +23,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
+import javafx.scene.text.TextAlignment;
 import jregex.Matcher;
 import org.fxmisc.richtext.CodeArea;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
@@ -76,6 +77,15 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 
 			// Grab focus
 			bar.requestSearchFocus();
+			bar.hideReplace();
+		} else if (keys.getReplace().match(event)) {
+			// Show if not visible
+			if (!bar.isVisible())
+				bar.show();
+
+			// Grab focus
+			bar.requestSearchFocus();
+			bar.showReplace();
 		}
 	}
 
@@ -89,8 +99,11 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 		private final SimpleBooleanProperty caseSensitivity = new SimpleBooleanProperty();
 		private final SimpleBooleanProperty regex = new SimpleBooleanProperty();
 		private final CustomTextField searchInput = new CustomTextField();
+		private final CustomTextField replaceInput = new CustomTextField();
 		private final ObservableList<String> pastSearches = FXCollections.observableArrayList();
+		private final ObservableList<String> pastReplaces = FXCollections.observableArrayList();
 		private final ObservableList<IntRange> resultRanges = FXCollections.observableArrayList();
+		private final HBox replaceLine;
 		private final Editor editor;
 
 		private Bar(Editor editor) {
@@ -105,16 +118,23 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 					.successionEnds(Duration.ofMillis(150))
 					.addObserver(changes -> refreshResults());
 
-			// Remove border from search text field.
+			// Remove border from search/replace text fields.
 			searchInput.getStyleClass().addAll(Styles.ACCENT);
+			replaceInput.getStyleClass().addAll(Styles.ACCENT);
 
-			// Create menu for search input left graphic (like IntelliJ) to display prior searches when clicked.
+			// Create menu for search input left graphic (like IntelliJ) to display prior searches/replaces when clicked.
 			Button oldSearches = new Button();
 			oldSearches.setFocusTraversable(false);
 			oldSearches.setDisable(true); // re-enabled when searches are populated.
 			oldSearches.setGraphic(new FontIconView(CarbonIcons.SEARCH));
-			oldSearches.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.FLAT, Styles.SMALL); // Tweaks.NO_ARROW
+			oldSearches.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.FLAT, Styles.SMALL);
 			searchInput.setLeft(oldSearches);
+			Button oldReplaces = new Button();
+			oldReplaces.setFocusTraversable(false);
+			oldReplaces.setDisable(true); // re-enabled when replaces are populated.
+			oldReplaces.setGraphic(new FontIconView(CarbonIcons.SEARCH));
+			oldReplaces.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.FLAT, Styles.SMALL);
+			replaceInput.setLeft(oldReplaces);
 
 			// Create toggles for search input query modes.
 			BoundToggleIcon toggleSensitivity = new BoundToggleIcon(Icons.CASE_SENSITIVITY, caseSensitivity).withTooltip("misc.casesensitive");
@@ -132,7 +152,8 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 
 			// Create label to display number of results.
 			Label resultCount = new Label();
-			resultCount.setMinWidth(30);
+			resultCount.setMinWidth(70);
+			resultCount.setTextAlignment(TextAlignment.CENTER);
 			resultCount.textProperty().bind(lastResultIndex.map(n -> {
 				int i = n.intValue();
 				if (i < 0) {
@@ -143,9 +164,9 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			}));
 			resultRanges.addListener((ListChangeListener<IntRange>) c -> {
 				if (resultRanges.isEmpty()) {
-					resultCount.setTextFill(Color.RED);
+					resultCount.setStyle("-fx-text-fill: red;");
 				} else {
-					resultCount.setTextFill(Color.GREEN);
+					resultCount.setStyle("-fx-text-fill: -color-fg-default;");
 				}
 			});
 
@@ -164,15 +185,21 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			close.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.SMALL);
 			close.setFocusTraversable(false);
 
-			// Add to past searches when:
-			//  - Enter pressed
-			//  - Search hidden
+			// Replace buttons.
+			Button replace = new ActionButton(Lang.getBinding("java.find.replace"), this::replace);
+			Button replaceAll = new ActionButton(Lang.getBinding("java.find.replaceall"), this::replaceAll);
+			replace.getStyleClass().addAll(Styles.SMALL);
+			replaceAll.getStyleClass().addAll(Styles.SMALL);
+			replace.setFocusTraversable(false);
+			replaceAll.setFocusTraversable(false);
+			replace.disableProperty().bind(hasResults.not());
+			replaceAll.disableProperty().bind(hasResults.not());
+
+			// Add to past searches/replaces when enter is pressed.
+			// Close when escape is pressed.
 			searchInput.setOnKeyPressed(e -> {
-				String searchText = searchInput.getText();
 				KeyCode code = e.getCode();
 				if (code == KeyCode.ENTER) {
-					pastSearches.remove(searchText);
-					pastSearches.add(0, searchText);
 					next();
 				} else if (code == KeyCode.ESCAPE) {
 					hide();
@@ -181,12 +208,22 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 					pastSearches.remove(pastSearches.size() - 1);
 			});
 			searchInput.setOnKeyReleased(e -> refreshResults());
+			replaceInput.setOnKeyPressed(e -> {
+				KeyCode code = e.getCode();
+				if (code == KeyCode.ENTER) {
+					replace();
+				} else if (code == KeyCode.ESCAPE) {
+					hide();
+				}
+				while (pastReplaces.size() > MAX_HISTORY)
+					pastReplaces.remove(pastReplaces.size() - 1);
+			});
 
 			// When past searches list is modified, update old search menu.
 			pastSearches.addListener((ListChangeListener<String>) c -> {
 				List<ActionMenuItem> items = pastSearches.stream()
-						.map(search -> new ActionMenuItem(search, () -> {
-							searchInput.setText(search);
+						.map(text -> new ActionMenuItem(text, () -> {
+							searchInput.setText(text);
 							requestSearchFocus();
 						}))
 						.toList();
@@ -199,8 +236,25 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 					oldSearches.setOnMousePressed(e -> contextMenu.show(oldSearches, e.getScreenX(), e.getScreenY()));
 				}
 			});
+			pastReplaces.addListener((ListChangeListener<String>) c -> {
+				List<ActionMenuItem> items = pastReplaces.stream()
+						.map(text -> new ActionMenuItem(text, () -> {
+							replaceInput.setText(text);
+							requestSearchFocus();
+						}))
+						.toList();
+				if (items.isEmpty()) {
+					oldReplaces.setDisable(true);
+				} else {
+					oldReplaces.setDisable(false);
+					ContextMenu contextMenu = new ContextMenu();
+					contextMenu.getItems().setAll(items);
+					oldReplaces.setOnMousePressed(e -> contextMenu.show(oldReplaces, e.getScreenX(), e.getScreenY()));
+				}
+			});
 
 			// Layout
+			replaceInput.prefWidthProperty().bind(searchInput.widthProperty());
 			HBox prevAndNext = new HBox(prev, next);
 			prevAndNext.setAlignment(Pos.CENTER);
 			prevAndNext.setFillHeight(false);
@@ -208,10 +262,12 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			searchLine.setAlignment(Pos.CENTER_LEFT);
 			searchLine.setSpacing(10);
 			searchLine.setPadding(new Insets(0, 5, 0, 0));
-			getChildren().addAll(
-					searchLine
-					// TODO: Replace line (with ability to toggle its visibility)
-			);
+			replaceLine = new HBox(replaceInput, new Spacer(0), replace, replaceAll);
+			replaceLine.setAlignment(Pos.CENTER_LEFT);
+			replaceLine.setSpacing(10);
+			replaceLine.setPadding(new Insets(0, 5, 0, 0));
+			replaceLine.setVisible(false); // invis + group = 0 height (group wrapping is required for this to work)
+			getChildren().addAll(searchLine, new Group(replaceLine));
 		}
 
 		/**
@@ -298,6 +354,8 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 		 * Select the next match.
 		 */
 		private void next() {
+			recordSearch();
+
 			// No ranges for current search query, so do nothing.
 			if (resultRanges.isEmpty()) {
 				lastResultIndex.set(-1);
@@ -321,6 +379,8 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 		 * Select the previous match.
 		 */
 		private void prev() {
+			recordSearch();
+
 			// No ranges for current search query, so do nothing.
 			if (resultRanges.isEmpty()) {
 				lastResultIndex.set(-1);
@@ -342,6 +402,69 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 		}
 
 		/**
+		 * Replaces the current selected range.
+		 */
+		private void replace() {
+			recordReplace();
+
+			String replacement = replaceInput.getText();
+			int index = lastResultIndex.get();
+			if (index >= 0) {
+				IntRange range = resultRanges.get(index);
+				CodeArea area = editor.getCodeArea();
+				area.replaceText(range.start(), range.end(), replacement);
+			}
+		}
+
+		/**
+		 * Replaces all ranges.
+		 */
+		private void replaceAll() {
+			recordReplace();
+
+			// Iterate backwards, replacing all matches.
+			// We record the start/end ranges so that we can do a re-style after for the affected range.
+			CodeArea area = editor.getCodeArea();
+			String replacement = replaceInput.getText();
+			List<IntRange> rangesCopy = new ArrayList<>(resultRanges);
+			int max = rangesCopy.size() - 1;
+			for (int i = max; i >= 0; i--) {
+				IntRange range = rangesCopy.get(i);
+				area.replaceText(range.start(), range.end(), replacement);
+			}
+			int start = rangesCopy.get(0).start();
+			int end = rangesCopy.get(max).end();
+			editor.restyleAtPosition(start, end - start);
+
+			// Update replacement history.
+			pastReplaces.remove(replacement);
+			pastReplaces.add(0, replacement);
+		}
+
+		/**
+		 * Records the current {@link #searchInput} text to {@link #pastSearches}.
+		 */
+		private void recordSearch() {
+			// Update search input history.
+			String searchText = searchInput.getText();
+			pastSearches.remove(searchText);
+			pastSearches.add(0, searchText);
+		}
+
+		/**
+		 * Records the current {@link #replaceInput} text to {@link #pastReplaces}.
+		 */
+		private void recordReplace() {
+			// Also record the search term.
+			recordSearch();
+
+			// Update replace input history.
+			String replacement = replaceInput.getText();
+			pastReplaces.remove(replacement);
+			pastReplaces.add(0, replacement);
+		}
+
+		/**
 		 * Show the search bar.
 		 */
 		public void show() {
@@ -350,8 +473,8 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			editor.setTop(this);
 
 			// If the editor has selected text, we will copy it to the search input field.
-			CodeArea codeArea = editor.getCodeArea();
-			String selectedText = codeArea.getSelectedText();
+			CodeArea area = editor.getCodeArea();
+			String selectedText = area.getSelectedText();
 			if (!selectedText.isBlank())
 				searchInput.setText(selectedText);
 		}
@@ -367,6 +490,20 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			// Need to send focus back to the editor's code-area.
 			// Doesn't work without the delay when handled from 'ESCAPE' key-event.
 			FxThreadUtil.delayedRun(1, () -> editor.getCodeArea().requestFocus());
+		}
+
+		/**
+		 * Shows the replace-bar segment.
+		 */
+		public void showReplace() {
+			replaceLine.setVisible(true);
+		}
+
+		/**
+		 * Hides the replace-bar segment.
+		 */
+		public void hideReplace() {
+			replaceLine.setVisible(false);
 		}
 
 		/**
