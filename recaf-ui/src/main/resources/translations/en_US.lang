@@ -258,8 +258,12 @@ modifications.title=Modifications
 ## Java area
 java.decompiling=Decompiling class...
 java.unparsable=JavaParser failed to interpret source, context actions only available 'Fields & Methods' side tab
-java.find.replace=Replace
-java.find.replaceall=Replace all
+
+## Search bar
+find.replace=Replace
+find.replaceall=Replace all
+find.regexinvalid=Replacement text
+find.regexreplace=Replacement text
 
 ## Fields and methods
 fieldsandmethods.title=Fields & methods

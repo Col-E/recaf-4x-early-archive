@@ -190,8 +190,8 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			close.setFocusTraversable(false);
 
 			// Replace buttons.
-			Button replace = new ActionButton(Lang.getBinding("java.find.replace"), this::replace);
-			Button replaceAll = new ActionButton(Lang.getBinding("java.find.replaceall"), this::replaceAll);
+			Button replace = new ActionButton(Lang.getBinding("find.replace"), this::replace);
+			Button replaceAll = new ActionButton(Lang.getBinding("find.replaceall"), this::replaceAll);
 			replace.getStyleClass().addAll(Styles.SMALL);
 			replaceAll.getStyleClass().addAll(Styles.SMALL);
 			replace.setFocusTraversable(false);
@@ -236,7 +236,7 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 						if (!replacement.equals(replaceInput.getText())) {
 							popoverPreview = new Popover(new Label(replacement));
 							popoverPreview.setHeaderAlwaysVisible(true);
-							popoverPreview.setTitle("Replacement text");
+							popoverPreview.titleProperty().bind(Lang.getBinding("find.regexreplace"));
 							popoverPreview.show(replaceInput);
 						} else {
 							popoverPreview = null;
@@ -332,7 +332,7 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 					// It's not valid. Tell the user what went wrong.
 					popoverValidation = new Popover(new Label(validation.message()));
 					popoverValidation.setHeaderAlwaysVisible(true);
-					popoverValidation.setTitle("Invalid regex");
+					popoverValidation.titleProperty().bind(Lang.getBinding("find.regexinvalid"));
 					popoverValidation.show(searchInput);
 				}
 
