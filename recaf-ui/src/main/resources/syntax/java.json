@@ -50,7 +50,7 @@
     },
     {
       "name": "SingleLineComment",
-      "regex": "//[^\\n]+",
+      "regex": "//[^\\n]*",
       "classes": [
         "comment-line"
       ],
