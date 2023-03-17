@@ -617,7 +617,6 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			return new Match(new IntRange(start, end), matcher.groups());
 		}
 
-
 		@Override
 		public int compareTo(Match o) {
 			return range.compareTo(o.range);

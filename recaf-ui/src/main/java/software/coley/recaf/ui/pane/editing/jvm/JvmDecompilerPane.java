@@ -3,7 +3,6 @@ package software.coley.recaf.ui.pane.editing.jvm;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
-import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
@@ -16,7 +15,9 @@ import software.coley.recaf.services.compile.CompileMap;
 import software.coley.recaf.services.compile.CompilerDiagnostic;
 import software.coley.recaf.services.compile.JavacArgumentsBuilder;
 import software.coley.recaf.services.compile.JavacCompiler;
+import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.DecompilerManager;
+import software.coley.recaf.services.decompile.JvmDecompiler;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.config.KeybindingConfig;
@@ -43,6 +44,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -56,16 +58,21 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 	private static final ExecutorService compilePool = ThreadPoolFactory.newSingleThreadExecutor("recompile");
 	private final AtomicBoolean updateLock = new AtomicBoolean();
 	private final ProblemTracking problemTracking = new ProblemTracking();
+	private final JvmDecompilerPaneConfig config;
 	private final DecompilerManager decompilerManager;
 	private final Editor editor;
+	private JvmDecompiler decompiler; // TODO: Make swappable from UI
 	private ClassPathNode path;
 
 	@Inject
-	public JvmDecompilerPane(@Nonnull KeybindingConfig keys,
+	public JvmDecompilerPane(@Nonnull JvmDecompilerPaneConfig config,
+							 @Nonnull KeybindingConfig keys,
 							 @Nonnull SearchBar searchBar,
 							 @Nonnull DecompilerManager decompilerManager,
 							 @Nonnull JavacCompiler javac) {
+		this.config = config;
 		this.decompilerManager = decompilerManager;
+		decompiler = decompilerManager.getTargetJvmDecompiler();
 		editor = new Editor();
 		editor.getStylesheets().add("/syntax/java.css");
 		editor.setSyntaxHighlighter(new RegexSyntaxHighlighter(RegexLanguages.getJavaLanguage()));
@@ -188,28 +195,31 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 			Workspace workspace = classPathNode.getValueOfType(Workspace.class);
 			JvmClassInfo classInfo = classPathNode.getValue().asJvmClass();
 
-			// TODO: Configurable timeout + option to have infinite timeout
-			//  - 'java.decompiling' bind overlay when waiting
-			decompilerManager.decompile(workspace, classInfo).whenCompleteAsync((result, throwable) -> {
-				if (throwable != null) {
-					editor.setText("/*\nUncaught exception when decompiling:\n" + StringUtil.traceToString(throwable) + "\n*/");
-					return;
-				}
-				switch (result.getType()) {
-					case SUCCESS -> editor.setText(result.getText());
-					case SKIPPED -> editor.setText("// Decompilation skipped");
-					case FAILURE -> {
-						Throwable exception = result.getException();
-						if (exception != null)
-							editor.setText("/*\nDecompile failed:\n" + StringUtil.traceToString(exception) + "\n*/");
-						else
-							editor.setText("/*\nDecompile failed, but no trace was attached:\n*/");
-					}
-				}
-
-				// Prevent undo from reverting to empty state.
-				editor.getCodeArea().getUndoManager().forgetHistory();
-			}, FxThreadUtil.executor());
+			// TODO: 'java.decompiling' bind overlay when waiting
+			decompilerManager.decompile(decompiler, workspace, classInfo)
+					.completeOnTimeout(timeoutResult(), config.getTimeoutSeconds().getValue(), TimeUnit.SECONDS)
+					.whenCompleteAsync((result, throwable) -> {
+						if (throwable != null) {
+							String trace = StringUtil.traceToString(throwable);
+							editor.setText("/*\nUncaught exception when decompiling:\n" + trace + "\n*/");
+							return;
+						}
+						String text = result.getText();
+						switch (result.getType()) {
+							case SUCCESS -> editor.setText(text);
+							case SKIPPED -> editor.setText(text == null ? "// Decompilation skipped" : text);
+							case FAILURE -> {
+								Throwable exception = result.getException();
+								if (exception != null) {
+									String trace = StringUtil.traceToString(exception);
+									editor.setText("/*\nDecompile failed:\n" + trace + "\n*/");
+								} else
+									editor.setText("/*\nDecompile failed, but no trace was attached:\n*/");
+							}
+						}
+						// Prevent undo from reverting to empty state.
+						editor.getCodeArea().getUndoManager().forgetHistory();
+					}, FxThreadUtil.executor());
 		}
 	}
 
@@ -217,5 +227,31 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 	public void disable() {
 		setDisable(true);
 		setOnKeyPressed(null);
+	}
+
+	/**
+	 * @return Result made for timed out decompilations.
+	 */
+	private DecompileResult timeoutResult() {
+		JvmClassInfo info = path.getValue().asJvmClass();
+		return new DecompileResult("""
+				// Decompilation timed out.
+				//  - Class name: %s
+				//  - Class size: %d bytes
+				//  - Decompiler: %s - %s
+				//  - Timeout: %d seconds
+				//
+				// Suggestions:
+				//  - Increase timeout
+				//  - Change decompilers
+				//  - Deobfuscate heavily obfuscated code and try again
+				//
+				// Reminder:
+				//  - Class information is still available on the side panels ==>
+				""".formatted(info.getName(),
+				info.getBytecode().length,
+				decompiler.getName(), decompiler.getVersion(),
+				config.getTimeoutSeconds().getValue()
+		), null, DecompileResult.ResultType.SKIPPED, 0);
 	}
 }
