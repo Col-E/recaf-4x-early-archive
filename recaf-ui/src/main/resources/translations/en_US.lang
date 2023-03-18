@@ -258,6 +258,10 @@ modifications.title=Modifications
 ## Java area
 java.decompiling=Decompiling class...
 java.unparsable=JavaParser failed to interpret source, context actions only available 'Fields & Methods' side tab
+java.decompiler=Decompiler
+java.targetversion=Compile target version
+java.targetversion.auto=Match class file version
+java.targetdebug=Compile with debug info
 
 ## Search bar
 find.replace=Replace
@@ -614,6 +618,7 @@ conf.undefined=Undefined
 
 misc.all=All
 misc.none=None
+misc.enabled=Enabled
 misc.casesensitive=Case sensitive
 misc.regex=Regex
 misc.member.field=Field

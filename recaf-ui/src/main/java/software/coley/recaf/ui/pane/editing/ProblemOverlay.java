@@ -6,12 +6,10 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
@@ -23,6 +21,7 @@ import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
+import software.coley.recaf.ui.control.richtext.ScrollbarPaddingUtil;
 import software.coley.recaf.ui.control.richtext.problem.ProblemInvalidationListener;
 import software.coley.recaf.ui.control.richtext.problem.ProblemLevel;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
@@ -33,7 +32,7 @@ import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
  * @author Matt Coley
  */
 public class ProblemOverlay extends Group implements EditorComponent, ProblemInvalidationListener {
-	private final ChangeListener<Boolean> handleScrollbarVisibility = this::handleScrollbarVisibility;
+	private final ChangeListener<Boolean> handleScrollbarVisibility = (ob, old, cur) -> ScrollbarPaddingUtil.handleScrollbarVisibility(this, cur);
 	private final IntegerProperty problemCount = new SimpleIntegerProperty(-1);
 	private Editor editor;
 
@@ -173,23 +172,5 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 		ProblemTracking tracking = editor.getProblemTracking();
 		if (tracking != null)
 			problemCount.set(tracking.getProblems().size());
-	}
-
-	/**
-	 * When the {@link Editor#getVerticalScrollbar()} is visible, our {@link StackPane#setMargin(Node, Insets)} will cause
-	 * us to overlap with it. This doesn't look great, so when it is visible we will shift a bit over to the left so we
-	 * do not overlap.
-	 *
-	 * @param ob
-	 * 		Visibility observable.
-	 * @param old
-	 * 		Old value.
-	 * @param currentlyVisible
-	 * 		Current value.
-	 */
-	private void handleScrollbarVisibility(ObservableValue<? extends Boolean> ob,
-										   Boolean old,
-										   Boolean currentlyVisible) {
-		StackPane.setMargin(this, new Insets(7, currentlyVisible ? 14 : 7, 7, 7));
 	}
 }

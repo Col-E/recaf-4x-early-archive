@@ -20,6 +20,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Wrapper for {@link JavaCompiler}.
+ * <br>
+ * Worth note, the minimum supported version is declared in {@code com.sun.tools.javac.jvm.Target} but is marked
+ * as an unstable API subject to change without notice. As of Java 17, the minimum target version is Java 7.
  *
  * @author Matt Coley
  */

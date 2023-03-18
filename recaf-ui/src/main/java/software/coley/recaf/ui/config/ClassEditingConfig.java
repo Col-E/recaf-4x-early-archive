@@ -8,9 +8,9 @@ import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
-import software.coley.recaf.ui.pane.editing.AndroidClassEditorType;
+import software.coley.recaf.ui.pane.editing.android.AndroidClassEditorType;
 import software.coley.recaf.ui.pane.editing.ClassPane;
-import software.coley.recaf.ui.pane.editing.JvmClassEditorType;
+import software.coley.recaf.ui.pane.editing.jvm.JvmClassEditorType;
 
 /**
  * Config for {@link ClassPane} and its child types, plus any components they declare.

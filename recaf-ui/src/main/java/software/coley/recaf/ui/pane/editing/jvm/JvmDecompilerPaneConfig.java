@@ -3,7 +3,7 @@ package software.coley.recaf.ui.pane.editing.jvm;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import software.coley.observables.ObservableLong;
+import software.coley.observables.ObservableInteger;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
@@ -15,16 +15,16 @@ import software.coley.recaf.config.ConfigGroups;
  */
 @ApplicationScoped
 public class JvmDecompilerPaneConfig extends BasicConfigContainer {
-	private final ObservableLong timeoutSeconds = new ObservableLong(60);
+	private final ObservableInteger timeoutSeconds = new ObservableInteger(60);
 
 	@Inject
 	public JvmDecompilerPaneConfig() {
 		super(ConfigGroups.SERVICE_UI, "decompile-pane" + CONFIG_SUFFIX);
-		addValue(new BasicConfigValue<>("timeout-seconds", long.class, timeoutSeconds));
+		addValue(new BasicConfigValue<>("timeout-seconds", int.class, timeoutSeconds));
 	}
 
 	@Nonnull
-	public ObservableLong getTimeoutSeconds() {
+	public ObservableInteger getTimeoutSeconds() {
 		return timeoutSeconds;
 	}
 }

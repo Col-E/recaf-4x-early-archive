@@ -11,6 +11,8 @@ import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
+import software.coley.recaf.ui.pane.editing.android.AndroidClassPane;
+import software.coley.recaf.ui.pane.editing.jvm.JvmClassPane;
 
 import java.util.ArrayList;
 import java.util.Collection;

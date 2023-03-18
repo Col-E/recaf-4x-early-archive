@@ -16,7 +16,7 @@ public class JavaVersion {
 	public static final int VERSION_OFFSET = 44;
 	private static final String JAVA_CLASS_VERSION = "java.class.version";
 	private static final String JAVA_VM_SPEC_VERSION = "java.vm.specification.version";
-	private static final int FALLBACK_VERSION = 8;
+	private static final int FALLBACK_VERSION = 11;
 	private static final Logger logger = Logging.get(JavaVersion.class);
 	private static int version = -1;
 
@@ -31,6 +31,7 @@ public class JavaVersion {
 			String property = System.getProperty(JAVA_CLASS_VERSION, "");
 			if (!property.isEmpty())
 				return version = (int) (Float.parseFloat(property) - VERSION_OFFSET);
+
 			// Odd, not found. Try the spec version
 			logger.warn("Property '{}' not found, using '{}' as fallback",
 					JAVA_CLASS_VERSION,
@@ -44,6 +45,7 @@ public class JavaVersion {
 			logger.warn("Property '{}' not found, using '{}' as fallback",
 					JAVA_VM_SPEC_VERSION, FALLBACK_VERSION
 			);
+
 			// Very odd
 			return FALLBACK_VERSION;
 		}

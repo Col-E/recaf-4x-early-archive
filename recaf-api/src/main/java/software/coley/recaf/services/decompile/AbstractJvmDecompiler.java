@@ -76,9 +76,4 @@ public abstract class AbstractJvmDecompiler extends AbstractDecompiler implement
 		result = 31 * result + inputFilters.hashCode();
 		return result;
 	}
-
-	@Override
-	public String toString() {
-		return "JvmDecompiler: " + getName() + " - " + getVersion();
-	}
 }

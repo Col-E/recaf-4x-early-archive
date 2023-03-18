@@ -1,24 +1,16 @@
-package software.coley.recaf.ui.pane.editing;
+package software.coley.recaf.ui.pane.editing.jvm;
 
-import atlantafx.base.theme.Styles;
-import atlantafx.base.theme.Tweaks;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.scene.control.Label;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TextArea;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
-import javafx.scene.text.Text;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.ui.config.ClassEditingConfig;
 import software.coley.recaf.ui.control.BoundTab;
 import software.coley.recaf.ui.control.IconView;
-import software.coley.recaf.ui.pane.editing.jvm.JvmDecompilerPane;
+import software.coley.recaf.ui.pane.editing.ClassPane;
 import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
 import software.coley.recaf.ui.pane.editing.tabs.InheritancePane;
 import software.coley.recaf.util.Icons;

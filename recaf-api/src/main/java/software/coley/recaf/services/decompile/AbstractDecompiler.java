@@ -60,4 +60,9 @@ public class AbstractDecompiler implements Decompiler {
 		result = 31 * result + config.hashCode();
 		return result;
 	}
+
+	@Override
+	public String toString() {
+		return getName() + " - " + getVersion();
+	}
 }

@@ -6,6 +6,9 @@ import jakarta.inject.Inject;
 import javafx.scene.layout.BorderPane;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
+import software.coley.observables.ObservableBoolean;
+import software.coley.observables.ObservableInteger;
+import software.coley.observables.ObservableObject;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
@@ -18,6 +21,7 @@ import software.coley.recaf.services.compile.JavacCompiler;
 import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.decompile.JvmDecompiler;
+import software.coley.recaf.services.decompile.NoopJvmDecompiler;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.config.KeybindingConfig;
@@ -56,12 +60,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable {
 	private static final Logger logger = Logging.get(JvmDecompilerPane.class);
 	private static final ExecutorService compilePool = ThreadPoolFactory.newSingleThreadExecutor("recompile");
+	private final ObservableObject<JvmDecompiler> decompiler = new ObservableObject<>(NoopJvmDecompiler.getInstance());
+	private final ObservableInteger javacTarget = new ObservableInteger(-1); // use negative to match class file's ver
+	private final ObservableBoolean javacDebug = new ObservableBoolean(true);
 	private final AtomicBoolean updateLock = new AtomicBoolean();
 	private final ProblemTracking problemTracking = new ProblemTracking();
 	private final JvmDecompilerPaneConfig config;
 	private final DecompilerManager decompilerManager;
 	private final Editor editor;
-	private JvmDecompiler decompiler; // TODO: Make swappable from UI
 	private ClassPathNode path;
 
 	@Inject
@@ -72,7 +78,7 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 							 @Nonnull JavacCompiler javac) {
 		this.config = config;
 		this.decompilerManager = decompilerManager;
-		decompiler = decompilerManager.getTargetJvmDecompiler();
+		decompiler.setValue(decompilerManager.getTargetJvmDecompiler());
 		editor = new Editor();
 		editor.getStylesheets().add("/syntax/java.css");
 		editor.setSyntaxHighlighter(new RegexSyntaxHighlighter(RegexLanguages.getJavaLanguage()));
@@ -82,6 +88,9 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 				new BracketMatchGraphicFactory(),
 				new ProblemGraphicFactory()
 		);
+		JvmDecompilerPaneConfigurator configurator = new JvmDecompilerPaneConfigurator(config, decompiler,
+				javacTarget, javacDebug, decompilerManager);
+		configurator.install(editor);
 		searchBar.install(editor);
 		// TODO: Hook up AST analysis for contextual right-click actions
 		setCenter(editor);
@@ -103,7 +112,10 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 				CompletableFuture.supplyAsync(() -> {
 					// TODO: allow user to manually change version target (should config be local? global?)
 					JavacArgumentsBuilder builder = new JavacArgumentsBuilder()
-							.withVersionTarget(JavaVersion.adaptFromClassFileVersion(info.getVersion()))
+							.withVersionTarget(useConfiguredVersion(info))
+							.withDebugVariables(javacDebug.getValue())
+							.withDebugSourceName(javacDebug.getValue())
+							.withDebugLineNumbers(javacDebug.getValue())
 							.withClassSource(editor.getText())
 							.withClassName(infoName);
 					return javac.compile(builder.build(), workspace, null);
@@ -196,7 +208,7 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 			JvmClassInfo classInfo = classPathNode.getValue().asJvmClass();
 
 			// TODO: 'java.decompiling' bind overlay when waiting
-			decompilerManager.decompile(decompiler, workspace, classInfo)
+			decompilerManager.decompile(decompiler.getValue(), workspace, classInfo)
 					.completeOnTimeout(timeoutResult(), config.getTimeoutSeconds().getValue(), TimeUnit.SECONDS)
 					.whenCompleteAsync((result, throwable) -> {
 						if (throwable != null) {
@@ -230,10 +242,28 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 	}
 
 	/**
+	 * @param info
+	 * 		Class to recompile.
+	 *
+	 * @return Target Java version <i>(Standard versioning, not the internal one)</i>.
+	 */
+	private int useConfiguredVersion(JvmClassInfo info) {
+		int version = javacTarget.getValue();
+
+		// Negative: Match class file's version
+		if (version < 0)
+			return JavaVersion.adaptFromClassFileVersion(info.getVersion());
+
+		// Use provided version
+		return version;
+	}
+
+	/**
 	 * @return Result made for timed out decompilations.
 	 */
 	private DecompileResult timeoutResult() {
 		JvmClassInfo info = path.getValue().asJvmClass();
+		JvmDecompiler jvmDecompiler = decompiler.getValue();
 		return new DecompileResult("""
 				// Decompilation timed out.
 				//  - Class name: %s
@@ -250,7 +280,7 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 				//  - Class information is still available on the side panels ==>
 				""".formatted(info.getName(),
 				info.getBytecode().length,
-				decompiler.getName(), decompiler.getVersion(),
+				jvmDecompiler.getName(), jvmDecompiler.getVersion(),
 				config.getTimeoutSeconds().getValue()
 		), null, DecompileResult.ResultType.SKIPPED, 0);
 	}

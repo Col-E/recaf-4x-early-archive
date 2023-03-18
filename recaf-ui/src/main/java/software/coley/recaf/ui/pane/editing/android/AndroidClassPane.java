@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.pane.editing;
+package software.coley.recaf.ui.pane.editing.android;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
@@ -6,6 +6,7 @@ import jakarta.inject.Inject;
 import javafx.scene.control.Label;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.ui.config.ClassEditingConfig;
+import software.coley.recaf.ui.pane.editing.ClassPane;
 
 /**
  * Displays {@link AndroidClassInfo} in a configurable manner.
