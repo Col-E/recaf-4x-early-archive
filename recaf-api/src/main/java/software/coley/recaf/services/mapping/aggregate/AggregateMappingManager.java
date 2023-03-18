@@ -62,7 +62,7 @@ public class AggregateMappingManager implements Service, WorkspaceCloseListener 
 	 * @param listener
 	 * 		Listener to add.
 	 */
-	public void addAggregatedMappingsListener(AggregatedMappingsListener listener) {
+	public void addAggregatedMappingsListener(@Nonnull AggregatedMappingsListener listener) {
 		aggregateListeners.add(listener);
 	}
 
@@ -73,13 +73,14 @@ public class AggregateMappingManager implements Service, WorkspaceCloseListener 
 	 * @return {@code true} when the listener was removed.
 	 * {@code false} if the listener was not in the list.
 	 */
-	public boolean removeAggregatedMappingListener(AggregatedMappingsListener listener) {
+	public boolean removeAggregatedMappingListener(@Nonnull AggregatedMappingsListener listener) {
 		return aggregateListeners.remove(listener);
 	}
 
 	/**
 	 * @return Current aggregated mappings in the ASM format.
 	 */
+	@Nonnull
 	public AggregatedMappings getAggregatedMappings() {
 		return aggregatedMappings;
 	}

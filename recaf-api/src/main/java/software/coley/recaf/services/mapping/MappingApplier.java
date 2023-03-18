@@ -14,16 +14,15 @@ import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 
 /**
- * Applies mappings to workspaces and workspace resources.
+ * Applies mappings to workspaces and workspace resources, wrapping the results in a {@link MappingResults}.
+ * To update the workspace with the mapping results, use {@link MappingResults#apply()}.
  *
  * @author Matt Coley
+ * @see MappingResults
  */
 @WorkspaceScoped
 public class MappingApplier {
@@ -33,8 +32,9 @@ public class MappingApplier {
 	private final Workspace workspace;
 
 	@Inject
-	public MappingApplier(InheritanceGraph inheritanceGraph, AggregateMappingManager aggregateMappingManager,
-						  Workspace workspace) {
+	public MappingApplier(@Nonnull InheritanceGraph inheritanceGraph,
+						  @Nonnull AggregateMappingManager aggregateMappingManager,
+						  @Nonnull Workspace workspace) {
 		this.inheritanceGraph = inheritanceGraph;
 		this.aggregateMappingManager = aggregateMappingManager;
 		this.workspace = workspace;
@@ -44,22 +44,21 @@ public class MappingApplier {
 	 * @param mappings
 	 * 		The mappings to apply.
 	 *
-	 * @return Names of the classes in the resource that had modifications as a result of the mapping operation.
+	 * @return Result wrapper detailing affected classes from the mapping operation.
 	 */
 	@Nonnull
-	public Set<String> apply(Mappings mappings) {
+	public MappingResults apply(@Nonnull Mappings mappings) {
 		WorkspaceResource resource = workspace.getPrimaryResource();
 
 		// Check if mappings can be enriched with type look-ups
-		if (inheritanceGraph != null && mappings instanceof MappingsAdapter adapter) {
+		if (mappings instanceof MappingsAdapter adapter) {
 			// If we have "Dog extends Animal" and both define "jump" this lets "Dog.jump()" see "Animal.jump()"
 			// allowing mappings that aren't complete for their type hierarchies to be filled in.
 			adapter.enableHierarchyLookup(inheritanceGraph);
 		}
 
-		Set<String> modifiedClasses = applyMappingsWithoutAggregation(workspace, resource, mappings);
-		if (aggregateMappingManager != null)
-			aggregateMappingManager.updateAggregateMappings(mappings);
+		MappingResults modifiedClasses = applyMappingsWithoutAggregation(workspace, resource, mappings);
+		aggregateMappingManager.updateAggregateMappings(mappings);
 		return modifiedClasses;
 	}
 
@@ -71,13 +70,14 @@ public class MappingApplier {
 	 * @param mappings
 	 * 		The mappings to apply.
 	 *
-	 * @return Names of the classes in the resource that had modifications as a result of the mapping operation.
+	 * @return Result wrapper detailing affected classes from the mapping operation.
 	 */
 	@Nonnull
-	private static Set<String> applyMappingsWithoutAggregation(Workspace workspace, WorkspaceResource resource, Mappings mappings) {
+	public static MappingResults applyMappingsWithoutAggregation(@Nonnull Workspace workspace,
+																 @Nonnull WorkspaceResource resource,
+																 @Nonnull Mappings mappings) {
+		MappingResults results = new MappingResults(mappings);
 		ExecutorService service = ThreadUtil.phasingService(applierThreadPool);
-		Set<String> modifiedClasses = ConcurrentHashMap.newKeySet();
-		Set<String> newNames = new HashSet<>();
 		Stream.concat(resource.jvmClassBundleStream(), resource.versionedJvmClassBundleStream()).forEach(bundle -> {
 			bundle.forEach(classInfo -> {
 				service.execute(() -> {
@@ -91,28 +91,17 @@ public class MappingApplier {
 
 					// Update class if it has any modified references
 					if (remapVisitor.hasMappingBeenApplied()) {
-						modifiedClasses.add(originalName);
 						JvmClassInfo updatedInfo = classInfo.toBuilder()
 								.adaptFrom(new ClassReader(cw.toByteArray()))
 								.build();
 						updatedInfo.setPropertyIfMissing(OriginalClassNameProperty.KEY,
 								() -> new OriginalClassNameProperty(originalName));
-						String newName = updatedInfo.getName();
-						synchronized (resource) {
-							newNames.add(newName);
-							bundle.put(updatedInfo);
-
-							// Remove old classes if they have been renamed and do not occur
-							// in a set of newly applied names
-							if (!originalName.equals(newName) && !newNames.contains(originalName)) {
-								bundle.remove(originalName);
-							}
-						}
+						results.add(workspace, resource, bundle, classInfo, updatedInfo);
 					}
 				});
 			});
 		});
 		ThreadUtil.blockUntilComplete(service);
-		return modifiedClasses;
+		return results;
 	}
 }
