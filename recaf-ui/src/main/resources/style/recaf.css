@@ -757,6 +757,144 @@ Text {
   -fx-text-fill: -color-fg-muted;
 }
 
+.spinner {
+  -fx-background-color: -color-bg-default;
+  -fx-border-color: -color-base-9;
+  -fx-border-radius: 1;
+  -fx-border-width: 1px;
+}
+.spinner > .text-field {
+  -fx-background-radius: 1 0 0 1;
+  -fx-background-insets: 0;
+  -fx-padding: 7px 11px 7px 11px;
+}
+.spinner > .increment-arrow-button {
+  -fx-background-color: -color-bg-subtle;
+  -fx-background-insets: 0;
+  -fx-background-radius: 0 1 0 0;
+  -fx-padding: 10px;
+}
+.spinner > .increment-arrow-button:hover {
+  -fx-background-color: -color-base-6;
+}
+.spinner > .increment-arrow-button > .increment-arrow {
+  -fx-background-color: -color-fg-default;
+  -fx-background-insets: 0;
+  -fx-padding: 0 0.25em 0 0.25em;
+  -fx-shape: "M7 14l5-5 5 5z";
+  -fx-scale-shape: false;
+}
+.spinner > .decrement-arrow-button {
+  -fx-background-color: -color-bg-subtle;
+  -fx-background-insets: -1 0 0 0;
+  -fx-background-radius: 0 0 1 0;
+  -fx-padding: 10px;
+}
+.spinner > .decrement-arrow-button:hover {
+  -fx-background-color: -color-base-6;
+}
+.spinner > .decrement-arrow-button > .decrement-arrow {
+  -fx-background-color: -color-fg-default;
+  -fx-background-insets: 0;
+  -fx-padding: 0 0.25em 0 0.25em;
+  -fx-shape: "M7 10l5 5 5-5z";
+  -fx-scale-shape: false;
+}
+.spinner:disabled {
+  -fx-opacity: 0.55;
+}
+.spinner:focused:focused, .spinner:contains-focus:focused {
+  -fx-border-color: -color-accent-5;
+}
+.spinner.arrows-on-left-vertical > .text-field {
+  -fx-background-radius: 0 1 1 0;
+  -fx-alignment: CENTER_RIGHT;
+}
+.spinner.arrows-on-left-vertical > .increment-arrow-button {
+  -fx-background-radius: 1 0 0 0;
+}
+.spinner.arrows-on-left-vertical > .decrement-arrow-button {
+  -fx-background-radius: 0 0 0 1;
+}
+.spinner.arrows-on-right-horizontal > .increment-arrow-button {
+  -fx-background-radius: 0 1 1 0;
+  -fx-background-insets: 0;
+}
+.spinner.arrows-on-right-horizontal > .increment-arrow-button > .increment-arrow {
+  -fx-shape: "M 18,12.857142 H 12.857142 V 18 H 11.142858 V 12.857142 H 6 v -1.714284 h 5.142858 V 6 h 1.714284 v 5.142858 H 18 Z";
+  -fx-scale-shape: false;
+}
+.spinner.arrows-on-right-horizontal > .decrement-arrow-button {
+  -fx-background-radius: 0;
+  -fx-background-insets: 0;
+}
+.spinner.arrows-on-right-horizontal > .decrement-arrow-button > .decrement-arrow {
+  -fx-shape: "M 17,13 H 7 v -2 h 10 z";
+  -fx-scale-shape: false;
+}
+.spinner.arrows-on-left-horizontal > .text-field {
+  -fx-background-radius: 0 1 1 0;
+  -fx-alignment: CENTER_RIGHT;
+}
+.spinner.arrows-on-left-horizontal > .increment-arrow-button {
+  -fx-background-radius: 0;
+  -fx-background-insets: 0;
+}
+.spinner.arrows-on-left-horizontal > .increment-arrow-button > .increment-arrow {
+  -fx-shape: "M 18,12.857142 H 12.857142 V 18 H 11.142858 V 12.857142 H 6 v -1.714284 h 5.142858 V 6 h 1.714284 v 5.142858 H 18 Z";
+  -fx-scale-shape: false;
+}
+.spinner.arrows-on-left-horizontal > .decrement-arrow-button {
+  -fx-background-radius: 1 0 0 1;
+  -fx-background-insets: 0;
+}
+.spinner.arrows-on-left-horizontal > .decrement-arrow-button > .decrement-arrow {
+  -fx-shape: "M 17,13 H 7 v -2 h 10 z";
+  -fx-scale-shape: false;
+}
+.spinner.split-arrows-horizontal > .text-field {
+  -fx-background-radius: 0;
+  -fx-alignment: CENTER;
+}
+.spinner.split-arrows-horizontal > .increment-arrow-button {
+  -fx-background-radius: 0 1 1 0;
+  -fx-background-insets: 0;
+}
+.spinner.split-arrows-horizontal > .increment-arrow-button > .increment-arrow {
+  -fx-shape: "M 18,12.857142 H 12.857142 V 18 H 11.142858 V 12.857142 H 6 v -1.714284 h 5.142858 V 6 h 1.714284 v 5.142858 H 18 Z";
+  -fx-scale-shape: false;
+}
+.spinner.split-arrows-horizontal > .decrement-arrow-button {
+  -fx-background-radius: 1 0 0 1;
+  -fx-background-insets: 0;
+}
+.spinner.split-arrows-horizontal > .decrement-arrow-button > .decrement-arrow {
+  -fx-shape: "M 17,13 H 7 v -2 h 10 z";
+  -fx-scale-shape: false;
+}
+.spinner.split-arrows-vertical > .text-field {
+  -fx-background-radius: 0;
+  -fx-alignment: CENTER;
+}
+.spinner.split-arrows-vertical > .increment-arrow-button {
+  -fx-background-radius: 1 1 0 0;
+  -fx-background-insets: 0;
+}
+.spinner.split-arrows-vertical > .increment-arrow-button > .increment-arrow {
+  -fx-shape: "M 18,12.857142 H 12.857142 V 18 H 11.142858 V 12.857142 H 6 v -1.714284 h 5.142858 V 6 h 1.714284 v 5.142858 H 18 Z";
+  -fx-scale-shape: false;
+  -fx-padding: 0.25em 0 0.25em 0;
+}
+.spinner.split-arrows-vertical > .decrement-arrow-button {
+  -fx-background-radius: 0 0 1 1;
+  -fx-background-insets: 0;
+}
+.spinner.split-arrows-vertical > .decrement-arrow-button > .decrement-arrow {
+  -fx-shape: "M 17,13 H 7 v -2 h 10 z";
+  -fx-scale-shape: false;
+  -fx-padding: 0.25em 0 0.25em 0;
+}
+
 .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected,
 .tree-view > .virtual-flow > .clipped-container > .sheet > .tree-cell:filled:selected,
 .table-view > .virtual-flow > .clipped-container > .sheet > .table-row-cell:filled:selected,
@@ -3498,144 +3636,6 @@ Text {
 }
 .separator.large:vertical {
   -fx-padding: 0 1.5em 0 1.5em;
-}
-
-.spinner {
-  -fx-background-color: -color-bg-default;
-  -fx-border-color: -color-border-default;
-  -fx-border-radius: 1;
-  -fx-border-width: 1px;
-}
-.spinner > .text-field {
-  -fx-background-radius: 1 0 0 1;
-  -fx-background-insets: 0;
-  -fx-padding: 7px 11px 7px 11px;
-}
-.spinner > .increment-arrow-button {
-  -fx-background-color: -color-bg-subtle;
-  -fx-background-insets: 0;
-  -fx-background-radius: 0 1 0 0;
-  -fx-padding: 10px;
-}
-.spinner > .increment-arrow-button:hover {
-  -fx-background-color: -color-base-6;
-}
-.spinner > .increment-arrow-button > .increment-arrow {
-  -fx-background-color: -color-fg-default;
-  -fx-background-insets: 0;
-  -fx-padding: 0 0.25em 0 0.25em;
-  -fx-shape: "M7 14l5-5 5 5z";
-  -fx-scale-shape: false;
-}
-.spinner > .decrement-arrow-button {
-  -fx-background-color: -color-bg-subtle;
-  -fx-background-insets: -1 0 0 0;
-  -fx-background-radius: 0 0 1 0;
-  -fx-padding: 10px;
-}
-.spinner > .decrement-arrow-button:hover {
-  -fx-background-color: -color-base-6;
-}
-.spinner > .decrement-arrow-button > .decrement-arrow {
-  -fx-background-color: -color-fg-default;
-  -fx-background-insets: 0;
-  -fx-padding: 0 0.25em 0 0.25em;
-  -fx-shape: "M7 10l5 5 5-5z";
-  -fx-scale-shape: false;
-}
-.spinner:disabled {
-  -fx-opacity: 0.55;
-}
-.spinner:focused:focused, .spinner:contains-focus:focused {
-  -fx-border-color: -color-accent-emphasis;
-}
-.spinner.arrows-on-left-vertical > .text-field {
-  -fx-background-radius: 0 1 1 0;
-  -fx-alignment: CENTER_RIGHT;
-}
-.spinner.arrows-on-left-vertical > .increment-arrow-button {
-  -fx-background-radius: 1 0 0 0;
-}
-.spinner.arrows-on-left-vertical > .decrement-arrow-button {
-  -fx-background-radius: 0 0 0 1;
-}
-.spinner.arrows-on-right-horizontal > .increment-arrow-button {
-  -fx-background-radius: 0 1 1 0;
-  -fx-background-insets: 0;
-}
-.spinner.arrows-on-right-horizontal > .increment-arrow-button > .increment-arrow {
-  -fx-shape: "M 18,12.857142 H 12.857142 V 18 H 11.142858 V 12.857142 H 6 v -1.714284 h 5.142858 V 6 h 1.714284 v 5.142858 H 18 Z";
-  -fx-scale-shape: false;
-}
-.spinner.arrows-on-right-horizontal > .decrement-arrow-button {
-  -fx-background-radius: 0;
-  -fx-background-insets: 0;
-}
-.spinner.arrows-on-right-horizontal > .decrement-arrow-button > .decrement-arrow {
-  -fx-shape: "M 17,13 H 7 v -2 h 10 z";
-  -fx-scale-shape: false;
-}
-.spinner.arrows-on-left-horizontal > .text-field {
-  -fx-background-radius: 0 1 1 0;
-  -fx-alignment: CENTER_RIGHT;
-}
-.spinner.arrows-on-left-horizontal > .increment-arrow-button {
-  -fx-background-radius: 0;
-  -fx-background-insets: 0;
-}
-.spinner.arrows-on-left-horizontal > .increment-arrow-button > .increment-arrow {
-  -fx-shape: "M 18,12.857142 H 12.857142 V 18 H 11.142858 V 12.857142 H 6 v -1.714284 h 5.142858 V 6 h 1.714284 v 5.142858 H 18 Z";
-  -fx-scale-shape: false;
-}
-.spinner.arrows-on-left-horizontal > .decrement-arrow-button {
-  -fx-background-radius: 1 0 0 1;
-  -fx-background-insets: 0;
-}
-.spinner.arrows-on-left-horizontal > .decrement-arrow-button > .decrement-arrow {
-  -fx-shape: "M 17,13 H 7 v -2 h 10 z";
-  -fx-scale-shape: false;
-}
-.spinner.split-arrows-horizontal > .text-field {
-  -fx-background-radius: 0;
-  -fx-alignment: CENTER;
-}
-.spinner.split-arrows-horizontal > .increment-arrow-button {
-  -fx-background-radius: 0 1 1 0;
-  -fx-background-insets: 0;
-}
-.spinner.split-arrows-horizontal > .increment-arrow-button > .increment-arrow {
-  -fx-shape: "M 18,12.857142 H 12.857142 V 18 H 11.142858 V 12.857142 H 6 v -1.714284 h 5.142858 V 6 h 1.714284 v 5.142858 H 18 Z";
-  -fx-scale-shape: false;
-}
-.spinner.split-arrows-horizontal > .decrement-arrow-button {
-  -fx-background-radius: 1 0 0 1;
-  -fx-background-insets: 0;
-}
-.spinner.split-arrows-horizontal > .decrement-arrow-button > .decrement-arrow {
-  -fx-shape: "M 17,13 H 7 v -2 h 10 z";
-  -fx-scale-shape: false;
-}
-.spinner.split-arrows-vertical > .text-field {
-  -fx-background-radius: 0;
-  -fx-alignment: CENTER;
-}
-.spinner.split-arrows-vertical > .increment-arrow-button {
-  -fx-background-radius: 1 1 0 0;
-  -fx-background-insets: 0;
-}
-.spinner.split-arrows-vertical > .increment-arrow-button > .increment-arrow {
-  -fx-shape: "M 18,12.857142 H 12.857142 V 18 H 11.142858 V 12.857142 H 6 v -1.714284 h 5.142858 V 6 h 1.714284 v 5.142858 H 18 Z";
-  -fx-scale-shape: false;
-  -fx-padding: 0.25em 0 0.25em 0;
-}
-.spinner.split-arrows-vertical > .decrement-arrow-button {
-  -fx-background-radius: 0 0 1 1;
-  -fx-background-insets: 0;
-}
-.spinner.split-arrows-vertical > .decrement-arrow-button > .decrement-arrow {
-  -fx-shape: "M 17,13 H 7 v -2 h 10 z";
-  -fx-scale-shape: false;
-  -fx-padding: 0.25em 0 0.25em 0;
 }
 
 .split-pane {
