@@ -83,6 +83,9 @@ public class MappingResults {
 		}
 	}
 
+	/**
+	 * Applies the mappings to the {@link Workspace} / {@link WorkspaceResource} from {@link MappingApplier}.
+	 */
 	@SuppressWarnings("unchecked")
 	public void apply() {
 		for (Map.Entry<String, String> entry : mappedClasses.entrySet()) {

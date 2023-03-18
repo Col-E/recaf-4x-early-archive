@@ -67,6 +67,7 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 	private final ProblemTracking problemTracking = new ProblemTracking();
 	private final JvmDecompilerPaneConfig config;
 	private final DecompilerManager decompilerManager;
+	private final JavacCompiler javac;
 	private final Editor editor;
 	private ClassPathNode path;
 
@@ -78,6 +79,7 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 							 @Nonnull JavacCompiler javac) {
 		this.config = config;
 		this.decompilerManager = decompilerManager;
+		this.javac = javac;
 		decompiler.setValue(decompilerManager.getTargetJvmDecompiler());
 		editor = new Editor();
 		editor.getStylesheets().add("/syntax/java.css");
@@ -94,95 +96,9 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 		searchBar.install(editor);
 		// TODO: Hook up AST analysis for contextual right-click actions
 		setCenter(editor);
-
 		setOnKeyPressed(e -> {
-			if (keys.getSave().match(e)) {
-				// Pull data from path.
-				JvmClassInfo info = path.getValue().asJvmClass();
-				Workspace workspace = path.getValueOfType(Workspace.class);
-				JvmClassBundle bundle = (JvmClassBundle) path.getValueOfType(Bundle.class);
-				if (bundle == null)
-					throw new IllegalStateException("Bundle missing from class path node");
-
-				// Clear old errors emitted by compilation.
-				problemTracking.removeByPhase(ProblemPhase.BUILD);
-
-				// Invoke compiler with data.
-				String infoName = info.getName();
-				CompletableFuture.supplyAsync(() -> {
-					// TODO: allow user to manually change version target (should config be local? global?)
-					JavacArgumentsBuilder builder = new JavacArgumentsBuilder()
-							.withVersionTarget(useConfiguredVersion(info))
-							.withDebugVariables(javacDebug.getValue())
-							.withDebugSourceName(javacDebug.getValue())
-							.withDebugLineNumbers(javacDebug.getValue())
-							.withClassSource(editor.getText())
-							.withClassName(infoName);
-					return javac.compile(builder.build(), workspace, null);
-				}, compilePool).whenCompleteAsync((result, throwable) -> {
-					// Handle results.
-					//  - Success --> Update content in the containing bundle
-					//  - Failure --> Show error + diagnostics to user
-					if (result != null && result.wasSuccess()) {
-						// Renaming is not allowed. Tell the user to use mapping operations.
-						// This should usually be caught by javac, but we're double-checking here.
-						// We *could* have some hacky code to work around the rename being done outside the dedicated API,
-						// but it would be ugly. Find the new name for the class and any inners, copy over properties from
-						// the old names, apply mapping operations to patch broken references, etc.
-						CompileMap compilations = result.getCompilations();
-						boolean wasClassRenamed = !compilations.containsKey(infoName) || info.getInnerClasses().stream()
-								.anyMatch(inner -> !compilations.containsKey(inner.getInnerClassName()));
-						if (wasClassRenamed) {
-							logger.warn("Please only rename classes via mapping operations.");
-							Animations.animateWarn(this, 1000);
-							return;
-						}
-
-						// Compilation map has contents, update the workspace.
-						Animations.animateSuccess(this, 1000);
-						updateLock.set(true);
-						compilations.forEach((name, bytecode) -> {
-							JvmClassInfo newInfo;
-							if (infoName.equals(name)) {
-								// Adapt from existing.
-								newInfo = info.toBuilder()
-										.adaptFrom(new ClassReader(bytecode))
-										.build();
-							} else {
-								// Handle inner classes.
-								JvmClassInfo originalClass = bundle.get(name);
-								if (originalClass != null) {
-									// Adapt from existing.
-									newInfo = originalClass
-											.toBuilder()
-											.adaptFrom(new ClassReader(bytecode))
-											.build();
-									bundle.put(newInfo);
-								} else {
-									// Class is new.
-									newInfo = new JvmClassInfoBuilder(new ClassReader(bytecode)).build();
-								}
-							}
-
-							// Update the class in the bundle.
-							bundle.put(newInfo);
-						});
-						updateLock.set(false);
-					} else {
-						// Handle compile-result failure, or uncaught thrown exception.
-						if (result != null) {
-							for (CompilerDiagnostic diagnostic : result.getDiagnostics())
-								problemTracking.add(Problem.fromDiagnostic(diagnostic));
-						} else {
-							logger.error("Compilation encountered an error on class '{}'", infoName, throwable);
-						}
-						Animations.animateFailure(this, 1000);
-					}
-
-					// Redraw paragraph graphics to update things like in-line problem graphics.
-					editor.redrawParagraphGraphics();
-				}, FxThreadUtil.executor());
-			}
+			if (keys.getSave().match(e))
+				save();
 		});
 	}
 
@@ -239,6 +155,99 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 	public void disable() {
 		setDisable(true);
 		setOnKeyPressed(null);
+	}
+
+	/**
+	 * Called when {@link KeybindingConfig#getSave()} is pressed.
+	 * <br>
+	 * Compiles the current Java code in the {@link #editor} and updates the workspace
+	 * with the newly compiled {@link JvmClassInfo}.
+	 */
+	private void save() {
+		// Pull data from path.
+		JvmClassInfo info = path.getValue().asJvmClass();
+		Workspace workspace = path.getValueOfType(Workspace.class);
+		JvmClassBundle bundle = (JvmClassBundle) path.getValueOfType(Bundle.class);
+		if (bundle == null)
+			throw new IllegalStateException("Bundle missing from class path node");
+
+		// Clear old errors emitted by compilation.
+		problemTracking.removeByPhase(ProblemPhase.BUILD);
+
+		// Invoke compiler with data.
+		String infoName = info.getName();
+		CompletableFuture.supplyAsync(() -> {
+			JavacArgumentsBuilder builder = new JavacArgumentsBuilder()
+					.withVersionTarget(useConfiguredVersion(info))
+					.withDebugVariables(javacDebug.getValue())
+					.withDebugSourceName(javacDebug.getValue())
+					.withDebugLineNumbers(javacDebug.getValue())
+					.withClassSource(editor.getText())
+					.withClassName(infoName);
+			return javac.compile(builder.build(), workspace, null);
+		}, compilePool).whenCompleteAsync((result, throwable) -> {
+			// Handle results.
+			//  - Success --> Update content in the containing bundle
+			//  - Failure --> Show error + diagnostics to user
+			if (result != null && result.wasSuccess()) {
+				// Renaming is not allowed. Tell the user to use mapping operations.
+				// This should usually be caught by javac, but we're double-checking here.
+				// We *could* have some hacky code to work around the rename being done outside the dedicated API,
+				// but it would be ugly. Find the new name for the class and any inners, copy over properties from
+				// the old names, apply mapping operations to patch broken references, etc.
+				CompileMap compilations = result.getCompilations();
+				boolean wasClassRenamed = !compilations.containsKey(infoName) || info.getInnerClasses().stream()
+						.anyMatch(inner -> !compilations.containsKey(inner.getInnerClassName()));
+				if (wasClassRenamed) {
+					logger.warn("Please only rename classes via mapping operations.");
+					Animations.animateWarn(this, 1000);
+					return;
+				}
+
+				// Compilation map has contents, update the workspace.
+				Animations.animateSuccess(this, 1000);
+				updateLock.set(true);
+				compilations.forEach((name, bytecode) -> {
+					JvmClassInfo newInfo;
+					if (infoName.equals(name)) {
+						// Adapt from existing.
+						newInfo = info.toBuilder()
+								.adaptFrom(new ClassReader(bytecode))
+								.build();
+					} else {
+						// Handle inner classes.
+						JvmClassInfo originalClass = bundle.get(name);
+						if (originalClass != null) {
+							// Adapt from existing.
+							newInfo = originalClass
+									.toBuilder()
+									.adaptFrom(new ClassReader(bytecode))
+									.build();
+							bundle.put(newInfo);
+						} else {
+							// Class is new.
+							newInfo = new JvmClassInfoBuilder(new ClassReader(bytecode)).build();
+						}
+					}
+
+					// Update the class in the bundle.
+					bundle.put(newInfo);
+				});
+				updateLock.set(false);
+			} else {
+				// Handle compile-result failure, or uncaught thrown exception.
+				if (result != null) {
+					for (CompilerDiagnostic diagnostic : result.getDiagnostics())
+						problemTracking.add(Problem.fromDiagnostic(diagnostic));
+				} else {
+					logger.error("Compilation encountered an error on class '{}'", infoName, throwable);
+				}
+				Animations.animateFailure(this, 1000);
+			}
+
+			// Redraw paragraph graphics to update things like in-line problem graphics.
+			editor.redrawParagraphGraphics();
+		}, FxThreadUtil.executor());
 	}
 
 	/**
