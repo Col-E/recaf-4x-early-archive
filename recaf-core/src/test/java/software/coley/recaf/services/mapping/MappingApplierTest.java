@@ -122,17 +122,22 @@ class MappingApplierTest extends TestBase {
 		assertEquals(stringSupplierName, OriginalClassNameProperty.get(mappedStringSupplier),
 				"Did not record original name after applying mappings");
 
-		// Assert aggregate updated too.
-		AggregatedMappings aggregatedMappings = aggregateMappingManager.getAggregatedMappings();
-		assertNotNull(aggregatedMappings.getMappedClassName(stringSupplierName),
-				"StringSupplier should be tracked in aggregate");
-
 		// Assert that the method is still runnable.
-		String result = run(AnonymousLambda.class, "run");
+		String result = runMapped(AnonymousLambda.class, "run");
 		assertTrue(result.contains("One: java.util.function.Supplier"),
 				"JDK class reference should not be mapped");
 		assertFalse(result.contains(stringSupplierName),
 				"Class reference to '" + stringSupplierName + "' should have been remapped");
+
+		// Assert aggregate updated too.
+		// We will validate this is only done AFTER 'results.apply()' is run.
+		// For future tests we will skip this since if it works here, it works there.
+		AggregatedMappings aggregatedMappings = aggregateMappingManager.getAggregatedMappings();
+		assertNull(aggregatedMappings.getMappedClassName(stringSupplierName),
+				"StringSupplier should not yet be tracked in aggregate");
+		results.apply();
+		assertNotNull(aggregatedMappings.getMappedClassName(stringSupplierName),
+				"StringSupplier should be tracked in aggregate");
 	}
 
 	@Test
@@ -169,13 +174,14 @@ class MappingApplierTest extends TestBase {
 		assertTrue(results.wasMapped(dummyEnumPrinterName), "DummyEnumPrinter should have updated");
 
 		// Assert aggregate updated too.
+		results.apply();
 		AggregatedMappings aggregatedMappings = aggregateMappingManager.getAggregatedMappings();
 		assertNotNull(aggregatedMappings.getMappedClassName(dummyEnumName),
 				"DummyEnum should be tracked in aggregate");
 
 		// Assert that the methods are still runnable.
-		run(DummyEnumPrinter.class, "run1");
-		run(DummyEnumPrinter.class, "run2");
+		runMapped(DummyEnumPrinter.class, "run1");
+		runMapped(DummyEnumPrinter.class, "run2");
 	}
 
 	@Test
@@ -204,6 +210,7 @@ class MappingApplierTest extends TestBase {
 		assertTrue(results.wasMapped(classWithAnnotationName), "ClassWithAnnotation should have updated");
 
 		// Assert aggregate updated too.
+		results.apply();
 		AggregatedMappings aggregatedMappings = aggregateMappingManager.getAggregatedMappings();
 		assertNotNull(aggregatedMappings.getMappedClassName(annotationName),
 				"AnnotationImpl should be tracked in aggregate");
@@ -258,6 +265,7 @@ class MappingApplierTest extends TestBase {
 		assertTrue(results.wasMapped(overlapCallerName), "OverlapCaller should have updated");
 
 		// Assert aggregate updated too.
+		results.apply();
 		AggregatedMappings aggregatedMappings = aggregateMappingManager.getAggregatedMappings();
 		assertNotNull(aggregatedMappings.getMappedClassName(overlapInterfaceAName),
 				"OverlapInterfaceA should be tracked in aggregate");
@@ -269,12 +277,12 @@ class MappingApplierTest extends TestBase {
 				"OverlapCaller should not be tracked in aggregate");
 
 		// Assert that the method is still runnable.
-		run(OverlapCaller.class, "run");
+		runMapped(OverlapCaller.class, "run");
 	}
 
-	private String run(Class<?> cls, String methodName) {
+	private String runMapped(Class<?> cls, String methodName) {
 		String className = cls.getName();
-		ClassDefiner definer = newDefiner();
+		ClassDefiner definer = newDefinerFromWorkspace();
 		try {
 			Class<?> runner = definer.findClass(className);
 			Method main = runner.getDeclaredMethod(methodName);
@@ -289,7 +297,7 @@ class MappingApplierTest extends TestBase {
 		throw new IllegalStateException();
 	}
 
-	private ClassDefiner newDefiner() {
+	private ClassDefiner newDefinerFromWorkspace() {
 		Map<String, byte[]> map = resource.getJvmClassBundle().values().stream()
 				.collect(Collectors.toMap(e -> e.getName().replace('/', '.'), JvmClassInfo::getBytecode));
 		return new ClassDefiner(map);

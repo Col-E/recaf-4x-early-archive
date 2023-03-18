@@ -57,9 +57,8 @@ public class MappingApplier {
 			adapter.enableHierarchyLookup(inheritanceGraph);
 		}
 
-		MappingResults modifiedClasses = applyMappingsWithoutAggregation(workspace, resource, mappings);
-		aggregateMappingManager.updateAggregateMappings(mappings);
-		return modifiedClasses;
+		return applyMappingsWithoutAggregation(workspace, resource, mappings)
+				.withAggregateManager(aggregateMappingManager);
 	}
 
 	/**

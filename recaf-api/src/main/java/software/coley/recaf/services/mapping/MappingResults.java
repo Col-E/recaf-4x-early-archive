@@ -6,6 +6,7 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.path.BundlePathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.WorkspacePathNode;
+import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
@@ -27,6 +28,7 @@ public class MappingResults {
 	private final Map<String, ClassPathNode> preMappingPaths = new HashMap<>();
 	private final Map<String, ClassPathNode> postMappingPaths = new HashMap<>();
 	private final Mappings mappings;
+	private AggregateMappingManager aggregateMappingManager;
 
 	/**
 	 * @param mappings
@@ -34,6 +36,18 @@ public class MappingResults {
 	 */
 	public MappingResults(@Nonnull Mappings mappings) {
 		this.mappings = mappings;
+	}
+
+	/**
+	 * @param aggregateMappingManager
+	 * 		Aggregate mapping manager to track mapping applications in.
+	 *
+	 * @return Self.
+	 */
+	@Nonnull
+	public MappingResults withAggregateManager(@Nonnull AggregateMappingManager aggregateMappingManager) {
+		this.aggregateMappingManager = aggregateMappingManager;
+		return this;
 	}
 
 	/**
@@ -91,6 +105,10 @@ public class MappingResults {
 					bundle.remove(preMappedName);
 			}
 		}
+
+		// Track changes in aggregate manager, if given.
+		if (aggregateMappingManager != null)
+			aggregateMappingManager.updateAggregateMappings(mappings);
 	}
 
 	/**
