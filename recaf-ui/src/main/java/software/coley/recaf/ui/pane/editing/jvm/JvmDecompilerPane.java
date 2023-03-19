@@ -1,9 +1,19 @@
 package software.coley.recaf.ui.pane.editing.jvm;
 
+import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.animation.Transition;
+import javafx.collections.ObservableList;
+import javafx.scene.Group;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
+import javafx.scene.control.Labeled;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
+import javafx.util.Duration;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import software.coley.observables.ObservableBoolean;
@@ -25,6 +35,7 @@ import software.coley.recaf.services.decompile.NoopJvmDecompiler;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.config.KeybindingConfig;
+import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
@@ -35,10 +46,7 @@ import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
-import software.coley.recaf.util.Animations;
-import software.coley.recaf.util.FxThreadUtil;
-import software.coley.recaf.util.JavaVersion;
-import software.coley.recaf.util.StringUtil;
+import software.coley.recaf.util.*;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
@@ -63,6 +71,7 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 	private final ObservableObject<JvmDecompiler> decompiler = new ObservableObject<>(NoopJvmDecompiler.getInstance());
 	private final ObservableInteger javacTarget = new ObservableInteger(-1); // use negative to match class file's ver
 	private final ObservableBoolean javacDebug = new ObservableBoolean(true);
+	private final ObservableBoolean decompileInProgress = new ObservableBoolean(false);
 	private final AtomicBoolean updateLock = new AtomicBoolean();
 	private final ProblemTracking problemTracking = new ProblemTracking();
 	private final JvmDecompilerPaneConfig config;
@@ -90,16 +99,31 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 				new BracketMatchGraphicFactory(),
 				new ProblemGraphicFactory()
 		);
+
+		// Install additional editor components
 		JvmDecompilerPaneConfigurator configurator = new JvmDecompilerPaneConfigurator(config, decompiler,
 				javacTarget, javacDebug, decompilerManager);
 		configurator.install(editor);
 		searchBar.install(editor);
+
+		// Add overlay for when decompilation is in-progress
+		DecompileProgressOverlay overlay = new DecompileProgressOverlay();
+		decompileInProgress.addChangeListener((ob, old, cur) -> {
+			ObservableList<Node> children = editor.getPrimaryStack().getChildren();
+			if (cur) children.add(overlay);
+			else children.remove(overlay);
+		});
+
 		// TODO: Hook up AST analysis for contextual right-click actions
-		setCenter(editor);
+
+		// Setup keybindings
 		setOnKeyPressed(e -> {
 			if (keys.getSave().match(e))
 				save();
 		});
+
+		// Layout
+		setCenter(editor);
 	}
 
 	@Nonnull
@@ -122,16 +146,22 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 			// Schedule decompilation task, update the editor's text asynchronously on the JavaFX UI thread when complete.
 			Workspace workspace = classPathNode.getValueOfType(Workspace.class);
 			JvmClassInfo classInfo = classPathNode.getValue().asJvmClass();
-
-			// TODO: 'java.decompiling' bind overlay when waiting
+			decompileInProgress.setValue(true);
+			editor.setDisable(true);
 			decompilerManager.decompile(decompiler.getValue(), workspace, classInfo)
 					.completeOnTimeout(timeoutResult(), config.getTimeoutSeconds().getValue(), TimeUnit.SECONDS)
 					.whenCompleteAsync((result, throwable) -> {
+						editor.setDisable(false);
+						decompileInProgress.setValue(false);
+
+						// Handle uncaught exceptions
 						if (throwable != null) {
 							String trace = StringUtil.traceToString(throwable);
 							editor.setText("/*\nUncaught exception when decompiling:\n" + trace + "\n*/");
 							return;
 						}
+
+						// Handle decompilation result
 						String text = result.getText();
 						switch (result.getType()) {
 							case SUCCESS -> editor.setText(text);
@@ -145,6 +175,7 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 									editor.setText("/*\nDecompile failed, but no trace was attached:\n*/");
 							}
 						}
+
 						// Prevent undo from reverting to empty state.
 						editor.getCodeArea().getUndoManager().forgetHistory();
 					}, FxThreadUtil.executor());
@@ -292,5 +323,84 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 				jvmDecompiler.getName(), jvmDecompiler.getVersion(),
 				config.getTimeoutSeconds().getValue()
 		), null, DecompileResult.ResultType.SKIPPED, 0);
+	}
+
+	/**
+	 * And overlay shown while a class is being decompiled.
+	 */
+	private class DecompileProgressOverlay extends BorderPane {
+		private DecompileProgressOverlay() {
+			Label title = new BoundLabel(Lang.getBinding("java.decompiling"));
+			title.getStyleClass().add(Styles.TITLE_3);
+			Label text = new Label();
+			text.getStyleClass().add(Styles.TEXT_SUBTLE);
+			text.setFont(new Font("JetBrains Mono", 12)); // Pulling from CSS applied to the editor.
+			setCenter(new Group(new VBox(title, text)));
+
+			// Setup transition to play whenever decompilation is in progress.
+			BytecodeTransition transition = new BytecodeTransition(text);
+			decompileInProgress.addChangeListener((ob, old, cur) -> {
+				setVisible(cur);
+				if (cur) {
+					transition.update(path.getValue().asJvmClass());
+					transition.play();
+				} else
+					transition.stop();
+			});
+		}
+
+		private class BytecodeTransition extends Transition {
+			private final Labeled labeled;
+			private byte[] bytecode;
+
+			/**
+			 * @param labeled
+			 * 		Target label.
+			 */
+			public BytecodeTransition(@Nonnull Labeled labeled) {
+				this.labeled = labeled;
+			}
+
+			/**
+			 * @param info
+			 * 		Class to show bytecode of.
+			 */
+			public void update(@Nonnull JvmClassInfo info) {
+				this.bytecode = info.getBytecode();
+				setCycleDuration(Duration.millis(bytecode.length));
+			}
+
+			@Override
+			protected void interpolate(double fraction) {
+				int bytecodeSize = bytecode.length;
+				int textLength = 18;
+				int middle = (int) (fraction * bytecodeSize);
+				int start = middle - (textLength / 2);
+				int end = middle + (textLength / 2);
+
+				// We have two rows, top for hex, bottom for text.
+				StringBuilder sbHex = new StringBuilder();
+				StringBuilder sbText = new StringBuilder();
+				for (int i = start; i < end; i++) {
+					if (i < 0) {
+						sbHex.append("   ");
+						sbText.append("   ");
+					} else if (i >= bytecodeSize) {
+						sbHex.append(" ..");
+						sbText.append(" ..");
+					} else {
+						byte b = bytecode[i];
+						char c = (char) b;
+						if (Character.isWhitespace(c)) c = ' ';
+						else if (c < 32 || c > 255) c = '?';
+						String hex = StringUtil.limit(Integer.toHexString(b), 2);
+						if (hex.length() == 1) hex = "0" + hex;
+						sbHex.append(StringUtil.fillLeft(3, " ", hex));
+						sbText.append(StringUtil.fillLeft(3, " ", String.valueOf(c)));
+					}
+				}
+				labeled.setText(sbHex + "\n" + sbText);
+			}
+		}
 	}
 }
