@@ -40,4 +40,11 @@ public interface ConfigValue<T> {
 	default T getValue() {
 		return getObservable().getValue();
 	}
+
+	/**
+	 * @return {@code true} for hidden values not to be shown to users <i>(Strictly in the UI)</i>.
+	 */
+	default boolean isHidden() {
+		return false;
+	}
 }

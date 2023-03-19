@@ -14,6 +14,7 @@ public class BasicConfigValue<T> implements ConfigValue<T> {
 	private final String key;
 	private final Class<T> type;
 	private final Observable<T> observable;
+	private final boolean hidden;
 
 	/**
 	 * @param key
@@ -24,9 +25,24 @@ public class BasicConfigValue<T> implements ConfigValue<T> {
 	 * 		Observable of value.
 	 */
 	public BasicConfigValue(String key, Class<T> type, Observable<T> observable) {
+		this(key, type, observable, false);
+	}
+
+	/**
+	 * @param key
+	 * 		Value key.
+	 * @param type
+	 * 		Value type class.
+	 * @param observable
+	 * 		Observable of value.
+	 * @param hidden
+	 * 		Hidden flag.
+	 */
+	public BasicConfigValue(String key, Class<T> type, Observable<T> observable, boolean hidden) {
 		this.key = key;
 		this.type = type;
 		this.observable = observable;
+		this.hidden = hidden;
 	}
 
 	@Override
@@ -42,6 +58,11 @@ public class BasicConfigValue<T> implements ConfigValue<T> {
 	@Override
 	public Observable<T> getObservable() {
 		return observable;
+	}
+
+	@Override
+	public boolean isHidden() {
+		return hidden;
 	}
 
 	@Override

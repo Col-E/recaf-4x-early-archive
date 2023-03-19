@@ -219,6 +219,7 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 			int row = 2;
 			for (Map.Entry<String, ConfigValue<?>> entry : values.entrySet()) {
 				ConfigValue<?> value = entry.getValue();
+				if (value.isHidden()) continue;
 				ConfigComponentFactory componentFactory = componentManager.getFactory(value);
 				if (componentFactory.isStandAlone()) {
 					add(componentFactory.create(container, value), 0, row, 2, 1);
