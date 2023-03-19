@@ -6,14 +6,20 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.animation.Transition;
 import javafx.collections.ObservableList;
+import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Labeled;
+import javafx.scene.control.TitledPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.stage.Popup;
 import javafx.util.Duration;
+import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import software.coley.observables.ObservableBoolean;
@@ -36,6 +42,7 @@ import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.BoundLabel;
+import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
@@ -270,6 +277,10 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 				if (result != null) {
 					for (CompilerDiagnostic diagnostic : result.getDiagnostics())
 						problemTracking.add(Problem.fromDiagnostic(diagnostic));
+
+					// For first-timers, tell them you cannot save with errors.
+					if (!config.getAcknowledgedSaveWithErrors().getValue())
+						showFirstTimeSaveWithErrors();
 				} else {
 					logger.error("Compilation encountered an error on class '{}'", infoName, throwable);
 				}
@@ -323,6 +334,49 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 				jvmDecompiler.getName(), jvmDecompiler.getVersion(),
 				config.getTimeoutSeconds().getValue()
 		), null, DecompileResult.ResultType.SKIPPED, 0);
+	}
+
+	/**
+	 * Show popup telling user they cannot save with errors.
+	 */
+	private void showFirstTimeSaveWithErrors() {
+		Button acknowledge = new Button();
+		acknowledge.setGraphic(new FontIconView(CarbonIcons.TIMER));
+		acknowledge.setDisable(true); // Enabled after a delay.
+
+		VBox content = new VBox(new BoundLabel(Lang.getBinding("java.savewitherrors")), acknowledge);
+		content.setSpacing(10);
+		content.setAlignment(Pos.CENTER);
+
+		TitledPane wrapper = new TitledPane();
+		wrapper.textProperty().bind(Lang.getBinding("java.savewitherrors.title"));
+		wrapper.setCollapsible(false);
+		wrapper.setContent(content);
+		wrapper.getStyleClass().add(Styles.ELEVATED_4);
+
+		Popup popup = new Popup();
+		popup.getContent().add(wrapper);
+		popup.show(getScene().getWindow());
+		popup.setAutoHide(false);
+		popup.setHideOnEscape(false);
+
+		// Start transition which counts down how long until the popup can be closed.
+		WaitToAcknowledgeTransition wait = new WaitToAcknowledgeTransition(acknowledge);
+		wait.play();
+
+		// Enable acknowledge button after 5 seconds.
+		FxThreadUtil.delayedRun(wait.getMillis(), () -> {
+			wait.stop();
+			acknowledge.textProperty().bind(Lang.getBinding("misc.acknowledge"));
+			acknowledge.setGraphic(new FontIconView(CarbonIcons.CHECKMARK, Color.LIME));
+			acknowledge.setDisable(false);
+		});
+
+		// When pressed, mark flag so prompt is not shown again.
+		acknowledge.setOnAction(e -> {
+			config.getAcknowledgedSaveWithErrors().setValue(true);
+			popup.hide();
+		});
 	}
 
 	/**
@@ -389,11 +443,11 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 						sbHex.append(" ..");
 						sbText.append(" ..");
 					} else {
-						byte b = bytecode[i];
+						short b = (short) (bytecode[i] & 0xFF);
 						char c = (char) b;
 						if (Character.isWhitespace(c)) c = ' ';
-						else if (c < 32 || c > 255) c = '?';
-						String hex = StringUtil.limit(Integer.toHexString(b), 2);
+						else if (c < 32) c = '?';
+						String hex = StringUtil.limit(Integer.toHexString(b).toUpperCase(), 2);
 						if (hex.length() == 1) hex = "0" + hex;
 						sbHex.append(StringUtil.fillLeft(3, " ", hex));
 						sbText.append(StringUtil.fillLeft(3, " ", String.valueOf(c)));
@@ -401,6 +455,29 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 				}
 				labeled.setText(sbHex + "\n" + sbText);
 			}
+		}
+	}
+
+	/**
+	 * Transition to handle countdown to allow acknowledging <i>"I can not save with errors"</i>.
+	 */
+	private static class WaitToAcknowledgeTransition extends Transition {
+		private static final int SECONDS = 5;
+		private final Labeled labeled;
+
+		private WaitToAcknowledgeTransition(Labeled labeled) {
+			this.labeled = labeled;
+			setCycleDuration(Duration.seconds(SECONDS));
+		}
+
+		private long getMillis() {
+			return SECONDS * 1000;
+		}
+
+		@Override
+		protected void interpolate(double frac) {
+			int secondsLeft = (int) Math.floor(SECONDS - (frac * SECONDS) + 1.01);
+			labeled.setText(secondsLeft + "...");
 		}
 	}
 }

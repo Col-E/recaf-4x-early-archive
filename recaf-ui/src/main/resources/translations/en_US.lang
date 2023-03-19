@@ -258,6 +258,8 @@ modifications.title=Modifications
 ## Java area
 java.decompiling=Decompiling class...
 java.unparsable=JavaParser failed to interpret source, context actions only available 'Fields & Methods' side tab
+java.savewitherrors=It seems like this is your first time making changes that resulted in errors.\nThese are typically a result of the decompiled code not being semantically correct Java.\nYou must resolve these errors before changes will be saved.\n\nSome suggestions:\n - Change decompilers\n - Hover over the red error boxes, or click the error box at the top to see what the errors are\n - Use the assembler instead of recompilation to make changes
+java.savewitherrors.title=Regarding recompile errors
 java.decompiler=Decompiler
 java.targetversion=Compile target version
 java.targetversion.auto=Match class file version
@@ -616,6 +618,7 @@ conf.ssvm.remote.active=Active
 conf.ssvm.remote.path=Path to VM executable
 conf.undefined=Undefined
 
+misc.acknowledge=Acknowledge
 misc.all=All
 misc.none=None
 misc.enabled=Enabled
