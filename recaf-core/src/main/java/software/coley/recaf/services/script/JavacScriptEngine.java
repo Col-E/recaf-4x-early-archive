@@ -196,7 +196,11 @@ public class JavacScriptEngine implements ScriptEngine {
 			className = packageName + "/" + modifiedName;
 
 			// Replace name in script
+			//  - Class definition
+			//  - Constructors
 			source = StringUtil.replaceRange(source, matcher.start(1), matcher.end(1), modifiedName);
+			source = source.replace(" " + originalName + "(", " " + modifiedName + "(");
+			source = source.replace("\t" + originalName + "(", "\t" + modifiedName + "(");
 		} else {
 			return new GenerateResult(null, List.of(
 					new CompilerDiagnostic(-1, -1, "Could not determine name of class", CompilerDiagnostic.Level.ERROR)));
