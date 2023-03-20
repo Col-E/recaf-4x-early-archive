@@ -94,6 +94,12 @@ public class JavacScriptEngine implements ScriptEngine {
 		return CompletableFuture.supplyAsync(() -> handleExecute(script), compileAndRunPool);
 	}
 
+	@Nonnull
+	@Override
+	public CompletableFuture<GenerateResult> compile(String scriptSource) {
+		return CompletableFuture.supplyAsync(() -> generate(scriptSource), compileAndRunPool);
+	}
+
 	/**
 	 * Compiles and executes the script.
 	 * If the same script has already been compiled previously, the prior class reference will be used
@@ -106,33 +112,51 @@ public class JavacScriptEngine implements ScriptEngine {
 	 */
 	@Nonnull
 	private ScriptResult handleExecute(@Nonnull String script) {
-		int hash = script.hashCode();
-		GenerateResult result;
-		if (RegexUtil.matchesAny(PATTERN_CLASS_NAME, script)) {
-			logger.debugging(l -> l.info("Executing script as class"));
-			result = generateResultMap.computeIfAbsent(hash, n -> generateStandardClass(script));
-		} else {
-			logger.debugging(l -> l.info("Executing script as function"));
-			String className = "Script" + Math.abs(hash);
-			result = generateResultMap.computeIfAbsent(hash, n -> generateScriptClass(className, script));
-		}
-		if (result.cls != null) {
+		GenerateResult result = generate(script);
+		if (result.cls() != null) {
 			try {
 				logger.debugging(l -> l.info("Allocating script instance"));
-				Object instance = allocator.instance(result.cls);
+				Object instance = allocator.instance(result.cls());
 				Method run = ReflectUtil.getDeclaredMethod(instance.getClass(), "run");
 				run.setAccessible(true);
 				run.invoke(instance);
 				logger.debugging(l -> l.info("Successfully ran script"));
-				return new ScriptResult(result.diagnostics);
+				return new ScriptResult(result.diagnostics());
 			} catch (Exception ex) {
 				logger.error("Failed to execute script", ex);
-				return new ScriptResult(result.diagnostics, ex);
+				return new ScriptResult(result.diagnostics(), ex);
 			}
 		} else {
 			logger.error("Failed to compile script");
-			return new ScriptResult(result.diagnostics);
+			return new ScriptResult(result.diagnostics());
 		}
+	}
+
+	/**
+	 * Maps an input script to a full Java source file, and compiles it.
+	 * Delegates to either:
+	 * <ul>
+	 *     <li>{@link #generateScriptClass(String, String)}</li>
+	 *     <li>{@link #generateStandardClass(String)}</li>
+	 * </ul>
+	 *
+	 * @param script
+	 * 		Initial source of the script.
+	 *
+	 * @return Compiler result wrapper containing the loaded class reference.
+	 */
+	private GenerateResult generate(@Nonnull String script) {
+		int hash = script.hashCode();
+		GenerateResult result;
+		if (RegexUtil.matchesAny(PATTERN_CLASS_NAME, script)) {
+			logger.debugging(l -> l.info("Compiling script as class"));
+			result = generateResultMap.computeIfAbsent(hash, n -> generateStandardClass(script));
+		} else {
+			logger.debugging(l -> l.info("Compiling script as function"));
+			String className = "Script" + Math.abs(hash);
+			result = generateResultMap.computeIfAbsent(hash, n -> generateScriptClass(className, script));
+		}
+		return result;
 	}
 
 	/**
@@ -268,8 +292,5 @@ public class JavacScriptEngine implements ScriptEngine {
 		return diagnostics.stream()
 				.map(d -> d.withLine(d.getLine() - syntheticLineCount))
 				.toList();
-	}
-
-	private record GenerateResult(Class<?> cls, List<CompilerDiagnostic> diagnostics) {
 	}
 }

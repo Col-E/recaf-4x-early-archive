@@ -6,7 +6,7 @@ import software.coley.recaf.services.Service;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Outline for script execution.
+ * Outline for script execution and compilation.
  *
  * @author Matt Coley
  */
@@ -21,4 +21,13 @@ public interface ScriptEngine extends Service {
 	 */
 	@Nonnull
 	CompletableFuture<ScriptResult> run(String scriptSource);
+
+	/**
+	 * @param scriptSource
+	 * 		Script source to compile.
+	 *
+	 * @return Future of script compilation.
+	 */
+	@Nonnull
+	CompletableFuture<GenerateResult> compile(String scriptSource);
 }
