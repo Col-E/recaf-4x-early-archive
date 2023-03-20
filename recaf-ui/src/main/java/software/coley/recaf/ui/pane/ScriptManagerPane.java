@@ -49,14 +49,12 @@ import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
 import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.util.*;
-import software.coley.recaf.util.threading.ThreadPoolFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.TreeSet;
-import java.util.concurrent.ExecutorService;
 
 import static software.coley.recaf.util.Lang.getBinding;
 
@@ -181,7 +179,6 @@ public class ScriptManagerPane extends BorderPane {
 	 * Editor for scripts.
 	 */
 	private class ScriptEditor extends BorderPane {
-		private static final ExecutorService compilePool = ThreadPoolFactory.newSingleThreadExecutor("script-editor");
 		private final ProblemTracking problemTracking = new ProblemTracking();
 		private final Editor editor = new Editor();
 		private Path scriptPath;
