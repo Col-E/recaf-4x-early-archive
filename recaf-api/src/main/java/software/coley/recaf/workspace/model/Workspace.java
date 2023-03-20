@@ -18,6 +18,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
 
 /**
  * Models a collection of user inputs, represented as {@link WorkspaceResource} instances.
@@ -111,7 +113,7 @@ public interface Workspace extends Closing {
 	default ClassPathNode findAnyClass(@Nonnull String name) {
 		ClassPathNode result = findJvmClass(name);
 		if (result == null)
-			result = findVersionedJvmClass(name);
+			result = findLatestVersionedJvmClass(name);
 		if (result == null)
 			result = findAndroidClass(name);
 		return result;
@@ -145,23 +147,40 @@ public interface Workspace extends Closing {
 	 * @param name
 	 * 		Class name.
 	 *
+	 * @return Result of lookup. If there are multiple versions of the class, the latest is used.
+	 */
+	@Nullable
+	default ClassPathNode findLatestVersionedJvmClass(@Nonnull String name) {
+		return findVersionedJvmClass(name, Integer.MAX_VALUE);
+	}
+
+	/**
+	 * @param name
+	 * 		Class name.
+	 * @param version
+	 * 		Version to look for.
+	 * 		This value is dropped down to the first available version bundle via {@link NavigableMap#floorEntry(Object)}.
+	 *
 	 * @return Result of lookup.
 	 */
 	@Nullable
-	default ClassPathNode findVersionedJvmClass(@Nonnull String name) {
-		// TODO: Need to differentiate with 'version' parameter
+	default ClassPathNode findVersionedJvmClass(@Nonnull String name, int version) {
 		List<WorkspaceResource> resources = new ArrayList<>(getSupportingResources());
 		resources.add(0, getPrimaryResource());
 		for (WorkspaceResource resource : resources) {
-			for (JvmClassBundle bundle : resource.getVersionedJvmClassBundles().values()) {
-				JvmClassInfo classInfo = bundle.get(name);
-				if (classInfo != null)
-					return new WorkspacePathNode(this)
-							.child(resource)
-							.child(bundle)
-							.child(classInfo.getPackageName())
-							.child(classInfo);
-			}
+			// Get floor version target.
+			Map.Entry<Integer, JvmClassBundle> entry = resource.getVersionedJvmClassBundles().floorEntry(version);
+			if (entry == null) continue;
+
+			// Bundle exists, check if the class exists in the path.
+			JvmClassBundle bundle = entry.getValue();
+			JvmClassInfo classInfo = bundle.get(name);
+			if (classInfo != null)
+				return new WorkspacePathNode(this)
+						.child(resource)
+						.child(bundle)
+						.child(classInfo.getPackageName())
+						.child(classInfo);
 		}
 		return null;
 	}
