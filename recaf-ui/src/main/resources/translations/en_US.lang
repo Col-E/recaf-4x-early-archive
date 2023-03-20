@@ -117,6 +117,7 @@ dialog.file.open=Open
 dialog.file.open.directory=Directories
 dialog.file.open.file=Files
 dialog.file.export=Export
+dialog.file.save=Save
 dialog.file.nothing=Nothing selected
 dialog.filefilter.any=Any type
 dialog.filefilter.mapping=Mappings
