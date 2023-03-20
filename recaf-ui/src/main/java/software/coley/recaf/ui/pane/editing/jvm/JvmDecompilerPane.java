@@ -1,13 +1,14 @@
 package software.coley.recaf.ui.pane.editing.jvm;
 
+import atlantafx.base.controls.Spacer;
 import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.animation.Transition;
 import javafx.collections.ObservableList;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
-import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -154,11 +155,11 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 			Workspace workspace = classPathNode.getValueOfType(Workspace.class);
 			JvmClassInfo classInfo = classPathNode.getValue().asJvmClass();
 			decompileInProgress.setValue(true);
-			editor.setDisable(true);
+			editor.setMouseTransparent(true);
 			decompilerManager.decompile(decompiler.getValue(), workspace, classInfo)
 					.completeOnTimeout(timeoutResult(), config.getTimeoutSeconds().getValue(), TimeUnit.SECONDS)
 					.whenCompleteAsync((result, throwable) -> {
-						editor.setDisable(false);
+						editor.setMouseTransparent(false);
 						decompileInProgress.setValue(false);
 
 						// Handle uncaught exceptions
@@ -382,14 +383,19 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 	/**
 	 * And overlay shown while a class is being decompiled.
 	 */
-	private class DecompileProgressOverlay extends BorderPane {
+	private class DecompileProgressOverlay extends VBox {
 		private DecompileProgressOverlay() {
 			Label title = new BoundLabel(Lang.getBinding("java.decompiling"));
-			title.getStyleClass().add(Styles.TITLE_3);
 			Label text = new Label();
+			title.getStyleClass().add(Styles.TITLE_3);
 			text.getStyleClass().add(Styles.TEXT_SUBTLE);
 			text.setFont(new Font("JetBrains Mono", 12)); // Pulling from CSS applied to the editor.
-			setCenter(new Group(new VBox(title, text)));
+
+			// Layout
+			getChildren().addAll(new Spacer(Orientation.VERTICAL), title, text, new Spacer(Orientation.VERTICAL));
+			getStyleClass().addAll("background");
+			setFillWidth(true);
+			setAlignment(Pos.CENTER);
 
 			// Setup transition to play whenever decompilation is in progress.
 			BytecodeTransition transition = new BytecodeTransition(text);
