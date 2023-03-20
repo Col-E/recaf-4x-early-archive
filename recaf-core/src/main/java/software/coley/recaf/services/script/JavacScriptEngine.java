@@ -191,7 +191,12 @@ public class JavacScriptEngine implements ScriptEngine {
 		String className;
 		matcher = RegexUtil.getMatcher(PATTERN_CLASS_NAME, source);
 		if (matcher.find()) {
-			className = packageName + "/" + matcher.group(1);
+			String originalName = matcher.group(1);
+			String modifiedName = originalName + Math.abs(source.hashCode());
+			className = packageName + "/" + modifiedName;
+
+			// Replace name in script
+			source = StringUtil.replaceRange(source, matcher.start(1), matcher.end(1), modifiedName);
 		} else {
 			return new GenerateResult(null, List.of(
 					new CompilerDiagnostic(-1, -1, "Could not determine name of class", CompilerDiagnostic.Level.ERROR)));

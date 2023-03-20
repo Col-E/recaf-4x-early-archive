@@ -148,6 +148,25 @@ public class StringUtil {
 	}
 
 	/**
+	 * @param string
+	 * 		Text with range to replace.
+	 * @param start
+	 * 		Range start.
+	 * @param end
+	 * 		Range end.
+	 * @param replacement
+	 * 		Replacement text to replace the contents of the given range.
+	 *
+	 * @return Modified string.
+	 */
+	public static String replaceRange(String string, int start, int end, String replacement) {
+		String temp = string.substring(0, start);
+		temp += replacement;
+		temp += string.substring(end);
+		return temp;
+	}
+
+	/**
 	 * @param pattern
 	 * 		Pattern to look for.
 	 * @param text

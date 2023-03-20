@@ -13,14 +13,14 @@ import java.util.concurrent.TimeoutException;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests for {@link ScriptEngine}
+ * Tests for {@link JavacScriptEngine}
  */
-public class ScriptEngineTest extends TestBase {
-	static ScriptEngine engine;
+public class JavacScriptEngineTest extends TestBase {
+	static JavacScriptEngine engine;
 
 	@BeforeAll
 	static void setup() {
-		engine = recaf.get(ScriptEngine.class);
+		engine = recaf.get(JavacScriptEngine.class);
 	}
 
 	@Nested
@@ -28,6 +28,26 @@ public class ScriptEngineTest extends TestBase {
 		@Test
 		void testHelloWorld() {
 			assertSuccess("System.out.println(\"hello\");");
+		}
+
+		@Test
+		void repeatedDefinitions() {
+			String propertyName = "test-xyz";
+
+			// set = one
+			assertSuccess("System.setProperty(\"" + propertyName + "\", \"one\");");
+			assertEquals("one", System.getProperty(propertyName),
+					"Javac script engine failed to set property: " + propertyName);
+
+			// set = one
+			assertSuccess("System.setProperty(\"" + propertyName + "\", \"two\");");
+			assertEquals("two", System.getProperty(propertyName),
+					"Javac script engine failed to set property correctly after script modifications: " + propertyName);
+
+			// set = two
+			assertSuccess("System.setProperty(\"" + propertyName + "\", \"three\");");
+			assertEquals("three", System.getProperty(propertyName),
+					"Javac script engine failed to set property correctly after script modifications: " + propertyName);
 		}
 	}
 
@@ -85,6 +105,34 @@ public class ScriptEngineTest extends TestBase {
 						}
 					}
 					""");
+		}
+
+		@Test
+		void repeatedDefinitions() {
+			String propertyName = "test-xyz";
+			String template = """
+					public class Test implements Runnable {
+						@Override
+						public void run() {
+							System.setProperty("%s", "%s");
+						}
+					}
+					""";
+
+			// set = one
+			assertSuccess(template.formatted(propertyName, "one"));
+			assertEquals("one", System.getProperty(propertyName),
+					"Javac script engine failed to set property: " + propertyName);
+
+			// set = one
+			assertSuccess(template.formatted(propertyName, "two"));
+			assertEquals("two", System.getProperty(propertyName),
+					"Javac script engine failed to set property correctly after script modifications: " + propertyName);
+
+			// set = two
+			assertSuccess(template.formatted(propertyName, "three"));
+			assertEquals("three", System.getProperty(propertyName),
+					"Javac script engine failed to set property correctly after script modifications: " + propertyName);
 		}
 	}
 
