@@ -33,6 +33,17 @@ public class CompilerDiagnostic {
 	}
 
 	/**
+	 * @param line
+	 * 		New line number.
+	 *
+	 * @return Copy of diagnostic, with changed line number.
+	 */
+	@Nonnull
+	public CompilerDiagnostic withLine(int line) {
+		return new CompilerDiagnostic(line, column, message, level);
+	}
+
+	/**
 	 * @return Line the message applies to.
 	 */
 	public int getLine() {

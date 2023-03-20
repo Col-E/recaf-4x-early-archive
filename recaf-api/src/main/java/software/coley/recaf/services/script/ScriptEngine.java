@@ -1,5 +1,6 @@
 package software.coley.recaf.services.script;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.services.Service;
 
 import java.util.concurrent.CompletableFuture;
@@ -18,5 +19,6 @@ public interface ScriptEngine extends Service {
 	 *
 	 * @return Future of script execution.
 	 */
+	@Nonnull
 	CompletableFuture<ScriptResult> run(String scriptSource);
 }

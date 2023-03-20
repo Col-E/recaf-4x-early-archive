@@ -4,12 +4,12 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jregex.Matcher;
-import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.compile.*;
 import software.coley.recaf.services.plugin.CdiClassAllocator;
 import software.coley.recaf.util.ClassDefiner;
+import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.util.RegexUtil;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
@@ -88,6 +88,7 @@ public class JavacScriptEngine implements ScriptEngine {
 		return config;
 	}
 
+	@Nonnull
 	@Override
 	public CompletableFuture<ScriptResult> run(String script) {
 		return CompletableFuture.supplyAsync(() -> handleExecute(script), compileAndRunPool);
@@ -103,7 +104,8 @@ public class JavacScriptEngine implements ScriptEngine {
 	 *
 	 * @return Result of script execution.
 	 */
-	private ScriptResult handleExecute(String script) {
+	@Nonnull
+	private ScriptResult handleExecute(@Nonnull String script) {
 		int hash = script.hashCode();
 		GenerateResult result;
 		if (RegexUtil.matchesAny(PATTERN_CLASS_NAME, script)) {
@@ -118,7 +120,8 @@ public class JavacScriptEngine implements ScriptEngine {
 			try {
 				logger.debugging(l -> l.info("Allocating script instance"));
 				Object instance = allocator.instance(result.cls);
-				Method run = instance.getClass().getDeclaredMethod("run");
+				Method run = ReflectUtil.getDeclaredMethod(instance.getClass(), "run");
+				run.setAccessible(true);
 				run.invoke(instance);
 				logger.debugging(l -> l.info("Successfully ran script"));
 				return new ScriptResult(result.diagnostics);
@@ -141,7 +144,10 @@ public class JavacScriptEngine implements ScriptEngine {
 	 *
 	 * @return Compiler result wrapper containing the loaded class reference.
 	 */
-	private GenerateResult generateStandardClass(String source) {
+	@Nonnull
+	private GenerateResult generateStandardClass(@Nonnull String source) {
+		String originalSource = source;
+
 		// Extract package name
 		String packageName = SCRIPT_PACKAGE_NAME;
 		Matcher matcher = RegexUtil.getMatcher(PATTERN_PACKAGE, source);
@@ -158,7 +164,7 @@ public class JavacScriptEngine implements ScriptEngine {
 		packageName = packageName.replace('.', '/');
 
 		// Extract class name
-		String className = null;
+		String className;
 		matcher = RegexUtil.getMatcher(PATTERN_CLASS_NAME, source);
 		if (matcher.find()) {
 			className = packageName + "/" + matcher.group(1);
@@ -168,7 +174,7 @@ public class JavacScriptEngine implements ScriptEngine {
 		}
 
 		// Compile the class
-		return generate(className, source);
+		return generate(className, originalSource, source);
 	}
 
 	/**
@@ -182,7 +188,9 @@ public class JavacScriptEngine implements ScriptEngine {
 	 *
 	 * @return Compiler result wrapper containing the loaded class reference.
 	 */
-	private GenerateResult generateScriptClass(String className, String script) {
+	@Nonnull
+	private GenerateResult generateScriptClass(@Nonnull String className, @Nonnull String script) {
+		String originalSource = script;
 		Set<String> imports = new HashSet<>(DEFAULT_IMPORTS);
 		Matcher matcher = RegexUtil.getMatcher(PATTERN_IMPORT, script);
 		while (matcher.find()) {
@@ -206,21 +214,26 @@ public class JavacScriptEngine implements ScriptEngine {
 		className = SCRIPT_PACKAGE_NAME.replace('.', '/') + "/" + className;
 
 		// Compile the class
-		return generate(className, code.toString());
+		return generate(className, originalSource, code.toString());
 	}
 
 	/**
 	 * @param className
 	 * 		Name of the script class.
-	 * @param source
-	 * 		Source of the script.
+	 * @param originalSource
+	 * 		Original source provided by the user.
+	 * @param compileSource
+	 * 		Full source of the script to pass to the compiler.
 	 *
 	 * @return Compiler result wrapper containing the loaded class reference.
 	 */
-	private GenerateResult generate(String className, String source) {
+	@Nonnull
+	private GenerateResult generate(@Nonnull String className,
+									@Nonnull String originalSource,
+									@Nonnull String compileSource) {
 		JavacArguments args = new JavacArgumentsBuilder()
 				.withClassName(className)
-				.withClassSource(source)
+				.withClassSource(compileSource)
 				.build();
 		CompilerResult result = compiler.compile(args, null, null);
 		if (result.wasSuccess()) {
@@ -229,12 +242,32 @@ public class JavacScriptEngine implements ScriptEngine {
 						.collect(Collectors.toMap(e -> e.getKey().replace('/', '.'), Map.Entry::getValue));
 				ClassDefiner definer = new ClassDefiner(classes);
 				Class<?> cls = definer.findClass(className.replace('/', '.'));
-				return new GenerateResult(cls, result.getDiagnostics());
+				return new GenerateResult(cls, mapDiagnostics(originalSource, compileSource, result.getDiagnostics()));
 			} catch (Exception ex) {
 				logger.error("Failed to define generated script class", ex);
 			}
 		}
-		return new GenerateResult(null, result.getDiagnostics());
+		return new GenerateResult(null, mapDiagnostics(originalSource, compileSource, result.getDiagnostics()));
+	}
+
+	/**
+	 * @param originalSource
+	 * 		Original source provided by the user.
+	 * @param compileSource
+	 * 		Full source of the script to pass to the compiler.
+	 * @param diagnostics
+	 * 		Diagnostics to map position of.
+	 *
+	 * @return List of updated diagnostics.
+	 */
+	private List<CompilerDiagnostic> mapDiagnostics(@Nonnull String originalSource,
+													@Nonnull String compileSource,
+													@Nonnull List<CompilerDiagnostic> diagnostics) {
+
+		int syntheticLineCount = StringUtil.count("\n", StringUtil.cutOffAtFirst(compileSource, originalSource));
+		return diagnostics.stream()
+				.map(d -> d.withLine(d.getLine() - syntheticLineCount))
+				.toList();
 	}
 
 	private record GenerateResult(Class<?> cls, List<CompilerDiagnostic> diagnostics) {
