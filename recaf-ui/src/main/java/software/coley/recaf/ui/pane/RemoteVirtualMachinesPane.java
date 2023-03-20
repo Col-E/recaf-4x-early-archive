@@ -228,7 +228,7 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 			// Create title controls
 			boolean canConnect = attachManager.getVirtualMachineConnectionFailure(descriptor) == null;
 			CarbonIcons titleIcon = canConnect ? CarbonIcons.DEBUG : CarbonIcons.ERROR_FILLED;
-			FontIconView titleGraphic = new FontIconView(titleIcon, 28, canConnect ? Color.GREEN.brighter() : Color.RED);
+			FontIconView titleGraphic = new FontIconView(titleIcon, 28, canConnect ? Color.LIME.brighter() : Color.RED);
 			Button connectButton = new ActionButton(titleGraphic, getBinding("attach.connect"), () -> {
 				if (workspaceManager.closeCurrent()) {
 					ThreadUtil.run(() -> {
