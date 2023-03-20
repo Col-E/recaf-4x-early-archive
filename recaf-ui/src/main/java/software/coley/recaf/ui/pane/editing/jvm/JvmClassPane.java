@@ -7,6 +7,7 @@ import jakarta.inject.Inject;
 import javafx.scene.control.Label;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.config.ClassEditingConfig;
 import software.coley.recaf.ui.control.BoundTab;
 import software.coley.recaf.ui.control.IconView;
@@ -64,6 +65,10 @@ public class JvmClassPane extends ClassPane {
 			// Refresh display
 			clearDisplay();
 			generateDisplay();
+
+			// Refresh UI with path
+			if (getCenter() instanceof UpdatableNavigable updatable)
+				updatable.onUpdatePath(getPath());
 		}
 	}
 
