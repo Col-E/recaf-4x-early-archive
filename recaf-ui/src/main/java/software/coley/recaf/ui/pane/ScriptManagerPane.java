@@ -327,7 +327,9 @@ public class ScriptManagerPane extends BorderPane {
 			getStyleClass().add("tooltip");
 
 			Label nameLabel = new Label(script.name());
+			nameLabel.setWrapText(true);
 			nameLabel.setMinSize(350, 20);
+			nameLabel.setMaxWidth(550);
 			nameLabel.getStyleClass().add(Styles.TITLE_3);
 
 			VBox info = new VBox();
@@ -339,7 +341,7 @@ public class ScriptManagerPane extends BorderPane {
 			String url = script.getTagValue("url");
 
 			if (!description.isBlank())
-				info.getChildren().add(makeAttribLabel(null, description));
+				info.getChildren().add(makeAttribLabel(null, EscapeUtil.unescapeStandard(description)));
 			if (!author.isBlank())
 				info.getChildren().add(makeAttribLabel(getBinding("menu.scripting.author"), author));
 			if (!version.isBlank())
@@ -399,6 +401,8 @@ public class ScriptManagerPane extends BorderPane {
 		 */
 		private static Label makeAttribLabel(StringBinding langBinding, String secondaryText) {
 			Label label = new Label(secondaryText);
+			label.setWrapText(true);
+			label.setMaxWidth(550);
 			if (langBinding != null) {
 				label.textProperty().bind(new StringBinding() {
 					{
