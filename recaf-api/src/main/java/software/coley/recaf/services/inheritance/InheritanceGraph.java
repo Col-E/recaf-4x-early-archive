@@ -22,6 +22,7 @@ import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.ResourceAndroidClassListener;
 import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
+import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.*;
@@ -435,7 +436,9 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 
 	private static class StubClass extends BasicJvmClassInfo {
 		public StubClass() {
-			super(new JvmClassInfoBuilder());
+			super(new JvmClassInfoBuilder()
+					.adaptFrom(RuntimeWorkspaceResource.getInstance().getJvmClassBundle()
+							.get("java/lang/Object").getClassReader()));
 		}
 	}
 }

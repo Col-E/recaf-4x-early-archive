@@ -1,5 +1,7 @@
 package software.coley.recaf.info.annotation;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.TypePath;
 
 /**
@@ -16,13 +18,14 @@ public class BasicTypeAnnotationInfo extends BasicAnnotationInfo implements Type
 	 * 		Constant denoting where the annotation is applied.
 	 * @param typePath
 	 * 		Path to a type argument.
+	 * 		May be {@code null} if no path is required.
 	 * @param visible
 	 * 		Annotation runtime visibility.
 	 * @param descriptor
 	 * 		Annotation descriptor.
 	 */
-	public BasicTypeAnnotationInfo(int typeRef, TypePath typePath,
-								   boolean visible, String descriptor) {
+	public BasicTypeAnnotationInfo(int typeRef, @Nullable TypePath typePath,
+								   boolean visible, @Nonnull String descriptor) {
 		super(visible, descriptor);
 		this.typeRef = typeRef;
 		this.typePath = typePath;
@@ -33,6 +36,7 @@ public class BasicTypeAnnotationInfo extends BasicAnnotationInfo implements Type
 		return typeRef;
 	}
 
+	@Nullable
 	@Override
 	public TypePath getTypePath() {
 		return typePath;

@@ -44,7 +44,7 @@ class ScriptManagerTest {
 
 	@AfterAll
 	static void cleanup() throws IOException {
-		fileWatching.setValue(anyBoolean());
+		fileWatching.setValue(false);
 		IOUtil.cleanDirectory(scriptDir);
 	}
 

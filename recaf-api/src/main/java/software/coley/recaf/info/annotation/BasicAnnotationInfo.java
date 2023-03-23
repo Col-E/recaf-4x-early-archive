@@ -1,6 +1,7 @@
 package software.coley.recaf.info.annotation;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.TypePath;
 
 import java.util.LinkedHashMap;
@@ -46,7 +47,7 @@ public class BasicAnnotationInfo implements AnnotationInfo {
 	 *
 	 * @return Type annotation from this annotation.
 	 */
-	public BasicTypeAnnotationInfo withTypeInfo(int typeRef, @Nonnull TypePath typePath) {
+	public BasicTypeAnnotationInfo withTypeInfo(int typeRef, @Nullable TypePath typePath) {
 		return new BasicTypeAnnotationInfo(typeRef, typePath, isVisible(), getDescriptor());
 	}
 
