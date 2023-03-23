@@ -27,8 +27,8 @@ public class AggregateMappingManager implements Service, WorkspaceCloseListener 
 	private final AggregateMappingManagerConfig config;
 
 	@Inject
-	public AggregateMappingManager(AggregateMappingManagerConfig config,
-								   Workspace workspace) {
+	public AggregateMappingManager(@Nonnull AggregateMappingManagerConfig config,
+								   @Nonnull Workspace workspace) {
 		this.config = config;
 		aggregatedMappings = new AggregatedMappings(workspace);
 	}
