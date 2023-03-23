@@ -250,11 +250,20 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 		return OBJECT;
 	}
 
+	@Nonnull
 	private Function<String, InheritanceVertex> createVertexProvider() {
 		return name -> {
+			// Edge case handling for 'java/lang/Object' doing a parent lookup.
+			// There is no parent, do not use STUB.
+			if (name == null)
+				return null;
+
+			// Find class in workspace, if not found yield stub.
 			ClassPathNode result = workspace.findAnyClass(name);
 			if (result == null)
 				return STUB;
+
+			// Map class to vertex.
 			ResourcePathNode resourceParent = result.getParentOfType(WorkspaceResource.class);
 			boolean isPrimary = resourceParent != null && resourceParent.isPrimary();
 			ClassInfo info = result.getValue();
