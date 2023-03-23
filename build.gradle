@@ -35,15 +35,12 @@ subprojects {
         }
     }
 
-    tasks.withType(JavaCompile) {
-        options.encoding = 'UTF-8'
-        options.incremental = true
-    }
-
     // Append options for unchecked/deprecation
     gradle.projectsEvaluated {
         tasks.withType(JavaCompile) {
             options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+            options.encoding = 'UTF-8'
+            options.incremental = true
         }
     }
 
