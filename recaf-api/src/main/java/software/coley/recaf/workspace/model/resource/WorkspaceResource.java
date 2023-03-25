@@ -148,7 +148,7 @@ public interface WorkspaceResource extends Closing {
 	 * @return Stream of all immediate class bundles in the resource.
 	 */
 	default Stream<ClassBundle<? extends ClassInfo>> classBundleStream() {
-		return concat(jvmClassBundleStream(), androidClassBundleStream());
+		return concat(jvmClassBundleStream(), concat(versionedJvmClassBundleStream(), androidClassBundleStream()));
 	}
 
 	/**

@@ -259,7 +259,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 				return null;
 
 			// Find class in workspace, if not found yield stub.
-			ClassPathNode result = workspace.findAnyClass(name);
+			ClassPathNode result = workspace.findClass(name);
 			if (result == null)
 				return STUB;
 

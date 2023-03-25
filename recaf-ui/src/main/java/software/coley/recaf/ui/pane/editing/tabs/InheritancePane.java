@@ -110,7 +110,7 @@ public class InheritancePane extends StackPane implements ContextSource, Updatab
 		for (InheritanceVertex parentVertex : vertex.getParents()) {
 			if (parentVertex.isJavaLangObject())
 				continue;
-			ClassPathNode parentPath = workspace.findAnyClass(parentVertex.getName());
+			ClassPathNode parentPath = workspace.findClass(parentVertex.getName());
 			if (parentPath != null) {
 				WorkspaceTreeNode subItem = new WorkspaceTreeNode(parentPath);
 				if (noLoops(node, subItem)) {
@@ -132,7 +132,7 @@ public class InheritancePane extends StackPane implements ContextSource, Updatab
 	private void createChildren(@Nonnull WorkspaceTreeNode node, @Nonnull InheritanceVertex vertex) {
 		node.setExpanded(true);
 		for (InheritanceVertex childVertex : vertex.getChildren()) {
-			ClassPathNode childPath = workspace.findAnyClass(childVertex.getName());
+			ClassPathNode childPath = workspace.findClass(childVertex.getName());
 			if (childPath != null) {
 				WorkspaceTreeNode subItem = new WorkspaceTreeNode(childPath);
 				if (noLoops(node, subItem)) {

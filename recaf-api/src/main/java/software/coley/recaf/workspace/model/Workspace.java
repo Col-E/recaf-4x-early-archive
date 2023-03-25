@@ -4,22 +4,21 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.info.AndroidClassInfo;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
-import software.coley.recaf.path.ClassPathNode;
-import software.coley.recaf.path.FilePathNode;
-import software.coley.recaf.path.WorkspacePathNode;
+import software.coley.recaf.path.*;
+import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.workspace.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
+import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
+import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * Models a collection of user inputs, represented as {@link WorkspaceResource} instances.
@@ -107,10 +106,10 @@ public interface Workspace extends Closing {
 	 * @param name
 	 * 		Class name.
 	 *
-	 * @return Result of lookup.
+	 * @return Path to <i>the first</i> class matching the given name.
 	 */
 	@Nullable
-	default ClassPathNode findAnyClass(@Nonnull String name) {
+	default ClassPathNode findClass(@Nonnull String name) {
 		ClassPathNode result = findJvmClass(name);
 		if (result == null)
 			result = findLatestVersionedJvmClass(name);
@@ -123,14 +122,11 @@ public interface Workspace extends Closing {
 	 * @param name
 	 * 		Class name.
 	 *
-	 * @return Result of lookup.
+	 * @return Path to <i>the first</i> JVM class matching the given name.
 	 */
 	@Nullable
 	default ClassPathNode findJvmClass(@Nonnull String name) {
-		List<WorkspaceResource> resources = new ArrayList<>(getSupportingResources());
-		resources.add(0, getPrimaryResource());
-		resources.addAll(getInternalSupportingResources());
-		for (WorkspaceResource resource : resources) {
+		for (WorkspaceResource resource : getAllResources(true)) {
 			JvmClassBundle bundle = resource.getJvmClassBundle();
 			JvmClassInfo classInfo = bundle.get(name);
 			if (classInfo != null)
@@ -147,7 +143,8 @@ public interface Workspace extends Closing {
 	 * @param name
 	 * 		Class name.
 	 *
-	 * @return Result of lookup. If there are multiple versions of the class, the latest is used.
+	 * @return @return Path to <i>the first</i> versioned JVM class matching the given name.
+	 * If there are multiple versions of the class, the latest is used.
 	 */
 	@Nullable
 	default ClassPathNode findLatestVersionedJvmClass(@Nonnull String name) {
@@ -161,13 +158,11 @@ public interface Workspace extends Closing {
 	 * 		Version to look for.
 	 * 		This value is dropped down to the first available version bundle via {@link NavigableMap#floorEntry(Object)}.
 	 *
-	 * @return Result of lookup.
+	 * @return Path to <i>the first</i> versioned JVM class matching the given name, supporting the given version.
 	 */
 	@Nullable
 	default ClassPathNode findVersionedJvmClass(@Nonnull String name, int version) {
-		List<WorkspaceResource> resources = new ArrayList<>(getSupportingResources());
-		resources.add(0, getPrimaryResource());
-		for (WorkspaceResource resource : resources) {
+		for (WorkspaceResource resource : getAllResources(false)) {
 			// Get floor version target.
 			Map.Entry<Integer, JvmClassBundle> entry = resource.getVersionedJvmClassBundles().floorEntry(version);
 			if (entry == null) continue;
@@ -189,13 +184,11 @@ public interface Workspace extends Closing {
 	 * @param name
 	 * 		Class name.
 	 *
-	 * @return Result of lookup.
+	 * @return Path to <i>the first</i> Android class matching the given name.
 	 */
 	@Nullable
 	default ClassPathNode findAndroidClass(@Nonnull String name) {
-		List<WorkspaceResource> resources = new ArrayList<>(getSupportingResources());
-		resources.add(0, getPrimaryResource());
-		for (WorkspaceResource resource : resources) {
+		for (WorkspaceResource resource : getAllResources(false)) {
 			for (AndroidClassBundle bundle : resource.getAndroidClassBundles().values()) {
 				AndroidClassInfo classInfo = bundle.get(name);
 				if (classInfo != null)
@@ -211,15 +204,126 @@ public interface Workspace extends Closing {
 
 	/**
 	 * @param name
+	 * 		Package name.
+	 *
+	 * @return Path to <i>the first</i> package matching the given name.
+	 */
+	@Nullable
+	default DirectoryPathNode findPackage(@Nonnull String name) {
+		for (WorkspaceResource resource : getAllResources(false)) {
+			for (ClassBundle<? extends ClassInfo> bundle : resource.classBundleStream().toList()) {
+				for (String key : bundle.keySet()) {
+					if (key.startsWith(name))
+						return new WorkspacePathNode(this)
+								.child(resource)
+								.child(bundle)
+								.child(name);
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * @param filter
+	 * 		Class filter.
+	 *
+	 * @return Classes matching the given filter.
+	 */
+	@Nonnull
+	default SortedSet<ClassPathNode> findClasses(@Nonnull Predicate<ClassInfo> filter) {
+		SortedSet<ClassPathNode> result = new TreeSet<>();
+		result.addAll(findJvmClasses(Unchecked.cast(filter)));
+		result.addAll(findVersionedJvmClasses(Unchecked.cast(filter)));
+		result.addAll(findAndroidClasses(Unchecked.cast(filter)));
+		return result;
+	}
+
+	/**
+	 * @param filter
+	 * 		JVM class filter.
+	 *
+	 * @return Classes matching the given filter.
+	 */
+	@Nonnull
+	default SortedSet<ClassPathNode> findJvmClasses(@Nonnull Predicate<JvmClassInfo> filter) {
+		SortedSet<ClassPathNode> results = new TreeSet<>();
+		WorkspacePathNode workspacePath = new WorkspacePathNode(this);
+		for (WorkspaceResource resource : getAllResources(true)) {
+			JvmClassBundle bundle = resource.getJvmClassBundle();
+			BundlePathNode bundlePath = workspacePath.child(resource).child(bundle);
+			for (JvmClassInfo classInfo : bundle.values()) {
+				if (filter.test(classInfo)) {
+					results.add(bundlePath
+							.child(classInfo.getPackageName())
+							.child(classInfo));
+				}
+			}
+		}
+		return results;
+	}
+
+	/**
+	 * @param filter
+	 * 		JVM class filter.
+	 *
+	 * @return Classes matching the given filter.
+	 */
+	@Nonnull
+	default SortedSet<ClassPathNode> findVersionedJvmClasses(@Nonnull Predicate<JvmClassInfo> filter) {
+		SortedSet<ClassPathNode> results = new TreeSet<>();
+		WorkspacePathNode workspacePath = new WorkspacePathNode(this);
+		for (WorkspaceResource resource : getAllResources(true)) {
+			ResourcePathNode resourcePath = workspacePath.child(resource);
+			for (JvmClassBundle bundle : resource.getVersionedJvmClassBundles().values()) {
+				BundlePathNode bundlePath = resourcePath.child(bundle);
+				for (JvmClassInfo classInfo : bundle.values()) {
+					if (filter.test(classInfo)) {
+						results.add(bundlePath
+								.child(classInfo.getPackageName())
+								.child(classInfo));
+					}
+				}
+			}
+		}
+		return results;
+	}
+
+	/**
+	 * @param filter
+	 * 		Android class filter.
+	 *
+	 * @return Classes matching the given filter.
+	 */
+	@Nonnull
+	default SortedSet<ClassPathNode> findAndroidClasses(@Nonnull Predicate<AndroidClassInfo> filter) {
+		SortedSet<ClassPathNode> results = new TreeSet<>();
+		WorkspacePathNode workspacePath = new WorkspacePathNode(this);
+		for (WorkspaceResource resource : getAllResources(true)) {
+			ResourcePathNode resourcePath = workspacePath.child(resource);
+			for (AndroidClassBundle bundle : resource.getAndroidClassBundles().values()) {
+				BundlePathNode bundlePath = resourcePath.child(bundle);
+				for (AndroidClassInfo classInfo : bundle.values()) {
+					if (filter.test(classInfo)) {
+						results.add(bundlePath
+								.child(classInfo.getPackageName())
+								.child(classInfo));
+					}
+				}
+			}
+		}
+		return results;
+	}
+
+	/**
+	 * @param name
 	 * 		File name.
 	 *
 	 * @return Result of lookup.
 	 */
 	@Nullable
 	default FilePathNode findFile(@Nonnull String name) {
-		List<WorkspaceResource> resources = new ArrayList<>(getSupportingResources());
-		resources.add(0, getPrimaryResource());
-		for (WorkspaceResource resource : resources) {
+		for (WorkspaceResource resource : getAllResources(false)) {
 			FileBundle bundle = resource.getFileBundle();
 			FileInfo fileInfo = bundle.get(name);
 			if (fileInfo != null)

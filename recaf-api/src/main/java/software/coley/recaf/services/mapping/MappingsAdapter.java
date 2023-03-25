@@ -99,7 +99,7 @@ public class MappingsAdapter implements Mappings {
 		if (mapped == null) {
 			if (workspace != null) {
 				// Pull the actual outer class name from the class-info in the workspace if available.
-				ClassPathNode classPath = workspace.findAnyClass(internalName);
+				ClassPathNode classPath = workspace.findClass(internalName);
 				if (classPath != null) {
 					ClassInfo info = classPath.getValue();
 					String outerName = info.getOuterClassName();

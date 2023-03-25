@@ -34,7 +34,7 @@ public class WorkspaceBackedRemapper extends BasicMappingsRemapper {
 	@Override
 	public String mapAnnotationAttributeName(String descriptor, String name) {
 		String annotationName = Type.getType(descriptor).getInternalName();
-		ClassPathNode classPath = workspace.findAnyClass(annotationName);
+		ClassPathNode classPath = workspace.findClass(annotationName);
 
 		// Not found, probably not intended to be renamed.
 		if (classPath == null)

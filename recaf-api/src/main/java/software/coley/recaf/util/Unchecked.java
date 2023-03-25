@@ -9,6 +9,19 @@ import java.util.function.*;
  */
 public class Unchecked {
 	/**
+	 * @param value
+	 * 		Value to cast.
+	 * @param <T>
+	 * 		Target type.
+	 *
+	 * @return Value casted.
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> T cast(Object value) {
+		return (T) value;
+	}
+
+	/**
 	 * @param runnable
 	 * 		Runnable.
 	 */
