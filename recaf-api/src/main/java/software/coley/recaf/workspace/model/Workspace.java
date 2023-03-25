@@ -210,10 +210,19 @@ public interface Workspace extends Closing {
 	 */
 	@Nullable
 	default DirectoryPathNode findPackage(@Nonnull String name) {
+		// Modify input such that the package name we compare against ends with '/'.
+		// This prevents confusing matches like "com/example/a" from matching against contents in "com/example/abc".
+		String cmp;
+		if (name.endsWith("/")) {
+			cmp = name;
+			name = name.substring(0, name.length() - 1);
+		} else {
+			cmp = name + "/";
+		}
 		for (WorkspaceResource resource : getAllResources(false)) {
 			for (ClassBundle<? extends ClassInfo> bundle : resource.classBundleStream().toList()) {
 				for (String key : bundle.keySet()) {
-					if (key.startsWith(name))
+					if (key.startsWith(cmp))
 						return new WorkspacePathNode(this)
 								.child(resource)
 								.child(bundle)

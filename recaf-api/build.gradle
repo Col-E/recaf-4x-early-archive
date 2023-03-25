@@ -22,6 +22,7 @@ dependencies {
     api llzip
     api logging_impl
     api jlinker
+    api openrewrite
     api regex
 }
 

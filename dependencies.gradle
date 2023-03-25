@@ -50,6 +50,8 @@ project.ext {
 
     mockito = 'org.mockito:mockito-core:4.9.0'
 
+    openrewrite = 'org.openrewrite:rewrite-java-17:7.38.0'
+
     regex = 'net.sourceforge.jregex:jregex:1.2_01'
 
     richtextfx = 'org.fxmisc.richtext:richtextfx:0.11.0'
