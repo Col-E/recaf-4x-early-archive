@@ -3,6 +3,7 @@ package software.coley.recaf.ui.config;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import javafx.scene.input.KeyCode;
 import software.coley.observables.ObservableMap;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicMapConfigValue;
@@ -10,13 +11,17 @@ import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.pane.editing.ClassPane;
+import software.coley.recaf.util.PlatformType;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static javafx.scene.input.KeyCode.*;
+import static software.coley.recaf.ui.config.Binding.nameOf;
 import static software.coley.recaf.ui.config.Binding.newBind;
+import static software.coley.recaf.ui.config.BindingCreator.OSBinding.newOsBind;
+import static software.coley.recaf.ui.config.BindingCreator.bindings;
 
 /**
  * Config for various keybindings.
@@ -37,9 +42,9 @@ public class KeybindingConfig extends BasicConfigContainer {
 
 		// We will only be storing one 'value' so that the UI can treat it as a singular element.
 		bundle = new BindingBundle(Arrays.asList(
-				newBind(ID_FIND, CONTROL, F),
-				newBind(ID_REPLACE, CONTROL, R),
-				newBind(ID_SAVE, CONTROL, S)
+				createBindForPlatform(ID_FIND, CONTROL, F),
+				createBindForPlatform(ID_REPLACE, CONTROL, R),
+				createBindForPlatform(ID_SAVE, CONTROL, S)
 		));
 		addValue(new BasicMapConfigValue<>("bundle", Map.class, String.class, Binding.class, bundle));
 	}
@@ -71,6 +76,26 @@ public class KeybindingConfig extends BasicConfigContainer {
 	public Binding getSave() {
 		// TODO: Update javadocs to @link to FilePane when made
 		return Objects.requireNonNull(bundle.get(ID_SAVE));
+	}
+
+	/**
+	 * Wrapper around {@link Binding#newBind(String, KeyCode...)} and {@link BindingCreator}
+	 * to swap out {@link KeyCode#CONTROL} for {@link KeyCode#META} for Mac users.
+	 *
+	 * @param id
+	 * 		Keybinding ID.
+	 * @param codes
+	 * 		Key-codes to use.
+	 *
+	 * @return Binding for the current platform.
+	 */
+	private static Binding createBindForPlatform(String id, KeyCode... codes) {
+		Binding defaultBind = newBind(id, codes);
+		// Swap out CONTROL for META on Mac.
+		if (defaultBind.contains(nameOf(CONTROL)))
+			return bindings(defaultBind, newOsBind(PlatformType.MAC, defaultBind))
+					.buildKeyBindingForCurrentOS();
+		return defaultBind;
 	}
 
 	/**

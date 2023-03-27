@@ -117,17 +117,35 @@ public class Binding extends ArrayList<String> {
 			throw new IllegalStateException("Keybind must have have at least 1 key!");
 	}
 
-	private static Set<String> namesOf(@Nonnull KeyEvent event) {
-		Set<String> eventSet = new HashSet<>();
-		eventSet.add(event.getCode().getName().toLowerCase());
+	/**
+	 * @param event
+	 * 		Event to get key names of <i>(Key name plus mask name)</i>.
+	 *
+	 * @return Key names of the event.
+	 */
+	@Nonnull
+	public static Set<String> namesOf(@Nonnull KeyEvent event) {
+		Set<String> eventSet = new LinkedHashSet<>();
 		if (event.isControlDown())
-			eventSet.add("ctrl");
-		else if (event.isAltDown())
-			eventSet.add("alt");
-		else if (event.isShiftDown())
-			eventSet.add("shift");
-		else if (event.isMetaDown())
-			eventSet.add("meta");
+			eventSet.add(nameOf(KeyCode.CONTROL));
+		if (event.isMetaDown())
+			eventSet.add(nameOf(KeyCode.META));
+		if (event.isAltDown())
+			eventSet.add(nameOf(KeyCode.ALT));
+		if (event.isShiftDown())
+			eventSet.add(nameOf(KeyCode.SHIFT));
+		eventSet.add(nameOf(event.getCode()));
 		return eventSet;
+	}
+
+	/**
+	 * @param code
+	 * 		Key code to get name of.
+	 *
+	 * @return Key name of the event.
+	 */
+	@Nonnull
+	public static String nameOf(KeyCode code) {
+		return code.getName().toLowerCase();
 	}
 }
