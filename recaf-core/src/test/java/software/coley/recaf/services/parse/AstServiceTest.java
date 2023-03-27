@@ -18,10 +18,7 @@ import software.coley.recaf.services.source.AstContextHelper;
 import software.coley.recaf.services.source.AstMappingVisitor;
 import software.coley.recaf.services.source.AstService;
 import software.coley.recaf.test.TestClassUtils;
-import software.coley.recaf.test.dummy.AnnotationImpl;
-import software.coley.recaf.test.dummy.ClassWithExceptions;
-import software.coley.recaf.test.dummy.DummyEnum;
-import software.coley.recaf.test.dummy.StringSupplier;
+import software.coley.recaf.test.dummy.*;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 
@@ -47,6 +44,7 @@ public class AstServiceTest extends TestBase {
 				DummyEnum.class,
 				StringSupplier.class,
 				ClassWithExceptions.class,
+				HelloWorld.class,
 				AnnotationImpl.class
 		);
 		Workspace workspace = TestClassUtils.fromBundle(bundle);
@@ -100,15 +98,22 @@ public class AstServiceTest extends TestBase {
 				}
 			});
 		}
+
+		// TODO: Casts, imports, import types of static imports, member of static imports
+		//  arrays, new-array,
+		//  field declarations
+		//  method declarations, constructors, static block
+		//  static-field qualifier, field qualifier, field reference
+		//  static-method qualifier, method qualifier, method reference
 	}
 
 	@Nested
 	class Mapping {
 		@Test
-		void renameClassReplacesPackage() {
+		void renameClass_ReplacesPackage() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-					
+										
 					enum DummyEnum {
 						ONE, TWO, THREE
 					}
@@ -121,6 +126,210 @@ public class AstServiceTest extends TestBase {
 				String modified = unit.acceptJava(visitor, ctx).print(new Cursor(null, unit));
 				assertTrue(modified.startsWith("package com.example;"));
 				assertTrue(modified.contains("enum MyEnum {"));
+			});
+		}
+
+		@Test
+		void renameClass_ReplacesCast() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+										
+					class HelloWorld {
+						static void main(Object arg) {
+							HelloWorld casted = (HelloWorld) arg;
+						}
+					}
+					""";
+			handle(source, (unit, ctx) -> {
+				IntermediateMappings mappings = new IntermediateMappings();
+				mappings.addClass(HelloWorld.class.getName().replace('.', '/'), "com/example/Howdy");
+				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
+
+				String modified = unit.acceptJava(visitor, ctx).print(new Cursor(null, unit));
+				assertTrue(modified.startsWith("package com.example;"));
+				assertTrue(modified.contains("class Howdy {"));
+				assertTrue(modified.contains("Howdy casted = (Howdy) arg;"));
+			});
+		}
+
+		@Test
+		void renameClass_ReplaceStaticCallContextInSamePackage() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+										
+					class HelloWorld {
+						static void main(String[] args) {
+							ClassWithExceptions.readInt(args[0]);
+						}
+					}
+					""";
+			handle(source, (unit, ctx) -> {
+				IntermediateMappings mappings = new IntermediateMappings();
+				mappings.addClass(ClassWithExceptions.class.getName().replace('.', '/'), "com/example/Call");
+				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
+
+				String modified = unit.acceptJava(visitor, ctx).print(new Cursor(null, unit));
+				assertTrue(modified.contains("Call.readInt("));
+			});
+		}
+
+		@Test
+		void renameClass_ReplaceImportOfStaticCall() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+										
+					import static software.coley.recaf.test.dummy.ClassWithExceptions.readInt;
+										
+					class HelloWorld {
+						static void main(String[] args) {
+							readInt(args[0]);
+						}
+					}
+					""";
+			handle(source, (unit, ctx) -> {
+				IntermediateMappings mappings = new IntermediateMappings();
+				mappings.addClass(ClassWithExceptions.class.getName().replace('.', '/'), "com/example/Call");
+				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
+
+				String modified = unit.acceptJava(visitor, ctx).print(new Cursor(null, unit));
+				assertTrue(modified.contains("import static com.example.Call.readInt"));
+			});
+		}
+
+		@Test
+		void renameClass_ArrayDecAndNew() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+										
+					class HelloWorld {
+						static void main(String[] args) {
+							ClassWithExceptions[] bar = new ClassWithExceptions[0];
+						}
+					}
+					""";
+			handle(source, (unit, ctx) -> {
+				IntermediateMappings mappings = new IntermediateMappings();
+				mappings.addClass(ClassWithExceptions.class.getName().replace('.', '/'), "com/example/Foo");
+				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
+
+				String modified = unit.acceptJava(visitor, ctx).print(new Cursor(null, unit));
+				assertTrue(modified.contains("Foo[] bar = new Foo[0];"));
+			});
+		}
+
+		@Test
+		void renameClass_FieldStaticQualifier() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+										
+					class HelloWorld {
+						static void main(String[] args) {
+							DummyEnum one = DummyEnum.ONE;
+							String two = DummyEnum.valueOf("TWO").name();
+						}
+					}
+					""";
+			handle(source, (unit, ctx) -> {
+				IntermediateMappings mappings = new IntermediateMappings();
+				mappings.addClass(DummyEnum.class.getName().replace('.', '/'), "com/example/Singleton");
+				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
+
+				String modified = unit.acceptJava(visitor, ctx).print(new Cursor(null, unit));
+				assertTrue(modified.contains("Singleton one = Singleton.ONE;"));
+				assertTrue(modified.contains("String two = Singleton.valueOf(\"TWO\").name();"));
+			});
+		}
+
+		@Test
+		void renameClass_FieldAndVariableDeclarations() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+										
+					class HelloWorld {
+						ClassWithExceptions[] array;
+						ClassWithExceptions single;
+										
+						static void main(String[] args) {
+							ClassWithExceptions[] local_array = null;
+							ClassWithExceptions local_single = null;
+						}
+					}
+					""";
+			handle(source, (unit, ctx) -> {
+				IntermediateMappings mappings = new IntermediateMappings();
+				mappings.addClass(ClassWithExceptions.class.getName().replace('.', '/'), "com/example/Foo");
+				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
+
+				String modified = unit.acceptJava(visitor, ctx).print(new Cursor(null, unit));
+				assertTrue(modified.contains("Foo[] array;"));
+				assertTrue(modified.contains("Foo single;"));
+				assertTrue(modified.contains("Foo[] local_array = null;"));
+				assertTrue(modified.contains("Foo local_single = null;"));
+			});
+		}
+
+		@Test
+		void renameClass_MethodReturnAndArgs() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+										
+					class HelloWorld {
+						static HelloWorld get() { return null; }
+						void accept(HelloWorld arg) {}
+					}
+					""";
+			handle(source, (unit, ctx) -> {
+				IntermediateMappings mappings = new IntermediateMappings();
+				mappings.addClass(HelloWorld.class.getName().replace('.', '/'), "com/example/Howdy");
+				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
+
+				String modified = unit.acceptJava(visitor, ctx).print(new Cursor(null, unit));
+				assertTrue(modified.contains("static Howdy get()"));
+				assertTrue(modified.contains("void accept(Howdy arg)"));
+			});
+		}
+
+		@Test
+		void renameClass_Constructor() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+										
+					class HelloWorld {
+						private HelloWorld(String s) {}
+						HelloWorld() {}
+					}
+					""";
+			handle(source, (unit, ctx) -> {
+				IntermediateMappings mappings = new IntermediateMappings();
+				mappings.addClass(HelloWorld.class.getName().replace('.', '/'), "com/example/Howdy");
+				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
+
+				String modified = unit.acceptJava(visitor, ctx).print(new Cursor(null, unit));
+				assertTrue(modified.contains("private Howdy(String s) {}"));
+				assertTrue(modified.contains("Howdy() {}"));
+			});
+		}
+
+		@Test
+		void renameClass_MethodReference() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+										
+					import java.util.function.Supplier;
+										
+					class HelloWorld {
+						static {
+							Supplier<HelloWorld> worldSupplier = HelloWorld::new;
+						}
+					}
+					""";
+			handle(source, (unit, ctx) -> {
+				IntermediateMappings mappings = new IntermediateMappings();
+				mappings.addClass(HelloWorld.class.getName().replace('.', '/'), "com/example/Howdy");
+				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
+
+				String modified = unit.acceptJava(visitor, ctx).print(new Cursor(null, unit));
+				assertTrue(modified.contains("Supplier<Howdy> worldSupplier = Howdy::new"));
 			});
 		}
 	}

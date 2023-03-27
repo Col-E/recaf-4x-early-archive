@@ -108,7 +108,9 @@ public class AstMappingVisitor extends JavaIsoVisitor<ExecutionContext> {
 			do {
 				cursorParent = cursorParent.getParent();
 			} while (cursorParent != null &&
-					(cursorParent.getValue() instanceof JLeftPadded || cursorParent.getValue() instanceof JRightPadded));
+					(cursorParent.getValue() instanceof JContainer ||
+							cursorParent.getValue() instanceof JLeftPadded ||
+							cursorParent.getValue() instanceof JRightPadded));
 
 			// Handle if valid parent found.
 			if (cursorParent != null) {
@@ -117,7 +119,9 @@ public class AstMappingVisitor extends JavaIsoVisitor<ExecutionContext> {
 						parentValue instanceof J.VariableDeclarations ||
 						parentValue instanceof J.ClassDeclaration ||
 						parentValue instanceof J.MethodDeclaration ||
+						parentValue instanceof J.MemberReference ||
 						parentValue instanceof J.ControlParentheses ||
+						parentValue instanceof J.ParameterizedType ||
 						parentValue instanceof J.NewClass ||
 						parentValue instanceof J.NewArray) {
 					// In these cases, the identifier should always be a reference to the class type, and not a general name.
@@ -145,6 +149,8 @@ public class AstMappingVisitor extends JavaIsoVisitor<ExecutionContext> {
 					} else {
 						throw new UnsupportedOperationException("Calling context on reference unknown: " + visitedType.getClass().getName());
 					}
+				} else {
+					System.out.println(parentValue.getClass().getSimpleName());
 				}
 			}
 		}
