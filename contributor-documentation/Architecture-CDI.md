@@ -101,7 +101,7 @@ or use `@Dependent` since its not the view that really matters, but the data bac
 
 When Recaf is launched, the `Bootstrap` class is used to initialize an instance of `Recaf`.
 The `Bootstrap` class creates a CDI container that is configured to automatically discover implementations of the
-servivces outlined in the `api` module. Once this process is completed, the newly made CDI container is wrapped in
+services outlined in the `api` module. Once this process is completed, the newly made CDI container is wrapped in
 a `Recaf` instance which lasts for the duration of the application.
 
 ## Why are so many UI classes `@Dependent` scoped?
