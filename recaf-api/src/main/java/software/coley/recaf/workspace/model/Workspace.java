@@ -210,6 +210,9 @@ public interface Workspace extends Closing {
 	 */
 	@Nullable
 	default DirectoryPathNode findPackage(@Nonnull String name) {
+		// Map '.' to '/' in case users pass in the common dot format instead.
+		name = name.replace('.', '/');
+
 		// Modify input such that the package name we compare against ends with '/'.
 		// This prevents confusing matches like "com/example/a" from matching against contents in "com/example/abc".
 		String cmp;
