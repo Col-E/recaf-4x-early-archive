@@ -49,6 +49,8 @@ public interface PluginManager extends Service {
 	/**
 	 * @param name
 	 * 		Name of the plugin.
+	 * @param <T>
+	 * 		Container plugin type.
 	 *
 	 * @return Plugin by its name or {@code null}, if not found.
 	 */
@@ -101,6 +103,8 @@ public interface PluginManager extends Service {
 	 *
 	 * @param source
 	 *        {@link ByteSource} to load plugin from.
+	 * @param <T>
+	 * 		Container plugin type.
 	 *
 	 * @return Loaded plugin.
 	 *
@@ -116,7 +120,10 @@ public interface PluginManager extends Service {
 
 				// Load and record plugin container
 				PluginContainer<T> container = loader.load(getAllocator(), source);
-				return loadPlugin(container);
+				PluginContainer<T> loadedContainer = loadPlugin(container);
+				if (shouldEnablePluginOnLoad(loadedContainer))
+					loader.enablePlugin(loadedContainer);
+				return loadedContainer;
 			} catch (IOException | UnsupportedSourceException ex) {
 				throw new PluginLoadException("Could not load plugin due to an error", ex);
 			}
@@ -129,6 +136,8 @@ public interface PluginManager extends Service {
 	 *
 	 * @param container
 	 * 		Container of a {@link Plugin}.
+	 * @param <T>
+	 * 		Container plugin type.
 	 *
 	 * @return Loaded plugin.
 	 *
@@ -160,4 +169,14 @@ public interface PluginManager extends Service {
 	 * 		Container of the plugin.
 	 */
 	void unloadPlugin(PluginContainer<?> container);
+
+	/**
+	 * @param container
+	 * 		Container of the plugin.
+	 * @param <T>
+	 * 		Container plugin type.
+	 *
+	 * @return {@code true} to enable the plugin once it is loaded.
+	 */
+	<T extends Plugin> boolean shouldEnablePluginOnLoad(PluginContainer<T> container);
 }

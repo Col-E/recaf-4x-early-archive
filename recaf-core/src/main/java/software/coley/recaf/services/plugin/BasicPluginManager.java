@@ -173,6 +173,13 @@ public class BasicPluginManager implements PluginManager {
 		container.getLoader().disablePlugin(container);
 	}
 
+	@Override
+	public <T extends Plugin> boolean shouldEnablePluginOnLoad(PluginContainer<T> container) {
+		// TODO: We should maintain a state (from config) which plugins the user wants to load on startup
+		//  and only allow those to be initialized on startup.
+		return true;
+	}
+
 	@Nonnull
 	@Override
 	public String getServiceId() {
