@@ -331,7 +331,7 @@ public interface Workspace extends Closing {
 	 * @param name
 	 * 		File name.
 	 *
-	 * @return Result of lookup.
+	 * @return Path to <i>the first</i> file matching the given name.
 	 */
 	@Nullable
 	default FilePathNode findFile(@Nonnull String name) {
@@ -355,5 +355,38 @@ public interface Workspace extends Closing {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * @param filter
+	 * 		File filter.
+	 *
+	 * @return Files matching the given filter.
+	 */
+	@Nonnull
+	default SortedSet<FilePathNode> findFiles(@Nonnull Predicate<FileInfo> filter) {
+		SortedSet<FilePathNode> results = new TreeSet<>();
+		WorkspacePathNode workspacePath = new WorkspacePathNode(this);
+		// Internal resources don't have files, so we won't iterate over those.
+		for (WorkspaceResource resource : getAllResources(false)) {
+			ResourcePathNode resourcePath = workspacePath.child(resource);
+			FileBundle bundle = resource.getFileBundle();
+			BundlePathNode bundlePath = resourcePath.child(bundle);
+			for (FileInfo fileInfo : bundle.values()) {
+				if (filter.test(fileInfo)) {
+					results.add(bundlePath
+							.child(fileInfo.getDirectoryName())
+							.child(fileInfo));
+				}
+			}
+
+			// TODO: Match 'resource.getEmbeddedResources()'
+			//  - Path model does not have existing logic to support embedded resources yet.
+			//    - They do not exist as entries in the file-bundle
+			//    - Perhaps we should change the API for that, having them as entries, but tracked specially
+			//      to allow easy access. Having them in the file-bundle would make logic simpler as there would be
+			//      less edge-case work.
+		}
+		return results;
 	}
 }
