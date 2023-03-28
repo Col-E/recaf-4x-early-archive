@@ -30,7 +30,7 @@ public class MappingGenerator implements Service {
 	private final MappingGeneratorConfig config;
 
 	@Inject
-	public MappingGenerator(MappingGeneratorConfig config) {
+	public MappingGenerator(@Nonnull MappingGeneratorConfig config) {
 		this.config = config;
 	}
 
@@ -49,6 +49,7 @@ public class MappingGenerator implements Service {
 	 *
 	 * @return Newly generated mappings.
 	 */
+	@Nonnull
 	public Mappings generate(@Nullable Workspace workspace,
 							 @Nonnull WorkspaceResource resource,
 							 @Nonnull InheritanceGraph inheritanceGraph,

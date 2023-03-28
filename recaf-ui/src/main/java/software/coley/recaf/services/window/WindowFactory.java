@@ -41,6 +41,7 @@ public class WindowFactory implements Service {
 	 *
 	 * @return Created stage.
 	 */
+	@Nonnull
 	public Stage createAnonymousStage(@Nonnull Scene scene, @Nonnull ObservableValue<String> title, int minWidth, int minHeight) {
 		Stage stage = create(scene, minWidth, minHeight);
 		stage.titleProperty().bind(title);
@@ -62,6 +63,7 @@ public class WindowFactory implements Service {
 	 *
 	 * @return Created stage.
 	 */
+	@Nonnull
 	public Stage createAnonymousStage(@Nonnull Scene scene, @Nonnull String title, int minWidth, int minHeight) {
 		Stage stage = create(scene, minWidth, minHeight);
 		stage.setTitle(title);
@@ -69,7 +71,8 @@ public class WindowFactory implements Service {
 		return stage;
 	}
 
-	private Stage create(Scene scene, int minWidth, int minHeight) {
+	@Nonnull
+	private Stage create(@Nonnull Scene scene, int minWidth, int minHeight) {
 		Stage stage = new Stage();
 		stage.setScene(scene);
 		stage.setMinWidth(minWidth);

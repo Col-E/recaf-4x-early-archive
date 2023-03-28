@@ -276,7 +276,7 @@ public class InheritanceVertex {
 		if (isModule())
 			return;
 		if (vertices.add(this) && !isJavaLangObject())
-			for (InheritanceVertex vertex : allDirectVertices())
+			for (InheritanceVertex vertex : getAllDirectVertices())
 				vertex.visitFamily(vertices);
 	}
 
@@ -372,7 +372,7 @@ public class InheritanceVertex {
 	/**
 	 * @return All direct parents and child vertices.
 	 */
-	public Set<InheritanceVertex> allDirectVertices() {
+	public Set<InheritanceVertex> getAllDirectVertices() {
 		return Sets.combine(getParents(), getChildren());
 	}
 

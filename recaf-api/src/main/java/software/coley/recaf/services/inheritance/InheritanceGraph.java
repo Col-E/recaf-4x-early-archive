@@ -1,6 +1,7 @@
 package software.coley.recaf.services.inheritance;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import software.coley.collections.Lists;
 import software.coley.recaf.cdi.AutoRegisterWorkspaceListeners;
@@ -61,7 +62,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 * 		Workspace to pull classes from.
 	 */
 	@Inject
-	public InheritanceGraph(InheritanceGraphConfig config, @Nonnull Workspace workspace) {
+	public InheritanceGraph(@Nonnull InheritanceGraphConfig config, @Nonnull Workspace workspace) {
 		this.config = config;
 		this.workspace = workspace;
 
@@ -99,7 +100,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 * @param parentName
 	 * 		Parent class name.
 	 */
-	private void populateParentToChildLookup(String name, String parentName) {
+	private void populateParentToChildLookup(@Nonnull String name, @Nonnull String parentName) {
 		parentToChild.put(parentName, name);
 	}
 
@@ -109,7 +110,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 * @param info
 	 * 		Child class.
 	 */
-	private void populateParentToChildLookup(ClassInfo info) {
+	private void populateParentToChildLookup(@Nonnull ClassInfo info) {
 		// Skip module classes
 		if (info.hasModuleModifier())
 			return;
@@ -117,7 +118,8 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 		// Add direct parent
 		String name = info.getName();
 		String superName = info.getSuperName();
-		populateParentToChildLookup(name, superName);
+		if (superName != null)
+			populateParentToChildLookup(name, superName);
 
 		// Visit parent
 		InheritanceVertex superVertex = vertexProvider.apply(superName);
@@ -141,8 +143,10 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 * @param info
 	 * 		Child class.
 	 */
-	private void removeParentToChildLookup(ClassInfo info) {
-		removeParentToChildLookup(info.getName(), info.getSuperName());
+	private void removeParentToChildLookup(@Nonnull ClassInfo info) {
+		String superName = info.getSuperName();
+		if (superName != null)
+			removeParentToChildLookup(info.getName(), superName);
 		for (String itf : info.getInterfaces())
 			removeParentToChildLookup(info.getName(), itf);
 	}
@@ -155,7 +159,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 * @param parentName
 	 * 		Parent class name.
 	 */
-	private void removeParentToChildLookup(String name, String parentName) {
+	private void removeParentToChildLookup(@Nonnull String name, @Nonnull String parentName) {
 		parentToChild.remove(parentName, name);
 	}
 
@@ -165,6 +169,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 *
 	 * @return Direct extensions/implementations of the given parent.
 	 */
+	@Nonnull
 	private Collection<String> getDirectChildren(String parent) {
 		return parentToChild.getIfPresent(parent);
 	}
@@ -175,6 +180,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 *
 	 * @return Vertex in graph of class. {@code null} if no such class was found in the inputs.
 	 */
+	@Nullable
 	public InheritanceVertex getVertex(String name) {
 		InheritanceVertex vertex = vertices.computeIfAbsent(name, vertexProvider);
 		return vertex == STUB ? null : vertex;
@@ -188,6 +194,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 *
 	 * @return Complete inheritance family of the class.
 	 */
+	@Nonnull
 	public Set<InheritanceVertex> getVertexFamily(String name, boolean includeObject) {
 		InheritanceVertex vertex = getVertex(name);
 		if (vertex == null)
@@ -203,13 +210,14 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 *
 	 * @return Common parent of the classes.
 	 */
-	public String getCommon(String first, String second) {
+	@Nonnull
+	public String getCommon(@Nonnull String first, @Nonnull String second) {
 		// Full upwards hierarchy for the first
 		InheritanceVertex vertex = getVertex(first);
 		if (vertex == null || OBJECT.equals(first) || OBJECT.equals(second))
 			return OBJECT;
 
-		Set<String> firstParents = getVertex(first).allParents()
+		Set<String> firstParents = vertex.allParents()
 				.map(InheritanceVertex::getName)
 				.collect(Collectors.toCollection(LinkedHashSet::new));
 		firstParents.add(first);
@@ -271,7 +279,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 		};
 	}
 
-	private void onUpdateClassImpl(ClassInfo oldValue, ClassInfo newValue) {
+	private void onUpdateClassImpl(@Nonnull ClassInfo oldValue, @Nonnull ClassInfo newValue) {
 		String name = oldValue.getName();
 		if (!newValue.getName().equals(name))
 			throw new IllegalStateException("onUpdateClass should not permit a class name change");
@@ -433,7 +441,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 		}
 
 		@Override
-		public Set<InheritanceVertex> allDirectVertices() {
+		public Set<InheritanceVertex> getAllDirectVertices() {
 			return Collections.emptySet();
 		}
 
