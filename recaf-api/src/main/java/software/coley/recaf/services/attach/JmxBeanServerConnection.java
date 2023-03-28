@@ -1,6 +1,7 @@
 package software.coley.recaf.services.attach;
 
-import javax.management.MBeanInfo;
+import jakarta.annotation.Nonnull;
+
 import javax.management.MBeanServerConnection;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -27,7 +28,7 @@ public class JmxBeanServerConnection {
 	 * @param connection
 	 * 		Underlying connection.
 	 */
-	public JmxBeanServerConnection(MBeanServerConnection connection) {
+	public JmxBeanServerConnection(@Nonnull MBeanServerConnection connection) {
 		this.connection = connection;
 	}
 
@@ -37,8 +38,9 @@ public class JmxBeanServerConnection {
 	 * @throws Exception
 	 * 		When the bean could not be fetched.
 	 */
-	public MBeanInfo getClassloadingBeanInfo() throws Exception {
-		return connection.getMBeanInfo(CLASS_LOADING);
+	@Nonnull
+	public NamedMBeanInfo getClassloadingBeanInfo() throws Exception {
+		return new NamedMBeanInfo(CLASS_LOADING, connection.getMBeanInfo(CLASS_LOADING));
 	}
 
 	/**
@@ -47,8 +49,9 @@ public class JmxBeanServerConnection {
 	 * @throws Exception
 	 * 		When the bean could not be fetched.
 	 */
-	public MBeanInfo getCompilationBeanInfo() throws Exception {
-		return connection.getMBeanInfo(COMPILATION);
+	@Nonnull
+	public NamedMBeanInfo getCompilationBeanInfo() throws Exception {
+		return new NamedMBeanInfo(COMPILATION, connection.getMBeanInfo(COMPILATION));
 	}
 
 	/**
@@ -57,8 +60,9 @@ public class JmxBeanServerConnection {
 	 * @throws Exception
 	 * 		When the bean could not be fetched.
 	 */
-	public MBeanInfo getOperatingSystemBeanInfo() throws Exception {
-		return connection.getMBeanInfo(OPERATING_SYSTEM);
+	@Nonnull
+	public NamedMBeanInfo getOperatingSystemBeanInfo() throws Exception {
+		return new NamedMBeanInfo(OPERATING_SYSTEM, connection.getMBeanInfo(OPERATING_SYSTEM));
 	}
 
 	/**
@@ -67,8 +71,9 @@ public class JmxBeanServerConnection {
 	 * @throws Exception
 	 * 		When the bean could not be fetched.
 	 */
-	public MBeanInfo getRuntimeBeanInfo() throws Exception {
-		return connection.getMBeanInfo(RUNTIME);
+	@Nonnull
+	public NamedMBeanInfo getRuntimeBeanInfo() throws Exception {
+		return new NamedMBeanInfo(RUNTIME, connection.getMBeanInfo(RUNTIME));
 	}
 
 	/**
@@ -77,18 +82,21 @@ public class JmxBeanServerConnection {
 	 * @throws Exception
 	 * 		When the bean could not be fetched.
 	 */
-	public MBeanInfo getThreadBeanInfo() throws Exception {
-		return connection.getMBeanInfo(THREAD);
+	@Nonnull
+	public NamedMBeanInfo getThreadBeanInfo() throws Exception {
+		return new NamedMBeanInfo(THREAD, connection.getMBeanInfo(THREAD));
 	}
 
 	/**
 	 * @return Underlying connection.
 	 */
+	@Nonnull
 	public MBeanServerConnection getConnection() {
 		return connection;
 	}
 
-	private static ObjectName named(String name) {
+	@Nonnull
+	private static ObjectName named(@Nonnull String name) {
 		try {
 			return new ObjectName(name);
 		} catch (MalformedObjectNameException ex) {

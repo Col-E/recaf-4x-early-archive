@@ -23,8 +23,8 @@ import org.slf4j.Logger;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.attach.AttachManager;
-import software.coley.recaf.services.attach.AttachManagerConfig;
 import software.coley.recaf.services.attach.JmxBeanServerConnection;
+import software.coley.recaf.services.attach.NamedMBeanInfo;
 import software.coley.recaf.services.attach.PostScanListener;
 import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.FontIconView;
@@ -41,8 +41,6 @@ import software.coley.recaf.workspace.model.resource.WorkspaceRemoteVmResource;
 
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanFeatureInfo;
-import javax.management.MBeanInfo;
-import javax.management.ObjectName;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.*;
@@ -65,16 +63,13 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 	private final VBox vmButtonsList = new VBox();
 	private final BorderPane vmDisplayPane = new BorderPane();
 	private final AttachManager attachManager;
-	private final AttachManagerConfig attachManagerConfig;
 	private final WorkspaceManager workspaceManager;
 	private VmPane currentVmPane;
 
 	@Inject
-	public RemoteVirtualMachinesPane(AttachManager attachManager,
-									 AttachManagerConfig attachManagerConfig,
-									 WorkspaceManager workspaceManager) {
+	public RemoteVirtualMachinesPane(@Nonnull AttachManager attachManager,
+									 @Nonnull WorkspaceManager workspaceManager) {
 		this.attachManager = attachManager;
-		this.attachManagerConfig = attachManagerConfig;
 		this.workspaceManager = workspaceManager;
 
 		// Register this class as scan listener so we can update the UI live as updates come in.
@@ -346,14 +341,13 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 				// JMX tiles
 				JmxBeanServerConnection jmxConnection = attachManager.getJmxServerConnection(descriptor);
 				List<JmxWrapper> beanSuppliers = List.of(
-						new JmxWrapper(CarbonIcons.OBJECT_STORAGE, "attach.tab.classloading", JmxBeanServerConnection.CLASS_LOADING, jmxConnection::getClassloadingBeanInfo),
-						new JmxWrapper(CarbonIcons.QUERY_QUEUE, "attach.tab.compilation", JmxBeanServerConnection.COMPILATION, jmxConnection::getCompilationBeanInfo),
-						new JmxWrapper(CarbonIcons.SCREEN, "attach.tab.system", JmxBeanServerConnection.OPERATING_SYSTEM, jmxConnection::getOperatingSystemBeanInfo),
-						new JmxWrapper(CarbonIcons.METER, "attach.tab.runtime", JmxBeanServerConnection.RUNTIME, jmxConnection::getRuntimeBeanInfo),
-						new JmxWrapper(CarbonIcons.PARENT_CHILD, "attach.tab.thread", JmxBeanServerConnection.THREAD, jmxConnection::getThreadBeanInfo)
+						new JmxWrapper(CarbonIcons.OBJECT_STORAGE, "attach.tab.classloading", jmxConnection::getClassloadingBeanInfo),
+						new JmxWrapper(CarbonIcons.QUERY_QUEUE, "attach.tab.compilation", jmxConnection::getCompilationBeanInfo),
+						new JmxWrapper(CarbonIcons.SCREEN, "attach.tab.system", jmxConnection::getOperatingSystemBeanInfo),
+						new JmxWrapper(CarbonIcons.METER, "attach.tab.runtime", jmxConnection::getRuntimeBeanInfo),
+						new JmxWrapper(CarbonIcons.PARENT_CHILD, "attach.tab.thread", jmxConnection::getThreadBeanInfo)
 				);
 				for (JmxWrapper wrapper : beanSuppliers) {
-					ObjectName name = wrapper.name();
 					add(new AbstractContentTile() {
 						private final TableView<String> propertyTable = new TableView<>();
 						private Map<String, String> lastAttributeMap;
@@ -382,12 +376,12 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 						void update() {
 							try {
 								// Update attribute table if there are changes
-								MBeanInfo beanInfo = wrapper.beanSupplier().get();
+								NamedMBeanInfo beanInfo = wrapper.beanSupplier().get();
 								MBeanAttributeInfo[] attributes = beanInfo.getAttributes();
 								Map<String, String> attributeMap = Arrays.stream(attributes)
-										.collect(Collectors.toMap(MBeanFeatureInfo::getDescription, a -> {
+										.collect(Collectors.toMap(MBeanFeatureInfo::getDescription, attribute -> {
 											try {
-												Object value = jmxConnection.getConnection().getAttribute(name, a.getName());
+												Object value = beanInfo.getAttributeValue(jmxConnection, attribute);
 												if (value != null) {
 													if (value.getClass().isArray()) {
 														value = Arrays.toString(convertToObjectArray(value));
@@ -480,13 +474,11 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 		 * 		Graphic icon representation.
 		 * @param langKey
 		 * 		Identifier for language name lookup.
-		 * @param name
-		 * 		JMX object name instance.
 		 * @param beanSupplier
 		 * 		Supplier to the current bean info.
 		 */
-		private record JmxWrapper(Ikon icon, String langKey, ObjectName name,
-								  UncheckedSupplier<MBeanInfo> beanSupplier) {
+		private record JmxWrapper(Ikon icon, String langKey,
+								  UncheckedSupplier<NamedMBeanInfo> beanSupplier) {
 		}
 	}
 }
