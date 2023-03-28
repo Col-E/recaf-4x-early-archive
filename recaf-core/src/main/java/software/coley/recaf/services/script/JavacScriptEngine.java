@@ -56,6 +56,9 @@ public class JavacScriptEngine implements ScriptEngine {
 			"software.coley.recaf.services.plugin.*",
 			"software.coley.recaf.services.script.*",
 			"software.coley.recaf.services.search.*",
+			"software.coley.recaf.workspace.*",
+			"software.coley.recaf.workspace.io.*",
+			"software.coley.recaf.workspace.model.*",
 			// "software.coley.recaf.services.ssvm.*",
 			"software.coley.recaf.util.*",
 			"org.objectweb.asm.*",
@@ -239,6 +242,8 @@ public class JavacScriptEngine implements ScriptEngine {
 		// Create code (just a basic class with a static 'run' method)
 		StringBuilder code = new StringBuilder(
 				"@Dependent public class " + className + " implements Runnable, Opcodes { " +
+						"Workspace workspace; " +
+						"@Inject " + className +"(Workspace workspace) { this.workspace = workspace; } " +
 						"public void run() {\n" + script + "\n" + "}" +
 						"}");
 		for (String imp : imports)
