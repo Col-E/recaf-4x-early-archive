@@ -48,6 +48,13 @@ public final class ConfigGroups {
 	 * Group base for UI classes.
 	 */
 	public static final String SERVICE_UI = SERVICE + PACKAGE_SPLIT + "ui";
+	/**
+	 * Group for 3rd party.
+	 * <br>
+	 * Plugin registering new {@link ConfigContainer} instances should use this as the {@link ConfigContainer#getGroup()}.
+	 * This group is given special treatment in the UI.
+	 */
+	public static final String EXTERNAL = "external";
 
 	private ConfigGroups() {
 	}

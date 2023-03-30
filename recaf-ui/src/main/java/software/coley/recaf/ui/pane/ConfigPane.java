@@ -17,12 +17,9 @@ import javafx.scene.layout.VBox;
 import org.kordamp.ikonli.Ikon;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.config.ConfigContainer;
+import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.config.ConfigValue;
-import software.coley.recaf.services.config.ConfigManager;
-import software.coley.recaf.services.config.ManagedConfigListener;
-import software.coley.recaf.services.config.ConfigComponentFactory;
-import software.coley.recaf.services.config.ConfigComponentManager;
-import software.coley.recaf.services.config.ConfigIconManager;
+import software.coley.recaf.services.config.*;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.util.CollectionUtil;
@@ -208,8 +205,13 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 	private class ConfigPage extends GridPane {
 		@SuppressWarnings({"rawtypes", "unchecked"})
 		private ConfigPage(ConfigContainer container) {
+			// Plugin configs are given special treatment.
+			// They are not expected to install additional translations, so their ID's will be used as literal names.
+			boolean isThirdPartyConfig = ConfigGroups.EXTERNAL.equals(container.getGroup());
+
 			// Title
-			Label title = new BoundLabel(getBinding(container.getGroupAndId()));
+			Label title = isThirdPartyConfig ? new Label(container.getId()) :
+					new BoundLabel(getBinding(container.getGroupAndId()));
 			title.getStyleClass().add(Styles.TITLE_4);
 			add(title, 0, 0, 2, 1);
 			add(new Separator(), 0, 1, 2, 1);
@@ -225,7 +227,11 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 					add(componentFactory.create(container, value), 0, row, 2, 1);
 				} else {
 					String key = container.getScopedId(value);
-					add(new BoundLabel(getBinding(key)), 0, row);
+					if (isThirdPartyConfig) {
+						add(new Label(value.getId()), 0, row);
+					} else {
+						add(new BoundLabel(getBinding(key)), 0, row);
+					}
 					add(componentFactory.create(container, value), 1, row);
 				}
 				row++;

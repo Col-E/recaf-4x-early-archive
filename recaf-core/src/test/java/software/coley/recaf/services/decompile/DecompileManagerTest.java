@@ -41,9 +41,16 @@ public class DecompileManagerTest extends TestBase {
 
 	private static void runJvmDecompilation(JvmDecompiler decompiler) {
 		try {
-			// Run initial decompilation
+			// Handle result when it's done.
+			decompilerManager.decompile(decompiler, workspace, classToDecompile)
+					.whenComplete((result, throwable) -> {
+						// Throwable thrown when unhandled exception occurs.
+					});
+
+			// Block until result is given, then handle it in the same thread.
 			DecompileResult result = decompilerManager.decompile(decompiler, workspace, classToDecompile)
 					.get(1, TimeUnit.SECONDS);
+
 			assertEquals(DecompileResult.ResultType.SUCCESS, result.getType(), "Decompile result was not successful");
 			assertNotNull(result.getText(), "Decompile result missing text");
 			assertTrue(result.getText().contains("\"Hello world\""), "Decompilation seems to be wrong");
