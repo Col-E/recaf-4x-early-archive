@@ -7,4 +7,6 @@ package software.coley.recaf.services.cell;
  * @author Matt Coley
  */
 public interface ContextSource {
+	// TODO: Should provide a way to validate a <PathNode> is a declaration or reference
+	//       (or maybe make a custom type/enum to allow filtering the menu in additional cases?)
 }
