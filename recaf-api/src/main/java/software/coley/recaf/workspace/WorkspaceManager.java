@@ -27,7 +27,7 @@ public interface WorkspaceManager {
 	 * @return A new exporter configured to match the options.
 	 */
 	@Nonnull
-	default WorkspaceExporter createExporter(WorkspaceExportOptions options) {
+	default WorkspaceExporter createExporter(@Nonnull WorkspaceExportOptions options) {
 		return options.create();
 	}
 
