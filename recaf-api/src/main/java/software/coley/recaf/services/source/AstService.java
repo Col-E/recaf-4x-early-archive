@@ -45,6 +45,10 @@ public class AstService implements Service, WorkspaceModificationListener, Resou
 		workspace.getPrimaryResource().addListener(this);
 	}
 
+	// TODO: Expose code-formatting system, which we can use to post-process code in decompilers
+	//  - We may be able to allow the user to tweak styles like the IntelliJ format preview
+	//  - See: 'org.openrewrite.java.style'
+
 	/**
 	 * Allocates a parser with the class-path of the complete workspace.
 	 *
