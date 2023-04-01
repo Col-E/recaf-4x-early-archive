@@ -2,6 +2,7 @@ package software.coley.recaf.services.parse;
 
 import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.Cursor;
@@ -19,6 +20,7 @@ import software.coley.recaf.services.source.AstMappingVisitor;
 import software.coley.recaf.services.source.AstService;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.*;
+import software.coley.recaf.util.Types;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 
@@ -45,6 +47,7 @@ public class AstServiceTest extends TestBase {
 				StringSupplier.class,
 				ClassWithExceptions.class,
 				HelloWorld.class,
+				Types.class,
 				AnnotationImpl.class
 		);
 		Workspace workspace = TestClassUtils.fromBundle(bundle);
@@ -330,6 +333,125 @@ public class AstServiceTest extends TestBase {
 
 				String modified = unit.acceptJava(visitor, ctx).print(new Cursor(null, unit));
 				assertTrue(modified.contains("Supplier<Howdy> worldSupplier = Howdy::new"));
+			});
+		}
+
+		@Test
+		@Disabled("Pending support in mapping visitor")
+		void renameClass_QualifiedNameReference() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+										
+					class HelloWorld {
+						static {
+							software.coley.recaf.util.Types value = new software.coley.recaf.util.Types();
+						}
+					}
+					""";
+			handle(source, (unit, ctx) -> {
+				IntermediateMappings mappings = new IntermediateMappings();
+				mappings.addClass(Types.class.getName().replace('.', '/'), "com/example/TypeUtil");
+				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
+
+				String modified = unit.acceptJava(visitor, ctx).print(new Cursor(null, unit));
+				System.err.println(modified);
+				assertTrue(modified.contains("com.example.TypeUtil value = new com.example.TypeUtil();"));
+			});
+		}
+
+		@Test
+		void renameMember_FieldName() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+										
+					class HelloWorld {
+						static String foo;
+						String fizz;
+						
+						HelloWorld() {
+							this.fizz = "fizz";
+							fizz = "buzz";
+							fizz = foo;
+							fizz.toString();
+						}
+						
+						static {
+							HelloWorld.foo = "foo";
+							foo = "bar";
+						}
+					}
+					""";
+			handle(source, (unit, ctx) -> {
+				IntermediateMappings mappings = new IntermediateMappings();
+				mappings.addField(HelloWorld.class.getName().replace('.', '/'), "Ljava/lang/String;", "foo", "bar");
+				mappings.addField(HelloWorld.class.getName().replace('.', '/'), "Ljava/lang/String;", "fizz", "buzz");
+				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
+
+				String modified = unit.acceptJava(visitor, ctx).print(new Cursor(null, unit));
+				assertTrue(modified.contains("static String bar;"));
+				assertTrue(modified.contains("String buzz;"));
+
+				assertTrue(modified.contains("this.buzz = \"fizz\";"));
+				assertTrue(modified.contains("buzz = \"buzz\";"));
+				assertTrue(modified.contains("buzz = bar;"));
+				assertTrue(modified.contains("buzz.toString();"));
+
+				assertTrue(modified.contains("HelloWorld.bar = \"foo\";"));
+				assertTrue(modified.contains("bar = \"bar\";"));
+			});
+		}
+
+		@Test
+		void renameMember_MethodName() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+										
+					import java.util.function.Supplier;
+										
+					class HelloWorld {
+						static {
+							Supplier<String> fooSupplier = HelloWorld::foo;
+							
+							foo();
+						}
+						
+						static String foo() { return "foo"; }
+					}
+					""";
+			handle(source, (unit, ctx) -> {
+				IntermediateMappings mappings = new IntermediateMappings();
+				mappings.addMethod(HelloWorld.class.getName().replace('.', '/'), "()Ljava/lang/String;", "foo", "bar");
+				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
+
+				String modified = unit.acceptJava(visitor, ctx).print(new Cursor(null, unit));
+				assertTrue(modified.contains("Supplier<String> fooSupplier = HelloWorld::bar;"));
+				assertTrue(modified.contains("bar();"));
+				assertTrue(modified.contains("static String bar() { return \"foo\"; }"));
+			});
+		}
+
+		@Test
+		@Disabled("Resolving the exact member reference of static import not directly supported by OpenRewrite")
+		void renameMember_MethodNameStaticallyImported() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+										
+					import static software.coley.recaf.test.dummy.ClassWithExceptions.readInt;
+										
+					class HelloWorld {
+						static void main(String[] args) {
+							readInt(args[0]);
+						}
+					}
+					""";
+			handle(source, (unit, ctx) -> {
+				IntermediateMappings mappings = new IntermediateMappings();
+				mappings.addMethod(ClassWithExceptions.class.getName().replace('.', '/'), "(Ljava/lang/Object;)I",  "readInt", "foo");
+				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
+
+				String modified = unit.acceptJava(visitor, ctx).print(new Cursor(null, unit));
+				assertTrue(modified.contains("import static software.coley.recaf.test.dummy.ClassWithExceptions.foo;"));
+				assertTrue(modified.contains("foo(args[0]);"));
 			});
 		}
 	}

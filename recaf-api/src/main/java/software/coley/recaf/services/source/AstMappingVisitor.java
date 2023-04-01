@@ -4,21 +4,30 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.openrewrite.Cursor;
 import org.openrewrite.ExecutionContext;
-import org.openrewrite.java.JavaIsoVisitor;
-import org.openrewrite.java.JavaTemplate;
-import org.openrewrite.java.JavaVisitor;
+import org.openrewrite.java.*;
 import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
 import software.coley.recaf.services.mapping.Mappings;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import static software.coley.recaf.services.source.AstUtils.toInternal;
 
 /**
  * {@link JavaVisitor} to remap type and member references from a {@link Mappings} instance in a {@link J.CompilationUnit}.
+ * <br>
+ * A fair amount of this logic is lifted from exiting OpenRewrite classes but with modifications.
+ * We do not intend on maintaining an AST after doing mapping operations, so we do not consistently maintain AST node's resolved types
+ * like the original OpenRewrite operations do.
+ * <ul>
+ *     <li>{@link ChangePackage}</li>
+ *     <li>{@link ChangeType}</li>
+ *     <li>{@link ChangeMethodName}</li>
+ *     <li>{@link ChangeFieldName}</li>
+ * </ul>
  *
  * @author Matt Coley
  */
@@ -70,10 +79,10 @@ public class AstMappingVisitor extends JavaIsoVisitor<ExecutionContext> {
 	@Nonnull
 	@Override
 	public J.Import visitImport(@Nonnull J.Import impoort, @Nonnull ExecutionContext ctx) {
+		J.FieldAccess qualid = impoort.getQualid();
 		String internalType = impoort.getTypeName().replace('.', '/');
 		String mappedType = mappings.getMappedClassName(internalType);
 		if (mappedType != null) {
-			J.FieldAccess qualid = impoort.getQualid();
 			String suffix = impoort.isStatic() ? "." + qualid.getName().getSimpleName() : "";
 			mappedType = mappedType.replace('/', '.');
 			int lastDot = mappedType.lastIndexOf('.');
@@ -88,6 +97,11 @@ public class AstMappingVisitor extends JavaIsoVisitor<ExecutionContext> {
 					.withTarget(packageIdentifier)
 					.withType(visitType(qualid.getType(), ctx)));
 		}
+
+		// We sadly cannot *easily* update static imports because their type does NOT get resolved.
+		// We know their owner type because that is the import, but the descriptor is missing.
+		// Later if it becomes an issue, we can do a lookup in the workspace (which would need to be provided)
+		// and loop over members of the imported type, finding a match that way.
 		return impoort;
 	}
 
@@ -131,6 +145,7 @@ public class AstMappingVisitor extends JavaIsoVisitor<ExecutionContext> {
 					//  class NAME { ... }
 					//  NAME getFoo() { ... }
 					//  foo = (NAME) bar;
+					//  Supplier<NAME> supplier = NAME::new
 					//  new NAME
 					//  new NAME[]
 					JavaType.FullyQualified visitedQualified = (JavaType.FullyQualified) visitedType;
@@ -141,6 +156,8 @@ public class AstMappingVisitor extends JavaIsoVisitor<ExecutionContext> {
 					// There's no 'isStatic' call, so we assume if the identifier is the class's simple name we ought to map it.
 					if (visitedType instanceof JavaType.FullyQualified visitedQualified) {
 						JavaType.FullyQualified initialQualified = (JavaType.FullyQualified) initialType;
+
+						// TODO: Handle fully qualified context like 'com.example.MyClass.myStaticMethod()'
 						if (visitedIdentifier.getSimpleName().equals(initialQualified.getClassName()))
 							visitedIdentifier = visitedIdentifier.withSimpleName(visitedQualified.getClassName());
 					} else if (visitedType instanceof JavaType.Array) {
@@ -149,8 +166,6 @@ public class AstMappingVisitor extends JavaIsoVisitor<ExecutionContext> {
 					} else {
 						throw new UnsupportedOperationException("Calling context on reference unknown: " + visitedType.getClass().getName());
 					}
-				} else {
-					System.out.println(parentValue.getClass().getSimpleName());
 				}
 			}
 		}
@@ -160,10 +175,137 @@ public class AstMappingVisitor extends JavaIsoVisitor<ExecutionContext> {
 
 	@Nonnull
 	@Override
+	public J.VariableDeclarations visitVariableDeclarations(@Nonnull J.VariableDeclarations multiVariable, @Nonnull ExecutionContext ctx) {
+		J.VariableDeclarations visitedVariables = super.visitVariableDeclarations(multiVariable, ctx);
+
+		// Handle field mapping. There is no difference in visitor for local vars and fields, so we
+		// will look at the visitor stack to see where we are. If the closest parent is a class and not an element
+		// that can define variables like a method/lambda, then it should be a field.
+		boolean isField = false;
+		Cursor cursor = getCursor();
+		while (cursor.getParent() != null) {
+			Object value = cursor.getValue();
+			if (value instanceof J.ClassDeclaration) {
+				isField = true;
+				break;
+			} else if (value instanceof J.MethodDeclaration) {
+				break;
+			} else if (value instanceof J.Lambda) {
+				break;
+			}
+			cursor = cursor.getParent();
+		}
+		if (isField) {
+			String owner = AstUtils.toInternal(currentType);
+			List<J.VariableDeclarations.NamedVariable> variableList = visitedVariables.getVariables();
+			for (int i = 0; i < variableList.size(); i++) {
+				J.VariableDeclarations.NamedVariable variable = variableList.get(i);
+				JavaType type = variable.getType();
+				if (type != null) {
+					String name = variable.getSimpleName();
+					String desc = AstUtils.toDesc(type);
+					String mappedFieldName = mappings.getMappedFieldName(owner, name, desc);
+					if (mappedFieldName != null) {
+						variableList.set(i, variable.withName(variable.getName().withSimpleName(mappedFieldName)));
+					}
+				}
+			}
+			visitedVariables = visitedVariables.withVariables(variableList);
+		}
+
+		return visitedVariables;
+	}
+
+	@Nonnull
+	@Override
+	public J.EnumValue visitEnumValue(@Nonnull J.EnumValue _enum, @Nonnull ExecutionContext ctx) {
+		J.EnumValue visitedValue = super.visitEnumValue(_enum, ctx);
+
+		// Handle field mapping for declared enum values
+		String owner = AstUtils.toInternal(currentType);
+		String name = visitedValue.getName().getSimpleName();
+		String desc = "L" + owner + ";";
+		String mappedFieldName = mappings.getMappedFieldName(owner, name, desc);
+		if (mappedFieldName != null)
+			visitedValue = visitedValue.withName(visitedValue.getName().withSimpleName(mappedFieldName));
+
+		return visitedValue;
+	}
+
+	@Nonnull
+	@Override
+	public J.FieldAccess visitFieldAccess(@Nonnull J.FieldAccess fieldAccess, @Nonnull ExecutionContext ctx) {
+		J.FieldAccess visitedFieldRef = super.visitFieldAccess(fieldAccess, ctx);
+
+		// Handle field mapping for instances where there is context like 'this.field' or 'method().field'
+		JavaType exprType = fieldAccess.getTarget().getType();
+		JavaType fieldType = fieldAccess.getName().getType();
+		if (exprType != null && fieldType != null) {
+			String owner = AstUtils.toInternal(exprType);
+			String desc = AstUtils.toDesc(fieldType);
+			String name = fieldAccess.getName().getSimpleName();
+			String mappedFieldName = mappings.getMappedFieldName(owner, name, desc);
+			if (mappedFieldName != null)
+				visitedFieldRef = visitedFieldRef.withName(visitedFieldRef.getName().withSimpleName(mappedFieldName));
+		}
+
+		return visitedFieldRef;
+	}
+
+	@Nonnull
+	@Override
+	public J.Assignment visitAssignment(@Nonnull J.Assignment assignment, @Nonnull ExecutionContext ctx) {
+		J.Assignment visitedAssignment = super.visitAssignment(assignment, ctx);
+
+		// Handle updating the variable, which may be a field reference.
+		Expression initialVariable = assignment.getVariable();
+		Expression visitedVariable = visitedAssignment.getVariable();
+		if (Objects.equals(initialVariable.toString(), visitedVariable.toString()) &&
+				initialVariable instanceof J.Identifier initialIdentifier &&
+				visitedVariable instanceof J.Identifier visitedIdentifier) {
+			// Variable was not renamed. We only need to address non-context driven variables.
+			// Things like 'this.field' are handled due to the API handling this as field-access.
+			// But 'field' by itself is handled as a generic identifier, which we need to fix here to use the new name.
+			JavaType.Variable fieldType = initialIdentifier.getFieldType();
+			if (fieldType != null && fieldType.getOwner() != null) {
+				String owner = AstUtils.toInternal(fieldType.getOwner());
+				String name = fieldType.getName();
+				String desc = AstUtils.toDesc(fieldType.getType());
+				String mappedFieldName = mappings.getMappedFieldName(owner, name, desc);
+				if (mappedFieldName != null)
+					visitedAssignment = visitedAssignment.withVariable(visitedIdentifier.withSimpleName(mappedFieldName));
+			}
+		}
+
+		// Handle updating the assignment value, which may be a field reference as well.
+		Expression initialAssigned = assignment.getAssignment();
+		Expression visitedAssigned = visitedAssignment.getAssignment();
+		if (Objects.equals(initialAssigned.toString(), visitedAssigned.toString()) &&
+				initialAssigned instanceof J.Identifier initialIdentifier &&
+				visitedAssigned instanceof J.Identifier visitedIdentifier) {
+			// The assigned value was not modified during visit.
+			// Similar to the reasons above, we only need to update it when the value is a non-context driven field reference.
+			// This means for 'x = y' we need to update 'y'. But if it were 'x = this.y' we don't have to.
+			JavaType.Variable fieldType = initialIdentifier.getFieldType();
+			if (fieldType != null && fieldType.getOwner() != null) {
+				String owner = AstUtils.toInternal(fieldType.getOwner());
+				String name = fieldType.getName();
+				String desc = AstUtils.toDesc(fieldType.getType());
+				String mappedFieldName = mappings.getMappedFieldName(owner, name, desc);
+				if (mappedFieldName != null)
+					visitedAssignment = visitedAssignment.withAssignment(visitedIdentifier.withSimpleName(mappedFieldName));
+			}
+		}
+
+		return visitedAssignment;
+	}
+
+	@Nonnull
+	@Override
 	public J.MethodDeclaration visitMethodDeclaration(@Nonnull J.MethodDeclaration method, @Nonnull ExecutionContext ctx) {
 		J.MethodDeclaration visitedMethod = super.visitMethodDeclaration(method, ctx);
 
-		// Edge case for constructors
+		// Edge case for mapping type names in constructors
 		if (visitedMethod.getSimpleName().equals(currentType.getClassName())) {
 			J.Identifier name = method.getName();
 			JavaType visitedNameType = visitType(currentType, ctx);
@@ -174,11 +316,95 @@ public class AstMappingVisitor extends JavaIsoVisitor<ExecutionContext> {
 						.withName(name.withSimpleName(qualified.getClassName()))
 						.withMethodType(visitedMethodType);
 			}
+		} else if (method.getMethodType() != null) {
+			// Handle method mappings
+			String owner = AstUtils.toInternal(currentType);
+			String name = method.getSimpleName();
+			String desc = AstUtils.toDesc(method.getMethodType());
+
+			String mappedMethodName = mappings.getMappedMethodName(owner, name, desc);
+			if (mappedMethodName != null)
+				visitedMethod = visitedMethod
+						.withName(method.getName().withSimpleName(mappedMethodName));
 		}
 
 		return visitedMethod;
 	}
 
+	@Nonnull
+	@Override
+	public J.MethodInvocation visitMethodInvocation(@Nonnull J.MethodInvocation method, @Nonnull ExecutionContext ctx) {
+		J.MethodInvocation visitedMethod = super.visitMethodInvocation(method, ctx);
+
+		// Handle method mappings
+		JavaType.Method methodType = visitedMethod.getMethodType();
+		if (methodType != null && visitedMethod.getType() != null) {
+			String owner = AstUtils.toInternal(methodType.getDeclaringType());
+			String name = visitedMethod.getSimpleName();
+			String desc = AstUtils.toDesc(methodType);
+
+			String mappedMethodName = mappings.getMappedMethodName(owner, name, desc);
+			if (mappedMethodName != null)
+				visitedMethod = visitedMethod.withName(visitedMethod.getName().withSimpleName(mappedMethodName));
+		}
+
+		// Handle updating the call context value, which may be a field reference as well.
+		Expression initialContext = method.getSelect();
+		Expression visitedContext = visitedMethod.getSelect();
+		if (initialContext != null && visitedContext != null &&
+				Objects.equals(initialContext.toString(), visitedContext.toString()) &&
+				initialContext instanceof J.Identifier initialIdentifier &&
+				visitedContext instanceof J.Identifier visitedIdentifier) {
+			// The assigned value was not modified during visit.
+			// Similar to the reasons above, we only need to update it when the value is a non-context driven field reference.
+			// This means for 'x = y' we need to update 'y'. But if it were 'x = this.y' we don't have to.
+			JavaType.Variable fieldType = initialIdentifier.getFieldType();
+			if (fieldType != null && fieldType.getOwner() != null) {
+				String owner = AstUtils.toInternal(fieldType.getOwner());
+				String name = fieldType.getName();
+				String desc = AstUtils.toDesc(fieldType.getType());
+				String mappedFieldName = mappings.getMappedFieldName(owner, name, desc);
+				if (mappedFieldName != null)
+					visitedMethod = visitedMethod.withSelect(visitedIdentifier.withSimpleName(mappedFieldName));
+			}
+		}
+
+		return visitedMethod;
+	}
+
+	@Nonnull
+	@Override
+	public J.MemberReference visitMemberReference(@Nonnull J.MemberReference memberRef, @Nonnull ExecutionContext context) {
+		J.MemberReference m = super.visitMemberReference(memberRef, context);
+
+		// Handle method mappings
+		JavaType.Method methodType = m.getMethodType();
+		if (methodType != null && m.getType() != null) {
+			J.Identifier reference = m.getReference();
+
+			String owner = AstUtils.toInternal(methodType.getDeclaringType());
+			String name = reference.getSimpleName();
+			String desc = AstUtils.toDesc(methodType);
+
+			String mappedMethodName = mappings.getMappedMethodName(owner, name, desc);
+			if (mappedMethodName != null)
+				m = m.withReference(reference.withSimpleName(mappedMethodName));
+		}
+
+		return m;
+	}
+
+	/**
+	 * Rather than have dozens of visitors for all possible edge cases what we do is change the type of values here.
+	 * Then in {@link #visitIdentifier(J.Identifier, ExecutionContext)} we swap out the name when the type is changed.
+	 *
+	 * @param javaType
+	 * 		Initial type.
+	 * @param ctx
+	 * 		Visitor execution context.
+	 *
+	 * @return Modified type, or input to retain the same.
+	 */
 	@Nullable
 	@Override
 	public JavaType visitType(@Nullable JavaType javaType, @Nonnull ExecutionContext ctx) {
@@ -249,20 +475,6 @@ public class AstMappingVisitor extends JavaIsoVisitor<ExecutionContext> {
 			JavaType visited = visitType(type, ctx);
 			if (visited != null && visited != type)
 				variableType = variableType.withType(visited);
-
-			// Update variable names
-			/*
-			// TODO: Support mapping member references (will probably end up having side-effects in other overrides)
-			String internalType = toInternal(type);
-			String name = variableType.getName();
-			JavaType owner = variableType.getOwner();
-			if (owner != null) {
-				String mappedName = mappings.getMappedFieldName(toInternal(owner), name, internalType);
-				if (mappedName != null)
-					variableType = variableType.withName(mappedName);
-			}
-			 */
-
 			javaType = variableType;
 		}
 		return super.visitType(javaType, ctx);
