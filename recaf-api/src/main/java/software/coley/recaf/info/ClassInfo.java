@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.builder.AbstractClassInfoBuilder;
+import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 
@@ -164,6 +165,14 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	@Nonnull
 	default Stream<MethodMember> methodStream() {
 		return Stream.of(this).flatMap(self -> self.getMethods().stream());
+	}
+
+	/**
+	 * @return Stream of declared fields and methods.
+	 */
+	@Nonnull
+	default Stream<ClassMember> fieldAndMethodStream() {
+		return Stream.concat(fieldStream(), methodStream());
 	}
 
 	/**
