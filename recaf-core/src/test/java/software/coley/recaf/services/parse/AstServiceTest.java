@@ -1,17 +1,18 @@
 package software.coley.recaf.services.parse;
 
 import jakarta.annotation.Nonnull;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.openrewrite.Cursor;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.tree.J;
 import software.coley.recaf.TestBase;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.path.ClassMemberPathNode;
+import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.DirectoryPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.mapping.IntermediateMappings;
@@ -27,6 +28,7 @@ import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 import java.io.IOException;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -38,6 +40,7 @@ public class AstServiceTest extends TestBase {
 	static JvmClassInfo thisClass;
 	static AstService service;
 	static AstContextHelper helper;
+	static JavaParser parser;
 
 	@BeforeAll
 	static void setup() throws IOException {
@@ -54,6 +57,17 @@ public class AstServiceTest extends TestBase {
 		helper = new AstContextHelper(workspace);
 		workspaceManager.setCurrent(workspace);
 		service = recaf.get(AstService.class);
+		parser = service.newParser(thisClass);
+	}
+
+	@AfterEach
+	void cleanup() {
+		// Flush in-memory caches.
+		parser.reset();
+
+		// For some reason, you need to re-allocate the parser to actually gain the full benefits
+		// of the prior cache flush.
+		parser = service.newParser(thisClass);
 	}
 
 	@Nested
@@ -64,19 +78,10 @@ public class AstServiceTest extends TestBase {
 					package software.coley.recaf.test.dummy;
 					enum DummyEnum {}
 					""";
-
-			handle(source, (unit, ctx) -> {
-				PathNode<?> path;
-
-				// Entire range of package should be recognized
-				for (int i = 0; i < source.indexOf(';'); i++) {
-					path = helper.resolve(unit, i);
-					if (path instanceof DirectoryPathNode packagePath) {
-						assertEquals("software/coley/recaf/test/dummy", packagePath.getValue());
-					} else {
-						fail("Failed to identify package");
-					}
-				}
+			handleUnit(source, (unit, ctx) -> {
+				validateRange(unit, source, "package software.coley.recaf.test.dummy;", DirectoryPathNode.class, packagePath -> {
+					assertEquals("software/coley/recaf/test/dummy", packagePath.getValue());
+				});
 			});
 		}
 
@@ -86,25 +91,176 @@ public class AstServiceTest extends TestBase {
 					package software.coley.recaf.test.dummy\t
 					enum DummyEnum {}
 					""";
-
-			handle(source, (unit, ctx) -> {
-				PathNode<?> path;
-
-				// Entire range of package should be recognized
-				for (int i = 0; i < source.indexOf('\t'); i++) {
-					path = helper.resolve(unit, i);
-					if (path instanceof DirectoryPathNode packagePath) {
-						assertEquals("software/coley/recaf/test/dummy", packagePath.getValue());
-					} else {
-						fail("Failed to identify package");
-					}
-				}
+			handleUnit(source, (unit, ctx) -> {
+				validateRange(unit, source, "package software.coley.recaf.test.dummy", DirectoryPathNode.class, packagePath -> {
+					assertEquals("software/coley/recaf/test/dummy", packagePath.getValue());
+				});
 			});
 		}
 
-		// TODO: Casts, imports, import types of static imports, member of static imports
+		@Test
+		void testImport() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+					import java.io.File;
+					import software.coley.recaf.test.dummy.DummyEnum;
+					class HelloWorld {}
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				validateRange(unit, source, "import java.io.File;", ClassPathNode.class, classPath -> {
+					assertEquals("java/io/File", classPath.getValue().getName());
+				});
+				validateRange(unit, source, "import software.coley.recaf.test.dummy.DummyEnum;", ClassPathNode.class, classPath -> {
+					assertEquals("software/coley/recaf/test/dummy/DummyEnum", classPath.getValue().getName());
+				});
+			});
+		}
+
+		@Test
+		void testImportStaticMember() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+					import static software.coley.recaf.test.dummy.DummyEnum.ONE;
+					class HelloWorld {}
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				validateRange(unit, source, "import static software.coley.recaf.test.dummy.DummyEnum.ONE", ClassMemberPathNode.class, memberPath -> {
+					assertEquals("software/coley/recaf/test/dummy/DummyEnum",
+							memberPath.getValueOfType(ClassInfo.class).getName());
+					assertEquals("ONE", memberPath.getValue().getName());
+				});
+			});
+		}
+
+		@Test
+		void testClassDeclaration() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+					class HelloWorld {}
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				validateRange(unit, source, "class HelloWorld", ClassPathNode.class, classPath -> {
+					assertEquals("software/coley/recaf/test/dummy/HelloWorld", classPath.getValue().getName());
+				});
+			});
+		}
+
+		@Test
+		void testInterfaceDeclaration() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+					interface HelloWorld {}
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				validateRange(unit, source, "interface HelloWorld", ClassPathNode.class, classPath -> {
+					assertEquals("software/coley/recaf/test/dummy/HelloWorld", classPath.getValue().getName());
+				});
+			});
+		}
+
+		@Test
+		void testEnumDeclaration() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+					enum HelloWorld {}
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				validateRange(unit, source, "enum HelloWorld", ClassPathNode.class, classPath -> {
+					assertEquals("software/coley/recaf/test/dummy/HelloWorld", classPath.getValue().getName());
+				});
+			});
+		}
+
+		@Test
+		void testRecordDeclaration() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+					record HelloWorld() {}
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				validateRange(unit, source, "record HelloWorld", ClassPathNode.class, classPath -> {
+					assertEquals("software/coley/recaf/test/dummy/HelloWorld", classPath.getValue().getName());
+				});
+			});
+		}
+
+		@Test
+		void testFieldDeclaration_Normal() {
+			String source = """
+					package software.coley.recaf.util;
+					public class Types {
+					  	public static final Type OBJECT_TYPE = null;
+					  	public static final Type STRING_TYPE = null;
+					  	private static final Type[] PRIMITIVES = null;
+					}
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				validateRange(unit, source, "public static final Type OBJECT_TYPE", ClassMemberPathNode.class, memberPath -> {
+					ClassMember member = memberPath.getValue();
+					assertEquals("OBJECT_TYPE", member.getName());
+				});
+				validateRange(unit, source, "public static final Type STRING_TYPE", ClassMemberPathNode.class, memberPath -> {
+					ClassMember member = memberPath.getValue();
+					assertEquals("STRING_TYPE", member.getName());
+				});
+				validateRange(unit, source, "private static final Type[] PRIMITIVES", ClassMemberPathNode.class, memberPath -> {
+					ClassMember member = memberPath.getValue();
+					assertEquals("PRIMITIVES", member.getName());
+				});
+			});
+		}
+
+		@Test
+		void testFieldDeclaration_EnumConstant() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+					public enum DummyEnum {
+					 	ONE,
+					 	TWO,
+					 	THREE
+					 }
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				validateRange(unit, source, "ONE", ClassMemberPathNode.class, memberPath -> {
+					ClassMember member = memberPath.getValue();
+					assertEquals("ONE", member.getName());
+				});
+				validateRange(unit, source, "TWO", ClassMemberPathNode.class, memberPath -> {
+					ClassMember member = memberPath.getValue();
+					assertEquals("TWO", member.getName());
+				});
+				validateRange(unit, source, "THREE", ClassMemberPathNode.class, memberPath -> {
+					ClassMember member = memberPath.getValue();
+					assertEquals("THREE", member.getName());
+				});
+			});
+		}
+
+		@Test
+		void testMethodReference_SyntheticEnumMethod() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+					     
+					public class DummyEnumPrinter {
+						public static void main(String[] args) {
+							for (DummyEnum enumConstant : DummyEnum.class.getEnumConstants()) {
+								String name = enumConstant.name();
+								System.out.println(name);
+							}
+						}
+					}
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				validateRange(unit, source, "name()", ClassMemberPathNode.class, memberPath -> {
+					ClassMember member = memberPath.getValue();
+					assertEquals("name", member.getName());
+					assertEquals("()Ljava/lang/String;", member.getDescriptor());
+				});
+			});
+		}
+
+		// TODO:
 		//  arrays, new-array,
-		//  field declarations
 		//  method declarations, constructors, static block
 		//  static-field qualifier, field qualifier, field reference
 		//  static-method qualifier, method qualifier, method reference
@@ -121,7 +277,7 @@ public class AstServiceTest extends TestBase {
 						ONE, TWO, THREE
 					}
 					""";
-			handle(source, (unit, ctx) -> {
+			handleUnit(source, (unit, ctx) -> {
 				IntermediateMappings mappings = new IntermediateMappings();
 				mappings.addClass(DummyEnum.class.getName().replace('.', '/'), "com/example/MyEnum");
 				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
@@ -143,7 +299,7 @@ public class AstServiceTest extends TestBase {
 						}
 					}
 					""";
-			handle(source, (unit, ctx) -> {
+			handleUnit(source, (unit, ctx) -> {
 				IntermediateMappings mappings = new IntermediateMappings();
 				mappings.addClass(HelloWorld.class.getName().replace('.', '/'), "com/example/Howdy");
 				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
@@ -166,7 +322,7 @@ public class AstServiceTest extends TestBase {
 						}
 					}
 					""";
-			handle(source, (unit, ctx) -> {
+			handleUnit(source, (unit, ctx) -> {
 				IntermediateMappings mappings = new IntermediateMappings();
 				mappings.addClass(ClassWithExceptions.class.getName().replace('.', '/'), "com/example/Call");
 				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
@@ -189,7 +345,7 @@ public class AstServiceTest extends TestBase {
 						}
 					}
 					""";
-			handle(source, (unit, ctx) -> {
+			handleUnit(source, (unit, ctx) -> {
 				IntermediateMappings mappings = new IntermediateMappings();
 				mappings.addClass(ClassWithExceptions.class.getName().replace('.', '/'), "com/example/Call");
 				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
@@ -210,7 +366,7 @@ public class AstServiceTest extends TestBase {
 						}
 					}
 					""";
-			handle(source, (unit, ctx) -> {
+			handleUnit(source, (unit, ctx) -> {
 				IntermediateMappings mappings = new IntermediateMappings();
 				mappings.addClass(ClassWithExceptions.class.getName().replace('.', '/'), "com/example/Foo");
 				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
@@ -232,7 +388,7 @@ public class AstServiceTest extends TestBase {
 						}
 					}
 					""";
-			handle(source, (unit, ctx) -> {
+			handleUnit(source, (unit, ctx) -> {
 				IntermediateMappings mappings = new IntermediateMappings();
 				mappings.addClass(DummyEnum.class.getName().replace('.', '/'), "com/example/Singleton");
 				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
@@ -258,7 +414,7 @@ public class AstServiceTest extends TestBase {
 						}
 					}
 					""";
-			handle(source, (unit, ctx) -> {
+			handleUnit(source, (unit, ctx) -> {
 				IntermediateMappings mappings = new IntermediateMappings();
 				mappings.addClass(ClassWithExceptions.class.getName().replace('.', '/'), "com/example/Foo");
 				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
@@ -281,7 +437,7 @@ public class AstServiceTest extends TestBase {
 						void accept(HelloWorld arg) {}
 					}
 					""";
-			handle(source, (unit, ctx) -> {
+			handleUnit(source, (unit, ctx) -> {
 				IntermediateMappings mappings = new IntermediateMappings();
 				mappings.addClass(HelloWorld.class.getName().replace('.', '/'), "com/example/Howdy");
 				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
@@ -302,7 +458,7 @@ public class AstServiceTest extends TestBase {
 						HelloWorld() {}
 					}
 					""";
-			handle(source, (unit, ctx) -> {
+			handleUnit(source, (unit, ctx) -> {
 				IntermediateMappings mappings = new IntermediateMappings();
 				mappings.addClass(HelloWorld.class.getName().replace('.', '/'), "com/example/Howdy");
 				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
@@ -326,7 +482,7 @@ public class AstServiceTest extends TestBase {
 						}
 					}
 					""";
-			handle(source, (unit, ctx) -> {
+			handleUnit(source, (unit, ctx) -> {
 				IntermediateMappings mappings = new IntermediateMappings();
 				mappings.addClass(HelloWorld.class.getName().replace('.', '/'), "com/example/Howdy");
 				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
@@ -348,7 +504,7 @@ public class AstServiceTest extends TestBase {
 						}
 					}
 					""";
-			handle(source, (unit, ctx) -> {
+			handleUnit(source, (unit, ctx) -> {
 				IntermediateMappings mappings = new IntermediateMappings();
 				mappings.addClass(Types.class.getName().replace('.', '/'), "com/example/TypeUtil");
 				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
@@ -381,7 +537,7 @@ public class AstServiceTest extends TestBase {
 						}
 					}
 					""";
-			handle(source, (unit, ctx) -> {
+			handleUnit(source, (unit, ctx) -> {
 				IntermediateMappings mappings = new IntermediateMappings();
 				mappings.addField(HelloWorld.class.getName().replace('.', '/'), "Ljava/lang/String;", "foo", "bar");
 				mappings.addField(HelloWorld.class.getName().replace('.', '/'), "Ljava/lang/String;", "fizz", "buzz");
@@ -418,7 +574,7 @@ public class AstServiceTest extends TestBase {
 						static String foo() { return "foo"; }
 					}
 					""";
-			handle(source, (unit, ctx) -> {
+			handleUnit(source, (unit, ctx) -> {
 				IntermediateMappings mappings = new IntermediateMappings();
 				mappings.addMethod(HelloWorld.class.getName().replace('.', '/'), "()Ljava/lang/String;", "foo", "bar");
 				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
@@ -444,9 +600,9 @@ public class AstServiceTest extends TestBase {
 						}
 					}
 					""";
-			handle(source, (unit, ctx) -> {
+			handleUnit(source, (unit, ctx) -> {
 				IntermediateMappings mappings = new IntermediateMappings();
-				mappings.addMethod(ClassWithExceptions.class.getName().replace('.', '/'), "(Ljava/lang/Object;)I",  "readInt", "foo");
+				mappings.addMethod(ClassWithExceptions.class.getName().replace('.', '/'), "(Ljava/lang/Object;)I", "readInt", "foo");
 				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
 
 				String modified = unit.acceptJava(visitor, ctx).print(new Cursor(null, unit));
@@ -456,18 +612,36 @@ public class AstServiceTest extends TestBase {
 		}
 	}
 
-	private static void handle(String source, BiConsumer<J.CompilationUnit, ExecutionContext> consumer) {
+	private static <T> void validateRange(@Nonnull J.CompilationUnit unit,
+										  @Nonnull String source, @Nonnull String match,
+										  @Nonnull Class<T> targetType,
+										  @Nonnull Consumer<T> consumer) {
+		int start = source.indexOf(match);
+		int end = start + match.length();
+		validateRange(unit, start, end, targetType, consumer);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <T> void validateRange(@Nonnull J.CompilationUnit unit,
+										  int start, int end,
+										  @Nonnull Class<T> targetType,
+										  @Nonnull Consumer<T> consumer) {
+		PathNode<?> path;
+		for (int i = start; i < end; i++) {
+			path = helper.resolve(unit, i);
+			if (path != null && targetType.isAssignableFrom(path.getClass())) {
+				consumer.accept((T) path);
+			} else {
+				fail("Failed to identify target at index: " + i + " in range [" + start + "-" + end + "]");
+			}
+		}
+	}
+
+	private static void handleUnit(String source, BiConsumer<J.CompilationUnit, ExecutionContext> consumer) {
 		InMemoryExecutionContext context = new InMemoryExecutionContext(Throwable::printStackTrace);
-		List<J.CompilationUnit> units = parser().parse(context, source);
+		List<J.CompilationUnit> units = parser.parse(context, source);
 		assertEquals(1, units.size());
 		if (consumer != null)
 			consumer.accept(units.get(0), context);
-	}
-
-	@Nonnull
-	private static JavaParser parser() {
-		// Since this extracts references from the passed info, passing this test class should yield a path
-		// that includes everything in the bundle.
-		return service.newParser(thisClass);
 	}
 }

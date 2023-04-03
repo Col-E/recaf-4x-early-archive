@@ -4,6 +4,13 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.openrewrite.Tree;
 import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.JavaType;
+import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.path.ClassMemberPathNode;
+import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.DirectoryPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.workspace.model.Workspace;
@@ -46,16 +53,177 @@ public class AstContextHelper {
 		// Iterate over path, checking if we can resolve some reference to a type/member/package.
 		// First items are the most specific, thus yielding the 'best' results.
 		for (Tree ast : astPath) {
-			if (ast instanceof J.Package packageAst) {
+			if (ast instanceof J.ClassDeclaration declarationAst) {
+				JavaType.FullyQualified declarationType = declarationAst.getType();
+				ClassPathNode resolved = resolveClass(declarationType);
+				if (resolved != null)
+					return resolved;
+			} else if (ast instanceof J.MethodDeclaration declarationAst) {
+				JavaType.Method methodType = declarationAst.getMethodType();
+				ClassMemberPathNode resolved = resolveMethod(methodType);
+				if (resolved != null)
+					return resolved;
+			} else if (ast instanceof J.MethodInvocation invocationAst) {
+				JavaType.Method methodType = invocationAst.getMethodType();
+				ClassMemberPathNode resolved = resolveMethod(methodType);
+				if (resolved != null)
+					return resolved;
+			} else if (ast instanceof J.FieldAccess fieldAst) {
+				JavaType.Variable fieldType = fieldAst.getName().getFieldType();
+				ClassMemberPathNode resolved = resolveField(fieldType);
+				if (resolved != null)
+					return resolved;
+			} else if (ast instanceof J.NewClass newAst) {
+				JavaType classType = newAst.getType();
+				ClassPathNode resolved = resolveClass(classType);
+				if (resolved != null)
+					return resolved;
+			} else if (ast instanceof J.NewArray arrayAst) {
+				JavaType classType = arrayAst.getType();
+				ClassPathNode resolved = resolveClass(classType);
+				if (resolved != null)
+					return resolved;
+			} else if (ast instanceof J.ArrayType arrayAst) {
+				JavaType classType = arrayAst.getType();
+				ClassPathNode resolved = resolveClass(classType);
+				if (resolved != null)
+					return resolved;
+			} else if (ast instanceof J.ArrayAccess arrayAst) {
+				JavaType classType = arrayAst.getType();
+				ClassPathNode resolved = resolveClass(classType);
+				if (resolved != null)
+					return resolved;
+			} else if (ast instanceof J.InstanceOf instanceOfAst) {
+				JavaType classType = instanceOfAst.getType();
+				ClassPathNode resolved = resolveClass(classType);
+				if (resolved != null)
+					return resolved;
+			} else if (ast instanceof J.MultiCatch instanceOfAst) {
+				JavaType classType = instanceOfAst.getType();
+				ClassPathNode resolved = resolveClass(classType);
+				if (resolved != null)
+					return resolved;
+			} else if (ast instanceof J.TypeCast castAst) {
+				JavaType classType = castAst.getType();
+				ClassPathNode resolved = resolveClass(classType);
+				if (resolved != null)
+					return resolved;
+			} else if (ast instanceof J.VariableDeclarations.NamedVariable variableAst) {
+				JavaType.Variable variableType = variableAst.getVariableType();
+				ClassMemberPathNode resolved = resolveField(variableType);
+				if (resolved != null)
+					return resolved;
+			} else if (ast instanceof J.VariableDeclarations variableAst) {
+				JavaType.Variable variableType = variableAst.getVariables().get(0).getVariableType();
+				ClassMemberPathNode resolved = resolveField(variableType);
+				if (resolved != null)
+					return resolved;
+			} else if (ast instanceof J.EnumValue enumAst) {
+				JavaType enumType = enumAst.getName().getType();
+				ClassPathNode enumOwnerPath = resolveClass(enumType);
+				if (enumOwnerPath != null) {
+					ClassInfo value = enumOwnerPath.getValue();
+					for (FieldMember field : value.getFields())
+						if (field.getName().equals(enumAst.getName().getSimpleName()) &&
+								field.getDescriptor().equals("L" + value.getName() + ";"))
+							return enumOwnerPath.child(field);
+				}
+			} else if (ast instanceof J.MemberReference referenceAst) {
+				JavaType.Method methodType = referenceAst.getMethodType();
+				ClassMemberPathNode resolved = resolveMethod(methodType);
+				if (resolved != null)
+					return resolved;
+			} else if (ast instanceof J.Package packageAst) {
 				String packageName = packageAst.getPackageName().replace('.', '/');
 				DirectoryPathNode packagePath = workspace.findPackage(packageName);
 				if (packagePath != null)
 					return packagePath;
+			} else if (ast instanceof J.Import importAst) {
+				String className = importAst.getTypeName().replace('.', '/');
+				ClassPathNode classPath = workspace.findClass(className);
+				if (classPath != null) {
+					// Attempt to resolve static import reference
+					if (importAst.isStatic()) {
+						String name = importAst.getQualid().getSimpleName();
+						if (!name.equals("*")) {
+							ClassMember member = classPath.getValue().fieldAndMethodStream()
+									.filter(m -> name.equals(m.getName()))
+									.findFirst().orElse(null);
+							if (member != null)
+								return classPath.child(member);
+						}
+					}
+					return classPath;
+				}
 			}
-			// TODO: Other cases
 		}
 
 		// Unknown.
+		return null;
+	}
+
+	@Nullable
+	private ClassPathNode resolveClass(@Nullable JavaType classType) {
+		if (classType != null) {
+			// Edge case handling because OpenRR handles string as a primitive
+			if (classType instanceof JavaType.Primitive primitive) {
+				if (primitive == JavaType.Primitive.String)
+					return workspace.findJvmClass("java/lang/String");
+				else
+					return null;
+			}
+			try {
+				String declarationName = AstUtils.toInternal(classType);
+				return workspace.findClass(declarationName);
+			} catch (UnsupportedOperationException ignored) {
+				// passed type was not a class type
+			}
+		}
+		return null;
+	}
+
+	@Nullable
+	private ClassPathNode resolveClass(@Nullable JavaType.FullyQualified classType) {
+		if (classType != null) {
+			String declarationName = AstUtils.toInternal(classType);
+			return workspace.findClass(declarationName);
+		}
+		return null;
+	}
+
+
+	@Nullable
+	private ClassMemberPathNode resolveField(@Nullable JavaType.Variable fieldType) {
+		if (fieldType != null) {
+			JavaType ownerType = fieldType.getOwner();
+			if (ownerType != null) {
+				String owner = AstUtils.toInternal(ownerType);
+				String name = fieldType.getName();
+				String desc = AstUtils.toDesc(fieldType);
+				ClassPathNode classPath = workspace.findClass(owner);
+				if (classPath != null) {
+					for (FieldMember field : classPath.getValue().getFields())
+						if (field.getName().equals(name) && (desc.contains("<unknown>") || field.getDescriptor().equals(desc)))
+							return classPath.child(field);
+				}
+			}
+		}
+		return null;
+	}
+
+	@Nullable
+	private ClassMemberPathNode resolveMethod(@Nullable JavaType.Method methodType) {
+		if (methodType != null) {
+			String owner = AstUtils.toInternal(methodType.getDeclaringType());
+			ClassPathNode classPath = workspace.findClass(owner);
+			if (classPath != null) {
+				String name = methodType.getName();
+				String desc = AstUtils.toDesc(methodType);
+				for (MethodMember method : classPath.getValue().getMethods())
+					if (method.getName().equals(name) && method.getDescriptor().equals(desc))
+						return classPath.child(method);
+			}
+		}
 		return null;
 	}
 }

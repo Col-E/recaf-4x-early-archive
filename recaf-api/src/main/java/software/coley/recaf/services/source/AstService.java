@@ -2,11 +2,13 @@ package software.coley.recaf.services.source;
 
 import jakarta.annotation.Nonnull;
 import jakarta.inject.Inject;
-import me.coley.cafedude.classfile.ConstantPoolConstants;
-import org.objectweb.asm.ClassReader;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.internal.JavaTypeCache;
+import org.openrewrite.java.tree.J;
 import software.coley.recaf.cdi.WorkspaceScoped;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.util.ReflectUtil;
@@ -19,7 +21,8 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.HashSet;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -29,20 +32,17 @@ import java.util.Set;
  * @author Matt Coley
  */
 @WorkspaceScoped
-public class AstService implements Service, WorkspaceModificationListener, ResourceJvmClassListener {
+public class AstService implements Service {
 	public static final String ID = "ast";
 	private final AstServiceConfig config;
-	private final JavaTypeCacheExt javaTypeCache = new JavaTypeCacheExt();
+	private final JavaTypeCache javaTypeCache = new JavaTypeCacheExt();
 	private final Workspace workspace;
 
 	@Inject
 	public AstService(@Nonnull AstServiceConfig config,
-					  @Nonnull Workspace workspace,
-					  @Nonnull WorkspaceManager workspaceManager) {
+					  @Nonnull Workspace workspace) {
 		this.config = config;
 		this.workspace = workspace;
-		workspaceManager.addDefaultWorkspaceModificationListeners(this);
-		workspace.getPrimaryResource().addListener(this);
 	}
 
 	// TODO: Expose code-formatting system, which we can use to post-process code in decompilers
@@ -81,20 +81,7 @@ public class AstService implements Service, WorkspaceModificationListener, Resou
 	@Nonnull
 	public JavaParser newParser(@Nonnull JvmClassInfo target) {
 		// Collect names of classes referenced.
-		Set<String> classNames = new HashSet<>();
-		ClassReader reader = target.getClassReader();
-		int itemCount = reader.getItemCount();
-		char[] buffer = new char[reader.getMaxStringLength()];
-		for (int i = 1; i < itemCount; i++) {
-			int offset = reader.getItem(i);
-			if (offset >= 10) {
-				int itemTag = reader.readByte(offset - 1);
-				if (itemTag == ConstantPoolConstants.CLASS) {
-					String className = reader.readUTF8(offset, buffer);
-					classNames.add(className);
-				}
-			}
-		}
+		Set<String> classNames = target.getReferencedClasses();
 
 		// Collect bytes of all referenced classes.
 		byte[][] classpath = workspace.getAllResources(false).stream()
@@ -103,10 +90,11 @@ public class AstService implements Service, WorkspaceModificationListener, Resou
 				.filter(info -> classNames.contains(info.getName()))
 				.map(JvmClassInfo::getBytecode)
 				.toArray(byte[][]::new);
-		return JavaParser.fromJavaVersion()
+		JavaParser parser = JavaParser.fromJavaVersion()
 				.classpath(classpath)
 				.typeCache(javaTypeCache)
 				.build();
+		return new DelegatingJavaParser(parser);
 	}
 
 	@Nonnull
@@ -121,42 +109,28 @@ public class AstService implements Service, WorkspaceModificationListener, Resou
 		return config;
 	}
 
-	@Override
-	public void onAddLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
-		// no-op
-	}
-
-	@Override
-	public void onRemoveLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
-		for (String name : library.getJvmClassBundle().keySet())
-			javaTypeCache.remove(name);
-	}
-
-	@Override
-	public void onNewClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls) {
-		// no-op
-	}
-
-	@Override
-	public void onUpdateClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo oldCls, @Nonnull JvmClassInfo newCls) {
-		javaTypeCache.remove(oldCls.getName());
-	}
-
-	@Override
-	public void onRemoveClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls) {
-		javaTypeCache.remove(cls.getName());
-	}
-
+	/**
+	 * Modified cache impl that does not compress keys.
+	 * For more memory cost, we get some additional performance.
+	 */
 	private static class JavaTypeCacheExt extends JavaTypeCache {
-		private final Map<String, ?> internalCache;
+		private final Map<Object, Object> internalCache;
 
 		@SuppressWarnings("unchecked")
 		private JavaTypeCacheExt() {
-			internalCache = (Map<String, ?>) Unchecked.get(() -> ReflectUtil.getDeclaredField(JavaTypeCache.class, "typeCache").get(this));
+			internalCache = (Map<Object, Object>) Unchecked.get(() -> ReflectUtil.getDeclaredField(JavaTypeCache.class, "typeCache").get(this));
 		}
 
-		private void remove(@Nonnull String key) {
-			internalCache.remove(key);
+		@Override
+		@Nullable
+		@SuppressWarnings("unchecked")
+		public <T> T get(@Nonnull String signature) {
+			return (T) internalCache.get(signature);
+		}
+
+		@Override
+		public void put(@Nonnull String signature, @Nonnull Object o) {
+			internalCache.put(signature, o);
 		}
 	}
 }
