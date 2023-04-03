@@ -1,4 +1,4 @@
-package software.coley.recaf.services.parse;
+package software.coley.recaf.services.source;
 
 import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.*;
@@ -16,9 +16,6 @@ import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.DirectoryPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.mapping.IntermediateMappings;
-import software.coley.recaf.services.source.AstContextHelper;
-import software.coley.recaf.services.source.AstMappingVisitor;
-import software.coley.recaf.services.source.AstService;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.*;
 import software.coley.recaf.util.Types;
