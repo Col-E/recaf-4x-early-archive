@@ -8,26 +8,33 @@ import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.TwoDimensional;
+import org.openrewrite.Tree;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.JavaType;
+import org.openrewrite.marker.Range;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.cell.ContextMenuProviderService;
+import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.source.AstContextHelper;
+import software.coley.recaf.services.source.AstRangeMapper;
 import software.coley.recaf.services.source.AstService;
+import software.coley.recaf.services.source.AstUtils;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
+import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
 import software.coley.recaf.util.EscapeUtil;
+import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.NavigableMap;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -35,6 +42,7 @@ import java.util.concurrent.ExecutorService;
  * The AST can then be used to get information required for operations offered by {@link ContextMenuProviderService}.
  *
  * @author Matt Coley
+ * @see FieldsAndMethodsPane#setupSelectionNavigationListener(ClassNavigable) Originating call for {@link #select(ClassMember)}.
  */
 @Dependent
 public class JavaContextActionSupport implements EditorComponent {
@@ -46,6 +54,7 @@ public class JavaContextActionSupport implements EditorComponent {
 	private final AstService astService;
 	private final AstContextHelper contextHelper;
 	private int lastSourceHash;
+	private Runnable queuedSelectionTask;
 	private String className;
 	private J.CompilationUnit unit;
 	private JavaParser parser;
@@ -90,6 +99,74 @@ public class JavaContextActionSupport implements EditorComponent {
 	}
 
 	/**
+	 * Selects a member in the AST.
+	 *
+	 * @param member
+	 * 		Member to select.
+	 */
+	public void select(@Nonnull ClassMember member) {
+		if (unit == null) {
+			queuedSelectionTask = () -> select(member);
+		} else {
+			queuedSelectionTask = null;
+			SortedMap<Range, Tree> map = AstRangeMapper.computeRangeToTreeMapping(unit);
+			for (Map.Entry<Range, Tree> entry : map.entrySet()) {
+				Tree tree = entry.getValue();
+				Range range = entry.getKey();
+
+				// Check against method and variable (field) declarations.
+				if (member.isMethod() && tree instanceof J.MethodDeclaration method) {
+					JavaType.Method methodType = method.getMethodType();
+
+					// Extract method info.
+					String name = method.getSimpleName();
+					String desc = methodType == null ? null : AstUtils.toDesc(methodType);
+					if (method.isConstructor()) {
+						name = "<init>";
+						if (desc != null) desc = StringUtil.cutOffAtFirst(desc, ")") + ")V";
+					}
+
+					// Compare to passed member.
+					if (member.getName().equals(name) && (desc == null || member.getDescriptor().equals(desc))) {
+						// Select it in the editor.
+						CodeArea area = editor.getCodeArea();
+						area.selectRange(range.getEnd().getOffset(), range.getStart().getOffset());
+						area.showParagraphAtCenter(area.getCurrentParagraph());
+						return;
+					}
+				} else if (member.isField() && tree instanceof J.VariableDeclarations variableDeclarations) {
+					for (J.VariableDeclarations.NamedVariable variable : variableDeclarations.getVariables()) {
+						JavaType.Variable variableType = variable.getVariableType();
+
+						// Skip variable declarations that are not fields.
+						if (variableType != null && !(variableType.getOwner() instanceof JavaType.FullyQualified))
+							continue;
+
+						// Extract variable info.
+						String name = variable.getSimpleName();
+						String desc = variableType == null ? null : AstUtils.toDesc(variableType);
+
+						// Compare to passed member.
+						if (member.getName().equals(name) && (desc == null || member.getDescriptor().equals(desc))) {
+							// Select it in the editor.
+							CodeArea area = editor.getCodeArea();
+							area.selectRange(range.getEnd().getOffset(), range.getStart().getOffset());
+							area.showParagraphAtCenter(area.getCurrentParagraph());
+							return;
+						}
+					}
+				} else if (member.getName().equals("<clinit>") && tree instanceof J.Block block && block.isStatic()) {
+					// Select it in the editor.
+					CodeArea area = editor.getCodeArea();
+					area.selectRange(range.getEnd().getOffset(), range.getStart().getOffset());
+					area.showParagraphAtCenter(area.getCurrentParagraph());
+					return;
+				}
+			}
+		}
+	}
+
+	/**
 	 * Handle updating the offset-map so that we do not need to do a full reparse of the source.
 	 * <br>
 	 * When the user makes small changes, its unlikely they will be immediately doing context actions in that area.
@@ -99,7 +176,7 @@ public class JavaContextActionSupport implements EditorComponent {
 	 * @param change
 	 * 		Text changed.
 	 */
-	private void handleShortDurationChange(PlainTextChange change) {
+	private void handleShortDurationChange(@Nonnull PlainTextChange change) {
 		int position = change.getPosition();
 		int offset = change.getNetLength();
 		offsetMap.merge(position, offset, Integer::sum);
@@ -141,6 +218,9 @@ public class JavaContextActionSupport implements EditorComponent {
 				unit = units.get(0);
 				logger.debugging(l -> l.info("AST parsed successfully, took {}ms",
 						(System.currentTimeMillis() - start)));
+
+				// Run queued tasks
+				if (queuedSelectionTask != null) queuedSelectionTask.run();
 			}
 
 			// Wipe offset map now that we have a new AST

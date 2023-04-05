@@ -10,6 +10,7 @@ import javafx.scene.Parent;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.Tab;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
@@ -19,6 +20,7 @@ import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.path.IncompletePathException;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.path.WorkspacePathNode;
 import software.coley.recaf.services.Service;
@@ -81,31 +83,38 @@ public class Actions implements Service {
 	 *
 	 * @param path
 	 * 		Path containing a class to open.
+	 *
+	 * @return Navigable content representing class content of the path.
+	 *
+	 * @throws IncompletePathException
+	 * 		When the path is missing parent elements.
 	 */
-	public void gotoDeclaration(@Nonnull ClassPathNode path) {
+	@Nonnull
+	public ClassNavigable gotoDeclaration(@Nonnull ClassPathNode path) throws IncompletePathException {
 		Workspace workspace = path.getValueOfType(Workspace.class);
 		WorkspaceResource resource = path.getValueOfType(WorkspaceResource.class);
 		ClassBundle<?> bundle = path.getValueOfType(ClassBundle.class);
 		ClassInfo info = path.getValue();
 		if (workspace == null) {
 			logger.error("Cannot handle goto-declaration for class '{}', missing workspace in path", info.getName());
-			return;
+			throw new IncompletePathException(Workspace.class);
 		}
 		if (resource == null) {
 			logger.error("Cannot handle goto-declaration for class '{}', missing resource in path", info.getName());
-			return;
+			throw new IncompletePathException(WorkspaceResource.class);
 		}
 		if (bundle == null) {
 			logger.error("Cannot handle goto-declaration for class '{}', missing bundle in path", info.getName());
-			return;
+			throw new IncompletePathException(ClassBundle.class);
 		}
 
 		// Handle JVM vs Android
 		if (info.isJvmClass()) {
-			gotoDeclaration(workspace, resource, (JvmClassBundle) bundle, info.asJvmClass());
+			return gotoDeclaration(workspace, resource, (JvmClassBundle) bundle, info.asJvmClass());
 		} else if (info.isAndroidClass()) {
-			gotoDeclaration(workspace, resource, (AndroidClassBundle) bundle, info.asAndroidClass());
+			return gotoDeclaration(workspace, resource, (AndroidClassBundle) bundle, info.asAndroidClass());
 		}
+		throw new IllegalStateException("Unsupported class type: " + info.getClass().getName());
 	}
 
 	/**
@@ -117,13 +126,16 @@ public class Actions implements Service {
 	 * 		Containing bundle.
 	 * @param info
 	 * 		Class to go to.
+	 *
+	 * @return Navigable content representing class content of the path.
 	 */
-	public void gotoDeclaration(@Nonnull Workspace workspace,
-								@Nonnull WorkspaceResource resource,
-								@Nonnull JvmClassBundle bundle,
-								@Nonnull JvmClassInfo info) {
+	@Nonnull
+	public ClassNavigable gotoDeclaration(@Nonnull Workspace workspace,
+										  @Nonnull WorkspaceResource resource,
+										  @Nonnull JvmClassBundle bundle,
+										  @Nonnull JvmClassInfo info) {
 		ClassPathNode path = buildPath(workspace, resource, bundle, info);
-		getOrCreatePathContent(path, () -> {
+		return (ClassNavigable) getOrCreatePathContent(path, () -> {
 			// Create text/graphic for the tab to create.
 			String title = textService.getJvmClassInfoTextProvider(workspace, resource, bundle, info).makeText();
 			Node graphic = iconService.getJvmClassInfoIconProvider(workspace, resource, bundle, info).makeIcon();
@@ -173,13 +185,16 @@ public class Actions implements Service {
 	 * 		Containing bundle.
 	 * @param info
 	 * 		Class to go to.
+	 *
+	 * @return Navigable content representing class content of the path.
 	 */
-	public void gotoDeclaration(@Nonnull Workspace workspace,
-								@Nonnull WorkspaceResource resource,
-								@Nonnull AndroidClassBundle bundle,
-								@Nonnull AndroidClassInfo info) {
+	@Nonnull
+	public ClassNavigable gotoDeclaration(@Nonnull Workspace workspace,
+										  @Nonnull WorkspaceResource resource,
+										  @Nonnull AndroidClassBundle bundle,
+										  @Nonnull AndroidClassInfo info) {
 		ClassPathNode path = buildPath(workspace, resource, bundle, info);
-		getOrCreatePathContent(path, () -> {
+		return (ClassNavigable) getOrCreatePathContent(path, () -> {
 			// Create text/graphic for the tab to create.
 			String title = textService.getAndroidClassInfoTextProvider(workspace, resource, bundle, info).makeText();
 			Node graphic = iconService.getAndroidClassInfoIconProvider(workspace, resource, bundle, info).makeIcon();
@@ -213,23 +228,36 @@ public class Actions implements Service {
 	}
 
 	/**
+	 * Looks for the {@link Navigable} component representing the path and returns it if found.
+	 * If no such component exists, it should be generated by the passed supplier, which then gets returned.
+	 * <br>
+	 * The tab containing the {@link Navigable} component is selected when returned.
+	 *
 	 * @param path
 	 * 		Path to navigate to.
 	 * @param factory
 	 * 		Factory to create a tab for displaying content located at the given path,
 	 * 		should a tab for the content not already exist.
+	 * 		<br>
+	 * 		<b>NOTE:</b> It is required/assumed that the {@link Tab#getContent()} is a
+	 * 		component implementing {@link Navigable}.
+	 *
+	 * @return Navigable content representing content of the path.
 	 */
-	private void getOrCreatePathContent(@Nonnull PathNode<?> path, @Nonnull Supplier<DockingTab> factory) {
+	@Nonnull
+	public Navigable getOrCreatePathContent(@Nonnull PathNode<?> path, @Nonnull Supplier<DockingTab> factory) {
 		List<Navigable> children = navigationManager.getNavigableChildrenByPath(path);
 		if (children.isEmpty()) {
 			// Create the tab for the content, then display it.
 			DockingTab tab = factory.get();
 			tab.select();
+			return (Navigable) tab.getContent();
 		} else {
 			// Content by path is already open.
 			Navigable navigable = children.get(0);
 			selectTab(navigable);
 			navigable.requestFocus();
+			return navigable;
 		}
 	}
 

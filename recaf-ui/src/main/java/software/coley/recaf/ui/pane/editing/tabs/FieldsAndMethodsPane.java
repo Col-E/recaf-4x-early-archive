@@ -10,7 +10,9 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.scene.Node;
+import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -29,13 +31,14 @@ import software.coley.recaf.path.InnerClassPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.cell.ContextSource;
+import software.coley.recaf.services.navigation.ClassNavigable;
+import software.coley.recaf.services.navigation.Navigable;
+import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.control.BoundMultiToggleIcon;
 import software.coley.recaf.ui.control.BoundToggleIcon;
 import software.coley.recaf.ui.control.tree.TreeFiltering;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeNode;
-import software.coley.recaf.services.navigation.Navigable;
-import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.Translatable;
@@ -52,7 +55,7 @@ import java.util.function.Function;
  * @author Matt Coley
  */
 @Dependent
-public class FieldsAndMethodsPane extends BorderPane implements ContextSource, UpdatableNavigable {
+public class FieldsAndMethodsPane extends BorderPane implements ContextSource, ClassNavigable, UpdatableNavigable {
 	private final SimpleStringProperty nameFilter = new SimpleStringProperty();
 	private final SimpleBooleanProperty nameFilterCaseSensitivity = new SimpleBooleanProperty();
 	private final SimpleBooleanProperty showSynthetics = new SimpleBooleanProperty(true);
@@ -61,6 +64,7 @@ public class FieldsAndMethodsPane extends BorderPane implements ContextSource, U
 	private final SimpleBooleanProperty sortAlphabetically = new SimpleBooleanProperty();
 	private final SimpleBooleanProperty sortByVisibility = new SimpleBooleanProperty();
 	private final TreeView<PathNode<?>> tree = new TreeView<>();
+	private boolean navigationLock;
 	private ClassPathNode path;
 
 	@Inject
@@ -75,6 +79,23 @@ public class FieldsAndMethodsPane extends BorderPane implements ContextSource, U
 		box.setFillWidth(true);
 		setCenter(tree);
 		setBottom(box);
+	}
+
+	/**
+	 * Sets up the selection listener on the tree that will call {@link ClassNavigable#requestFocus(ClassMember)}
+	 * with the current selected item.
+	 *
+	 * @param navigableClass
+	 * 		Parent class navigable component.
+	 */
+	public void setupSelectionNavigationListener(@Nonnull ClassNavigable navigableClass) {
+		tree.getSelectionModel().selectedItemProperty().addListener((ob, old, current) -> {
+			if (!navigationLock && current.getValue() instanceof ClassMemberPathNode memberPathNode) {
+				navigationLock = true;
+				navigableClass.requestFocus(memberPathNode.getValue());
+				navigationLock = false;
+			}
+		});
 	}
 
 	/**
@@ -205,8 +226,24 @@ public class FieldsAndMethodsPane extends BorderPane implements ContextSource, U
 
 	@Nonnull
 	@Override
-	public PathNode<?> getPath() {
+	public ClassPathNode getPath() {
 		return path;
+	}
+
+	@Override
+	public void requestFocus(@Nonnull ClassMember member) {
+		// Skip if lock is active. Implies we are the source of the request.
+		if (navigationLock) return;
+
+		// Select the given member.
+		for (TreeItem<PathNode<?>> child : tree.getRoot().getChildren()) {
+			if (member.equals(child.getValue().getValue())) {
+				var selectionModel = tree.getSelectionModel();
+				selectionModel.select(child);
+				tree.getFocusModel().focus(selectionModel.getSelectedIndex());
+				return;
+			}
+		}
 	}
 
 	@Override

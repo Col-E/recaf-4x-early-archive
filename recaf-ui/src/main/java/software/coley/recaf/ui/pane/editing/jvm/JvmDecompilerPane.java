@@ -29,6 +29,7 @@ import software.coley.observables.ObservableObject;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
+import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.compile.CompileMap;
@@ -39,6 +40,7 @@ import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.decompile.JvmDecompiler;
 import software.coley.recaf.services.decompile.NoopJvmDecompiler;
+import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.config.KeybindingConfig;
@@ -75,7 +77,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Matt Coley
  */
 @Dependent
-public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable {
+public class JvmDecompilerPane extends BorderPane implements ClassNavigable, UpdatableNavigable {
 	private static final Logger logger = Logging.get(JvmDecompilerPane.class);
 	private static final ExecutorService compilePool = ThreadPoolFactory.newSingleThreadExecutor("recompile");
 	private final ObservableObject<JvmDecompiler> decompiler = new ObservableObject<>(NoopJvmDecompiler.getInstance());
@@ -140,8 +142,13 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 
 	@Nonnull
 	@Override
-	public PathNode<?> getPath() {
+	public ClassPathNode getPath() {
 		return path;
+	}
+
+	@Override
+	public void requestFocus(@Nonnull ClassMember member) {
+		contextActionSupport.select(member);
 	}
 
 	@Nonnull

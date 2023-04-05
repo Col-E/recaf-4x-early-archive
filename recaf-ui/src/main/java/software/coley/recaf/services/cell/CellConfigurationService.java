@@ -131,11 +131,15 @@ public class CellConfigurationService implements Service {
 	 * 		Item to open.
 	 */
 	private void openPath(PathNode<?> item) {
-		if (item instanceof ClassPathNode classPathNode) {
-			actions.gotoDeclaration(classPathNode);
-		} else if (item instanceof FilePathNode filePathNode) {
-			// TODO: Action to open file
-			//   actions.gotoDeclaration(filePathNode);
+		try {
+			if (item instanceof ClassPathNode classPathNode) {
+				actions.gotoDeclaration(classPathNode);
+			} else if (item instanceof FilePathNode filePathNode) {
+				// TODO: Action to open file
+				//   actions.gotoDeclaration(filePathNode);
+			}
+		} catch (IncompletePathException ex) {
+			logger.error("Cannot open incomplete path", ex);
 		}
 	}
 

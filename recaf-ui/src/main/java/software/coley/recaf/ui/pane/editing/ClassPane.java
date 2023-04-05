@@ -7,8 +7,10 @@ import javafx.scene.layout.BorderPane;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
+import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.pane.editing.android.AndroidClassPane;
@@ -26,7 +28,7 @@ import java.util.function.Consumer;
  * @see JvmClassPane For {@link JvmClassInfo}.
  * @see AndroidClassPane For {@link AndroidClassInfo}.
  */
-public abstract class ClassPane extends BorderPane implements UpdatableNavigable {
+public abstract class ClassPane extends BorderPane implements ClassNavigable, UpdatableNavigable {
 	private final List<Consumer<ClassPathNode>> pathUpdateListeners = new ArrayList<>();
 	protected final List<Navigable> children = new ArrayList<>();
 	private SideTabs sideTabs;
@@ -90,6 +92,14 @@ public abstract class ClassPane extends BorderPane implements UpdatableNavigable
 	 */
 	public void addPathUpdateListener(Consumer<ClassPathNode> listener) {
 		pathUpdateListeners.add(listener);
+	}
+
+	@Override
+	public void requestFocus(@Nonnull ClassMember member) {
+		// Delegate to child components
+		for (Navigable navigableChild : getNavigableChildren())
+			if (navigableChild instanceof ClassNavigable navigableClass)
+				navigableClass.requestFocus(member);
 	}
 
 	@Override
