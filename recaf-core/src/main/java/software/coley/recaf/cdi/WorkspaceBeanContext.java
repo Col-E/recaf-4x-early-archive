@@ -48,7 +48,7 @@ public class WorkspaceBeanContext implements AlterableContext, WorkspaceOpenList
 			return foundBean;
 
 		// Not found, create a new bean instead
-		logger.debugging(l -> l.info("Creating new bean: {}", beanName));
+		logger.debugging(l -> l.info("Creating instance of bean type: {}", beanName));
 		WorkspaceBean<T> workspaceBean = new WorkspaceBean<>(contextual, creationalContext, beanName);
 		map.put(beanName, workspaceBean);
 		return workspaceBean.getBean();
@@ -61,7 +61,7 @@ public class WorkspaceBeanContext implements AlterableContext, WorkspaceOpenList
 		String beanName = bean.getBeanClass().getName();
 		WorkspaceBean<T> workspaceBean = (WorkspaceBean<T>) map.get(beanName);
 		if (workspaceBean == null) {
-			logger.debugging(l -> l.warn("No bean by name: {}", beanName));
+			logger.debugging(l -> l.warn("No instance of bean type: {}", beanName));
 			return null;
 		}
 		return workspaceBean.getBean();
@@ -73,10 +73,10 @@ public class WorkspaceBeanContext implements AlterableContext, WorkspaceOpenList
 		String beanName = bean.getBeanClass().getName();
 		WorkspaceBean<?> workspaceBean = map.remove(beanName);
 		if (workspaceBean != null) {
-			logger.debugging(l -> l.info("Destroying bean: {}", beanName));
+			logger.debugging(l -> l.info("Destroying bean instance of type: {}", beanName));
 			workspaceBean.destroy();
 		} else {
-			logger.warn("No bean to destroy by name: {}", beanName);
+			logger.warn("No bean instance to destroy by type: {}", beanName);
 		}
 	}
 
@@ -96,7 +96,7 @@ public class WorkspaceBeanContext implements AlterableContext, WorkspaceOpenList
 			try {
 				bean.destroy();
 			} catch (Throwable t) {
-				logger.error("Failed to update {} bean: {}",
+				logger.error("Failed to update {} bean instance of type: {}",
 						WorkspaceScoped.class.getSimpleName(),
 						bean.getName());
 			}
