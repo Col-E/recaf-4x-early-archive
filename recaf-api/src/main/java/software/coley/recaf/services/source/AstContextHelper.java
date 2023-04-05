@@ -13,6 +13,7 @@ import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.DirectoryPathNode;
 import software.coley.recaf.path.PathNode;
+import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.List;
@@ -53,7 +54,30 @@ public class AstContextHelper {
 		// Iterate over path, checking if we can resolve some reference to a type/member/package.
 		// First items are the most specific, thus yielding the 'best' results.
 		for (Tree ast : astPath) {
-			if (ast instanceof J.ClassDeclaration declarationAst) {
+			if (ast instanceof J.Identifier identifierAst) {
+				JavaType identifierType = identifierAst.getFieldType();
+				if (identifierType == null)
+					identifierType = identifierAst.getType();
+				if (identifierType instanceof JavaType.Method methodType) {
+					ClassMemberPathNode resolved = resolveMethod(methodType);
+					if (resolved != null)
+						return resolved;
+				} else if (identifierType instanceof JavaType.Variable fieldType) {
+					ClassMemberPathNode resolved = resolveField(fieldType);
+					if (resolved != null)
+						return resolved;
+				} else if (identifierType instanceof JavaType.FullyQualified qualified) {
+					ClassPathNode resolved = resolveClass(qualified);
+					if (resolved != null)
+						return resolved;
+				} else if (identifierType instanceof JavaType.Array ||
+						identifierType instanceof JavaType.Variable ||
+						identifierType instanceof JavaType.MultiCatch) {
+					ClassPathNode resolved = resolveClass(identifierType);
+					if (resolved != null)
+						return resolved;
+				}
+			} else if (ast instanceof J.ClassDeclaration declarationAst) {
 				JavaType.FullyQualified declarationType = declarationAst.getType();
 				ClassPathNode resolved = resolveClass(declarationType);
 				if (resolved != null)
@@ -64,6 +88,8 @@ public class AstContextHelper {
 				if (resolved != null)
 					return resolved;
 			} else if (ast instanceof J.MethodInvocation invocationAst) {
+				// TODO: Handle generics
+				//   DummyEnum.class.getEnumConstants() --> ()[LDummyEnum; but we want the base type ()[LEnum;
 				JavaType.Method methodType = invocationAst.getMethodType();
 				ClassMemberPathNode resolved = resolveMethod(methodType);
 				if (resolved != null)
@@ -113,6 +139,9 @@ public class AstContextHelper {
 				ClassMemberPathNode resolved = resolveField(variableType);
 				if (resolved != null)
 					return resolved;
+				ClassPathNode resolvedClass = resolveClass(variableType);
+				if (resolvedClass != null)
+					return resolvedClass;
 			} else if (ast instanceof J.VariableDeclarations variableAst) {
 				JavaType.Variable variableType = variableAst.getVariables().get(0).getVariableType();
 				ClassMemberPathNode resolved = resolveField(variableType);
@@ -155,6 +184,16 @@ public class AstContextHelper {
 					}
 					return classPath;
 				}
+			} else if (ast instanceof J.Block blockAst && blockAst.isStatic()) {
+				// Edge case for static initializer
+				ClassPathNode declaringPath = resolveClass(unit.getClasses().get(0).getType());
+				if (declaringPath != null) {
+					ClassInfo declaringClass = declaringPath.getValue();
+					for (MethodMember method : declaringClass.getMethods()) {
+						if (method.getName().equals("<clinit>"))
+							return declaringPath.child(method);
+					}
+				}
 			}
 		}
 
@@ -171,6 +210,9 @@ public class AstContextHelper {
 					return workspace.findJvmClass("java/lang/String");
 				else
 					return null;
+			} else if (classType instanceof JavaType.Array array) {
+				// We want to resolve the class, so grab the element type.
+				classType = array.getElemType();
 			}
 			try {
 				String declarationName = AstUtils.toInternal(classType);
@@ -195,9 +237,11 @@ public class AstContextHelper {
 	@Nullable
 	private ClassMemberPathNode resolveField(@Nullable JavaType.Variable fieldType) {
 		if (fieldType != null) {
+			// A variable's owner for fields is the declaring class which is a fully qualified type.
+			// Local variable's owner are methods, so we only check for fully qualified owner types.
 			JavaType ownerType = fieldType.getOwner();
-			if (ownerType != null) {
-				String owner = AstUtils.toInternal(ownerType);
+			if (ownerType instanceof JavaType.FullyQualified qualifiedOwner) {
+				String owner = AstUtils.toInternal(qualifiedOwner);
 				String name = fieldType.getName();
 				String desc = AstUtils.toDesc(fieldType);
 				ClassPathNode classPath = workspace.findClass(owner);
@@ -219,6 +263,11 @@ public class AstContextHelper {
 			if (classPath != null) {
 				String name = methodType.getName();
 				String desc = AstUtils.toDesc(methodType);
+				if (name.equals("<constructor>")) {
+					// OpenRewrite does not use bytecode level semantics for constructors
+					name = "<init>";
+					desc = StringUtil.cutOffAtFirst(desc, ")") + ")V";
+				}
 				for (MethodMember method : classPath.getValue().getMethods())
 					if (method.getName().equals(name) && method.getDescriptor().equals(desc))
 						return classPath.child(method);

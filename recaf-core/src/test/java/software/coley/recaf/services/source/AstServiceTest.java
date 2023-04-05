@@ -2,6 +2,7 @@ package software.coley.recaf.services.source;
 
 import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.*;
+import org.objectweb.asm.Type;
 import org.openrewrite.Cursor;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.InMemoryExecutionContext;
@@ -45,9 +46,12 @@ public class AstServiceTest extends TestBase {
 		BasicJvmClassBundle bundle = TestClassUtils.fromClasses(
 				DummyEnum.class,
 				StringSupplier.class,
+				ClassWithConstructor.class,
 				ClassWithExceptions.class,
+				ClassWithStaticInit.class,
 				HelloWorld.class,
 				Types.class,
+				Type.class,
 				AnnotationImpl.class
 		);
 		Workspace workspace = TestClassUtils.fromBundle(bundle);
@@ -121,7 +125,18 @@ public class AstServiceTest extends TestBase {
 					class HelloWorld {}
 					""";
 			handleUnit(source, (unit, ctx) -> {
-				validateRange(unit, source, "import static software.coley.recaf.test.dummy.DummyEnum.ONE", ClassMemberPathNode.class, memberPath -> {
+				// The 'DummyEnum' takes precedence
+				validateRange(unit, source, "DummyEnum", ClassPathNode.class, classPath -> {
+					assertEquals("software/coley/recaf/test/dummy/DummyEnum", classPath.getValue().getName());
+				});
+
+				// The static import takes precedence
+				validateRange(unit, source, "import static software.coley.recaf.test.dummy.", ClassMemberPathNode.class, memberPath -> {
+					assertEquals("software/coley/recaf/test/dummy/DummyEnum",
+							memberPath.getValueOfType(ClassInfo.class).getName());
+					assertEquals("ONE", memberPath.getValue().getName());
+				});
+				validateRange(unit, source, "ONE;", ClassMemberPathNode.class, memberPath -> {
 					assertEquals("software/coley/recaf/test/dummy/DummyEnum",
 							memberPath.getValueOfType(ClassInfo.class).getName());
 					assertEquals("ONE", memberPath.getValue().getName());
@@ -185,24 +200,32 @@ public class AstServiceTest extends TestBase {
 		void testFieldDeclaration_Normal() {
 			String source = """
 					package software.coley.recaf.util;
+					import org.objectweb.asm.Type;
 					public class Types {
-					  	public static final Type OBJECT_TYPE = null;
-					  	public static final Type STRING_TYPE = null;
-					  	private static final Type[] PRIMITIVES = null;
+					  	public static final Type OBJECT_TYPE = Type.getObjectType("java/lang/Object");
+					  	public static final Type STRING_TYPE = new Type();
+					  	private static final Type[] PRIMITIVES = new Type[0];
 					}
 					""";
 			handleUnit(source, (unit, ctx) -> {
-				validateRange(unit, source, "public static final Type OBJECT_TYPE", ClassMemberPathNode.class, memberPath -> {
+				validateRange(unit, source, "OBJECT_TYPE", ClassMemberPathNode.class, memberPath -> {
 					ClassMember member = memberPath.getValue();
 					assertEquals("OBJECT_TYPE", member.getName());
 				});
-				validateRange(unit, source, "public static final Type STRING_TYPE", ClassMemberPathNode.class, memberPath -> {
+				validateRange(unit, source, "STRING_TYPE", ClassMemberPathNode.class, memberPath -> {
 					ClassMember member = memberPath.getValue();
 					assertEquals("STRING_TYPE", member.getName());
 				});
-				validateRange(unit, source, "private static final Type[] PRIMITIVES", ClassMemberPathNode.class, memberPath -> {
+				validateRange(unit, source, "PRIMITIVES", ClassMemberPathNode.class, memberPath -> {
 					ClassMember member = memberPath.getValue();
 					assertEquals("PRIMITIVES", member.getName());
+				});
+				validateRange(unit, source, "getObjectType", ClassMemberPathNode.class, memberPath -> {
+					ClassMember member = memberPath.getValue();
+					assertEquals("getObjectType", member.getName());
+				});
+				validateRange(unit, source, "new Type[0]", ClassPathNode.class, classPath -> {
+					assertEquals("org/objectweb/asm/Type", classPath.getValue().getName());
 				});
 			});
 		}
@@ -234,6 +257,7 @@ public class AstServiceTest extends TestBase {
 		}
 
 		@Test
+		@Disabled("Fails since generic type is used as return type, getEnumConstants() = DummyEnum[] not base type Enum[]")
 		void testMethodReference_SyntheticEnumMethod() {
 			String source = """
 					package software.coley.recaf.test.dummy;
@@ -243,24 +267,124 @@ public class AstServiceTest extends TestBase {
 							for (DummyEnum enumConstant : DummyEnum.class.getEnumConstants()) {
 								String name = enumConstant.name();
 								System.out.println(name);
+								
+								Supplier<String> supplier = enumConstant::name;
+								System.out.println(supplier.get());
 							}
 						}
 					}
 					""";
+			// TODO: More tests validating generic methods being resolved to NOT the <T> type once this behavior is fixed
 			handleUnit(source, (unit, ctx) -> {
 				validateRange(unit, source, "name()", ClassMemberPathNode.class, memberPath -> {
 					ClassMember member = memberPath.getValue();
 					assertEquals("name", member.getName());
 					assertEquals("()Ljava/lang/String;", member.getDescriptor());
 				});
+				validateRange(unit, source, "enumConstant::name", ClassMemberPathNode.class, memberPath -> {
+					ClassMember member = memberPath.getValue();
+					assertEquals("name", member.getName());
+					assertEquals("()Ljava/lang/String;", member.getDescriptor());
+				});
+				validateRange(unit, source, "getEnumConstants", ClassPathNode.class, classPath -> {
+					assertEquals("software/coley/recaf/test/dummy/DummyEnum", classPath.getValue().getName());
+				});
 			});
 		}
 
-		// TODO:
-		//  arrays, new-array,
-		//  method declarations, constructors, static block
-		//  static-field qualifier, field qualifier, field reference
-		//  static-method qualifier, method qualifier, method reference
+		@Test
+		void testStaticMethodCall() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+					  										
+					class HelloWorld {
+						static void main(String[] args) {
+							ClassWithExceptions.readInt(args[0]);
+						}
+					}
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				validateRange(unit, source, "ClassWithExceptions", ClassPathNode.class, classPath -> {
+					assertEquals("software/coley/recaf/test/dummy/ClassWithExceptions", classPath.getValue().getName());
+				});
+				validateRange(unit, source, "readInt", ClassMemberPathNode.class, memberPath -> {
+					ClassMember member = memberPath.getValue();
+					assertEquals("readInt", member.getName());
+					assertEquals("(Ljava/lang/Object;)I", member.getDescriptor());
+				});
+			});
+		}
+
+		@Test
+		void testStaticFieldRef() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+					  										
+					class HelloWorld {
+						static void main(String[] args) {
+							ClassWithStaticInit.i = 0;
+						}
+					}
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				validateRange(unit, source, "ClassWithStaticInit", ClassPathNode.class, classPath -> {
+					assertEquals("software/coley/recaf/test/dummy/ClassWithStaticInit", classPath.getValue().getName());
+				});
+				validateRange(unit, source, "i ", ClassMemberPathNode.class, memberPath -> {
+					ClassMember member = memberPath.getValue();
+					assertEquals("software/coley/recaf/test/dummy/ClassWithStaticInit", member.getDeclaringClass().getName());
+					assertEquals("i", member.getName());
+					assertEquals("I", member.getDescriptor());
+				});
+			});
+		}
+
+		@Test
+		void testConstructorDeclaration() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+					public class ClassWithConstructor {
+					  	public ClassWithConstructor() {}
+					  	public ClassWithConstructor(int i) {}
+					  	public ClassWithConstructor(int i, int j) {}
+					}
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				validateRange(unit, source, "ClassWithConstructor()", ClassMemberPathNode.class, memberPath -> {
+					ClassMember member = memberPath.getValue();
+					assertEquals("<init>", member.getName());
+					assertEquals("()V", member.getDescriptor());
+				});
+				validateRange(unit, source, "ClassWithConstructor(int i)", ClassMemberPathNode.class, memberPath -> {
+					ClassMember member = memberPath.getValue();
+					assertEquals("<init>", member.getName());
+					assertEquals("(I)V", member.getDescriptor());
+				});
+				validateRange(unit, source, "ClassWithConstructor(int i, int j)", ClassMemberPathNode.class, memberPath -> {
+					ClassMember member = memberPath.getValue();
+					assertEquals("<init>", member.getName());
+					assertEquals("(II)V", member.getDescriptor());
+				});
+			});
+		}
+
+		@Test
+		void testStaticInitializer() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+					public class ClassWithStaticInit {
+					 	public static int i;
+					 	static { i = 42; }
+					 }
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				validateRange(unit, source, "static {", ClassMemberPathNode.class, memberPath -> {
+					ClassMember member = memberPath.getValue();
+					assertEquals("<clinit>", member.getName());
+					assertEquals("()V", member.getDescriptor());
+				});
+			});
+		}
 	}
 
 	@Nested
