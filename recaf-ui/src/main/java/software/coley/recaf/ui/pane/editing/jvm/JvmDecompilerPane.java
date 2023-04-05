@@ -52,6 +52,7 @@ import software.coley.recaf.ui.control.richtext.problem.ProblemGraphicFactory;
 import software.coley.recaf.ui.control.richtext.problem.ProblemPhase;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
+import software.coley.recaf.ui.control.richtext.source.JavaContextActionSupport;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
 import software.coley.recaf.util.*;
@@ -64,6 +65,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -83,6 +85,7 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 	private final AtomicBoolean updateLock = new AtomicBoolean();
 	private final ProblemTracking problemTracking = new ProblemTracking();
 	private final JvmDecompilerPaneConfig config;
+	private final JavaContextActionSupport contextActionSupport;
 	private final DecompilerManager decompilerManager;
 	private final JavacCompiler javac;
 	private final Editor editor;
@@ -92,9 +95,11 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 	public JvmDecompilerPane(@Nonnull JvmDecompilerPaneConfig config,
 							 @Nonnull KeybindingConfig keys,
 							 @Nonnull SearchBar searchBar,
+							 @Nonnull JavaContextActionSupport contextActionSupport,
 							 @Nonnull DecompilerManager decompilerManager,
 							 @Nonnull JavacCompiler javac) {
 		this.config = config;
+		this.contextActionSupport = contextActionSupport;
 		this.decompilerManager = decompilerManager;
 		this.javac = javac;
 		decompiler.setValue(decompilerManager.getTargetJvmDecompiler());
@@ -113,6 +118,7 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 				javacTarget, javacDebug, decompilerManager);
 		configurator.install(editor);
 		searchBar.install(editor);
+		contextActionSupport.install(editor);
 
 		// Add overlay for when decompilation is in-progress
 		DecompileProgressOverlay overlay = new DecompileProgressOverlay();
@@ -121,8 +127,6 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 			if (cur) children.add(overlay);
 			else children.remove(overlay);
 		});
-
-		// TODO: Hook up AST analysis for contextual right-click actions
 
 		// Setup keybindings
 		setOnKeyPressed(e -> {
@@ -150,10 +154,13 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 	public void onUpdatePath(@Nonnull PathNode<?> path) {
 		if (!updateLock.get() && path instanceof ClassPathNode classPathNode) {
 			this.path = classPathNode;
-
-			// Schedule decompilation task, update the editor's text asynchronously on the JavaFX UI thread when complete.
 			Workspace workspace = classPathNode.getValueOfType(Workspace.class);
 			JvmClassInfo classInfo = classPathNode.getValue().asJvmClass();
+
+			// Schedule initializing the context action support with the class information on a background thread.
+			Executors.newSingleThreadExecutor().submit(() -> contextActionSupport.initialize(classInfo));
+
+			// Schedule decompilation task, update the editor's text asynchronously on the JavaFX UI thread when complete.
 			decompileInProgress.setValue(true);
 			editor.setMouseTransparent(true);
 			decompilerManager.decompile(decompiler.getValue(), workspace, classInfo)
@@ -183,6 +190,9 @@ public class JvmDecompilerPane extends BorderPane implements UpdatableNavigable 
 									editor.setText("/*\nDecompile failed, but no trace was attached:\n*/");
 							}
 						}
+
+						// Schedule AST parsing for context action support.
+						contextActionSupport.scheduleAstParse();
 
 						// Prevent undo from reverting to empty state.
 						editor.getCodeArea().getUndoManager().forgetHistory();
