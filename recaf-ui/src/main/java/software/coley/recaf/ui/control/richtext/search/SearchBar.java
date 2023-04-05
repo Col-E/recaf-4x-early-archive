@@ -448,6 +448,9 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			int index = lastResultIndex.get();
 			if (index >= 0)
 				replaceResult(index);
+
+			// Highlight next result.
+			refreshResults();
 		}
 
 		/**
