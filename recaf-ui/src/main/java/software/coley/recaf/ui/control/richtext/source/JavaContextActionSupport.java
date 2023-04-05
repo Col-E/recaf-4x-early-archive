@@ -39,7 +39,7 @@ import java.util.concurrent.ExecutorService;
 @Dependent
 public class JavaContextActionSupport implements EditorComponent {
 	private static final DebuggingLogger logger = Logging.get(JavaContextActionSupport.class);
-	private static final long REPARSE_ELAPSED_TIME = 5_000L;
+	private static final long REPARSE_ELAPSED_TIME = 2_000L;
 	private final ExecutorService parseThreadPool = ThreadPoolFactory.newSingleThreadExecutor("java-parse");
 	private final NavigableMap<Integer, Integer> offsetMap = new TreeMap<>();
 	private final CellConfigurationService cellConfigurationService;
@@ -109,6 +109,10 @@ public class JavaContextActionSupport implements EditorComponent {
 	 * Handle a full reparse of the source, updating the {@link #unit}.
 	 */
 	private void handleLongDurationChange() {
+		// Skip if parser is not ready yet.
+		if (parser == null)
+			return;
+
 		// Do parsing on BG thread, it can be slower on complex inputs.
 		parseThreadPool.submit(() -> {
 			String text = editor.getText();
