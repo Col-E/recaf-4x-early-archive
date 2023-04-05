@@ -35,7 +35,7 @@ public class AstRangeMapper {
 	 * If two tree nodes have the same start position, the range is used to differentiate, such that the containing node is first.
 	 */
 	@Nonnull
-	public static SortedMap<Range, Tree> mapRanges(@Nonnull Tree tree) {
+	public static SortedMap<Range, Tree> computeRangeToTreeMapping(@Nonnull Tree tree) {
 		// Check if there's a cached range mapping.
 		Optional<AstRangeMappingMarker> opt = tree.getMarkers().findFirst(AstRangeMappingMarker.class);
 		if (opt.isPresent())

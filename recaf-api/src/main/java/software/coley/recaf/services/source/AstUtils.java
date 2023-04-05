@@ -131,7 +131,7 @@ public class AstUtils {
 	@Nonnull
 	public static List<Tree> getAstPathAtOffset(int offset, @Nonnull J.CompilationUnit unit) {
 		List<Tree> path = new ArrayList<>();
-		Map<Range, Tree> map = AstRangeMapper.mapRanges(unit);
+		Map<Range, Tree> map = AstRangeMapper.computeRangeToTreeMapping(unit);
 		for (Map.Entry<Range, Tree> entry : map.entrySet()) {
 			Range range = entry.getKey();
 			int start = range.getStart().getOffset();
