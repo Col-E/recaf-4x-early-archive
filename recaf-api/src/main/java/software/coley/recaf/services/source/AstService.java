@@ -2,28 +2,20 @@ package software.coley.recaf.services.source;
 
 import jakarta.annotation.Nonnull;
 import jakarta.inject.Inject;
-import org.openrewrite.ExecutionContext;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.internal.JavaTypeCache;
-import org.openrewrite.java.tree.J;
 import software.coley.recaf.cdi.WorkspaceScoped;
-import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.util.Unchecked;
-import software.coley.recaf.workspace.WorkspaceManager;
-import software.coley.recaf.workspace.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
-import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
-import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -84,11 +76,10 @@ public class AstService implements Service {
 		Set<String> classNames = target.getReferencedClasses();
 
 		// Collect bytes of all referenced classes.
-		byte[][] classpath = workspace.getAllResources(false).stream()
-				.flatMap(WorkspaceResource::jvmClassBundleStream)
-				.flatMap(Bundle::stream)
-				.filter(info -> classNames.contains(info.getName()))
-				.map(JvmClassInfo::getBytecode)
+		byte[][] classpath = classNames.stream()
+				.map(workspace::findJvmClass)
+				.filter(Objects::nonNull)
+				.map(path -> path.getValue().asJvmClass().getBytecode())
 				.toArray(byte[][]::new);
 		JavaParser parser = JavaParser.fromJavaVersion()
 				.classpath(classpath)

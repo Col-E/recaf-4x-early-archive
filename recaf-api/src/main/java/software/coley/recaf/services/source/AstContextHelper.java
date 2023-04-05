@@ -70,9 +70,7 @@ public class AstContextHelper {
 					ClassPathNode resolved = resolveClass(qualified);
 					if (resolved != null)
 						return resolved;
-				} else if (identifierType instanceof JavaType.Array ||
-						identifierType instanceof JavaType.Variable ||
-						identifierType instanceof JavaType.MultiCatch) {
+				} else if (identifierType instanceof JavaType.Array || identifierType instanceof JavaType.MultiCatch) {
 					ClassPathNode resolved = resolveClass(identifierType);
 					if (resolved != null)
 						return resolved;
