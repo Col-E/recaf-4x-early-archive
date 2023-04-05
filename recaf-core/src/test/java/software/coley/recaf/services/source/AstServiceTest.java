@@ -347,6 +347,7 @@ public class AstServiceTest extends TestBase {
 					  	public ClassWithConstructor() {}
 					  	public ClassWithConstructor(int i) {}
 					  	public ClassWithConstructor(int i, int j) {}
+					  	public ClassWithConstructor(DummyEnum dummyEnum, StringSupplier supplier) {}
 					}
 					""";
 			handleUnit(source, (unit, ctx) -> {
@@ -364,6 +365,14 @@ public class AstServiceTest extends TestBase {
 					ClassMember member = memberPath.getValue();
 					assertEquals("<init>", member.getName());
 					assertEquals("(II)V", member.getDescriptor());
+				});
+				int start = source.indexOf("ClassWithConstructor(DummyEnum dummyEnum, StringSupplier supplier)");
+				int end = start + "ClassWithConstructor".length();
+				validateRange(unit, start, end, ClassMemberPathNode.class, memberPath -> {
+					ClassMember member = memberPath.getValue();
+					assertEquals("<init>", member.getName());
+					assertEquals("(Lsoftware/coley/recaf/test/dummy/DummyEnum;" +
+							"Lsoftware/coley/recaf/test/dummy/StringSupplier;)V", member.getDescriptor());
 				});
 			});
 		}
