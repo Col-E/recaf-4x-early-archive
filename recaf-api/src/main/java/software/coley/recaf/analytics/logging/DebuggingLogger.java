@@ -11,7 +11,7 @@ import java.util.function.Consumer;
  * @author Matt Coley
  */
 public interface DebuggingLogger extends Logger {
-	boolean MANUAL_DEBUG = false;
+	boolean DEBUG = System.getenv("RECAF_DEBUG") != null;
 
 	/**
 	 * Only do the given action when manual debugging is enabled.
@@ -20,7 +20,7 @@ public interface DebuggingLogger extends Logger {
 	 * 		Call onto self.
 	 */
 	default void debugging(Consumer<DebuggingLogger> action) {
-		if (MANUAL_DEBUG)
+		if (DEBUG)
 			action.accept(this);
 	}
 }
