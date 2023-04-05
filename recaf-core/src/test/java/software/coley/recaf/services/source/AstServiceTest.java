@@ -49,6 +49,8 @@ public class AstServiceTest extends TestBase {
 				ClassWithConstructor.class,
 				ClassWithExceptions.class,
 				ClassWithStaticInit.class,
+				StringList.class,
+				StringListUser.class,
 				HelloWorld.class,
 				Types.class,
 				Type.class,
@@ -391,6 +393,41 @@ public class AstServiceTest extends TestBase {
 					ClassMember member = memberPath.getValue();
 					assertEquals("<clinit>", member.getName());
 					assertEquals("()V", member.getDescriptor());
+				});
+			});
+		}
+
+		@Test
+		void testStringList() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+					public class StringListUser {
+					  	public static void main(String[] args) {
+					  		StringList list = StringList.of("foo");
+					  		for (String string : list.unique()) {
+					  			System.out.println(string);
+					  		}
+					  	}
+					}
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				validateRange(unit, source, "of(", ClassMemberPathNode.class, memberPath -> {
+					ClassMember member = memberPath.getValue();
+					assertEquals("of", member.getName());
+				});
+				validateRange(unit, source, "unique()", ClassMemberPathNode.class, memberPath -> {
+					ClassMember member = memberPath.getValue();
+					assertEquals("unique", member.getName());
+				});
+				int start = source.indexOf("StringList list");
+				int end = start + "StringList".length();
+				validateRange(unit, start, end, ClassPathNode.class, classPath -> {
+					assertEquals("software/coley/recaf/test/dummy/StringList", classPath.getValue().getName());
+				});
+				start = source.indexOf("StringList.of");
+				end = start + "StringList".length();
+				validateRange(unit, start, end, ClassPathNode.class, classPath -> {
+					assertEquals("software/coley/recaf/test/dummy/StringList", classPath.getValue().getName());
 				});
 			});
 		}
