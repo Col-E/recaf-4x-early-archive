@@ -65,6 +65,7 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -185,6 +186,8 @@ public class JvmDecompilerPane extends BorderPane implements ClassNavigable, Upd
 
 						// Handle decompilation result
 						String text = result.getText();
+						if (Objects.equals(text, editor.getText()))
+							return; // Skip if existing text is the same
 						switch (result.getType()) {
 							case SUCCESS -> editor.setText(text);
 							case SKIPPED -> editor.setText(text == null ? "// Decompilation skipped" : text);
