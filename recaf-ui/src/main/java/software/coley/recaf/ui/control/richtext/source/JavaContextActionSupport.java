@@ -20,11 +20,9 @@ import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.cell.ContextMenuProviderService;
+import software.coley.recaf.services.cell.ContextSource;
 import software.coley.recaf.services.navigation.ClassNavigable;
-import software.coley.recaf.services.source.AstContextHelper;
-import software.coley.recaf.services.source.AstRangeMapper;
-import software.coley.recaf.services.source.AstService;
-import software.coley.recaf.services.source.AstUtils;
+import software.coley.recaf.services.source.*;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
 import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
@@ -280,12 +278,15 @@ public class JavaContextActionSupport implements EditorComponent {
 
 			// Create menu
 			int offsetHitIndex = offset(hit.getInsertionIndex());
-			PathNode<?> path = contextHelper.resolve(unit, offsetHitIndex);
-			if (path != null) {
+			AstResolveResult result = contextHelper.resolve(unit, offsetHitIndex);
+			if (result != null) {
+				PathNode<?> path = result.path();
 				logger.debugging(l -> l.info("Path at offset '{}' = {}", offsetHitIndex, path));
-				menu = cellConfigurationService.contextMenuOf(editor, path);
-			} else
-				menu = null;
+
+				// Map the result's declaration state to a context-source.
+				ContextSource source = result.isDeclaration() ? ContextSource.DECLARATION : ContextSource.REFERENCE;
+				menu = cellConfigurationService.contextMenuOf(source, path);
+			}
 
 			// Show menu
 			if (menu != null) {

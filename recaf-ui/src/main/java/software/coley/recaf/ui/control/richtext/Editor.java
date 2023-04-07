@@ -17,7 +17,6 @@ import org.fxmisc.richtext.model.StyleSpans;
 import org.reactfx.Change;
 import org.reactfx.EventStream;
 import org.reactfx.EventStreams;
-import software.coley.recaf.services.cell.ContextSource;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
 import software.coley.recaf.ui.control.richtext.linegraphics.RootLineGraphicFactory;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
@@ -46,7 +45,7 @@ import java.util.function.Supplier;
  *
  * @author Matt Coley
  */
-public class Editor extends BorderPane implements ContextSource {
+public class Editor extends BorderPane {
 	public static final int SHORT_DELAY_MS = 150;
 	private final StackPane stackPane = new StackPane();
 	private final CodeArea codeArea = new CodeArea();

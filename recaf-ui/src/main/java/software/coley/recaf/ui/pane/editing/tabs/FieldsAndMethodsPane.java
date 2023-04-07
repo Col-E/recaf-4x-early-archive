@@ -10,7 +10,6 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.scene.Node;
-import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -46,6 +45,7 @@ import software.coley.recaf.util.Translatable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -55,7 +55,7 @@ import java.util.function.Function;
  * @author Matt Coley
  */
 @Dependent
-public class FieldsAndMethodsPane extends BorderPane implements ContextSource, ClassNavigable, UpdatableNavigable {
+public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, UpdatableNavigable {
 	private final SimpleStringProperty nameFilter = new SimpleStringProperty();
 	private final SimpleBooleanProperty nameFilterCaseSensitivity = new SimpleBooleanProperty();
 	private final SimpleBooleanProperty showSynthetics = new SimpleBooleanProperty(true);
@@ -71,7 +71,7 @@ public class FieldsAndMethodsPane extends BorderPane implements ContextSource, C
 	public FieldsAndMethodsPane(@Nonnull CellConfigurationService configurationService) {
 		// Configure tree.
 		tree.setShowRoot(false);
-		tree.setCellFactory(param -> new WorkspaceTreeCell(this, configurationService));
+		tree.setCellFactory(param -> new WorkspaceTreeCell(ContextSource.DECLARATION, configurationService));
 		tree.getStyleClass().addAll(Tweaks.EDGE_TO_EDGE, Styles.DENSE);
 
 		// Layout

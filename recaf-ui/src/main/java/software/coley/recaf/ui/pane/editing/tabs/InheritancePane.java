@@ -20,12 +20,12 @@ import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.cell.ContextSource;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceVertex;
+import software.coley.recaf.services.navigation.Navigable;
+import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.control.BoundMultiToggleIcon;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeNode;
-import software.coley.recaf.services.navigation.Navigable;
-import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -38,7 +38,7 @@ import java.util.Collections;
  * @author Matt Coley
  */
 @Dependent
-public class InheritancePane extends StackPane implements ContextSource, UpdatableNavigable {
+public class InheritancePane extends StackPane implements UpdatableNavigable {
 	private final SimpleObjectProperty<TreeContent> contentType = new SimpleObjectProperty<>(TreeContent.CHILDREN);
 	private final TreeView<PathNode<?>> tree = new TreeView<>();
 	private final InheritanceGraph inheritanceGraph;
@@ -53,7 +53,7 @@ public class InheritancePane extends StackPane implements ContextSource, Updatab
 
 		// Configure tree.
 		tree.setShowRoot(true);
-		tree.setCellFactory(param -> new WorkspaceTreeCell(this, configurationService));
+		tree.setCellFactory(param -> new WorkspaceTreeCell(ContextSource.REFERENCE, configurationService));
 		tree.getStyleClass().addAll(Tweaks.EDGE_TO_EDGE, Styles.DENSE);
 
 		// Configure toggle button between parent & child display.

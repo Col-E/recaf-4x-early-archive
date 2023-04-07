@@ -15,7 +15,6 @@ import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.DirectoryPathNode;
-import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.*;
@@ -793,11 +792,10 @@ public class AstServiceTest extends TestBase {
 										  int start, int end,
 										  @Nonnull Class<T> targetType,
 										  @Nonnull Consumer<T> consumer) {
-		PathNode<?> path;
 		for (int i = start; i < end; i++) {
-			path = helper.resolve(unit, i);
-			if (path != null && targetType.isAssignableFrom(path.getClass())) {
-				consumer.accept((T) path);
+			AstResolveResult result = helper.resolve(unit, i);
+			if (result != null && targetType.isAssignableFrom(result.path().getClass())) {
+				consumer.accept((T) result.path());
 			} else {
 				fail("Failed to identify target at index: " + i + " in range [" + start + "-" + end + "]");
 			}

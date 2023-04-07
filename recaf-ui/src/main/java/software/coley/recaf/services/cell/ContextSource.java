@@ -1,12 +1,50 @@
 package software.coley.recaf.services.cell;
 
 /**
- * Type used by components that may provide context menus.
- * Allows the {@link ContextMenuProviderFactory} types to know which class is requesting a menu.
+ * Allows the {@link ContextMenuProviderFactory} types to know additional information about the context of the inputs.
+ * For instance, if the request to provide a context menu for some data is based on <b>the declaration</b> of the data
+ * or <b>a reference to</b> the data.
  *
  * @author Matt Coley
  */
 public interface ContextSource {
-	// TODO: Should provide a way to validate a <PathNode> is a declaration or reference
-	//       (or maybe make a custom type/enum to allow filtering the menu in additional cases?)
+	/**
+	 * Constant describing declaration context sources.
+	 */
+	ContextSource DECLARATION = new ContextSource() {
+		@Override
+		public boolean isDeclaration() {
+			return true;
+		}
+
+		@Override
+		public boolean isReference() {
+			return false;
+		}
+	};
+
+	/**
+	 * Constant describing reference context sources.
+	 */
+	ContextSource REFERENCE = new ContextSource() {
+		@Override
+		public boolean isDeclaration() {
+			return false;
+		}
+
+		@Override
+		public boolean isReference() {
+			return true;
+		}
+	};
+
+	/**
+	 * @return {@code true} if the context is of a declaration.
+	 */
+	boolean isDeclaration();
+
+	/**
+	 * @return {@code true} if the context is of a reference.
+	 */
+	boolean isReference();
 }

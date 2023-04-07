@@ -38,8 +38,7 @@ import java.util.List;
 @Dependent
 public class WorkspaceTree extends TreeView<PathNode<?>> implements
 		WorkspaceModificationListener, WorkspaceCloseListener,
-		ResourceJvmClassListener, ResourceAndroidClassListener, ResourceFileListener,
-		ContextSource {
+		ResourceJvmClassListener, ResourceAndroidClassListener, ResourceFileListener {
 	private WorkspaceTreeNode root;
 	private WorkspacePathNode rootPath;
 	private Workspace workspace;
@@ -52,9 +51,8 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 	 */
 	@Inject
 	public WorkspaceTree(@Nonnull CellConfigurationService configurationService) {
-		ContextSource source = this;
 		setShowRoot(false);
-		setCellFactory(param -> new WorkspaceTreeCell(source, configurationService));
+		setCellFactory(param -> new WorkspaceTreeCell(ContextSource.DECLARATION, configurationService));
 		getStyleClass().addAll(Tweaks.EDGE_TO_EDGE, Styles.DENSE);
 		setOnKeyPressed(e -> {
 			KeyCode code = e.getCode();
