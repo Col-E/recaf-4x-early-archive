@@ -1,5 +1,6 @@
 package software.coley.recaf.util.visitors;
 
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -16,7 +17,7 @@ public class SyntheticRemovingVisitor extends ClassVisitor {
 	 * @param cv
 	 * 		Parent visitor.
 	 */
-	public SyntheticRemovingVisitor(ClassVisitor cv) {
+	public SyntheticRemovingVisitor(@Nullable ClassVisitor cv) {
 		super(RecafConstants.getAsmVersion(), cv);
 	}
 

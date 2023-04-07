@@ -1,5 +1,7 @@
 package software.coley.recaf.util.visitors;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.*;
 import software.coley.recaf.RecafConstants;
 import software.coley.recaf.info.member.ClassMember;
@@ -24,7 +26,9 @@ public class MemberCopyingVisitor extends ClassVisitor {
 	 * @param copyName
 	 * 		Name of copied member.
 	 */
-	public MemberCopyingVisitor(ClassVisitor cv, ClassMember member, String copyName) {
+	public MemberCopyingVisitor(@Nullable ClassVisitor cv,
+								@Nonnull ClassMember member,
+								@Nonnull String copyName) {
 		super(RecafConstants.getAsmVersion(), cv);
 		this.member = member;
 		this.copyName = copyName;

@@ -1,17 +1,18 @@
 package software.coley.recaf.util.visitors;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.*;
 import software.coley.recaf.RecafConstants;
 import software.coley.recaf.info.member.ClassMember;
 
 /**
- * A visitor that visits only the targeted member. Everything else is stripped.
+ * A visitor that visits only matched members. Everything else is stripped.
  *
  * @author Matt Coley
  */
-public class SingleMemberVisitor extends ClassVisitor {
-	private final ClassMember member;
-	private boolean finished;
+public class MemberFilteringVisitor extends ClassVisitor {
+	private final MemberPredicate predicate;
 
 	/**
 	 * @param cv
@@ -19,32 +20,32 @@ public class SingleMemberVisitor extends ClassVisitor {
 	 * @param member
 	 * 		Target member to visit.
 	 */
-	public SingleMemberVisitor(ClassVisitor cv, ClassMember member) {
+	public MemberFilteringVisitor(@Nullable ClassVisitor cv, @Nonnull ClassMember member) {
+		this(cv, new SingleMemberPredicate(member));
+	}
+
+	/**
+	 * @param cv
+	 * 		Parent visitor.
+	 * @param predicate
+	 * 		Predicate to match against the members to include.
+	 */
+	public MemberFilteringVisitor(@Nullable ClassVisitor cv, @Nonnull MemberPredicate predicate) {
 		super(RecafConstants.getAsmVersion(), cv);
-		this.member = member;
+		this.predicate = predicate;
 	}
 
 	@Override
 	public FieldVisitor visitField(int access, String name, String desc, String sig, Object value) {
-		// Only visit if matching the target info and searching
-		if (finished)
-			return null;
-		if (member.isField() && member.getName().equals(name) && member.getDescriptor().equals(desc)) {
-			finished = true;
+		if (predicate.matchField(access, name, desc, sig, value))
 			return super.visitField(access, name, desc, sig, value);
-		}
 		return null;
 	}
 
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String sig, String[] exceptions) {
-		// Only visit if matching the target info and searching
-		if (finished)
-			return null;
-		if (member.isMethod() && member.getName().equals(name) && member.getDescriptor().equals(desc)) {
-			finished = true;
+		if (predicate.matchMethod(access, name, desc, sig, exceptions))
 			return super.visitMethod(access, name, desc, sig, exceptions);
-		}
 		return null;
 	}
 
@@ -101,4 +102,5 @@ public class SingleMemberVisitor extends ClassVisitor {
 		// Skip
 		return null;
 	}
+
 }

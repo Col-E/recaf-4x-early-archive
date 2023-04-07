@@ -1,5 +1,6 @@
 package software.coley.recaf.util.visitors;
 
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
@@ -16,7 +17,7 @@ public class SignatureRemovingVisitor extends ClassVisitor {
 	 * @param cv
 	 * 		Parent visitor.
 	 */
-	public SignatureRemovingVisitor(ClassVisitor cv) {
+	public SignatureRemovingVisitor(@Nullable ClassVisitor cv) {
 		super(RecafConstants.getAsmVersion(), cv);
 	}
 

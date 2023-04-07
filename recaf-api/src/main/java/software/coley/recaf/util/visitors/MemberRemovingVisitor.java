@@ -1,5 +1,7 @@
 package software.coley.recaf.util.visitors;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -12,7 +14,7 @@ import software.coley.recaf.info.member.ClassMember;
  * @author Matt Coley
  */
 public class MemberRemovingVisitor extends ClassVisitor {
-	private final ClassMember member;
+	private final MemberPredicate predicate;
 	private boolean removed;
 
 	/**
@@ -21,14 +23,24 @@ public class MemberRemovingVisitor extends ClassVisitor {
 	 * @param member
 	 * 		Member to remove.
 	 */
-	public MemberRemovingVisitor(ClassVisitor cv, ClassMember member) {
+	public MemberRemovingVisitor(@Nullable ClassVisitor cv, @Nonnull ClassMember member) {
+		this(cv, new SingleMemberPredicate(member));
+	}
+
+	/**
+	 * @param cv
+	 * 		Parent visitor where the removal will be applied in.
+	 * @param predicate
+	 * 		Predicate to match against the members to remove.
+	 */
+	public MemberRemovingVisitor(@Nullable ClassVisitor cv, @Nonnull MemberPredicate predicate) {
 		super(RecafConstants.getAsmVersion(), cv);
-		this.member = member;
+		this.predicate = predicate;
 	}
 
 	@Override
 	public FieldVisitor visitField(int access, String name, String desc, String sig, Object value) {
-		if (member.isField() && member.getName().equals(name) && member.getDescriptor().equals(desc)) {
+		if (predicate.matchField(access, name, desc, sig, value)) {
 			removed = true;
 			return null;
 		}
@@ -37,7 +49,7 @@ public class MemberRemovingVisitor extends ClassVisitor {
 
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String sig, String[] exceptions) {
-		if (member.isMethod() && member.getName().equals(name) && member.getDescriptor().equals(desc)) {
+		if (predicate.matchMethod(access, name, desc, sig, exceptions)) {
 			removed = true;
 			return null;
 		}

@@ -1,5 +1,6 @@
 package software.coley.recaf.util.visitors;
 
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.*;
 import software.coley.recaf.RecafConstants;
 
@@ -15,7 +16,7 @@ public class ClassHollowingVisitor extends ClassVisitor {
 	 * @param cv
 	 * 		Parent visitor.
 	 */
-	public ClassHollowingVisitor(ClassVisitor cv) {
+	public ClassHollowingVisitor(@Nullable ClassVisitor cv) {
 		super(RecafConstants.getAsmVersion(), cv);
 	}
 

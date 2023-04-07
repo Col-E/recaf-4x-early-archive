@@ -1,5 +1,6 @@
 package software.coley.recaf.util.visitors;
 
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.Attribute;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
@@ -23,7 +24,7 @@ public class CustomAttributeCollectingVisitor extends ClassVisitor {
 	 * @param cv
 	 * 		Parent visitor.
 	 */
-	public CustomAttributeCollectingVisitor(ClassVisitor cv) {
+	public CustomAttributeCollectingVisitor(@Nullable ClassVisitor cv) {
 		super(RecafConstants.getAsmVersion(), cv);
 		fieldCustomAttributes
 				= MultiMap.from(new HashMap<>(), ArrayList::new);

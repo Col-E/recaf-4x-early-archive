@@ -1,5 +1,6 @@
 package software.coley.recaf.util.visitors;
 
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.AnnotationVisitor;
 import software.coley.recaf.RecafConstants;
 
@@ -19,18 +20,10 @@ public class AnnotationArrayVisitor<T> extends AnnotationVisitor {
 	/**
 	 * @param visitor
 	 * 		Parent visitor.
-	 */
-	public AnnotationArrayVisitor(AnnotationVisitor visitor) {
-		this(visitor, null);
-	}
-
-	/**
-	 * @param visitor
-	 * 		Parent visitor.
 	 * @param onComplete
 	 * 		Action to run on completed array contents.
 	 */
-	public AnnotationArrayVisitor(AnnotationVisitor visitor, Consumer<List<T>> onComplete) {
+	public AnnotationArrayVisitor(@Nullable AnnotationVisitor visitor, @Nullable Consumer<List<T>> onComplete) {
 		super(RecafConstants.getAsmVersion(), visitor);
 		this.onComplete = onComplete;
 	}

@@ -1,5 +1,6 @@
 package software.coley.recaf.util.visitors;
 
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.*;
 import software.coley.recaf.RecafConstants;
 
@@ -13,7 +14,7 @@ public class VariableRemovingVisitor extends ClassVisitor {
 	 * @param cv
 	 * 		Parent visitor.
 	 */
-	public VariableRemovingVisitor(ClassVisitor cv) {
+	public VariableRemovingVisitor(@Nullable ClassVisitor cv) {
 		super(RecafConstants.getAsmVersion(), cv);
 	}
 

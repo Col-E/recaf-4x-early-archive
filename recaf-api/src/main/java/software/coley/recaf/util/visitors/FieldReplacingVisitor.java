@@ -1,5 +1,7 @@
 package software.coley.recaf.util.visitors;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.tree.FieldNode;
@@ -24,7 +26,9 @@ public class FieldReplacingVisitor extends ClassVisitor {
 	 * @param replacementField
 	 * 		Field to replace with.
 	 */
-	public FieldReplacingVisitor(ClassVisitor cv, FieldMember fieldMember, FieldNode replacementField) {
+	public FieldReplacingVisitor(@Nullable ClassVisitor cv,
+								 @Nonnull FieldMember fieldMember,
+								 @Nonnull FieldNode replacementField) {
 		super(RecafConstants.getAsmVersion(), cv);
 		this.fieldMember = fieldMember;
 		this.replacementField = replacementField;

@@ -1,5 +1,7 @@
 package software.coley.recaf.util.visitors;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.tree.MethodNode;
@@ -24,7 +26,9 @@ public class MethodReplacingVisitor extends ClassVisitor {
 	 * @param replacementMethod
 	 * 		Method to replace with.
 	 */
-	public MethodReplacingVisitor(ClassVisitor cv, MethodMember methodMember, MethodNode replacementMethod) {
+	public MethodReplacingVisitor(@Nullable ClassVisitor cv,
+								  @Nonnull MethodMember methodMember,
+								  @Nonnull MethodNode replacementMethod) {
 		super(RecafConstants.getAsmVersion(), cv);
 		this.methodMember = methodMember;
 		this.replacementMethod = replacementMethod;
