@@ -6,6 +6,7 @@ import jakarta.inject.Inject;
 import javafx.scene.control.ContextMenu;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.services.cell.*;
+import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -16,15 +17,13 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  * @author Matt Coley
  */
 @ApplicationScoped
-public class BasicPackageContextMenuProviderFactory implements PackageContextMenuProviderFactory {
-	private final TextProviderService textService;
-	private final IconProviderService iconService;
-
+public class BasicPackageContextMenuProviderFactory extends AbstractContextMenuProviderFactory
+		implements PackageContextMenuProviderFactory {
 	@Inject
 	public BasicPackageContextMenuProviderFactory(@Nonnull TextProviderService textService,
-												  @Nonnull IconProviderService iconService) {
-		this.textService = textService;
-		this.iconService = iconService;
+												  @Nonnull IconProviderService iconService,
+												  @Nonnull Actions actions) {
+		super(textService, iconService, actions);
 	}
 
 	@Nonnull
@@ -40,6 +39,12 @@ public class BasicPackageContextMenuProviderFactory implements PackageContextMen
 			ContextMenu menu = new ContextMenu();
 			addHeader(menu, nameProvider.makeText(), iconProvider.makeIcon());
 			// TODO: implement operations
+			//  - Copy
+			//  - Delete
+			//  - Refactor
+			//    - Rename
+			//    - Move
+			//  - Search references
 			return menu;
 		};
 	}

@@ -28,19 +28,14 @@ import static software.coley.recaf.util.Menus.action;
  * @author Matt Coley
  */
 @ApplicationScoped
-public class BasicMethodContextMenuProviderFactory implements MethodContextMenuProviderFactory {
+public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuProviderFactory implements MethodContextMenuProviderFactory {
 	private static final Logger logger = Logging.get(BasicMethodContextMenuProviderFactory.class);
-	private final TextProviderService textService;
-	private final IconProviderService iconService;
-	private final Actions actions;
 
 	@Inject
 	public BasicMethodContextMenuProviderFactory(@Nonnull TextProviderService textService,
 												 @Nonnull IconProviderService iconService,
 												 @Nonnull Actions actions) {
-		this.textService = textService;
-		this.iconService = iconService;
-		this.actions = actions;
+		super(textService, iconService, actions);
 	}
 
 	@Nonnull
@@ -69,6 +64,25 @@ public class BasicMethodContextMenuProviderFactory implements MethodContextMenuP
 						}
 					}));
 			// TODO: implement additional operations
+			//  - Go to
+			//  - Edit
+			//    - (field / method assembler)
+			//    - Add annotation
+			//    - Remove annotations
+			//    - Make no-op
+			//  - Copy
+			//  - Delete
+			//  - Refactor
+			//    - Rename
+			//  - Search references
+			//  - View
+			//    - Control flow graph
+			//    - Application flow graph
+			//  - Deobfuscate
+			//    - Regenerate variable names
+			//    - Optimize with pattern matchers
+			//    - Optimize with SSVM
+			//  - Simulate with SSVM (Virtualize > Run)
 			return menu;
 		};
 	}

@@ -28,19 +28,15 @@ import static software.coley.recaf.util.Menus.action;
  * @author Matt Coley
  */
 @ApplicationScoped
-public class BasicFieldContextMenuProviderFactory implements FieldContextMenuProviderFactory {
+public class BasicFieldContextMenuProviderFactory extends AbstractContextMenuProviderFactory
+		implements FieldContextMenuProviderFactory {
 	private static final Logger logger = Logging.get(BasicFieldContextMenuProviderFactory.class);
-	private final TextProviderService textService;
-	private final IconProviderService iconService;
-	private final Actions actions;
 
 	@Inject
 	public BasicFieldContextMenuProviderFactory(@Nonnull TextProviderService textService,
 												@Nonnull IconProviderService iconService,
 												@Nonnull Actions actions) {
-		this.textService = textService;
-		this.iconService = iconService;
-		this.actions = actions;
+		super(textService, iconService, actions);
 	}
 
 	@Nonnull
@@ -69,6 +65,16 @@ public class BasicFieldContextMenuProviderFactory implements FieldContextMenuPro
 						}
 					}));
 			// TODO: implement operations
+			//  - Go to
+			//  - Edit
+			//    - (field / method assembler)
+			//    - Add annotation
+			//    - Remove annotations
+			//  - Copy
+			//  - Delete
+			//  - Refactor
+			//    - Rename
+			//  - Search references
 			return menu;
 		};
 	}

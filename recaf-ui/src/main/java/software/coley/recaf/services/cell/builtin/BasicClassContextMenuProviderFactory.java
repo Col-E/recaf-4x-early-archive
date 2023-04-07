@@ -26,18 +26,13 @@ import static software.coley.recaf.util.Menus.action;
  * @author Matt Coley
  */
 @ApplicationScoped
-public class BasicClassContextMenuProviderFactory implements ClassContextMenuProviderFactory {
-	private final TextProviderService textService;
-	private final IconProviderService iconService;
-	private final Actions actions;
-
+public class BasicClassContextMenuProviderFactory extends AbstractContextMenuProviderFactory
+		implements ClassContextMenuProviderFactory {
 	@Inject
 	public BasicClassContextMenuProviderFactory(@Nonnull TextProviderService textService,
 												@Nonnull IconProviderService iconService,
 												@Nonnull Actions actions) {
-		this.textService = textService;
-		this.iconService = iconService;
-		this.actions = actions;
+		super(textService, iconService, actions);
 	}
 
 	@Nonnull
@@ -48,8 +43,8 @@ public class BasicClassContextMenuProviderFactory implements ClassContextMenuPro
 																  @Nonnull JvmClassBundle bundle,
 																  @Nonnull JvmClassInfo info) {
 		return () -> {
-			ContextMenu menu = createCommon(workspace, resource, bundle, info);
-			populateJvmMenu(menu, workspace, resource, bundle, info);
+			ContextMenu menu = createMenu(source, workspace, resource, bundle, info);
+			populateJvmMenu(menu, source, workspace, resource, bundle, info);
 			return menu;
 		};
 	}
@@ -62,13 +57,15 @@ public class BasicClassContextMenuProviderFactory implements ClassContextMenuPro
 																	  @Nonnull AndroidClassBundle bundle,
 																	  @Nonnull AndroidClassInfo info) {
 		return () -> {
-			ContextMenu menu = createCommon(workspace, resource, bundle, info);
-			populateAndroidMenu(menu, workspace, resource, bundle, info);
+			ContextMenu menu = createMenu(source, workspace, resource, bundle, info);
+			populateAndroidMenu(menu, source, workspace, resource, bundle, info);
 			return menu;
 		};
 	}
 
 	/**
+	 * @param source
+	 * 		Context source.
 	 * @param workspace
 	 * 		Containing workspace.
 	 * @param resource
@@ -78,12 +75,13 @@ public class BasicClassContextMenuProviderFactory implements ClassContextMenuPro
 	 * @param info
 	 * 		The class to create a menu for.
 	 *
-	 * @return Initial menu with common setup between JVM and Android classes.
+	 * @return Initial menu header for the class.
 	 */
-	private ContextMenu createCommon(@Nonnull Workspace workspace,
-									 @Nonnull WorkspaceResource resource,
-									 @Nonnull ClassBundle<? extends ClassInfo> bundle,
-									 @Nonnull ClassInfo info) {
+	private ContextMenu createMenu(@Nonnull ContextSource source,
+								   @Nonnull Workspace workspace,
+								   @Nonnull WorkspaceResource resource,
+								   @Nonnull ClassBundle<? extends ClassInfo> bundle,
+								   @Nonnull ClassInfo info) {
 		TextProvider nameProvider;
 		IconProvider iconProvider;
 		if (info.isJvmClass()) {
@@ -109,6 +107,8 @@ public class BasicClassContextMenuProviderFactory implements ClassContextMenuPro
 	 *
 	 * @param menu
 	 * 		Menu to append content to.
+	 * @param source
+	 * 		Context source.
 	 * @param workspace
 	 * 		Containing workspace.
 	 * @param resource
@@ -119,24 +119,39 @@ public class BasicClassContextMenuProviderFactory implements ClassContextMenuPro
 	 * 		The class to create a menu for.
 	 */
 	private void populateJvmMenu(@Nonnull ContextMenu menu,
+								 @Nonnull ContextSource source,
 								 @Nonnull Workspace workspace,
 								 @Nonnull WorkspaceResource resource,
 								 @Nonnull JvmClassBundle bundle,
 								 @Nonnull JvmClassInfo info) {
-		// TODO: implement operations
-		//  - edit
-		//    - class assembler
-		//    - copy
-		//    - delete
-		//  - refactor
-		//    - move
-		//    - rename
-		//  - search references
-		//  - view
-		//    - class hierarchy
 		ObservableList<MenuItem> items = menu.getItems();
-		items.add(action("menu.goto.class", CarbonIcons.ARROW_RIGHT,
-				() -> actions.gotoDeclaration(workspace, resource, bundle, info)));
+		if (source.isReference()) {
+			items.add(action("menu.goto.class", CarbonIcons.ARROW_RIGHT,
+					() -> actions.gotoDeclaration(workspace, resource, bundle, info)));
+		} else if (source.isDeclaration()) {
+			// TODO: implement operations
+			//  - Edit
+			//    - (class assembler)
+			//    - Add field
+			//    - Add method
+			//    - Add annotation
+			//    - Remove fields
+			//    - Remove methods
+			//    - Remove annotations
+			//  - Copy
+			//  - Delete
+		}
+		// TODO: implement operations
+		//  - Refactor
+		//    - Rename
+		//    - Move
+		//  - Search references
+		//  - View
+		//    - Class hierarchy
+		//  - Deobfuscate
+		//    - Suggest class name / purpose
+		//    - Suggest method names / purposes (get/set)
+		//    - Organize fields (constants -> finals -> non-finals
 	}
 
 	/**
@@ -144,6 +159,8 @@ public class BasicClassContextMenuProviderFactory implements ClassContextMenuPro
 	 *
 	 * @param menu
 	 * 		Menu to append content to.
+	 * @param source
+	 * 		Context source.
 	 * @param workspace
 	 * 		Containing workspace.
 	 * @param resource
@@ -154,21 +171,30 @@ public class BasicClassContextMenuProviderFactory implements ClassContextMenuPro
 	 * 		The class to create a menu for.
 	 */
 	private void populateAndroidMenu(@Nonnull ContextMenu menu,
-									 @Nonnull Workspace workspace,
+									 ContextSource source, @Nonnull Workspace workspace,
 									 @Nonnull WorkspaceResource resource,
 									 @Nonnull AndroidClassBundle bundle,
 									 @Nonnull AndroidClassInfo info) {
 		// TODO: implement operations
-		//  - edit
-		//    - class assembler
-		//    - copy
-		//    - delete
-		//  - refactor
-		//    - move
-		//    - rename
-		//  - search references
-		//  - view
-		//    - class hierarchy
+		//  - Edit
+		//    - (class assembler)
+		//    - Add field
+		//    - Add method
+		//    - Add annotation
+		//    - Remove fields
+		//    - Remove methods
+		//    - Remove annotations
+		//  - Copy
+		//  - Delete
+		//  - Refactor
+		//    - Rename
+		//    - Move
+		//  - Search references
+		//  - View
+		//    - Class hierarchy
+		//  - Deobfuscate
+		//    - Suggest class name / purpose
+		//    - Suggest method names / purposes (get/set)
 		ObservableList<MenuItem> items = menu.getItems();
 		items.add(action("menu.goto.class", CarbonIcons.ARROW_RIGHT,
 				() -> actions.gotoDeclaration(workspace, resource, bundle, info)));
