@@ -7,7 +7,7 @@ import software.coley.recaf.RecafConstants;
 import software.coley.recaf.info.member.ClassMember;
 
 /**
- * A visitor that visits only matched members. Everything else is stripped.
+ * A visitor that keeps only matched members. Everything else is removed.
  *
  * @author Matt Coley
  */
