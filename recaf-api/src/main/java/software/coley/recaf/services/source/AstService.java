@@ -11,8 +11,6 @@ import software.coley.recaf.services.Service;
 import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.workspace.model.Workspace;
-import software.coley.recaf.workspace.model.bundle.Bundle;
-import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.Map;
 import java.util.Objects;
@@ -42,28 +40,7 @@ public class AstService implements Service {
 	//  - See: 'org.openrewrite.java.style'
 
 	/**
-	 * Allocates a parser with the class-path of the complete workspace.
-	 *
-	 * @return New parser instance to handle any class in the workspace.
-	 *
-	 * @see #newParser(JvmClassInfo) Creates a parser with a smaller classpath <i>(Only classes referenced by the given info type)</i>
-	 */
-	@Nonnull
-	public JavaParser newParser() {
-		// Collect bytes of all classes in the workspace.
-		byte[][] classpath = workspace.getAllResources(false).stream()
-				.flatMap(WorkspaceResource::jvmClassBundleStream)
-				.flatMap(Bundle::stream)
-				.map(JvmClassInfo::getBytecode)
-				.toArray(byte[][]::new);
-		return JavaParser.fromJavaVersion()
-				.classpath(classpath)
-				.typeCache(javaTypeCache)
-				.build();
-	}
-
-	/**
-	 * Allocates a parser with the class-path of just classes referenced by the given class.
+	 * Allocates a parser with the class-path of classes referenced by the given class.
 	 *
 	 * @param target
 	 * 		Class to target.
