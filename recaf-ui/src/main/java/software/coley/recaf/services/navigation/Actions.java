@@ -19,10 +19,7 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
-import software.coley.recaf.path.ClassPathNode;
-import software.coley.recaf.path.IncompletePathException;
-import software.coley.recaf.path.PathNode;
-import software.coley.recaf.path.WorkspacePathNode;
+import software.coley.recaf.path.*;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.cell.IconProviderService;
 import software.coley.recaf.services.cell.TextProviderService;
@@ -79,6 +76,9 @@ public class Actions implements Service {
 	}
 
 	/**
+	 * Brings a {@link ClassNavigable} component representing the given class into focus.
+	 * If no such component exists, one is created.
+	 * <br>
 	 * Automatically calls the type-specific goto-declaration handling.
 	 *
 	 * @param path
@@ -118,6 +118,9 @@ public class Actions implements Service {
 	}
 
 	/**
+	 * Brings a {@link ClassNavigable} component representing the given class into focus.
+	 * If no such component exists, one is created.
+	 *
 	 * @param workspace
 	 * 		Containing workspace.
 	 * @param resource
@@ -177,6 +180,9 @@ public class Actions implements Service {
 	}
 
 	/**
+	 * Brings a {@link ClassNavigable} component representing the given class into focus.
+	 * If no such component exists, one is created.
+	 *
 	 * @param workspace
 	 * 		Containing workspace.
 	 * @param resource
@@ -357,11 +363,7 @@ public class Actions implements Service {
 										   @Nonnull WorkspaceResource resource,
 										   @Nonnull Bundle<?> bundle,
 										   @Nonnull ClassInfo info) {
-		return new WorkspacePathNode(workspace)
-				.child(resource)
-				.child(bundle)
-				.child(info.getPackageName())
-				.child(info);
+		return PathNodes.classPath(workspace, resource, bundle, info);
 	}
 
 	@Nonnull

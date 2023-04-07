@@ -13,7 +13,7 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.IncompletePathException;
-import software.coley.recaf.path.WorkspacePathNode;
+import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.cell.*;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.workspace.model.Workspace;
@@ -60,11 +60,7 @@ public class BasicFieldContextMenuProviderFactory implements FieldContextMenuPro
 			ObservableList<MenuItem> items = menu.getItems();
 			items.add(action("menu.goto.field", CarbonIcons.ARROW_RIGHT,
 					() -> {
-						ClassPathNode classPath = new WorkspacePathNode(workspace)
-								.child(resource)
-								.child(bundle)
-								.child(declaringClass.getPackageName())
-								.child(declaringClass);
+						ClassPathNode classPath = PathNodes.classPath(workspace, resource, bundle, declaringClass);
 						try {
 							actions.gotoDeclaration(classPath)
 									.requestFocus(field);

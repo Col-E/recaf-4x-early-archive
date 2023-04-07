@@ -130,11 +130,7 @@ public interface Workspace extends Closing {
 			JvmClassBundle bundle = resource.getJvmClassBundle();
 			JvmClassInfo classInfo = bundle.get(name);
 			if (classInfo != null)
-				return new WorkspacePathNode(this)
-						.child(resource)
-						.child(bundle)
-						.child(classInfo.getPackageName())
-						.child(classInfo);
+				return PathNodes.classPath(this, resource, bundle, classInfo);
 		}
 		return null;
 	}
@@ -171,11 +167,7 @@ public interface Workspace extends Closing {
 			JvmClassBundle bundle = entry.getValue();
 			JvmClassInfo classInfo = bundle.get(name);
 			if (classInfo != null)
-				return new WorkspacePathNode(this)
-						.child(resource)
-						.child(bundle)
-						.child(classInfo.getPackageName())
-						.child(classInfo);
+				return PathNodes.classPath(this, resource, bundle, classInfo);
 		}
 		return null;
 	}
@@ -192,11 +184,7 @@ public interface Workspace extends Closing {
 			for (AndroidClassBundle bundle : resource.getAndroidClassBundles().values()) {
 				AndroidClassInfo classInfo = bundle.get(name);
 				if (classInfo != null)
-					return new WorkspacePathNode(this)
-							.child(resource)
-							.child(bundle)
-							.child(classInfo.getPackageName())
-							.child(classInfo);
+					return PathNodes.classPath(this, resource, bundle, classInfo);
 			}
 		}
 		return null;
@@ -226,10 +214,7 @@ public interface Workspace extends Closing {
 			for (ClassBundle<? extends ClassInfo> bundle : resource.classBundleStream().toList()) {
 				for (String key : bundle.keySet()) {
 					if (key.startsWith(cmp))
-						return new WorkspacePathNode(this)
-								.child(resource)
-								.child(bundle)
-								.child(name);
+						return PathNodes.directoryPath(this, resource, bundle, name);
 				}
 			}
 		}
@@ -339,19 +324,11 @@ public interface Workspace extends Closing {
 			FileBundle bundle = resource.getFileBundle();
 			FileInfo fileInfo = bundle.get(name);
 			if (fileInfo != null)
-				return new WorkspacePathNode(this)
-						.child(resource)
-						.child(bundle)
-						.child(fileInfo.getDirectoryName())
-						.child(fileInfo);
+				return PathNodes.filePath(this, resource, bundle, fileInfo);
 			for (WorkspaceFileResource embedded : resource.getEmbeddedResources().values()) {
 				FileInfo embeddedFileInfo = embedded.getFileInfo();
 				if (embeddedFileInfo.getName().equals(name))
-					return new WorkspacePathNode(this)
-							.child(resource)
-							.child(bundle)
-							.child(embeddedFileInfo.getDirectoryName())
-							.child(embeddedFileInfo);
+					return PathNodes.filePath(this, resource, bundle, embeddedFileInfo);
 			}
 		}
 		return null;
