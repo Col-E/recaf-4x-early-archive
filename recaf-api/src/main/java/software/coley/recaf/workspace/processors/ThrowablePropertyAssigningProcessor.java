@@ -8,6 +8,7 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.properties.builtin.ThrowableProperty;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.services.inheritance.InheritanceVertex;
 import software.coley.recaf.workspace.WorkspaceModificationListener;
 import software.coley.recaf.workspace.WorkspaceProcessor;
 import software.coley.recaf.workspace.model.Workspace;
@@ -65,10 +66,10 @@ public class ThrowablePropertyAssigningProcessor implements WorkspaceProcessor, 
 		return "Mark throwable types";
 	}
 
-	private void handle(ClassInfo cls) {
-		if (graph.getVertex(cls.getName()).hasParent(THROWABLE)) {
+	private void handle(@Nonnull ClassInfo cls) {
+		InheritanceVertex vertex = graph.getVertex(cls.getName());
+		if (vertex != null && vertex.hasParent(THROWABLE))
 			ThrowableProperty.set(cls);
-		}
 	}
 
 	@Override
