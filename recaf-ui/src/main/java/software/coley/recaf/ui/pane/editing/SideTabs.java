@@ -158,7 +158,7 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 
 	@Override
 	public void onUpdatePath(@Nonnull PathNode<?> path) {
-		if (this.path == null || this.path.getValue() == path.getClass()) {
+		if (this.path == null || this.path.getClass() == path.getClass()) {
 			this.path = path;
 			for (Navigable navigable : getNavigableChildren()) {
 				if (navigable instanceof UpdatableNavigable updatable) {

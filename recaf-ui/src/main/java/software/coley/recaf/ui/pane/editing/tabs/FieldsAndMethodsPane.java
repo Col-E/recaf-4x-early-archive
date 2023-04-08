@@ -45,7 +45,6 @@ import software.coley.recaf.util.Translatable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -90,7 +89,7 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 	 */
 	public void setupSelectionNavigationListener(@Nonnull ClassNavigable navigableClass) {
 		tree.getSelectionModel().selectedItemProperty().addListener((ob, old, current) -> {
-			if (!navigationLock && current.getValue() instanceof ClassMemberPathNode memberPathNode) {
+			if (!navigationLock && current != null && current.getValue() instanceof ClassMemberPathNode memberPathNode) {
 				navigationLock = true;
 				navigableClass.requestFocus(memberPathNode.getValue());
 				navigationLock = false;

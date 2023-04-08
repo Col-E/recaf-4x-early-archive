@@ -100,6 +100,13 @@ public abstract class ClassPane extends BorderPane implements ClassNavigable, Up
 		for (Navigable navigableChild : getNavigableChildren())
 			if (navigableChild instanceof ClassNavigable navigableClass)
 				navigableClass.requestFocus(member);
+			else {
+				// The side-tabs are not class-navigable, but some the side-tab's contents are.
+				// We will thus check the children of non class-navigable components to address this.
+				for (Navigable childOfChild : navigableChild.getNavigableChildren())
+					if (childOfChild instanceof ClassNavigable upnavigableClassatable)
+						upnavigableClassatable.requestFocus(member);
+			}
 	}
 
 	@Override
