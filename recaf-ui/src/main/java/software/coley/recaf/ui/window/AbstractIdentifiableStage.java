@@ -1,14 +1,13 @@
 package software.coley.recaf.ui.window;
 
 import javafx.stage.Stage;
-import software.coley.recaf.util.Icons;
 
 /**
  * Base implementation of {@link IdentifiableStage}.
  *
  * @author Matt Coley
  */
-public class AbstractIdentifiableStage extends Stage implements IdentifiableStage {
+public class AbstractIdentifiableStage extends RecafStage implements IdentifiableStage {
 	private final String id;
 
 	/**
@@ -17,9 +16,6 @@ public class AbstractIdentifiableStage extends Stage implements IdentifiableStag
 	 */
 	public AbstractIdentifiableStage(String id) {
 		this.id = id;
-
-		// Add icon
-		getIcons().add(Icons.getImage(Icons.LOGO));
 	}
 
 	@Override

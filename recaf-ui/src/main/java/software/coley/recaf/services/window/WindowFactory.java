@@ -7,6 +7,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import software.coley.recaf.services.Service;
+import software.coley.recaf.ui.window.RecafStage;
 import software.coley.recaf.util.Icons;
 
 /**
@@ -73,11 +74,10 @@ public class WindowFactory implements Service {
 
 	@Nonnull
 	private Stage create(@Nonnull Scene scene, int minWidth, int minHeight) {
-		Stage stage = new Stage();
+		Stage stage = new RecafStage();
 		stage.setScene(scene);
 		stage.setMinWidth(minWidth);
 		stage.setMinHeight(minHeight);
-		stage.getIcons().add(Icons.getImage(Icons.LOGO));
 		return stage;
 	}
 
