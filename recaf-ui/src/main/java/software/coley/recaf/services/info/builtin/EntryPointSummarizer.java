@@ -78,8 +78,8 @@ public class EntryPointSummarizer implements ResourceSummarizer {
 						methodLabel.setOnMouseEntered(e -> methodLabel.getStyleClass().add(Styles.TEXT_UNDERLINED));
 						methodLabel.setOnMouseExited(e -> methodLabel.getStyleClass().remove(Styles.TEXT_UNDERLINED));
 						methodLabel.setOnMouseClicked(e -> {
-							// TODO: Navigate to method
-							//  - actions.gotoDeclaration(workspace, resource, bundle, cls, method);
+							actions.gotoDeclaration(workspace, resource, bundle, cls)
+									.requestFocus(method);
 						});
 						consumer.appendSummary(methodLabel);
 						found[0]++;

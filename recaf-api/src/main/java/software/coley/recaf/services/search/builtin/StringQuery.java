@@ -32,13 +32,9 @@ public class StringQuery extends AbstractValueQuery {
 
 	@Override
 	protected boolean isMatch(Object value) {
-		if (value instanceof String)
-			return isMatch((String) value);
+		if (value instanceof String text)
+			return matchMode.match(target, text);
 		return false;
-	}
-
-	protected boolean isMatch(String text) {
-		return matchMode.match(target, text);
 	}
 
 	@Nonnull

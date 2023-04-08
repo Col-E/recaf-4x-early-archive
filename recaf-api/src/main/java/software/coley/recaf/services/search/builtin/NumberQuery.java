@@ -36,13 +36,9 @@ public class NumberQuery extends AbstractValueQuery {
 
 	@Override
 	protected boolean isMatch(Object value) {
-		if (value instanceof Number)
-			return isMatch((Number) value);
+		if (value instanceof Number number)
+			return matchMode.match(target, number);
 		return false;
-	}
-
-	protected boolean isMatch(Number number) {
-		return matchMode.match(target, number);
 	}
 
 	@Nonnull
