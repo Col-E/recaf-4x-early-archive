@@ -5,6 +5,8 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.recaf.info.*;
+import software.coley.recaf.info.annotation.Annotated;
+import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
@@ -44,6 +46,7 @@ public class IconProviderService implements Service {
 	private final InnerClassIconProviderFactory innerClassIconDefault;
 	private final FieldIconProviderFactory fieldIconDefault;
 	private final MethodIconProviderFactory methodIconDefault;
+	private final AnnotationIconProviderFactory annotationIconDefault;
 	private final PackageIconProviderFactory packageIconDefault;
 	private final DirectoryIconProviderFactory directoryIconDefault;
 	private final BundleIconProviderFactory bundleIconDefault;
@@ -54,6 +57,7 @@ public class IconProviderService implements Service {
 	private InnerClassIconProviderFactory innerClassIconOverride;
 	private FieldIconProviderFactory fieldIconOverride;
 	private MethodIconProviderFactory methodIconOverride;
+	private AnnotationIconProviderFactory annotationIconOverride;
 	private PackageIconProviderFactory packageIconOverride;
 	private DirectoryIconProviderFactory directoryIconOverride;
 	private BundleIconProviderFactory bundleIconOverride;
@@ -66,6 +70,7 @@ public class IconProviderService implements Service {
 							   @Nonnull InnerClassIconProviderFactory innerClassIconDefault,
 							   @Nonnull FieldIconProviderFactory fieldIconDefault,
 							   @Nonnull MethodIconProviderFactory methodIconDefault,
+							   @Nonnull AnnotationIconProviderFactory annotationIconDefault,
 							   @Nonnull PackageIconProviderFactory packageIconDefault,
 							   @Nonnull DirectoryIconProviderFactory directoryIconDefault,
 							   @Nonnull BundleIconProviderFactory bundleIconDefault,
@@ -78,6 +83,7 @@ public class IconProviderService implements Service {
 		this.innerClassIconDefault = innerClassIconDefault;
 		this.fieldIconDefault = fieldIconDefault;
 		this.methodIconDefault = methodIconDefault;
+		this.annotationIconDefault = annotationIconDefault;
 		this.packageIconDefault = packageIconDefault;
 		this.directoryIconDefault = directoryIconDefault;
 		this.bundleIconDefault = bundleIconDefault;
@@ -210,6 +216,32 @@ public class IconProviderService implements Service {
 		} else {
 			throw new IllegalStateException("Unsupported member: " + member.getClass().getName());
 		}
+	}
+
+	/**
+	 * Delegates to {@link AnnotationIconProviderFactory}.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param annotated
+	 * 		The annotated item.
+	 * @param annotation
+	 * 		The annotation to create an icon for.
+	 *
+	 * @return Text provider for the annotation.
+	 */
+	@Nonnull
+	public IconProvider getAnnotationIconProvider(@Nonnull Workspace workspace,
+												  @Nonnull WorkspaceResource resource,
+												  @Nonnull ClassBundle<? extends ClassInfo> bundle,
+												  @Nonnull Annotated annotated,
+												  @Nonnull AnnotationInfo annotation) {
+		AnnotationIconProviderFactory factory = annotationIconOverride != null ? annotationIconOverride : annotationIconDefault;
+		return factory.getAnnotationIconProvider(workspace, resource, bundle, annotated, annotation);
 	}
 
 	/**
@@ -421,6 +453,22 @@ public class IconProviderService implements Service {
 	 */
 	public void setMethodIconProviderOverride(@Nonnull MethodIconProviderFactory methodIconOverride) {
 		this.methodIconOverride = methodIconOverride;
+	}
+
+	/**
+	 * @return Override factory for supplying annotation icon providers.
+	 */
+	@Nonnull
+	public AnnotationIconProviderFactory getAnnotationIconProviderOverride() {
+		return annotationIconOverride;
+	}
+
+	/**
+	 * @param annotationIconOverride
+	 * 		Override factory for supplying annotation icon providers.
+	 */
+	public void setAnnotationIconProviderOverride(@Nonnull AnnotationIconProviderFactory annotationIconOverride) {
+		this.annotationIconOverride = annotationIconOverride;
 	}
 
 	/**

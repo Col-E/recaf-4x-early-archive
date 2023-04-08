@@ -7,7 +7,7 @@ import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 /**
- * Icon provider for {@link Bundle types}, to be plugged into {@link IconProviderService}
+ * Icon provider for {@link Bundle bundles}, to be plugged into {@link IconProviderService}
  * to allow for third party icon customization.
  *
  * @author Matt Coley

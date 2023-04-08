@@ -5,6 +5,8 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.recaf.info.*;
+import software.coley.recaf.info.annotation.Annotated;
+import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
@@ -44,6 +46,7 @@ public class ContextMenuProviderService implements Service {
 	private final InnerClassContextMenuProviderFactory innerClassContextMenuDefault;
 	private final FieldContextMenuProviderFactory fieldContextMenuDefault;
 	private final MethodContextMenuProviderFactory methodContextMenuDefault;
+	private final AnnotationContextMenuProviderFactory annotationContextMenuDefault;
 	private final PackageContextMenuProviderFactory packageContextMenuDefault;
 	private final DirectoryContextMenuProviderFactory directoryContextMenuDefault;
 	private final BundleContextMenuProviderFactory bundleContextMenuDefault;
@@ -54,6 +57,7 @@ public class ContextMenuProviderService implements Service {
 	private InnerClassContextMenuProviderFactory innerClassContextMenuOverride;
 	private FieldContextMenuProviderFactory fieldContextMenuOverride;
 	private MethodContextMenuProviderFactory methodContextMenuOverride;
+	private AnnotationContextMenuProviderFactory annotationContextMenuOverride;
 	private PackageContextMenuProviderFactory packageContextMenuOverride;
 	private DirectoryContextMenuProviderFactory directoryContextMenuOverride;
 	private BundleContextMenuProviderFactory bundleContextMenuOverride;
@@ -66,6 +70,7 @@ public class ContextMenuProviderService implements Service {
 									  @Nonnull InnerClassContextMenuProviderFactory innerClassContextMenuDefault,
 									  @Nonnull FieldContextMenuProviderFactory fieldContextMenuDefault,
 									  @Nonnull MethodContextMenuProviderFactory methodContextMenuDefault,
+									  @Nonnull AnnotationContextMenuProviderFactory annotationContextMenuDefault,
 									  @Nonnull PackageContextMenuProviderFactory packageContextMenuDefault,
 									  @Nonnull DirectoryContextMenuProviderFactory directoryContextMenuDefault,
 									  @Nonnull BundleContextMenuProviderFactory bundleContextMenuDefault,
@@ -78,6 +83,7 @@ public class ContextMenuProviderService implements Service {
 		this.innerClassContextMenuDefault = innerClassContextMenuDefault;
 		this.fieldContextMenuDefault = fieldContextMenuDefault;
 		this.methodContextMenuDefault = methodContextMenuDefault;
+		this.annotationContextMenuDefault = annotationContextMenuDefault;
 		this.packageContextMenuDefault = packageContextMenuDefault;
 		this.directoryContextMenuDefault = directoryContextMenuDefault;
 		this.bundleContextMenuDefault = bundleContextMenuDefault;
@@ -195,6 +201,33 @@ public class ContextMenuProviderService implements Service {
 		} else {
 			throw new IllegalStateException("Unsupported member: " + member.getClass().getName());
 		}
+	}
+
+	/**
+	 * Delegates to {@link AnnotationContextMenuProviderFactory}.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param annotated
+	 * 		The annotated item.
+	 * @param annotation
+	 * 		The annotation to create an icon for.
+	 *
+	 * @return Text provider for the annotation.
+	 */
+	@Nonnull
+	public ContextMenuProvider getAnnotationContextMenuProvider(@Nonnull ContextSource source,
+																@Nonnull Workspace workspace,
+																@Nonnull WorkspaceResource resource,
+																@Nonnull ClassBundle<? extends ClassInfo> bundle,
+																@Nonnull Annotated annotated,
+																@Nonnull AnnotationInfo annotation) {
+		AnnotationContextMenuProviderFactory factory = annotationContextMenuOverride != null ? annotationContextMenuOverride : annotationContextMenuDefault;
+		return factory.getAnnotationContextMenuProvider(source, workspace, resource, bundle, annotated, annotation);
 	}
 
 	/**
@@ -444,6 +477,22 @@ public class ContextMenuProviderService implements Service {
 	 */
 	public void setMethodContextMenuProviderOverride(@Nullable MethodContextMenuProviderFactory methodContextMenuOverride) {
 		this.methodContextMenuOverride = methodContextMenuOverride;
+	}
+
+	/**
+	 * @return Override factory for supplying annotation menu providers.
+	 */
+	@Nullable
+	public AnnotationContextMenuProviderFactory getAnnotationContextMenuProviderOverride() {
+		return annotationContextMenuOverride;
+	}
+
+	/**
+	 * @param annotationContextMenuOverride
+	 * 		Override factory for supplying annotation menu providers.
+	 */
+	public void setAnnotationContextMenuProviderOverride(@Nullable AnnotationContextMenuProviderFactory annotationContextMenuOverride) {
+		this.annotationContextMenuOverride = annotationContextMenuOverride;
 	}
 
 	/**

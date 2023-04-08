@@ -15,6 +15,8 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.InnerClassInfo;
+import software.coley.recaf.info.annotation.Annotated;
+import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
@@ -71,8 +73,6 @@ public class CellConfigurationService implements Service {
 		this.actions = actions;
 
 		// TODO: Handle new path types
-		//  (ANNOTATABLE - CLASS/FIELD/METHOD, other locations don't matter as much)
-		//   - AnnotationPathNode
 		//  (FILE)
 		//   - LineNumberPathNode
 		//  (METHOD)
@@ -234,6 +234,21 @@ public class CellConfigurationService implements Service {
 			InnerClassInfo innerClass = innerClassPath.getValue();
 			return textService.getInnerClassInfoTextProvider(workspace, resource,
 					bundle, outerClass.asJvmClass(), innerClass).makeText();
+		} else if (item instanceof AnnotationPathNode annotationPath) {
+			ClassBundle<? extends ClassInfo> bundle = annotationPath.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Annotation path node missing bundle section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			Annotated annotated = annotationPath.getValueOfType(Annotated.class);
+			if (annotated == null) {
+				logger.error("Annotation path node missing annotated element section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			AnnotationInfo annotation = annotationPath.getValue();
+			return textService.getAnnotationTextProvider(workspace, resource, bundle, annotated, annotation).makeText();
 		} else if (item instanceof BundlePathNode bundlePath) {
 			return textService.getBundleTextProvider(workspace, resource, bundlePath.getValue()).makeText();
 		} else if (item instanceof ResourcePathNode) {
@@ -331,7 +346,22 @@ public class CellConfigurationService implements Service {
 			InnerClassInfo innerClass = innerClassPath.getValue();
 			return iconService.getInnerClassInfoIconProvider(workspace, resource,
 					bundle, outerClass.asJvmClass(), innerClass).makeIcon();
-		} else if (item instanceof BundlePathNode bundlePath) {
+		}else if (item instanceof AnnotationPathNode annotationPath) {
+			ClassBundle<? extends ClassInfo> bundle = annotationPath.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Annotation path node missing bundle section: {}", item);
+				return UNKNOWN_GRAPHIC;
+			}
+
+			Annotated annotated = annotationPath.getValueOfType(Annotated.class);
+			if (annotated == null) {
+				logger.error("Annotation path node missing annotated element section: {}", item);
+				return UNKNOWN_GRAPHIC;
+			}
+
+			AnnotationInfo annotation = annotationPath.getValue();
+			return iconService.getAnnotationIconProvider(workspace, resource, bundle, annotated, annotation).makeIcon();
+		}  else if (item instanceof BundlePathNode bundlePath) {
 			return iconService.getBundleIconProvider(workspace, resource, bundlePath.getValue()).makeIcon();
 		} else if (item instanceof ResourcePathNode) {
 			return iconService.getResourceIconProvider(workspace, resource).makeIcon();
@@ -430,6 +460,21 @@ public class CellConfigurationService implements Service {
 			InnerClassInfo innerClass = innerClassPath.getValue();
 			return contextMenuService.getInnerClassInfoContextMenuProvider(source, workspace, resource,
 					bundle, outerClass.asJvmClass(), innerClass).makeMenu();
+		} else if (item instanceof AnnotationPathNode annotationPath) {
+			ClassBundle<? extends ClassInfo> bundle = annotationPath.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Annotation path node missing bundle section: {}", item);
+				return null;
+			}
+
+			Annotated annotated = annotationPath.getValueOfType(Annotated.class);
+			if (annotated == null) {
+				logger.error("Annotation path node missing annotated element section: {}", item);
+				return null;
+			}
+
+			AnnotationInfo annotation = annotationPath.getValue();
+			return contextMenuService.getAnnotationContextMenuProvider(source, workspace, resource, bundle, annotated, annotation).makeMenu();
 		} else if (item instanceof BundlePathNode bundlePath) {
 			return contextMenuService.getBundleContextMenuProvider(source, workspace, resource, bundlePath.getValue()).makeMenu();
 		} else if (item instanceof ResourcePathNode) {

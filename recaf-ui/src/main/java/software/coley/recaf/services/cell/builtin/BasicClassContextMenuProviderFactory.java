@@ -271,9 +271,8 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 									.build());
 						})
 						.withTitle(Lang.getBinding("menu.edit.remove.annotation"))
-						// TODO: Annotation text/icon providers
-						// .withTextMapping(anno -> textService.getAnnotationTextProvider(workspace, resource, bundle, info, anno).makeText())
-						// .withGraphicMapping(anno -> iconService.getAnnotationIconProvider(workspace, resource, bundle, info, anno).makeIcon())
+						.withTextMapping(anno -> textService.getAnnotationTextProvider(workspace, resource, bundle, info, anno).makeText())
+						.withGraphicMapping(anno -> iconService.getAnnotationIconProvider(workspace, resource, bundle, info, anno).makeIcon())
 						.show();
 			});
 			// TODO: Implement these operations after assembler is added.

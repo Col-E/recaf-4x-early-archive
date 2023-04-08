@@ -10,7 +10,7 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 /**
- * Icon provider for {@link ClassInfo types}, to be plugged into {@link IconProviderService}
+ * Icon provider for {@link ClassInfo classes}, to be plugged into {@link IconProviderService}
  * to allow for third party icon customization.
  *
  * @author Matt Coley

@@ -4,6 +4,8 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.recaf.info.*;
+import software.coley.recaf.info.annotation.Annotated;
+import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.Service;
@@ -122,6 +124,9 @@ public class TextProviderService implements Service {
 												   @Nonnull ClassBundle<? extends ClassInfo> bundle,
 												   @Nonnull ClassInfo declaringClass,
 												   @Nonnull FieldMember field) {
+		// TODO: Will want to provide config option for showing the type
+		//  - name (default)
+		//  - type + name
 		return () -> formatConfig.filter(field.getName());
 	}
 
@@ -145,7 +150,40 @@ public class TextProviderService implements Service {
 													@Nonnull ClassBundle<? extends ClassInfo> bundle,
 													@Nonnull ClassInfo declaringClass,
 													@Nonnull MethodMember method) {
+		// TODO: Will want to provide config option for showing the descriptor
+		//  - hidden (default)
+		//  - raw
+		//  - simple names
 		return () -> formatConfig.filter(method.getName());
+	}
+
+	/**
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param annotated
+	 * 		The annotated item.
+	 * @param annotation
+	 * 		The annotation to create an icon for.
+	 *
+	 * @return Text provider for the annotation.
+	 */
+	@Nonnull
+	public TextProvider getAnnotationTextProvider(@Nonnull Workspace workspace,
+												  @Nonnull WorkspaceResource resource,
+												  @Nonnull ClassBundle<? extends ClassInfo> bundle,
+												  @Nonnull Annotated annotated,
+												  @Nonnull AnnotationInfo annotation) {
+		return () -> {
+			// TODO: Will want to provide config option for showing elements
+			//  - type name
+			//  - type name + elements
+			String desc = annotation.getDescriptor();
+			return formatConfig.filter(desc.substring(1, desc.length() - 1));
+		};
 	}
 
 	/**

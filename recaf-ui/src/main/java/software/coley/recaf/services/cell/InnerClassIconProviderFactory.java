@@ -8,7 +8,7 @@ import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 /**
- * Icon provider for {@link InnerClassInfo types}, to be plugged into {@link IconProviderService}
+ * Icon provider for {@link InnerClassInfo inner classes}, to be plugged into {@link IconProviderService}
  * to allow for third party icon customization.
  *
  * @author Matt Coley
