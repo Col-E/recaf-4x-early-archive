@@ -345,6 +345,7 @@ public class InheritanceVertex {
 	/**
 	 * @return Classes that extend or implement this class.
 	 */
+	@Nonnull
 	public Set<InheritanceVertex> getChildren() {
 		Set<InheritanceVertex> children = this.children;
 		if (children == null) {
@@ -361,6 +362,7 @@ public class InheritanceVertex {
 							.stream()
 							.filter(childName -> !name.equals(childName))
 							.map(lookup)
+							.filter(Objects::nonNull)
 							.collect(Collectors.toCollection(LinkedHashSet::new));
 					this.children = children;
 				}
