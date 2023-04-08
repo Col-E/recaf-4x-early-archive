@@ -21,7 +21,6 @@ import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassPathNode;
-import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.cell.*;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingApplier;
@@ -204,9 +203,8 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 				bundle.remove(info.getName());
 			});
 			Menu edit = Menus.menu("menu.edit", CarbonIcons.EDIT);
-			ClassPathNode classPathNode = PathNodes.classPath(workspace, resource, bundle, info);
 			ActionMenuItem removeFields = action("menu.edit.remove.field", CarbonIcons.CLOSE, () -> {
-				ItemSelectionPopup.forFields(classPathNode, fields -> {
+				ItemSelectionPopup.forFields(info, fields -> {
 							ClassWriter writer = new ClassWriter(0);
 							MemberRemovingVisitor visitor = new MemberRemovingVisitor(writer, new MemberPredicate() {
 								@Override

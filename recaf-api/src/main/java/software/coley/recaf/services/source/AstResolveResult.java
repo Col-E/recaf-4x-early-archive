@@ -60,7 +60,7 @@ public record AstResolveResult(boolean isDeclaration, @Nonnull PathNode<?> path)
 	public AstResolveResult matchDeclarationState(AstResolveResult other) {
 		if (this == other)
 			return this;
-		if (isDeclaration != other.isDeclaration)
+		if (isDeclaration == other.isDeclaration)
 			return this;
 		return other.isDeclaration ? asDeclaration() : asReference();
 	}
