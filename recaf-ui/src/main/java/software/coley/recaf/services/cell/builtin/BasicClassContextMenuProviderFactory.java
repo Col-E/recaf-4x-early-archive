@@ -2,21 +2,38 @@ package software.coley.recaf.services.cell.builtin;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.collections.ObservableList;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.cell.*;
+import software.coley.recaf.services.mapping.IntermediateMappings;
+import software.coley.recaf.services.mapping.MappingApplier;
+import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.navigation.Actions;
+import software.coley.recaf.ui.control.ActionMenuItem;
+import software.coley.recaf.ui.control.popup.NamePopup;
+import software.coley.recaf.util.EscapeUtil;
+import software.coley.recaf.util.Menus;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 import static software.coley.recaf.util.Menus.action;
 
@@ -28,11 +45,16 @@ import static software.coley.recaf.util.Menus.action;
 @ApplicationScoped
 public class BasicClassContextMenuProviderFactory extends AbstractContextMenuProviderFactory
 		implements ClassContextMenuProviderFactory {
+	private static final Logger logger = Logging.get(BasicClassContextMenuProviderFactory.class);
+	private final Instance<MappingApplier> applierProvider;
+
 	@Inject
 	public BasicClassContextMenuProviderFactory(@Nonnull TextProviderService textService,
 												@Nonnull IconProviderService iconService,
-												@Nonnull Actions actions) {
+												@Nonnull Actions actions,
+												@Nonnull Instance<MappingApplier> applierProvider) {
 		super(textService, iconService, actions);
+		this.applierProvider = applierProvider;
 	}
 
 	@Nonnull
@@ -129,6 +151,46 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 			items.add(action("menu.goto.class", CarbonIcons.ARROW_RIGHT,
 					() -> actions.gotoDeclaration(workspace, resource, bundle, info)));
 		} else if (source.isDeclaration()) {
+			ActionMenuItem copy = action("menu.edit.copy", CarbonIcons.COPY_FILE, () -> {
+				String originalName = info.getName();
+				Consumer<String> copyTask = newName -> {
+					// Create mappings
+					IntermediateMappings mappings = new IntermediateMappings();
+					mappings.addClass(originalName, newName);
+
+					// Collect inner classes, we need to copy these as well
+					List<JvmClassInfo> classesToCopy = new ArrayList<>();
+					classesToCopy.add(info);
+					for (InnerClassInfo inner : info.getInnerClasses()) {
+						if (inner.isExternalReference()) continue;
+						String innerClassName = inner.getInnerClassName();
+						mappings.addClass(innerClassName, newName + innerClassName.substring(originalName.length()));
+						JvmClassInfo innerClassInfo = bundle.get(innerClassName);
+						if (innerClassInfo != null)
+							classesToCopy.add(innerClassInfo);
+						else
+							logger.warn("Could not find inner class for copy-operation: {}", EscapeUtil.escapeStandard(innerClassName));
+					}
+
+					// Apply mappings to create copies of the affected classes, using the provided name.
+					// Then dump the mapped classes into bundle.
+					MappingApplier applier = applierProvider.get();
+					MappingResults results = applier.applyToClasses(mappings, resource, bundle, classesToCopy);
+					for (ClassPathNode mappedClassPath : results.getPostMappingPaths().values()) {
+						JvmClassInfo mappedClass = mappedClassPath.getValue().asJvmClass();
+						bundle.put(mappedClass);
+					}
+				};
+				new NamePopup(copyTask)
+						.withInitialClassName(originalName)
+						.forClassCopy(bundle)
+						.show();
+			});
+			ActionMenuItem delete = action("menu.edit.delete", CarbonIcons.DELETE, () -> {
+				// TODO: Ask user if they are sure
+				//  - Use config to check if "are you sure" prompts should be bypassed
+				bundle.remove(info.getName());
+			});
 			// TODO: implement operations
 			//  - Edit
 			//    - (class assembler)
@@ -138,8 +200,8 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 			//    - Remove fields
 			//    - Remove methods
 			//    - Remove annotations
-			//  - Copy
-			//  - Delete
+			items.add(copy);
+			items.add(delete);
 		}
 		// TODO: implement operations
 		//  - Refactor
