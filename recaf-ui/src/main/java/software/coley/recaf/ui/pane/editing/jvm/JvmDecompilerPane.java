@@ -215,6 +215,9 @@ public class JvmDecompilerPane extends BorderPane implements ClassNavigable, Upd
 					ExecutionContext ctx = new InMemoryExecutionContext();
 					J mappedAst = unit.acceptJava(visitor, ctx);
 					if (mappedAst != null) {
+						// We want to get the difference between the current and modified text and update only
+						// the areas of the text that are modified. In most situations this will be much faster
+						// than re-assigning the whole text (which will require restyling the entire document)
 						String modified = mappedAst.print(new Cursor(null, unit));
 						List<StringDiff.Diff> diffs = StringDiff.diff(currentText, modified);
 						FxThreadUtil.run(() -> {
