@@ -298,7 +298,11 @@ public class MappingResults {
 				return -1;
 
 			// We want more complex classes to go last.
-			return Integer.compare(complexity(), o.complexity());
+			int cmp =  Integer.compare(complexity(), o.complexity());
+			if (cmp != 0) return cmp;
+
+			// Always want a unique ordering, so as a last resort we will compare by name.
+			return post().getValue().getName().compareTo(o.post().getValue().getName());
 		}
 	}
 }
