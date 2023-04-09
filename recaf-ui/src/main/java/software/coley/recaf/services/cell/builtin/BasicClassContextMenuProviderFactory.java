@@ -312,6 +312,7 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 		}
 		Menu refactor = Menus.menu("menu.refactor", CarbonIcons.PAINT_BRUSH);
 		ActionMenuItem move = action("menu.refactor.move", CarbonIcons.STACKED_MOVE, () -> {
+			// TODO: This should use a tree, not a list popup
 			ItemSelectionPopup.forPackageNames(bundle, packages -> {
 						// We only allow a single package, so the list should contain just one item.
 						String oldPackage = info.getPackageName() + "/";
