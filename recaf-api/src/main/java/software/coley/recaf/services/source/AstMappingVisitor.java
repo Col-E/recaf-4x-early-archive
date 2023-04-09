@@ -163,6 +163,9 @@ public class AstMappingVisitor extends JavaIsoVisitor<ExecutionContext> {
 					} else if (visitedType instanceof JavaType.Array) {
 						// In this case, the identifier seems to always be the reference name.
 						// We can skip doing anything here.
+					} else if (visitedType instanceof JavaType.Method) {
+						// In this case, the identifier seems to always be the calling context.
+						// We can skip doing anything here.
 					} else {
 						throw new UnsupportedOperationException("Calling context on reference unknown: " + visitedType.getClass().getName());
 					}
