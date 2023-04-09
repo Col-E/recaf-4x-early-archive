@@ -25,6 +25,7 @@ import java.util.Map;
  */
 public class MappingResults {
 	private final Map<String, String> mappedClasses = new HashMap<>();
+	private final Map<String, String> mappedClassesReverse = new HashMap<>();
 	private final Map<String, ClassPathNode> preMappingPaths = new HashMap<>();
 	private final Map<String, ClassPathNode> postMappingPaths = new HashMap<>();
 	private final Mappings mappings;
@@ -74,6 +75,9 @@ public class MappingResults {
 		ClassPathNode postMappingPath = bundlePath.child(postMapping.getPackageName()).child(postMapping);
 		synchronized (mappedClasses) {
 			mappedClasses.put(preMappingName, postMappingName);
+		}
+		synchronized (mappedClassesReverse) {
+			mappedClassesReverse.put(postMappingName, preMappingName);
 		}
 		synchronized (preMappingPaths) {
 			preMappingPaths.put(preMappingName, preMappingPath);
@@ -133,6 +137,18 @@ public class MappingResults {
 	}
 
 	/**
+	 * @param postMappingName
+	 * 		Post-mapping name.
+	 *
+	 * @return Name of the class before the mapping operation.
+	 * May be {@code null} if the post-mapping name was not renamed during the mapping operation.
+	 */
+	@Nullable
+	public String getPreMappingName(@Nonnull String postMappingName) {
+		return mappedClassesReverse.get(postMappingName);
+	}
+
+	/**
 	 * @param preMappingName
 	 * 		Pre-mapping name.
 	 *
@@ -158,6 +174,33 @@ public class MappingResults {
 		String postMappingName = mappedClasses.get(preMappingName);
 		if (postMappingName == null) return null;
 		return postMappingPaths.get(postMappingName);
+	}
+
+	/**
+	 * @param postMappingName
+	 * 		Post-mapping name.
+	 *
+	 * @return Pre-mapped class info.
+	 * May be {@code null} if no the given post-mapped name was not present in the mapping operation output.
+	 */
+	@Nullable
+	public ClassInfo getPreMappingClass(@Nonnull String postMappingName) {
+		ClassPathNode preMappingPath = getPreMappingPath(postMappingName);
+		if (preMappingPath == null) return null;
+		return preMappingPath.getValue();
+	}
+
+	/**
+	 * @param postMappingName
+	 * 		Post-mapping name.
+	 *
+	 * @return Path node of pre-mapped class.
+	 * May be {@code null} if no the given post-mapped name was not present in the mapping operation output.
+	 */
+	@Nullable
+	public ClassPathNode getPreMappingPath(@Nonnull String postMappingName) {
+		String preMappedName = getPreMappingName(postMappingName);
+		return preMappedName == null ? null : preMappingPaths.get(preMappedName);
 	}
 
 	/**
