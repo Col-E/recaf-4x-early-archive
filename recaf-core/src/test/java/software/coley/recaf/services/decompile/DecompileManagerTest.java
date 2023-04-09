@@ -41,29 +41,28 @@ public class DecompileManagerTest extends TestBase {
 
 	private static void runJvmDecompilation(JvmDecompiler decompiler) {
 		try {
-			// Handle result when it's done.
-			decompilerManager.decompile(decompiler, workspace, classToDecompile)
+			// Generally, you'd handle results like this, with a when-complete.
+			// The blocking 'get' at the end is just so our test works.
+			DecompileResult firstResult = decompilerManager.decompile(decompiler, workspace, classToDecompile)
 					.whenComplete((result, throwable) -> {
+						assertNull(throwable);
+
 						// Throwable thrown when unhandled exception occurs.
-					});
-
-			// Block until result is given, then handle it in the same thread.
-			DecompileResult result = decompilerManager.decompile(decompiler, workspace, classToDecompile)
-					.get(1, TimeUnit.SECONDS);
-
-			assertEquals(DecompileResult.ResultType.SUCCESS, result.getType(), "Decompile result was not successful");
-			assertNotNull(result.getText(), "Decompile result missing text");
-			assertTrue(result.getText().contains("\"Hello world\""), "Decompilation seems to be wrong");
+						assertEquals(DecompileResult.ResultType.SUCCESS, result.getType(), "Decompile result was not successful");
+						assertNotNull(result.getText(), "Decompile result missing text");
+						assertTrue(result.getText().contains("\"Hello world\""), "Decompilation seems to be wrong");
+					}) // Block on this thread until we have the value.
+					.get(1, TimeUnit.DAYS);
 
 			// Assert that repeated decompiles use the same result (caching, should be handled by abstract base)
 			DecompileResult newResult = decompiler.decompile(workspace, classToDecompile);
-			assertSame(result, newResult, "Decompiler did not cache results");
+			assertSame(firstResult, newResult, "Decompiler did not cache results");
 
 			// Change the decompiler hash. The decompiler result should change.
 			decompiler.getConfig().setConfigHash(-1);
 			newResult = decompilerManager.decompile(decompiler, workspace, classToDecompile)
 					.get(1, TimeUnit.SECONDS);
-			assertNotSame(result, newResult, "Decompiler used cached result even though config hash changed");
+			assertNotSame(firstResult, newResult, "Decompiler used cached result even though config hash changed");
 		} catch (InterruptedException e) {
 			fail("Decompile was interrupted", e);
 		} catch (ExecutionException e) {
