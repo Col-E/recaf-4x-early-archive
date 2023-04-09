@@ -2,9 +2,13 @@ package software.coley.recaf.path;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Path node for {@link Bundle} types.
@@ -101,7 +105,28 @@ public class BundlePathNode extends AbstractPathNode<WorkspaceResource, Bundle> 
 	@Override
 	public int localCompare(PathNode<?> o) {
 		if (o instanceof BundlePathNode bundlePathNode) {
-			return -Integer.compare(bundleMask(), bundlePathNode.bundleMask());
+			int cmp = -Integer.compare(bundleMask(), bundlePathNode.bundleMask());
+
+			// Order dex class bundles to be in alphabetical order.
+			Bundle bundle = getValue();
+			Object otherBundle = o.getValue();
+			if (cmp == 0 && getParent() != null &&
+					bundle instanceof AndroidClassBundle &&
+					otherBundle instanceof AndroidClassBundle) {
+				WorkspaceResource resource = getParent().getValue();
+				Set<Map.Entry<String, AndroidClassBundle>> androidBundles = resource.getAndroidClassBundles().entrySet();
+				String dexName = androidBundles.stream()
+						.filter(e -> e.getValue() == bundle)
+						.map(Map.Entry::getKey)
+						.findFirst()
+						.orElse(null);
+				String otherDexName = androidBundles.stream()
+						.filter(e -> e.getValue() == otherBundle)
+						.map(Map.Entry::getKey)
+						.findFirst()
+						.orElse(null);
+				return String.CASE_INSENSITIVE_ORDER.compare(dexName, otherDexName);
+			}
 		}
 		return 0;
 	}

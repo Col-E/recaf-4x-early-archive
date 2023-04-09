@@ -20,6 +20,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceRemoteVmResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.Map;
+
 /**
  * Provides support for providing text for a variety of item types.
  * For instance, the text of {@link WorkspaceTreeCell} instances.
@@ -261,6 +263,16 @@ public class TextProviderService implements Service {
 											  @Nonnull WorkspaceResource resource,
 											  @Nonnull Bundle<? extends Info> bundle) {
 		return () -> {
+			if (bundle instanceof AndroidClassBundle) {
+				String dexName = resource.getAndroidClassBundles().entrySet().stream()
+						.filter(e -> e.getValue() == bundle)
+						.map(Map.Entry::getKey)
+						.findFirst()
+						.orElse(null);
+				if (dexName != null)
+					return dexName;
+			}
+
 			if (bundle instanceof ClassBundle)
 				return Lang.get("tree.classes");
 			else
