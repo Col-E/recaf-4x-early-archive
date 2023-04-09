@@ -20,16 +20,23 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Popup;
 import javafx.util.Duration;
+import org.fxmisc.richtext.CodeArea;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.objectweb.asm.ClassReader;
+import org.openrewrite.Cursor;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.InMemoryExecutionContext;
+import org.openrewrite.java.tree.J;
 import org.slf4j.Logger;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableInteger;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.info.properties.builtin.RemapOriginTaskProperty;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.compile.CompileMap;
@@ -40,9 +47,12 @@ import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.decompile.JvmDecompiler;
 import software.coley.recaf.services.decompile.NoopJvmDecompiler;
+import software.coley.recaf.services.mapping.MappingResults;
+import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
+import software.coley.recaf.services.source.AstMappingVisitor;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
@@ -65,6 +75,7 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -162,52 +173,113 @@ public class JvmDecompilerPane extends BorderPane implements ClassNavigable, Upd
 	public void onUpdatePath(@Nonnull PathNode<?> path) {
 		if (!updateLock.get() && path instanceof ClassPathNode classPathNode) {
 			this.path = classPathNode;
-			Workspace workspace = classPathNode.getValueOfType(Workspace.class);
-			JvmClassInfo classInfo = classPathNode.getValue().asJvmClass();
+			ClassInfo classInfo = classPathNode.getValue();
+			if (classInfo.isJvmClass()) {
+				// Schedule initializing the context action support with the class information on a background thread.
+				Executors.newSingleThreadExecutor().submit(() -> contextActionSupport.initialize(classInfo.asJvmClass()));
 
-			// Schedule initializing the context action support with the class information on a background thread.
-			Executors.newSingleThreadExecutor().submit(() -> contextActionSupport.initialize(classInfo));
-
-			// Schedule decompilation task, update the editor's text asynchronously on the JavaFX UI thread when complete.
-			decompileInProgress.setValue(true);
-			editor.setMouseTransparent(true);
-			decompilerManager.decompile(decompiler.getValue(), workspace, classInfo)
-					.completeOnTimeout(timeoutResult(), config.getTimeoutSeconds().getValue(), TimeUnit.SECONDS)
-					.whenCompleteAsync((result, throwable) -> {
-						editor.setMouseTransparent(false);
-						decompileInProgress.setValue(false);
-
-						// Handle uncaught exceptions
-						if (throwable != null) {
-							String trace = StringUtil.traceToString(throwable);
-							editor.setText("/*\nUncaught exception when decompiling:\n" + trace + "\n*/");
-							return;
-						}
-
-						// Handle decompilation result
-						String text = result.getText();
-						if (Objects.equals(text, editor.getText()))
-							return; // Skip if existing text is the same
-						switch (result.getType()) {
-							case SUCCESS -> editor.setText(text);
-							case SKIPPED -> editor.setText(text == null ? "// Decompilation skipped" : text);
-							case FAILURE -> {
-								Throwable exception = result.getException();
-								if (exception != null) {
-									String trace = StringUtil.traceToString(exception);
-									editor.setText("/*\nDecompile failed:\n" + trace + "\n*/");
-								} else
-									editor.setText("/*\nDecompile failed, but no trace was attached:\n*/");
-							}
-						}
-
-						// Schedule AST parsing for context action support.
-						contextActionSupport.scheduleAstParse();
-
-						// Prevent undo from reverting to empty state.
-						editor.getCodeArea().getUndoManager().forgetHistory();
-					}, FxThreadUtil.executor());
+				// Check if we can update the text efficiently with a remapper.
+				// If not, then schedule a decompilation instead.
+				if (!handleRemapUpdate(classInfo))
+					decompile();
+			}
 		}
+	}
+
+	/**
+	 * Attempts to update the {@link #editor}'s text with intent-specific AST operations.
+	 * This includes:
+	 * <ul>
+	 *     <li>{@link AstMappingVisitor} when handling classes marked with {@link RemapOriginTaskProperty}</li>
+	 * </ul>
+	 *
+	 * @param classInfo
+	 * 		Modified class.
+	 *
+	 * @return {@code true} when we were able to handle it with an AST visitors.
+	 */
+	private boolean handleRemapUpdate(@Nonnull ClassInfo classInfo) {
+		// Attempt to handle change with an AST mapping visitor if the change is originating
+		// from a mapping application job.
+		String currentText = editor.getText();
+		if (!currentText.isBlank()) {
+			MappingResults mappingOrigin = classInfo.getPropertyValueOrNull(RemapOriginTaskProperty.KEY);
+			if (mappingOrigin != null) {
+				// If the mapping operation affects inner classes
+				Mappings mappings = mappingOrigin.getMappings();
+
+				// We can handle the update with AST mapping instead of decompiling the class again.
+				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
+				J.CompilationUnit unit = contextActionSupport.getUnit();
+				if (unit != null) {
+					ExecutionContext ctx = new InMemoryExecutionContext();
+					J mappedAst = unit.acceptJava(visitor, ctx);
+					if (mappedAst != null) {
+						String modified = mappedAst.print(new Cursor(null, unit));
+						List<StringDiff.Diff> diffs = StringDiff.diff(currentText, modified);
+						FxThreadUtil.run(() -> {
+							CodeArea area = editor.getCodeArea();
+							for (int i = diffs.size() - 1; i >= 0; i--) {
+								StringDiff.Diff diff = diffs.get(i);
+								if (diff.type() == StringDiff.DiffType.CHANGE)
+									area.replaceText(diff.startA(), diff.endA(), diff.textB());
+							}
+						});
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Decompiles the class contained by the current {@link #path} and updates the {@link #editor}'s text
+	 * with the decompilation results.
+	 */
+	private void decompile() {
+		Workspace workspace = path.getValueOfType(Workspace.class);
+		JvmClassInfo classInfo = path.getValue().asJvmClass();
+
+		// Schedule decompilation task, update the editor's text asynchronously on the JavaFX UI thread when complete.
+		decompileInProgress.setValue(true);
+		editor.setMouseTransparent(true);
+		decompilerManager.decompile(decompiler.getValue(), workspace, classInfo)
+				.completeOnTimeout(timeoutResult(), config.getTimeoutSeconds().getValue(), TimeUnit.SECONDS)
+				.whenCompleteAsync((result, throwable) -> {
+					editor.setMouseTransparent(false);
+					decompileInProgress.setValue(false);
+
+					// Handle uncaught exceptions
+					if (throwable != null) {
+						String trace = StringUtil.traceToString(throwable);
+						editor.setText("/*\nUncaught exception when decompiling:\n" + trace + "\n*/");
+						return;
+					}
+
+					// Handle decompilation result
+					String text = result.getText();
+					if (Objects.equals(text, editor.getText()))
+						return; // Skip if existing text is the same
+					switch (result.getType()) {
+						case SUCCESS -> editor.setText(text);
+						case SKIPPED -> editor.setText(text == null ? "// Decompilation skipped" : text);
+						case FAILURE -> {
+							Throwable exception = result.getException();
+							if (exception != null) {
+								String trace = StringUtil.traceToString(exception);
+								editor.setText("/*\nDecompile failed:\n" + trace + "\n*/");
+							} else
+								editor.setText("/*\nDecompile failed, but no trace was attached:\n*/");
+						}
+					}
+
+					// Schedule AST parsing for context action support.
+					contextActionSupport.scheduleAstParse();
+
+					// Prevent undo from reverting to empty state.
+					editor.getCodeArea().getUndoManager().forgetHistory();
+				}, FxThreadUtil.executor());
 	}
 
 	@Override
