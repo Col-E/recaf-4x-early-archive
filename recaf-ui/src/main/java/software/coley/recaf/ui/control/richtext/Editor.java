@@ -17,6 +17,7 @@ import org.fxmisc.richtext.model.StyleSpans;
 import org.reactfx.Change;
 import org.reactfx.EventStream;
 import org.reactfx.EventStreams;
+import software.coley.collections.Lists;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
 import software.coley.recaf.ui.control.richtext.linegraphics.RootLineGraphicFactory;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
@@ -29,6 +30,7 @@ import software.coley.recaf.util.threading.ThreadPoolFactory;
 
 import java.time.Duration;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -93,22 +95,25 @@ public class Editor extends BorderPane {
 		// Register a text change listener and use the inserted/removed text content to determine what portions
 		// of the document need to be restyled.
 		codeArea.plainTextChanges()
-				.successionEnds(Duration.ofMillis(SHORT_DELAY_MS))
+				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(SHORT_DELAY_MS))
 				.addObserver(changes -> {
 					// Pass to highlighter.
 					if (syntaxHighlighter != null) {
-						schedule(syntaxPool, () -> {
-							IntRange range = SyntaxUtil.getRangeForRestyle(getText(), getStyleSpans(),
-									syntaxHighlighter, changes);
-							int start = range.start();
-							int end = range.end();
-							return new StyleResult(syntaxHighlighter.createStyleSpans(getText(), start, end), start);
-						}, result -> codeArea.setStyleSpans(result.position(), result.spans()));
+						for (PlainTextChange change : changes) {
+							schedule(syntaxPool, () -> {
+								String text = getText();
+								IntRange range = SyntaxUtil.getRangeForRestyle(text, getStyleSpans(), syntaxHighlighter, change);
+								int start = range.start();
+								int end = range.end();
+								return new StyleResult(syntaxHighlighter.createStyleSpans(text, start, end), start);
+							}, result -> codeArea.setStyleSpans(result.position(), result.spans()));
+						}
 					}
 
 					// Pass to problem tracking.
 					if (problemTracking != null) {
-						problemTracking.accept(changes);
+						for (PlainTextChange change : changes)
+							problemTracking.accept(change);
 					}
 
 					// Record content of area.
