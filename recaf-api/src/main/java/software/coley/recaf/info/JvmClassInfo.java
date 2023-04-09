@@ -98,6 +98,28 @@ public interface JvmClassInfo extends ClassInfo {
 		return classNames;
 	}
 
+	/**
+	 * @return Set of all string constants listed in the constant pool.
+	 */
+	@Nonnull
+	default Set<String> getStringConstants() {
+		Set<String> classNames = new HashSet<>();
+		ClassReader reader = getClassReader();
+		int itemCount = reader.getItemCount();
+		char[] buffer = new char[reader.getMaxStringLength()];
+		for (int i = 1; i < itemCount; i++) {
+			int offset = reader.getItem(i);
+			if (offset >= 10) {
+				int itemTag = reader.readByte(offset - 1);
+				if (itemTag == ConstantPoolConstants.STRING) {
+					String string = reader.readUTF8(offset, buffer);
+					classNames.add(string);
+				}
+			}
+		}
+		return classNames;
+	}
+
 	@Override
 	default void acceptIfJvmClass(Consumer<JvmClassInfo> action) {
 		action.accept(this);
