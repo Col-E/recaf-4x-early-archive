@@ -80,7 +80,7 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	protected void onMatchResult(@Nonnull TreeItem<T> child, boolean matched) {
 		// Expand items that match, hide those that do not.
 		if (matched) {
-			TreeItems.expandParents(this);
+			TreeItems.expandParents(child);
 		} else {
 			child.setExpanded(false);
 		}
