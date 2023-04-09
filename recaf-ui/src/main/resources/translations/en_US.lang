@@ -184,10 +184,10 @@ dialog.header.rename-method=Provide a new name for the method.
 dialog.header.rename-package=Provide a new name for the package.
 
 ## Move class/file
-dialog.title.move-class=Move class
-dialog.title.move-directory=Move directory
-dialog.title.move-file=Move file
-dialog.title.move-package=Move package
+dialog.title.move-class=Select a destination package
+dialog.title.move-directory=Select a destination (parent) directory
+dialog.title.move-file=Select a destination directory
+dialog.title.move-package=Select a destination (parent) package
 dialog.header.move-class=Move the class to a new package.
 dialog.header.move-directory=Move the directory into to a new parent directory.
 dialog.header.move-file=Move the file to a new directory.
