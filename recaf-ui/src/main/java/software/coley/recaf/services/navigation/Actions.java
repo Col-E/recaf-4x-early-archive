@@ -14,21 +14,40 @@ import javafx.scene.control.Tab;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
-import software.coley.recaf.path.*;
+import software.coley.recaf.info.annotation.AnnotationInfo;
+import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.path.IncompletePathException;
+import software.coley.recaf.path.PathNode;
+import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.cell.IconProviderService;
 import software.coley.recaf.services.cell.TextProviderService;
+import software.coley.recaf.services.mapping.IntermediateMappings;
+import software.coley.recaf.services.mapping.MappingApplier;
+import software.coley.recaf.services.mapping.MappingResults;
+import software.coley.recaf.ui.control.popup.ItemSelectionPopup;
+import software.coley.recaf.ui.control.popup.NamePopup;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingRegion;
 import software.coley.recaf.ui.docking.DockingTab;
 import software.coley.recaf.ui.pane.editing.android.AndroidClassPane;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassEditorType;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassPane;
+import software.coley.recaf.util.EscapeUtil;
+import software.coley.recaf.util.Lang;
+import software.coley.recaf.util.visitors.ClassAnnotationRemovingVisitor;
+import software.coley.recaf.util.visitors.MemberPredicate;
+import software.coley.recaf.util.visitors.MemberRemovingVisitor;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.Bundle;
@@ -36,8 +55,12 @@ import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static software.coley.recaf.util.Menus.*;
 
@@ -54,6 +77,7 @@ public class Actions implements Service {
 	private final DockingManager dockingManager;
 	private final TextProviderService textService;
 	private final IconProviderService iconService;
+	private final Instance<MappingApplier> applierProvider;
 	private final Instance<JvmClassPane> jvmPaneProvider;
 	private final Instance<AndroidClassPane> androidPaneProvider;
 	private final ActionsConfig config;
@@ -64,6 +88,7 @@ public class Actions implements Service {
 				   @Nonnull DockingManager dockingManager,
 				   @Nonnull TextProviderService textService,
 				   @Nonnull IconProviderService iconService,
+				   @Nonnull Instance<MappingApplier> applierProvider,
 				   @Nonnull Instance<JvmClassPane> jvmPaneProvider,
 				   @Nonnull Instance<AndroidClassPane> androidPaneProvider) {
 		this.config = config;
@@ -71,6 +96,7 @@ public class Actions implements Service {
 		this.dockingManager = dockingManager;
 		this.textService = textService;
 		this.iconService = iconService;
+		this.applierProvider = applierProvider;
 		this.jvmPaneProvider = jvmPaneProvider;
 		this.androidPaneProvider = androidPaneProvider;
 	}
@@ -96,15 +122,15 @@ public class Actions implements Service {
 		ClassBundle<?> bundle = path.getValueOfType(ClassBundle.class);
 		ClassInfo info = path.getValue();
 		if (workspace == null) {
-			logger.error("Cannot handle goto-declaration for class '{}', missing workspace in path", info.getName());
+			logger.error("Cannot resolve required path nodes for class '{}', missing workspace in path", info.getName());
 			throw new IncompletePathException(Workspace.class);
 		}
 		if (resource == null) {
-			logger.error("Cannot handle goto-declaration for class '{}', missing resource in path", info.getName());
+			logger.error("Cannot resolve required path nodes for class '{}', missing resource in path", info.getName());
 			throw new IncompletePathException(WorkspaceResource.class);
 		}
 		if (bundle == null) {
-			logger.error("Cannot handle goto-declaration for class '{}', missing bundle in path", info.getName());
+			logger.error("Cannot resolve required path nodes for class '{}', missing bundle in path", info.getName());
 			throw new IncompletePathException(ClassBundle.class);
 		}
 
@@ -235,6 +261,314 @@ public class Actions implements Service {
 			tab.setContextMenu(menu);
 			return tab;
 		});
+	}
+
+	/**
+	 * Prompts the user to select a package to move the given class into.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		Class to go move into a different package.
+	 */
+	public void moveClass(@Nonnull Workspace workspace,
+						  @Nonnull WorkspaceResource resource,
+						  @Nonnull JvmClassBundle bundle,
+						  @Nonnull JvmClassInfo info) {
+		// TODO: This should use a tree, not a list popup
+		ItemSelectionPopup.forPackageNames(bundle, packages -> {
+					// We only allow a single package, so the list should contain just one item.
+					String oldPackage = info.getPackageName() + "/";
+					String newPackage = packages.get(0) + "/";
+					if (Objects.equals(oldPackage, newPackage)) return;
+
+					// Create mapping for the class and any inner classes.
+					String originalName = info.getName();
+					String newName = newPackage + info.getName().substring(oldPackage.length());
+					IntermediateMappings mappings = new IntermediateMappings();
+					for (InnerClassInfo inner : info.getInnerClasses()) {
+						if (inner.isExternalReference()) continue;
+						String innerClassName = inner.getInnerClassName();
+						mappings.addClass(innerClassName, newName + innerClassName.substring(originalName.length()));
+					}
+
+					// Apply the mappings.
+					MappingApplier applier = applierProvider.get();
+					MappingResults results = applier.applyToPrimary(mappings);
+					results.apply();
+				})
+				.withTitle(Lang.getBinding("dialog.title.move-class"))
+				.withTextMapping(name -> textService.getPackageTextProvider(workspace, resource, bundle, name).makeText())
+				.withGraphicMapping(name -> iconService.getPackageIconProvider(workspace, resource, bundle, name).makeIcon())
+				.show();
+	}
+
+	public void renameClass(@Nonnull ClassPathNode path) throws IncompletePathException {
+		Workspace workspace = path.getValueOfType(Workspace.class);
+		WorkspaceResource resource = path.getValueOfType(WorkspaceResource.class);
+		ClassBundle<?> bundle = path.getValueOfType(ClassBundle.class);
+		ClassInfo info = path.getValue();
+		if (workspace == null) {
+			logger.error("Cannot resolve required path nodes for class '{}', missing workspace in path", info.getName());
+			throw new IncompletePathException(Workspace.class);
+		}
+		if (resource == null) {
+			logger.error("Cannot resolve required path nodes for class '{}', missing resource in path", info.getName());
+			throw new IncompletePathException(WorkspaceResource.class);
+		}
+		if (bundle == null) {
+			logger.error("Cannot resolve required path nodes for class '{}', missing bundle in path", info.getName());
+			throw new IncompletePathException(ClassBundle.class);
+		}
+
+		// Handle JVM vs Android
+		if (info.isJvmClass()) {
+			renameClass(workspace, resource, (JvmClassBundle) bundle, info.asJvmClass());
+		} else if (info.isAndroidClass()) {
+			// TODO: Android renaming
+			logger.error("TODO: Android renaming");
+		} else {
+			throw new IllegalStateException("Unsupported class type: " + info.getClass().getName());
+		}
+	}
+
+	/**
+	 * Prompts the user to rename the given class.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		Class to go rename.
+	 */
+	public void renameClass(@Nonnull Workspace workspace,
+							@Nonnull WorkspaceResource resource,
+							@Nonnull JvmClassBundle bundle,
+							@Nonnull JvmClassInfo info) {
+		String originalName = info.getName();
+		Consumer<String> renameTask = newName -> {
+			// Create mapping for the class and any inner classes.
+			IntermediateMappings mappings = new IntermediateMappings();
+			mappings.addClass(originalName, newName);
+			for (InnerClassInfo inner : info.getInnerClasses()) {
+				if (inner.isExternalReference()) continue;
+				String innerClassName = inner.getInnerClassName();
+				mappings.addClass(innerClassName, newName + innerClassName.substring(originalName.length()));
+			}
+
+			// Apply the mappings.
+			MappingApplier applier = applierProvider.get();
+			MappingResults results = applier.applyToPrimary(mappings);
+			results.apply();
+		};
+		new NamePopup(renameTask)
+				.withInitialClassName(originalName)
+				.forClassRename(bundle)
+				.show();
+	}
+
+	/**
+	 * Prompts the user to give a new name for the copied class.
+	 * Inner classes also get copied.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		Class to copy.
+	 */
+	public void copyClass(@Nonnull Workspace workspace,
+						  @Nonnull WorkspaceResource resource,
+						  @Nonnull JvmClassBundle bundle,
+						  @Nonnull JvmClassInfo info) {
+		String originalName = info.getName();
+		Consumer<String> copyTask = newName -> {
+			// Create mappings.
+			IntermediateMappings mappings = new IntermediateMappings();
+			mappings.addClass(originalName, newName);
+
+			// Collect inner classes, we need to copy these as well.
+			List<JvmClassInfo> classesToCopy = new ArrayList<>();
+			classesToCopy.add(info);
+			for (InnerClassInfo inner : info.getInnerClasses()) {
+				if (inner.isExternalReference()) continue;
+				String innerClassName = inner.getInnerClassName();
+				mappings.addClass(innerClassName, newName + innerClassName.substring(originalName.length()));
+				JvmClassInfo innerClassInfo = bundle.get(innerClassName);
+				if (innerClassInfo != null)
+					classesToCopy.add(innerClassInfo);
+				else
+					logger.warn("Could not find inner class for copy-operation: {}", EscapeUtil.escapeStandard(innerClassName));
+			}
+
+			// Apply mappings to create copies of the affected classes, using the provided name.
+			// Then dump the mapped classes into bundle.
+			MappingApplier applier = applierProvider.get();
+			MappingResults results = applier.applyToClasses(mappings, resource, bundle, classesToCopy);
+			for (ClassPathNode mappedClassPath : results.getPostMappingPaths().values()) {
+				JvmClassInfo mappedClass = mappedClassPath.getValue().asJvmClass();
+				bundle.put(mappedClass);
+			}
+		};
+		new NamePopup(copyTask)
+				.withInitialClassName(originalName)
+				.forClassCopy(bundle)
+				.show();
+	}
+
+	/**
+	 * Prompts the user <i>(if configured, otherwise prompt is skipped)</i> to delete the class.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		Class to delete.
+	 */
+	public void deleteClass(@Nonnull Workspace workspace,
+							@Nonnull WorkspaceResource resource,
+							@Nonnull JvmClassBundle bundle,
+							@Nonnull JvmClassInfo info) {
+		// TODO: Ask user if they are sure
+		//  - Use config to check if "are you sure" prompts should be bypassed
+		bundle.remove(info.getName());
+	}
+
+
+	/**
+	 * Prompts the user to select fields within the class to remove.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		Class to update.
+	 */
+	public void deleteClassFields(@Nonnull Workspace workspace,
+								  @Nonnull WorkspaceResource resource,
+								  @Nonnull JvmClassBundle bundle,
+								  @Nonnull JvmClassInfo info) {
+		ItemSelectionPopup.forFields(info, fields -> {
+					ClassWriter writer = new ClassWriter(0);
+					MemberRemovingVisitor visitor = new MemberRemovingVisitor(writer, new MemberPredicate() {
+						@Override
+						public boolean matchField(int access, String name, String desc, String sig, Object value) {
+							for (FieldMember field : fields)
+								if (field.getName().equals(name) && field.getDescriptor().equals(desc))
+									return true;
+							return false;
+						}
+
+						@Override
+						public boolean matchMethod(int access, String name, String desc, String sig, String[] exceptions) {
+							return false;
+						}
+					});
+					info.getClassReader().accept(visitor, 0);
+					bundle.put(info.toBuilder()
+							.adaptFrom(new ClassReader(writer.toByteArray()))
+							.build());
+				})
+				.withMultipleSelection()
+				.withTitle(Lang.getBinding("menu.edit.remove.field"))
+				.withTextMapping(field -> textService.getFieldMemberTextProvider(workspace, resource, bundle, info, field).makeText())
+				.withGraphicMapping(field -> iconService.getClassMemberIconProvider(workspace, resource, bundle, info, field).makeIcon())
+				.show();
+	}
+
+	/**
+	 * Prompts the user to select methods within the class to remove.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		Class to update.
+	 */
+	public void deleteClassMethods(@Nonnull Workspace workspace,
+								   @Nonnull WorkspaceResource resource,
+								   @Nonnull JvmClassBundle bundle,
+								   @Nonnull JvmClassInfo info) {
+		ItemSelectionPopup.forMethods(info, methods -> {
+					ClassWriter writer = new ClassWriter(0);
+					MemberRemovingVisitor visitor = new MemberRemovingVisitor(writer, new MemberPredicate() {
+						@Override
+						public boolean matchField(int access, String name, String desc, String sig, Object value) {
+							return false;
+						}
+
+						@Override
+						public boolean matchMethod(int access, String name, String desc, String sig, String[] exceptions) {
+							for (MethodMember method : methods)
+								if (method.getName().equals(name) && method.getDescriptor().equals(desc))
+									return true;
+							return false;
+						}
+					});
+					info.getClassReader().accept(visitor, 0);
+					bundle.put(info.toBuilder()
+							.adaptFrom(new ClassReader(writer.toByteArray()))
+							.build());
+				})
+				.withMultipleSelection()
+				.withTitle(Lang.getBinding("menu.edit.remove.method"))
+				.withTextMapping(method -> textService.getMethodMemberTextProvider(workspace, resource, bundle, info, method).makeText())
+				.withGraphicMapping(method -> iconService.getClassMemberIconProvider(workspace, resource, bundle, info, method).makeIcon())
+				.show();
+	}
+
+	/**
+	 * Prompts the user to select annotations on the class to remove.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		Class to update.
+	 */
+	public void deleteClassAnnotations(@Nonnull Workspace workspace,
+									   @Nonnull WorkspaceResource resource,
+									   @Nonnull JvmClassBundle bundle,
+									   @Nonnull JvmClassInfo info) {
+		ItemSelectionPopup.forAnnotationRemoval(info, annotations -> {
+					List<String> names = annotations.stream()
+							.map(AnnotationInfo::getDescriptor)
+							.map(desc -> desc.substring(1, desc.length() - 1))
+							.collect(Collectors.toList());
+					ClassWriter writer = new ClassWriter(0);
+					ClassAnnotationRemovingVisitor visitor = new ClassAnnotationRemovingVisitor(writer, names);
+					info.getClassReader().accept(visitor, 0);
+					bundle.put(info.toBuilder()
+							.adaptFrom(new ClassReader(writer.toByteArray()))
+							.build());
+				})
+				.withMultipleSelection()
+				.withTitle(Lang.getBinding("menu.edit.remove.annotation"))
+				.withTextMapping(anno -> textService.getAnnotationTextProvider(workspace, resource, bundle, info, anno).makeText())
+				.withGraphicMapping(anno -> iconService.getAnnotationIconProvider(workspace, resource, bundle, info, anno).makeIcon())
+				.show();
 	}
 
 	/**
