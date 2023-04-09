@@ -16,13 +16,17 @@ import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.marker.Range;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.cell.ContextMenuProviderService;
 import software.coley.recaf.services.cell.ContextSource;
 import software.coley.recaf.services.navigation.ClassNavigable;
+import software.coley.recaf.services.navigation.Navigable;
+import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.services.source.*;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
@@ -35,6 +39,7 @@ import software.coley.recaf.workspace.model.Workspace;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Enables context actions on an {@link Editor} by parsing the source text as Java and modeling the AST.
@@ -44,7 +49,7 @@ import java.util.concurrent.ExecutorService;
  * @see FieldsAndMethodsPane#setupSelectionNavigationListener(ClassNavigable) Originating call for {@link #select(ClassMember)}.
  */
 @Dependent
-public class JavaContextActionSupport implements EditorComponent {
+public class JavaContextActionSupport implements EditorComponent, UpdatableNavigable {
 	private static final DebuggingLogger logger = Logging.get(JavaContextActionSupport.class);
 	private static final long REPARSE_ELAPSED_TIME = 2_000L;
 	private final ExecutorService parseThreadPool = ThreadPoolFactory.newSingleThreadExecutor("java-parse");
@@ -53,6 +58,7 @@ public class JavaContextActionSupport implements EditorComponent {
 	private final AstService astService;
 	private final AstContextHelper contextHelper;
 	private int lastSourceHash;
+	private ClassPathNode path;
 	private Runnable queuedSelectionTask;
 	private String className;
 	private J.CompilationUnit unit;
@@ -174,6 +180,24 @@ public class JavaContextActionSupport implements EditorComponent {
 	}
 
 	/**
+	 * @param pos
+	 * 		Offset in the source.
+	 *
+	 * @return Resolution of content at the given offset.
+	 */
+	@Nullable
+	public AstResolveResult resolvePosition(int pos) {
+		return resolvePosition(pos, true);
+	}
+
+	@Nullable
+	private AstResolveResult resolvePosition(int pos, boolean doOffset) {
+		if (unit == null) return null;
+		if (doOffset) pos = offset(pos);
+		return contextHelper.resolve(unit, pos);
+	}
+
+	/**
 	 * Handle updating the offset-map so that we do not need to do a full reparse of the source.
 	 * <br>
 	 * When the user makes small changes, its unlikely they will be immediately doing context actions in that area.
@@ -287,7 +311,7 @@ public class JavaContextActionSupport implements EditorComponent {
 
 			// Create menu
 			int offsetHitIndex = offset(hit.getInsertionIndex());
-			AstResolveResult result = contextHelper.resolve(unit, offsetHitIndex);
+			AstResolveResult result = resolvePosition(offsetHitIndex, false);
 			if (result != null) {
 				PathNode<?> path = result.path();
 				logger.debugging(l -> l.info("Path at offset '{}' = {}", offsetHitIndex, path));
@@ -313,5 +337,41 @@ public class JavaContextActionSupport implements EditorComponent {
 	public void uninstall(@Nonnull Editor editor) {
 		editor.getCodeArea().setOnContextMenuRequested(null);
 		this.editor = null;
+	}
+
+	@Nonnull
+	@Override
+	public ClassPathNode getPath() {
+		return path;
+	}
+
+	@Nonnull
+	@Override
+	public Collection<Navigable> getNavigableChildren() {
+		return Collections.emptyList();
+	}
+
+	@Override
+	public void requestFocus() {
+		// no-op
+	}
+
+	@Override
+	public void disable() {
+		// no-op
+	}
+
+	@Override
+	public void onUpdatePath(@Nonnull PathNode<?> path) {
+		if (path instanceof ClassPathNode classPath) {
+			this.path = classPath;
+
+			// Re-initialize the parser if the path updates.
+			// This addresses situations where changes to the class introduce new type dependencies.
+			// If we used the existing parser, the newly added types would be unresolvable.
+			ClassInfo classInfo = classPath.getValue();
+			if (classInfo.isJvmClass())
+				Executors.newSingleThreadExecutor().submit(() -> initialize(classInfo.asJvmClass()));
+		}
 	}
 }

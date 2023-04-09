@@ -11,6 +11,7 @@ import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.pane.editing.ClassPane;
+import software.coley.recaf.ui.pane.editing.jvm.JvmDecompilerPane;
 import software.coley.recaf.util.PlatformType;
 
 import java.util.*;
@@ -34,6 +35,7 @@ public class KeybindingConfig extends BasicConfigContainer {
 	private static final String ID_FIND = "editor.find";
 	private static final String ID_REPLACE = "editor.replace";
 	private static final String ID_SAVE = "editor.save";
+	private static final String ID_RENAME = "editor.rename";
 	private final BindingBundle bundle;
 
 	@Inject
@@ -44,7 +46,8 @@ public class KeybindingConfig extends BasicConfigContainer {
 		bundle = new BindingBundle(Arrays.asList(
 				createBindForPlatform(ID_FIND, CONTROL, F),
 				createBindForPlatform(ID_REPLACE, CONTROL, R),
-				createBindForPlatform(ID_SAVE, CONTROL, S)
+				createBindForPlatform(ID_SAVE, CONTROL, S),
+				createBindForPlatform(ID_RENAME, ALT, R)
 		));
 		addValue(new BasicMapConfigValue<>("bundle", Map.class, String.class, Binding.class, bundle));
 	}
@@ -76,6 +79,16 @@ public class KeybindingConfig extends BasicConfigContainer {
 	public Binding getSave() {
 		// TODO: Update javadocs to @link to FilePane when made
 		return Objects.requireNonNull(bundle.get(ID_SAVE));
+	}
+
+	/**
+	 * @return Keybinding for renaming whatever is found at the current caret position.
+	 *
+	 * @see JvmDecompilerPane Usage in decompiler.
+	 */
+	@Nonnull
+	public Binding getRename() {
+		return Objects.requireNonNull(bundle.get(ID_RENAME));
 	}
 
 	/**

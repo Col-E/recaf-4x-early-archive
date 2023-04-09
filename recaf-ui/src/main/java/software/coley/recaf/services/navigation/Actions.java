@@ -45,6 +45,7 @@ import software.coley.recaf.ui.pane.editing.jvm.JvmClassEditorType;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassPane;
 import software.coley.recaf.util.EscapeUtil;
 import software.coley.recaf.util.Lang;
+import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.util.visitors.ClassAnnotationRemovingVisitor;
 import software.coley.recaf.util.visitors.MemberPredicate;
 import software.coley.recaf.util.visitors.MemberRemovingVisitor;
@@ -307,6 +308,28 @@ public class Actions implements Service {
 				.show();
 	}
 
+	/**
+	 * Prompts the user to rename whatever sort of content is contained within the given path.
+	 *
+	 * @param path
+	 * 		Item to rename. Can be a number of values.
+	 */
+	public void rename(@Nonnull PathNode<?> path) {
+		// Handle renaming based on the different resolved content type.
+		if (path instanceof ClassPathNode classPath)
+			Unchecked.run(() -> renameClass(classPath));
+		// TODO: Handle other types (fields/methods)
+	}
+
+	/**
+	 * Prompts the user to rename the given class.
+	 *
+	 * @param path
+	 * 		Path to class.
+	 *
+	 * @throws IncompletePathException
+	 * 		When the path is missing parent elements.
+	 */
 	public void renameClass(@Nonnull ClassPathNode path) throws IncompletePathException {
 		Workspace workspace = path.getValueOfType(Workspace.class);
 		WorkspaceResource resource = path.getValueOfType(WorkspaceResource.class);

@@ -49,10 +49,12 @@ import software.coley.recaf.services.decompile.JvmDecompiler;
 import software.coley.recaf.services.decompile.NoopJvmDecompiler;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.mapping.Mappings;
+import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.services.source.AstMappingVisitor;
+import software.coley.recaf.services.source.AstResolveResult;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
@@ -79,7 +81,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -111,7 +112,8 @@ public class JvmDecompilerPane extends BorderPane implements ClassNavigable, Upd
 							 @Nonnull SearchBar searchBar,
 							 @Nonnull JavaContextActionSupport contextActionSupport,
 							 @Nonnull DecompilerManager decompilerManager,
-							 @Nonnull JavacCompiler javac) {
+							 @Nonnull JavacCompiler javac,
+							 @Nonnull Actions actions) {
 		this.config = config;
 		this.contextActionSupport = contextActionSupport;
 		this.decompilerManager = decompilerManager;
@@ -146,6 +148,12 @@ public class JvmDecompilerPane extends BorderPane implements ClassNavigable, Upd
 		setOnKeyPressed(e -> {
 			if (keys.getSave().match(e))
 				save();
+			if (keys.getRename().match(e)) {
+				// Resolve what the caret position has, then handle renaming on the generic result.
+				AstResolveResult result = contextActionSupport.resolvePosition(editor.getCodeArea().getCaretPosition());
+				if (result != null)
+					actions.rename(result.path());
+			}
 		});
 
 		// Layout
@@ -166,18 +174,21 @@ public class JvmDecompilerPane extends BorderPane implements ClassNavigable, Upd
 	@Nonnull
 	@Override
 	public Collection<Navigable> getNavigableChildren() {
-		return Collections.emptyList();
+		return Collections.singleton(contextActionSupport);
 	}
 
 	@Override
 	public void onUpdatePath(@Nonnull PathNode<?> path) {
+		// Pass to children
+		for (Navigable navigableChild : getNavigableChildren())
+			if (navigableChild instanceof UpdatableNavigable updatableNavigable)
+				updatableNavigable.onUpdatePath(path);
+
+		// Handle updates to the decompiled code.
 		if (!updateLock.get() && path instanceof ClassPathNode classPathNode) {
 			this.path = classPathNode;
 			ClassInfo classInfo = classPathNode.getValue();
 			if (classInfo.isJvmClass()) {
-				// Schedule initializing the context action support with the class information on a background thread.
-				Executors.newSingleThreadExecutor().submit(() -> contextActionSupport.initialize(classInfo.asJvmClass()));
-
 				// Check if we can update the text efficiently with a remapper.
 				// If not, then schedule a decompilation instead.
 				if (!config.getUseMappingAcceleration().getValue() || !handleRemapUpdate(classInfo))
@@ -221,12 +232,20 @@ public class JvmDecompilerPane extends BorderPane implements ClassNavigable, Upd
 						String modified = mappedAst.print(new Cursor(null, unit));
 						List<StringDiff.Diff> diffs = StringDiff.diff(currentText, modified);
 						FxThreadUtil.run(() -> {
+							// Track where caret was.
 							CodeArea area = editor.getCodeArea();
+							int currentParagraph = area.getCurrentParagraph();
+							int currentColumn = area.getCaretColumn();
+
+							// Apply diffs.
 							for (int i = diffs.size() - 1; i >= 0; i--) {
 								StringDiff.Diff diff = diffs.get(i);
 								if (diff.type() == StringDiff.DiffType.CHANGE)
 									area.replaceText(diff.startA(), diff.endA(), diff.textB());
 							}
+
+							// Reset caret.
+							area.moveTo(currentParagraph, currentColumn);
 						});
 						return true;
 					}

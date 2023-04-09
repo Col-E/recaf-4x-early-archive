@@ -30,9 +30,11 @@ import software.coley.recaf.path.InnerClassPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.cell.ContextSource;
+import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
+import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.BoundMultiToggleIcon;
 import software.coley.recaf.ui.control.BoundToggleIcon;
 import software.coley.recaf.ui.control.tree.TreeFiltering;
@@ -67,11 +69,20 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 	private ClassPathNode path;
 
 	@Inject
-	public FieldsAndMethodsPane(@Nonnull CellConfigurationService configurationService) {
+	public FieldsAndMethodsPane(@Nonnull CellConfigurationService configurationService,
+								@Nonnull KeybindingConfig keys,
+								@Nonnull Actions actions) {
 		// Configure tree.
 		tree.setShowRoot(false);
 		tree.setCellFactory(param -> new WorkspaceTreeCell(ContextSource.DECLARATION, configurationService));
 		tree.getStyleClass().addAll(Tweaks.EDGE_TO_EDGE, Styles.DENSE);
+		tree.setOnKeyPressed(e -> {
+			if (keys.getRename().match(e)) {
+				TreeItem<PathNode<?>> selectedItem = tree.getSelectionModel().getSelectedItem();
+				if (selectedItem != null)
+					actions.rename(selectedItem.getValue());
+			}
+		});
 
 		// Layout
 		VBox box = new VBox(createButtonBar(), createFilterBar());
