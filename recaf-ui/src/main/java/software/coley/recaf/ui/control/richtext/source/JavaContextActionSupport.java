@@ -1,6 +1,7 @@
 package software.coley.recaf.ui.control.richtext.source;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.scene.control.ContextMenu;
@@ -66,6 +67,14 @@ public class JavaContextActionSupport implements EditorComponent {
 		this.cellConfigurationService = cellConfigurationService;
 		this.astService = astService;
 		contextHelper = new AstContextHelper(workspace);
+	}
+
+	/**
+	 * @return Current AST for the class.
+	 */
+	@Nullable
+	public J.CompilationUnit getUnit() {
+		return unit;
 	}
 
 	/**
