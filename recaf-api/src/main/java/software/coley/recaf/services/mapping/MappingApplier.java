@@ -7,6 +7,7 @@ import org.objectweb.asm.ClassWriter;
 import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.properties.builtin.OriginalClassNameProperty;
+import software.coley.recaf.info.properties.builtin.RemapOriginTaskProperty;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
@@ -159,6 +160,7 @@ public class MappingApplier {
 			JvmClassInfo updatedInfo = classInfo.toBuilder()
 					.adaptFrom(new ClassReader(cw.toByteArray()))
 					.build();
+			updatedInfo.setProperty(new RemapOriginTaskProperty(results));
 			updatedInfo.setPropertyIfMissing(OriginalClassNameProperty.KEY,
 					() -> new OriginalClassNameProperty(originalName));
 			results.add(workspace, resource, bundle, classInfo, updatedInfo);
