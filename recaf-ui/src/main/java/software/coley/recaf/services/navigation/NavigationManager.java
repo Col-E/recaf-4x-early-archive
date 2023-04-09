@@ -12,8 +12,10 @@ import software.coley.recaf.cdi.InitializationStage;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.properties.builtin.RemapOriginTaskProperty;
 import software.coley.recaf.path.*;
 import software.coley.recaf.services.Service;
+import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingTab;
 import software.coley.recaf.workspace.WorkspaceManager;
@@ -165,7 +167,17 @@ public class NavigationManager implements Navigable, Service {
 
 		@Override
 		public void onNewClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls) {
-			// no-op
+			// Handle forwarding updates to remapped classes
+			MappingResults mappingResults = cls.getPropertyValueOrNull(RemapOriginTaskProperty.KEY);
+			if (mappingResults != null) {
+				ClassPathNode preMappingPath = mappingResults.getPreMappingPath(cls.getName());
+				if (preMappingPath != null) {
+					ClassPathNode postMappingPath = workspacePath.child(resource).child(bundle).child(cls.getPackageName()).child(cls);
+					for (Navigable navigable : getNavigableChildrenByPath(preMappingPath))
+						if (navigable instanceof UpdatableNavigable updatable)
+							updatable.onUpdatePath(postMappingPath);
+				}
+			}
 		}
 
 		@Override

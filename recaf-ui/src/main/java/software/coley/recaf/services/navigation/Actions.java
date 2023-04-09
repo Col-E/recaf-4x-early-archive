@@ -154,7 +154,9 @@ public class Actions implements Service {
 			content.addPathUpdateListener(updatedPath -> {
 				// Update tab graphic in case backing class details change.
 				JvmClassInfo updatedInfo = updatedPath.getValue().asJvmClass();
+				String updatedTitle = textService.getJvmClassInfoTextProvider(workspace, resource, bundle, updatedInfo).makeText();
 				Node updatedGraphic = iconService.getJvmClassInfoIconProvider(workspace, resource, bundle, updatedInfo).makeIcon();
+				tab.setText(updatedTitle);
 				tab.setGraphic(updatedGraphic);
 			});
 			ContextMenu menu = new ContextMenu();
@@ -216,8 +218,10 @@ public class Actions implements Service {
 			content.addPathUpdateListener(updatedPath -> {
 				// Update tab graphic in case backing class details change.
 				AndroidClassInfo updatedInfo = updatedPath.getValue().asAndroidClass();
+				String updatedTitle = textService.getAndroidClassInfoTextProvider(workspace, resource, bundle, updatedInfo).makeText();
 				Node updatedGraphic = iconService.getAndroidClassInfoIconProvider(workspace, resource, bundle, updatedInfo).makeIcon();
 				tab.setGraphic(updatedGraphic);
+				tab.setText(updatedTitle);
 			});
 			ContextMenu menu = new ContextMenu();
 			ObservableList<MenuItem> items = menu.getItems();
