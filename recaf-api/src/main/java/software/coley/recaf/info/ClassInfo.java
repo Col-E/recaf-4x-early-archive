@@ -265,14 +265,6 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 		return function.apply(this);
 	}
 
-	/**
-	 * @return New builder wrapping this class information.
-	 */
-	@Nonnull
-	default AbstractClassInfoBuilder<?> toBuilder() {
-		return AbstractClassInfoBuilder.forClass(this);
-	}
-
 	@Nonnull
 	@Override
 	default ClassInfo asClass() {

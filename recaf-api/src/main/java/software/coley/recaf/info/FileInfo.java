@@ -11,6 +11,14 @@ import software.coley.recaf.info.builder.FileInfoBuilder;
  */
 public interface FileInfo extends Info {
 	/**
+	 * @return New builder wrapping this file information.
+	 */
+	@Nonnull
+	default FileInfoBuilder<?> toFileBuilder() {
+		return FileInfoBuilder.forFile(this);
+	}
+
+	/**
 	 * @return Raw bytes of file content.
 	 */
 	@Nonnull
@@ -26,14 +34,6 @@ public interface FileInfo extends Info {
 		int directoryIndex = fileName.lastIndexOf('/');
 		if (directoryIndex <= 0) return null;
 		return fileName.substring(0, directoryIndex);
-	}
-
-	/**
-	 * @return New builder wrapping this file information.
-	 */
-	@Nonnull
-	default FileInfoBuilder<?> toBuilder() {
-		return FileInfoBuilder.forFile(this);
 	}
 
 	@Nonnull
