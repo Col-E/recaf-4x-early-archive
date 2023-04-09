@@ -180,7 +180,7 @@ public class JvmDecompilerPane extends BorderPane implements ClassNavigable, Upd
 
 				// Check if we can update the text efficiently with a remapper.
 				// If not, then schedule a decompilation instead.
-				if (!handleRemapUpdate(classInfo))
+				if (!config.getUseMappingAcceleration().getValue() || !handleRemapUpdate(classInfo))
 					decompile();
 			}
 		}
@@ -394,7 +394,7 @@ public class JvmDecompilerPane extends BorderPane implements ClassNavigable, Upd
 	 *
 	 * @return Target Java version <i>(Standard versioning, not the internal one)</i>.
 	 */
-	private int useConfiguredVersion(JvmClassInfo info) {
+	private int useConfiguredVersion(@Nonnull JvmClassInfo info) {
 		int version = javacTarget.getValue();
 
 		// Negative: Match class file's version
@@ -408,6 +408,7 @@ public class JvmDecompilerPane extends BorderPane implements ClassNavigable, Upd
 	/**
 	 * @return Result made for timed out decompilations.
 	 */
+	@Nonnull
 	private DecompileResult timeoutResult() {
 		JvmClassInfo info = path.getValue().asJvmClass();
 		JvmDecompiler jvmDecompiler = decompiler.getValue();

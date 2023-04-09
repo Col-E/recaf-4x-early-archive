@@ -8,6 +8,8 @@ import software.coley.observables.ObservableInteger;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
+import software.coley.recaf.services.source.AstMappingVisitor;
+import software.coley.recaf.ui.control.richtext.Editor;
 
 import java.io.File;
 
@@ -19,12 +21,14 @@ import java.io.File;
 @ApplicationScoped
 public class JvmDecompilerPaneConfig extends BasicConfigContainer {
 	private final ObservableInteger timeoutSeconds = new ObservableInteger(60);
+	private final ObservableBoolean useMappingAcceleration = new ObservableBoolean(true);
 	private final ObservableBoolean acknowledgedSaveWithErrors = new ObservableBoolean(isNotDevEnv());
 
 	@Inject
 	public JvmDecompilerPaneConfig() {
 		super(ConfigGroups.SERVICE_UI, "decompile-pane" + CONFIG_SUFFIX);
 		addValue(new BasicConfigValue<>("timeout-seconds", int.class, timeoutSeconds));
+		addValue(new BasicConfigValue<>("mapping-acceleration", boolean.class, acknowledgedSaveWithErrors));
 		addValue(new BasicConfigValue<>("acknowledged-save-with-errors", boolean.class, acknowledgedSaveWithErrors, true));
 	}
 
@@ -42,6 +46,15 @@ public class JvmDecompilerPaneConfig extends BasicConfigContainer {
 	@Nonnull
 	public ObservableBoolean getAcknowledgedSaveWithErrors() {
 		return acknowledgedSaveWithErrors;
+	}
+
+	/**
+	 * @return Flag indicating if {@link AstMappingVisitor} should be used to update {@link Editor#getText()}
+	 * instead of decompiling the new remapped class. Generally faster, but can be inaccurate in some edge cases.
+	 */
+	@Nonnull
+	public ObservableBoolean getUseMappingAcceleration() {
+		return useMappingAcceleration;
 	}
 
 	private static boolean isNotDevEnv() {
