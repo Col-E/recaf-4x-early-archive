@@ -22,7 +22,7 @@ import java.io.File;
 public class JvmDecompilerPaneConfig extends BasicConfigContainer {
 	private final ObservableInteger timeoutSeconds = new ObservableInteger(60);
 	private final ObservableBoolean useMappingAcceleration = new ObservableBoolean(true);
-	private final ObservableBoolean acknowledgedSaveWithErrors = new ObservableBoolean(isNotDevEnv());
+	private final ObservableBoolean acknowledgedSaveWithErrors = new ObservableBoolean(isDevEnv());
 
 	@Inject
 	public JvmDecompilerPaneConfig() {
@@ -57,7 +57,7 @@ public class JvmDecompilerPaneConfig extends BasicConfigContainer {
 		return useMappingAcceleration;
 	}
 
-	private static boolean isNotDevEnv() {
+	private static boolean isDevEnv() {
 		// Should only be true when building Recaf from source/build-system.
 		return System.getProperty("java.class.path").contains("recaf-ui" + File.separator + "build");
 	}
