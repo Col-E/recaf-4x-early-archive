@@ -4,24 +4,13 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
-import javafx.scene.input.DragEvent;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Region;
-import org.slf4j.Logger;
-import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.ui.config.WorkspaceExplorerConfig;
 import software.coley.recaf.ui.control.tree.TreeFiltering;
 import software.coley.recaf.ui.control.tree.WorkspaceTree;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeFilterPane;
 import software.coley.recaf.ui.dnd.DragAndDrop;
-import software.coley.recaf.ui.dnd.FileDropListener;
-import software.coley.recaf.workspace.PathLoadingManager;
+import software.coley.recaf.ui.dnd.WorkspaceLoadingDropListener;
 import software.coley.recaf.workspace.model.Workspace;
-
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Pane to display the current workspace in a navigable tree layout.
@@ -30,28 +19,22 @@ import java.util.List;
  * @see WorkspaceRootPane
  */
 @Dependent
-public class WorkspaceExplorerPane extends BorderPane implements FileDropListener {
-	private static final Logger logger = Logging.get(WorkspaceExplorerPane.class);
-	private final WorkspaceExplorerConfig config;
-	private final PathLoadingManager pathLoadingManager;
+public class WorkspaceExplorerPane extends BorderPane {
 	private final WorkspaceTree workspaceTree;
-	private final Workspace workspace;
 
 	/**
-	 * @param workspace
-	 * 		Workspace instance.
+	 * @param listener
+	 * 		Workspace drag-and-drop listener.
 	 * @param workspaceTree
 	 * 		Tree to display workspace with.
+	 * @param workspace
+	 * 		Current workspace, if any.
 	 */
 	@Inject
-	public WorkspaceExplorerPane(@Nonnull WorkspaceExplorerConfig config,
-								 @Nonnull PathLoadingManager pathLoadingManager,
-								 @Nullable Workspace workspace,
-								 @Nonnull WorkspaceTree workspaceTree) {
-		this.pathLoadingManager = pathLoadingManager;
+	public WorkspaceExplorerPane(@Nonnull WorkspaceLoadingDropListener listener,
+								 @Nonnull WorkspaceTree workspaceTree,
+								 @Nullable Workspace workspace) {
 		this.workspaceTree = workspaceTree;
-		this.workspace = workspace;
-		this.config = config;
 
 		// Add filter pane, and hook up key-events so the user can easily
 		// navigate between the tree and the filter.
@@ -59,7 +42,7 @@ public class WorkspaceExplorerPane extends BorderPane implements FileDropListene
 		TreeFiltering.install(workspaceTreeFilterPane.getTextField(), workspaceTree);
 
 		// Initialize drag-drop support.
-		DragAndDrop.installFileSupport(this, this);
+		DragAndDrop.installFileSupport(this, listener);
 
 		// Layout
 		setCenter(workspaceTree);
@@ -76,25 +59,5 @@ public class WorkspaceExplorerPane extends BorderPane implements FileDropListene
 	@Nonnull
 	public WorkspaceTree getWorkspaceTree() {
 		return workspaceTree;
-	}
-
-	@Override
-	public void onDragDrop(@Nonnull Region region, @Nonnull DragEvent event, @Nonnull List<Path> files) throws IOException {
-		// Sanity check input
-		if (files.isEmpty()) return;
-
-		if (config.createOnDragDrop()) {
-			// Create new workspace from files
-			Path primary = files.get(0);
-			List<Path> supporting = files.size() > 1 ? files.subList(1, files.size()) : Collections.emptyList();
-			pathLoadingManager.asyncNewWorkspace(primary, supporting, err -> {
-				logger.error("Failed to create new workspace from dropped files", err);
-			});
-		} else if (workspace != null && config.appendOnDragDrop()) {
-			// Append files to current workspace
-			pathLoadingManager.asyncAddSupportingResourcesToWorkspace(workspace, files, err -> {
-				logger.error("Failed to add supporting resources from dropped files", err);
-			});
-		}
 	}
 }
