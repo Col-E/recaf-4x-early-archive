@@ -23,8 +23,12 @@ import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.ui.window.RecafStage;
+import software.coley.recaf.workspace.model.bundle.ClassBundle;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -48,7 +52,7 @@ public class ItemSelectionPopup<T> extends RecafStage {
 	 * @param consumer
 	 * 		Consumer to run when user accepts selected items.
 	 */
-	public ItemSelectionPopup(@Nonnull List<T> items, @Nonnull Consumer<List<T>> consumer) {
+	public ItemSelectionPopup(@Nonnull Collection<T> items, @Nonnull Consumer<List<T>> consumer) {
 		// Handle user accepting input
 		members.setOnKeyPressed(e -> {
 			if (e.getCode() == KeyCode.ENTER) {
@@ -58,7 +62,6 @@ public class ItemSelectionPopup<T> extends RecafStage {
 			}
 		});
 		members.setItems(FXCollections.observableArrayList(items));
-		members.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		members.setCellFactory(param -> new ListCell<>() {
 			@Override
 			protected void updateItem(T item, boolean empty) {
@@ -100,6 +103,17 @@ public class ItemSelectionPopup<T> extends RecafStage {
 	}
 
 	/**
+	 * Enables multiple selection.
+	 *
+	 * @return Self.
+	 */
+	@Nonnull
+	public ItemSelectionPopup<T> withMultipleSelection() {
+		members.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+		return this;
+	}
+
+	/**
 	 * @param binding
 	 * 		Title binding.
 	 *
@@ -133,6 +147,26 @@ public class ItemSelectionPopup<T> extends RecafStage {
 	public ItemSelectionPopup<T> withGraphicMapping(@Nonnull Function<T, Node> graphicMapper) {
 		this.graphicMapper = graphicMapper;
 		return this;
+	}
+
+	/**
+	 * @param bundle
+	 * 		Target bundle to pull packages from.
+	 * @param packageConsumer
+	 * 		Action to run on accepted packages.
+	 *
+	 * @return
+	 */
+	@Nonnull
+	public static ItemSelectionPopup<String> forPackageNames(@Nonnull ClassBundle<?> bundle,
+															 @Nonnull Consumer<List<String>> packageConsumer) {
+		Set<String> packages = new HashSet<>();
+		packages.add(""); // Empty package
+		for (String className : bundle.keySet()) {
+			int slash = className.lastIndexOf('/');
+			if (slash > 0) packages.add(className.substring(0, slash));
+		}
+		return new ItemSelectionPopup<>(packages, packageConsumer);
 	}
 
 	/**

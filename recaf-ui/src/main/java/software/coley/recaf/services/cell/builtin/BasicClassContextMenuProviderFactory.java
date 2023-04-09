@@ -43,6 +43,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -165,11 +166,11 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 			ActionMenuItem copy = action("menu.edit.copy", CarbonIcons.COPY_FILE, () -> {
 				String originalName = info.getName();
 				Consumer<String> copyTask = newName -> {
-					// Create mappings
+					// Create mappings.
 					IntermediateMappings mappings = new IntermediateMappings();
 					mappings.addClass(originalName, newName);
 
-					// Collect inner classes, we need to copy these as well
+					// Collect inner classes, we need to copy these as well.
 					List<JvmClassInfo> classesToCopy = new ArrayList<>();
 					classesToCopy.add(info);
 					for (InnerClassInfo inner : info.getInnerClasses()) {
@@ -225,6 +226,7 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 									.adaptFrom(new ClassReader(writer.toByteArray()))
 									.build());
 						})
+						.withMultipleSelection()
 						.withTitle(Lang.getBinding("menu.edit.remove.field"))
 						.withTextMapping(field -> textService.getFieldMemberTextProvider(workspace, resource, bundle, info, field).makeText())
 						.withGraphicMapping(field -> iconService.getClassMemberIconProvider(workspace, resource, bundle, info, field).makeIcon())
@@ -252,6 +254,7 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 									.adaptFrom(new ClassReader(writer.toByteArray()))
 									.build());
 						})
+						.withMultipleSelection()
 						.withTitle(Lang.getBinding("menu.edit.remove.method"))
 						.withTextMapping(method -> textService.getMethodMemberTextProvider(workspace, resource, bundle, info, method).makeText())
 						.withGraphicMapping(method -> iconService.getClassMemberIconProvider(workspace, resource, bundle, info, method).makeIcon())
@@ -270,6 +273,7 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 									.adaptFrom(new ClassReader(writer.toByteArray()))
 									.build());
 						})
+						.withMultipleSelection()
 						.withTitle(Lang.getBinding("menu.edit.remove.annotation"))
 						.withTextMapping(anno -> textService.getAnnotationTextProvider(workspace, resource, bundle, info, anno).makeText())
 						.withGraphicMapping(anno -> iconService.getAnnotationIconProvider(workspace, resource, bundle, info, anno).makeIcon())
@@ -306,10 +310,59 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 			addMethod.setDisable(true);
 			addAnnotation.setDisable(true);
 		}
+		Menu refactor = Menus.menu("menu.refactor", CarbonIcons.PAINT_BRUSH);
+		ActionMenuItem move = action("menu.refactor.move", CarbonIcons.STACKED_MOVE, () -> {
+			ItemSelectionPopup.forPackageNames(bundle, packages -> {
+						// We only allow a single package, so the list should contain just one item.
+						String oldPackage = info.getPackageName() + "/";
+						String newPackage = packages.get(0) + "/";
+						if (Objects.equals(oldPackage, newPackage)) return;
+
+						// Create mapping for the class and any inner classes.
+						String originalName = info.getName();
+						String newName = newPackage + info.getName().substring(oldPackage.length());
+						IntermediateMappings mappings = new IntermediateMappings();
+						for (InnerClassInfo inner : info.getInnerClasses()) {
+							if (inner.isExternalReference()) continue;
+							String innerClassName = inner.getInnerClassName();
+							mappings.addClass(innerClassName, newName + innerClassName.substring(originalName.length()));
+						}
+
+						// Apply the mappings.
+						MappingApplier applier = applierProvider.get();
+						MappingResults results = applier.applyToPrimary(mappings);
+						results.apply();
+					})
+					.withTitle(Lang.getBinding("dialog.title.move-class"))
+					.withTextMapping(name -> textService.getPackageTextProvider(workspace, resource, bundle, name).makeText())
+					.withGraphicMapping(name -> iconService.getPackageIconProvider(workspace, resource, bundle, name).makeIcon())
+					.show();
+		});
+		ActionMenuItem rename = action("menu.refactor.rename", CarbonIcons.TAG_EDIT, () -> {
+			String originalName = info.getName();
+			Consumer<String> renameTask = newName -> {
+				// Create mapping for the class and any inner classes.
+				IntermediateMappings mappings = new IntermediateMappings();
+				mappings.addClass(originalName, newName);
+				for (InnerClassInfo inner : info.getInnerClasses()) {
+					if (inner.isExternalReference()) continue;
+					String innerClassName = inner.getInnerClassName();
+					mappings.addClass(innerClassName, newName + innerClassName.substring(originalName.length()));
+				}
+
+				// Apply the mappings.
+				MappingApplier applier = applierProvider.get();
+				MappingResults results = applier.applyToPrimary(mappings);
+				results.apply();
+			};
+			new NamePopup(renameTask)
+					.withInitialClassName(originalName)
+					.forClassRename(bundle)
+					.show();
+		});
+		refactor.getItems().addAll(move, rename);
+		items.add(refactor);
 		// TODO: implement operations
-		//  - Refactor
-		//    - Rename
-		//    - Move
 		//  - Search references
 		//  - View
 		//    - Class hierarchy
