@@ -8,7 +8,6 @@ import javafx.event.ActionEvent;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.util.StringConverter;
@@ -34,7 +33,7 @@ import java.util.ArrayList;
  */
 public class JvmDecompilerPaneConfigurator extends Button implements EditorComponent {
 	private final ChangeListener<Boolean> handleScrollbarVisibility = (ob, old, cur) -> ScrollbarPaddingUtil.handleScrollbarVisibility(this, cur);
-	private final JvmDecompilerPaneConfig config;
+	private final DecompilerPaneConfig config;
 	private final ObservableObject<JvmDecompiler> decompiler;
 	private final ObservableInteger javacTarget;
 	private final ObservableBoolean javacDebug;
@@ -53,7 +52,7 @@ public class JvmDecompilerPaneConfigurator extends Button implements EditorCompo
 	 * @param decompilerManager
 	 * 		Manager to pull available {@link JvmDecompiler} instances from.
 	 */
-	public JvmDecompilerPaneConfigurator(@Nonnull JvmDecompilerPaneConfig config,
+	public JvmDecompilerPaneConfigurator(@Nonnull DecompilerPaneConfig config,
 										 @Nonnull ObservableObject<JvmDecompiler> decompiler,
 										 @Nonnull ObservableInteger javacTarget,
 										 @Nonnull ObservableBoolean javacDebug,

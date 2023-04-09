@@ -99,7 +99,7 @@ public class JvmDecompilerPane extends BorderPane implements ClassNavigable, Upd
 	private final ObservableBoolean decompileInProgress = new ObservableBoolean(false);
 	private final AtomicBoolean updateLock = new AtomicBoolean();
 	private final ProblemTracking problemTracking = new ProblemTracking();
-	private final JvmDecompilerPaneConfig config;
+	private final DecompilerPaneConfig config;
 	private final JavaContextActionSupport contextActionSupport;
 	private final DecompilerManager decompilerManager;
 	private final JavacCompiler javac;
@@ -107,7 +107,7 @@ public class JvmDecompilerPane extends BorderPane implements ClassNavigable, Upd
 	private ClassPathNode path;
 
 	@Inject
-	public JvmDecompilerPane(@Nonnull JvmDecompilerPaneConfig config,
+	public JvmDecompilerPane(@Nonnull DecompilerPaneConfig config,
 							 @Nonnull KeybindingConfig keys,
 							 @Nonnull SearchBar searchBar,
 							 @Nonnull JavaContextActionSupport contextActionSupport,
@@ -364,7 +364,7 @@ public class JvmDecompilerPane extends BorderPane implements ClassNavigable, Upd
 					JvmClassInfo newInfo;
 					if (infoName.equals(name)) {
 						// Adapt from existing.
-						newInfo = info.toBuilder()
+						newInfo = info.toJvmClassBuilder()
 								.adaptFrom(new ClassReader(bytecode))
 								.build();
 					} else {
@@ -373,7 +373,7 @@ public class JvmDecompilerPane extends BorderPane implements ClassNavigable, Upd
 						if (originalClass != null) {
 							// Adapt from existing.
 							newInfo = originalClass
-									.toBuilder()
+									.toJvmClassBuilder()
 									.adaptFrom(new ClassReader(bytecode))
 									.build();
 							bundle.put(newInfo);

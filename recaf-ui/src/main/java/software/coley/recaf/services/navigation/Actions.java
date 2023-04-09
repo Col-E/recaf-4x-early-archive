@@ -504,7 +504,7 @@ public class Actions implements Service {
 						}
 					});
 					info.getClassReader().accept(visitor, 0);
-					bundle.put(info.toBuilder()
+					bundle.put(info.toJvmClassBuilder()
 							.adaptFrom(new ClassReader(writer.toByteArray()))
 							.build());
 				})
@@ -548,7 +548,7 @@ public class Actions implements Service {
 						}
 					});
 					info.getClassReader().accept(visitor, 0);
-					bundle.put(info.toBuilder()
+					bundle.put(info.toJvmClassBuilder()
 							.adaptFrom(new ClassReader(writer.toByteArray()))
 							.build());
 				})
@@ -583,7 +583,7 @@ public class Actions implements Service {
 					ClassWriter writer = new ClassWriter(0);
 					ClassAnnotationRemovingVisitor visitor = new ClassAnnotationRemovingVisitor(writer, names);
 					info.getClassReader().accept(visitor, 0);
-					bundle.put(info.toBuilder()
+					bundle.put(info.toJvmClassBuilder()
 							.adaptFrom(new ClassReader(writer.toByteArray()))
 							.build());
 				})

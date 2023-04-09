@@ -157,7 +157,7 @@ public class MappingApplier {
 
 		// Update class if it has any modified references
 		if (remapVisitor.hasMappingBeenApplied()) {
-			JvmClassInfo updatedInfo = classInfo.toBuilder()
+			JvmClassInfo updatedInfo = classInfo.toJvmClassBuilder()
 					.adaptFrom(new ClassReader(cw.toByteArray()))
 					.build();
 			updatedInfo.setProperty(new RemapOriginTaskProperty(results));

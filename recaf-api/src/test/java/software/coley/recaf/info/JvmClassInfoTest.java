@@ -87,13 +87,13 @@ class JvmClassInfoTest {
 	@Test
 	void toBuilder() {
 		// Direct copy
-		JvmClassInfo builderDirectCopy = accessibleFields.toBuilder()
+		JvmClassInfo builderDirectCopy = accessibleFields.toJvmClassBuilder()
 				.build();
 		assertEquals(accessibleFields, builderDirectCopy,
 				"Direct copy via builder should have same class equality");
 
 		// With modification
-		JvmClassInfo builderModifiedCopy = accessibleFields.toBuilder()
+		JvmClassInfo builderModifiedCopy = accessibleFields.toJvmClassBuilder()
 				.withName("Modified")
 				.build();
 		assertNotEquals(accessibleFields, builderModifiedCopy,

@@ -30,6 +30,14 @@ public interface JvmClassInfo extends ClassInfo {
 	int BASE_VERSION = 44;
 
 	/**
+	 * @return New builder wrapping this class information.
+	 */
+	@Nonnull
+	default JvmClassInfoBuilder toJvmClassBuilder() {
+		return new JvmClassInfoBuilder(this);
+	}
+
+	/**
 	 * @return Java class file version.
 	 */
 	int getVersion();
@@ -160,11 +168,5 @@ public interface JvmClassInfo extends ClassInfo {
 	@Override
 	default boolean isAndroidClass() {
 		return false;
-	}
-
-	@Nonnull
-	@Override
-	default JvmClassInfoBuilder toBuilder() {
-		return new JvmClassInfoBuilder(this);
 	}
 }

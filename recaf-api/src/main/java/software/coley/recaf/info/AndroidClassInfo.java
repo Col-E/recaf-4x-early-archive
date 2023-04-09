@@ -12,6 +12,14 @@ import java.util.function.Predicate;
  * @author Matt Coley
  */
 public interface AndroidClassInfo extends ClassInfo {
+	/**
+	 * @return New builder wrapping this class information.
+	 */
+	@Nonnull
+	default AndroidClassInfoBuilder toAndroidBuilder() {
+		return new AndroidClassInfoBuilder(this);
+	}
+
 	@Override
 	default void acceptIfJvmClass(Consumer<JvmClassInfo> action) {
 		// no-op
@@ -52,11 +60,5 @@ public interface AndroidClassInfo extends ClassInfo {
 	@Override
 	default boolean isAndroidClass() {
 		return true;
-	}
-
-	@Nonnull
-	@Override
-	default AndroidClassInfoBuilder toBuilder() {
-		return new AndroidClassInfoBuilder(this);
 	}
 }

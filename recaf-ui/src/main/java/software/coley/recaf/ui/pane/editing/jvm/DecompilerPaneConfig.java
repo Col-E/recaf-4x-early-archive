@@ -10,22 +10,23 @@ import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.source.AstMappingVisitor;
 import software.coley.recaf.ui.control.richtext.Editor;
+import software.coley.recaf.ui.pane.editing.android.AndroidDecompilerPane;
 
 import java.io.File;
 
 /**
- * Config for {@link JvmDecompilerPane}.
+ * Config for {@link JvmDecompilerPane} and {@link AndroidDecompilerPane}.
  *
  * @author Matt Coley
  */
 @ApplicationScoped
-public class JvmDecompilerPaneConfig extends BasicConfigContainer {
+public class DecompilerPaneConfig extends BasicConfigContainer {
 	private final ObservableInteger timeoutSeconds = new ObservableInteger(60);
 	private final ObservableBoolean useMappingAcceleration = new ObservableBoolean(true);
 	private final ObservableBoolean acknowledgedSaveWithErrors = new ObservableBoolean(isDevEnv());
 
 	@Inject
-	public JvmDecompilerPaneConfig() {
+	public DecompilerPaneConfig() {
 		super(ConfigGroups.SERVICE_UI, "decompile-pane" + CONFIG_SUFFIX);
 		addValue(new BasicConfigValue<>("timeout-seconds", int.class, timeoutSeconds));
 		addValue(new BasicConfigValue<>("mapping-acceleration", boolean.class, acknowledgedSaveWithErrors));
