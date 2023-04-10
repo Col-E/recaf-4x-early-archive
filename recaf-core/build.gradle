@@ -1,16 +1,11 @@
 apply plugin: 'java-library'
 apply plugin: 'java-test-fixtures'
 
-repositories {
-    flatDir {
-        dirs 'libs'
-    }
-}
-
 dependencies {
     api project(':recaf-api')
     testImplementation(testFixtures(project(":recaf-api")))
 
     api cdi_impl
+    api picocli
     api cfr
 }

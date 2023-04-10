@@ -1,14 +1,24 @@
 package software.coley.recaf;
 
 import org.slf4j.Logger;
+import picocli.CommandLine;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.launch.LaunchArguments;
+import software.coley.recaf.launch.LaunchCommand;
 import software.coley.recaf.plugin.Plugin;
 import software.coley.recaf.plugin.PluginContainer;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.services.plugin.PluginManager;
+import software.coley.recaf.services.script.ScriptEngine;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.JFXValidation;
 import software.coley.recaf.util.Lang;
+import software.coley.recaf.workspace.PathLoadingManager;
+import software.coley.recaf.workspace.WorkspaceManager;
+import software.coley.recaf.workspace.io.ResourceImporter;
+import software.coley.recaf.workspace.model.BasicWorkspace;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,7 +38,7 @@ import java.util.zip.ZipOutputStream;
  */
 public class Main {
 	private static final Logger logger = Logging.get(Main.class);
-	private static String[] launchArgs;
+	private static LaunchArguments launchArgs;
 	private static Recaf recaf;
 
 	/**
@@ -36,14 +46,18 @@ public class Main {
 	 * 		Application arguments.
 	 */
 	public static void main(String[] args) {
-		launchArgs = args;
+		// Handle arguments.
+		LaunchCommand launchArgValues = new LaunchCommand();
+		CommandLine.populateCommand(launchArgValues, args);
 
-		// Validate the JFX environment is available.
+		// Validate the JFX environment is available if not running in headless mode.
 		// Abort if not available.
-		int validationCode = JFXValidation.validateJFX();
-		if (validationCode != 0) {
-			System.exit(validationCode);
-			return;
+		if (!launchArgValues.isHeadless()) {
+			int validationCode = JFXValidation.validateJFX();
+			if (validationCode != 0) {
+				System.exit(validationCode);
+				return;
+			}
 		}
 
 		// Add a class reference for our UI module.
@@ -51,6 +65,9 @@ public class Main {
 
 		// Invoke the bootstrapper, initializing the UI once the container is built.
 		recaf = Bootstrap.get();
+		launchArgs = recaf.get(LaunchArguments.class);
+		launchArgs.setCommand(launchArgValues);
+		launchArgs.setRawArgs(args);
 		initialize();
 	}
 
@@ -59,9 +76,15 @@ public class Main {
 	 */
 	private static void initialize() {
 		initLogging();
-		initTranslations();
-		initPlugins();
-		RecafApplication.launch(RecafApplication.class, launchArgs);
+		if (launchArgs.isHeadless()) {
+			initPlugins();
+			initHandling();
+		} else {
+			initTranslations();
+			initPlugins();
+			FxThreadUtil.delayedRun(500, Main::initHandling);
+			RecafApplication.launch(RecafApplication.class, launchArgs.getArgs());
+		}
 	}
 
 	/**
@@ -138,6 +161,32 @@ public class Main {
 					plugins.stream().map(PluginContainer::getInformation)
 							.map(info -> info.getName() + " - " + info.getVersion())
 							.collect(Collectors.joining(split)));
+		}
+	}
+
+	private static void initHandling() {
+		// Open initial file if found.
+		try {
+			File input = launchArgs.getInput();
+			if (input != null && input.isFile()) {
+				ResourceImporter importer = recaf.get(ResourceImporter.class);
+				WorkspaceManager workspaceManager = recaf.get(WorkspaceManager.class);
+				workspaceManager.setCurrent(new BasicWorkspace(importer.importResource(input)));
+			}
+		} catch (Throwable t) {
+			logger.error("Error handling loading of launch workspace content.", t);
+		}
+
+		// Run startup script.
+		try {
+			File script = launchArgs.getScript();
+			if (script != null && !script.isFile())
+				script = launchArgs.getScriptInScriptsDirectory();
+			if (script != null && script.isFile())
+				recaf.get(ScriptEngine.class)
+						.run(Files.readString(script.toPath()));
+		} catch (Throwable t) {
+			logger.error("Error handling execution of launch script.", t);
 		}
 	}
 }
