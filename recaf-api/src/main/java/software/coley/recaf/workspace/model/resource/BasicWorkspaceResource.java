@@ -6,9 +6,7 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.FileInfo;
-import software.coley.recaf.info.Info;
 import software.coley.recaf.info.JvmClassInfo;
-import software.coley.recaf.info.properties.builtin.ContainingResourceProperty;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.BundleListener;
@@ -82,7 +80,6 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 	 */
 	protected void setup() {
 		setupListenerDelegation();
-		linkContentsToResource();
 		linkToEmbedded();
 	}
 
@@ -194,37 +191,6 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 				}
 			}
 		}));
-	}
-
-	/**
-	 * Ensure {@link ContainingResourceProperty} is assigned to all {@link Info} values within this resource.
-	 */
-	private void linkContentsToResource() {
-		// Link all existing items in all contained bundles.
-		bundleStream()
-				.flatMap(bundle -> bundle.values().stream())
-				.forEach(info -> ContainingResourceProperty.set(info, this));
-
-		// Register listener to ensure all resources on this workspace have the built-in property
-		// assigned for quick lookup of info-to-resource.
-		WorkspaceResource resource = this;
-		BundleListener<Info> bundleListener = new BundleListener<>() {
-			@Override
-			public void onNewItem(String key, Info info) {
-				ContainingResourceProperty.set(info, resource);
-			}
-
-			@Override
-			public void onUpdateItem(String key, Info oldInfo, Info newInfo) {
-				ContainingResourceProperty.set(newInfo, resource);
-			}
-
-			@Override
-			public void onRemoveItem(String key, Info info) {
-				// no-op
-			}
-		};
-		bundleStream().forEach(bundle -> bundle.addBundleListener(bundleListener));
 	}
 
 	/**

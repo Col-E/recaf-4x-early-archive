@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
-import software.coley.recaf.info.properties.builtin.ContainingResourceProperty;
 import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.threading.ThreadLocals;
 import software.coley.recaf.workspace.model.bundle.*;
@@ -71,7 +70,6 @@ public class RuntimeWorkspaceResource implements WorkspaceResource {
 					return null;
 				}
 				JvmClassInfo info = new JvmClassInfoBuilder(new ClassReader(value)).build();
-				ContainingResourceProperty.set(info, resource);
 				cache.put(key, info);
 				return info;
 			}

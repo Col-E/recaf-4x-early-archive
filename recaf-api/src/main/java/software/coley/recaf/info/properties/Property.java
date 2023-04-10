@@ -29,8 +29,8 @@ public interface Property<V> {
 	 * When that occurs properties of the original info instance get copied to the new one. Not all properties should
 	 * be copied though. Consider these two cases:
 	 * <ul>
-	 *     <li>{@link software.coley.recaf.info.properties.builtin.ContainingResourceProperty} -
-	 *     Links an info instance to its containing resource. Will never change based on info state, thus
+	 *     <li>{@link software.coley.recaf.info.properties.builtin.ZipCommentProperty} -
+	 *     Is based on the input file content. Will never change based on info state, thus
 	 *     should be copied between info instances.</li>
 	 *     <li>{@link software.coley.recaf.info.properties.builtin.CachedDecompileProperty} -
 	 *     Caches the decompiled code of a class file to prevent duplicate work. Changes when info state
