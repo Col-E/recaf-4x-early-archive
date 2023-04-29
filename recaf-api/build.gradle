@@ -17,7 +17,6 @@ dependencies {
     api directories
     api extra_collections
     api extra_observables
-    api hppc
     api instrument_server
     api llzip
     api logging_impl

@@ -29,8 +29,6 @@ project.ext {
 
     gson = 'com.google.code.gson:gson:2.10.1'
 
-    hppc = 'com.carrotsearch:hppc:0.9.1'
-
     ikonli = 'org.kordamp.ikonli:ikonli-javafx:12.3.1'
     ikonli_pack = 'org.kordamp.ikonli:ikonli-carbonicons-pack:12.3.1'
 

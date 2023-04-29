@@ -1,8 +1,7 @@
 package software.coley.recaf.util;
 
-import com.carrotsearch.hppc.CharIntHashMap;
-import com.carrotsearch.hppc.CharIntMap;
-import com.carrotsearch.hppc.cursors.CharIntCursor;
+import it.unimi.dsi.fastutil.chars.Char2IntArrayMap;
+import it.unimi.dsi.fastutil.chars.Char2IntMap;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 
@@ -17,7 +16,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Random;
-import java.util.function.Consumer;
 
 /**
  * Various utilities for {@link String} manipulation.
@@ -415,13 +413,13 @@ public class StringUtil {
 	 * @return Entropy of the characters in the text.
 	 */
 	public static double getEntropy(String text) {
-		CharIntMap charCountMap = new CharIntHashMap(64);
+		Char2IntMap charCountMap = new Char2IntArrayMap(64);
 		for (char c : text.toCharArray())
-			charCountMap.addTo(c, 1);
+			charCountMap.mergeInt(c, 1, Integer::sum);
 		int length = text.length();
 		final double[] entropy = {0.0};
-		charCountMap.forEach((Consumer<CharIntCursor>) cursor -> {
-			double freq = ((double) cursor.value) / length;
+		charCountMap.values().forEach(value -> {
+			double freq = ((double) value) / length;
 			entropy[0] -= freq * (Math.log(freq) / Math.log(2));
 		});
 		return entropy[0];
