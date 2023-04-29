@@ -69,6 +69,7 @@ import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.source.JavaContextActionSupport;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
+import software.coley.recaf.ui.pane.editing.AbstractDecompilePane;
 import software.coley.recaf.util.*;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.Workspace;
@@ -90,21 +91,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Matt Coley
  */
 @Dependent
-public class JvmDecompilerPane extends BorderPane implements ClassNavigable, UpdatableNavigable {
+public class JvmDecompilerPane extends AbstractDecompilePane {
 	private static final Logger logger = Logging.get(JvmDecompilerPane.class);
 	private static final ExecutorService compilePool = ThreadPoolFactory.newSingleThreadExecutor("recompile");
-	private final ObservableObject<JvmDecompiler> decompiler = new ObservableObject<>(NoopJvmDecompiler.getInstance());
 	private final ObservableInteger javacTarget = new ObservableInteger(-1); // use negative to match class file's ver
 	private final ObservableBoolean javacDebug = new ObservableBoolean(true);
-	private final ObservableBoolean decompileInProgress = new ObservableBoolean(false);
-	private final AtomicBoolean updateLock = new AtomicBoolean();
-	private final ProblemTracking problemTracking = new ProblemTracking();
-	private final DecompilerPaneConfig config;
-	private final JavaContextActionSupport contextActionSupport;
-	private final DecompilerManager decompilerManager;
 	private final JavacCompiler javac;
-	private final Editor editor;
-	private ClassPathNode path;
 
 	@Inject
 	public JvmDecompilerPane(@Nonnull DecompilerPaneConfig config,
@@ -114,35 +106,13 @@ public class JvmDecompilerPane extends BorderPane implements ClassNavigable, Upd
 							 @Nonnull DecompilerManager decompilerManager,
 							 @Nonnull JavacCompiler javac,
 							 @Nonnull Actions actions) {
-		this.config = config;
-		this.contextActionSupport = contextActionSupport;
-		this.decompilerManager = decompilerManager;
+		super(config, keys, searchBar, contextActionSupport, decompilerManager, actions);
 		this.javac = javac;
-		decompiler.setValue(decompilerManager.getTargetJvmDecompiler());
-		editor = new Editor();
-		editor.getStylesheets().add("/syntax/java.css");
-		editor.setSyntaxHighlighter(new RegexSyntaxHighlighter(RegexLanguages.getJavaLanguage()));
-		editor.setSelectedBracketTracking(new SelectedBracketTracking());
-		editor.setProblemTracking(problemTracking);
-		editor.getRootLineGraphicFactory().addLineGraphicFactories(
-				new BracketMatchGraphicFactory(),
-				new ProblemGraphicFactory()
-		);
 
-		// Install additional editor components
+		// Install configurator popup
 		JvmDecompilerPaneConfigurator configurator = new JvmDecompilerPaneConfigurator(config, decompiler,
 				javacTarget, javacDebug, decompilerManager);
 		configurator.install(editor);
-		searchBar.install(editor);
-		contextActionSupport.install(editor);
-
-		// Add overlay for when decompilation is in-progress
-		DecompileProgressOverlay overlay = new DecompileProgressOverlay();
-		decompileInProgress.addChangeListener((ob, old, cur) -> {
-			ObservableList<Node> children = editor.getPrimaryStack().getChildren();
-			if (cur) children.add(overlay);
-			else children.remove(overlay);
-		});
 
 		// Setup keybindings
 		setOnKeyPressed(e -> {
@@ -155,159 +125,6 @@ public class JvmDecompilerPane extends BorderPane implements ClassNavigable, Upd
 					actions.rename(result.path());
 			}
 		});
-
-		// Layout
-		setCenter(editor);
-	}
-
-	@Nonnull
-	@Override
-	public ClassPathNode getPath() {
-		return path;
-	}
-
-	@Override
-	public void requestFocus(@Nonnull ClassMember member) {
-		contextActionSupport.select(member);
-	}
-
-	@Nonnull
-	@Override
-	public Collection<Navigable> getNavigableChildren() {
-		return Collections.singleton(contextActionSupport);
-	}
-
-	@Override
-	public void onUpdatePath(@Nonnull PathNode<?> path) {
-		// Pass to children
-		for (Navigable navigableChild : getNavigableChildren())
-			if (navigableChild instanceof UpdatableNavigable updatableNavigable)
-				updatableNavigable.onUpdatePath(path);
-
-		// Handle updates to the decompiled code.
-		if (!updateLock.get() && path instanceof ClassPathNode classPathNode) {
-			this.path = classPathNode;
-			ClassInfo classInfo = classPathNode.getValue();
-			if (classInfo.isJvmClass()) {
-				// Check if we can update the text efficiently with a remapper.
-				// If not, then schedule a decompilation instead.
-				if (!config.getUseMappingAcceleration().getValue() || !handleRemapUpdate(classInfo))
-					decompile();
-			}
-		}
-	}
-
-	/**
-	 * Attempts to update the {@link #editor}'s text with intent-specific AST operations.
-	 * This includes:
-	 * <ul>
-	 *     <li>{@link AstMappingVisitor} when handling classes marked with {@link RemapOriginTaskProperty}</li>
-	 * </ul>
-	 *
-	 * @param classInfo
-	 * 		Modified class.
-	 *
-	 * @return {@code true} when we were able to handle it with an AST visitors.
-	 */
-	private boolean handleRemapUpdate(@Nonnull ClassInfo classInfo) {
-		// Attempt to handle change with an AST mapping visitor if the change is originating
-		// from a mapping application job.
-		String currentText = editor.getText();
-		if (!currentText.isBlank()) {
-			MappingResults mappingOrigin = classInfo.getPropertyValueOrNull(RemapOriginTaskProperty.KEY);
-			if (mappingOrigin != null) {
-				// If the mapping operation affects inner classes
-				Mappings mappings = mappingOrigin.getMappings();
-
-				// We can handle the update with AST mapping instead of decompiling the class again.
-				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
-				J.CompilationUnit unit = contextActionSupport.getUnit();
-				if (unit != null) {
-					ExecutionContext ctx = new InMemoryExecutionContext();
-					J mappedAst = unit.acceptJava(visitor, ctx);
-					if (mappedAst != null) {
-						// We want to get the difference between the current and modified text and update only
-						// the areas of the text that are modified. In most situations this will be much faster
-						// than re-assigning the whole text (which will require restyling the entire document)
-						String modified = mappedAst.print(new Cursor(null, unit));
-						List<StringDiff.Diff> diffs = StringDiff.diff(currentText, modified);
-						FxThreadUtil.run(() -> {
-							// Track where caret was.
-							CodeArea area = editor.getCodeArea();
-							int currentParagraph = area.getCurrentParagraph();
-							int currentColumn = area.getCaretColumn();
-
-							// Apply diffs.
-							for (int i = diffs.size() - 1; i >= 0; i--) {
-								StringDiff.Diff diff = diffs.get(i);
-								if (diff.type() == StringDiff.DiffType.CHANGE)
-									area.replaceText(diff.startA(), diff.endA(), diff.textB());
-							}
-
-							// Reset caret.
-							area.moveTo(currentParagraph, currentColumn);
-						});
-						return true;
-					}
-				}
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * Decompiles the class contained by the current {@link #path} and updates the {@link #editor}'s text
-	 * with the decompilation results.
-	 */
-	private void decompile() {
-		Workspace workspace = path.getValueOfType(Workspace.class);
-		JvmClassInfo classInfo = path.getValue().asJvmClass();
-
-		// Schedule decompilation task, update the editor's text asynchronously on the JavaFX UI thread when complete.
-		decompileInProgress.setValue(true);
-		editor.setMouseTransparent(true);
-		decompilerManager.decompile(decompiler.getValue(), workspace, classInfo)
-				.completeOnTimeout(timeoutResult(), config.getTimeoutSeconds().getValue(), TimeUnit.SECONDS)
-				.whenCompleteAsync((result, throwable) -> {
-					editor.setMouseTransparent(false);
-					decompileInProgress.setValue(false);
-
-					// Handle uncaught exceptions
-					if (throwable != null) {
-						String trace = StringUtil.traceToString(throwable);
-						editor.setText("/*\nUncaught exception when decompiling:\n" + trace + "\n*/");
-						return;
-					}
-
-					// Handle decompilation result
-					String text = result.getText();
-					if (Objects.equals(text, editor.getText()))
-						return; // Skip if existing text is the same
-					switch (result.getType()) {
-						case SUCCESS -> editor.setText(text);
-						case SKIPPED -> editor.setText(text == null ? "// Decompilation skipped" : text);
-						case FAILURE -> {
-							Throwable exception = result.getException();
-							if (exception != null) {
-								String trace = StringUtil.traceToString(exception);
-								editor.setText("/*\nDecompile failed:\n" + trace + "\n*/");
-							} else
-								editor.setText("/*\nDecompile failed, but no trace was attached:\n*/");
-						}
-					}
-
-					// Schedule AST parsing for context action support.
-					contextActionSupport.scheduleAstParse();
-
-					// Prevent undo from reverting to empty state.
-					editor.getCodeArea().getUndoManager().forgetHistory();
-				}, FxThreadUtil.executor());
-	}
-
-	@Override
-	public void disable() {
-		setDisable(true);
-		setOnKeyPressed(null);
 	}
 
 	/**
@@ -425,34 +242,6 @@ public class JvmDecompilerPane extends BorderPane implements ClassNavigable, Upd
 	}
 
 	/**
-	 * @return Result made for timed out decompilations.
-	 */
-	@Nonnull
-	private DecompileResult timeoutResult() {
-		JvmClassInfo info = path.getValue().asJvmClass();
-		JvmDecompiler jvmDecompiler = decompiler.getValue();
-		return new DecompileResult("""
-				// Decompilation timed out.
-				//  - Class name: %s
-				//  - Class size: %d bytes
-				//  - Decompiler: %s - %s
-				//  - Timeout: %d seconds
-				//
-				// Suggestions:
-				//  - Increase timeout
-				//  - Change decompilers
-				//  - Deobfuscate heavily obfuscated code and try again
-				//
-				// Reminder:
-				//  - Class information is still available on the side panels ==>
-				""".formatted(info.getName(),
-				info.getBytecode().length,
-				jvmDecompiler.getName(), jvmDecompiler.getVersion(),
-				config.getTimeoutSeconds().getValue()
-		), null, DecompileResult.ResultType.SKIPPED, 0);
-	}
-
-	/**
 	 * Show popup telling user they cannot save with errors.
 	 */
 	private void showFirstTimeSaveWithErrors() {
@@ -493,90 +282,6 @@ public class JvmDecompilerPane extends BorderPane implements ClassNavigable, Upd
 			config.getAcknowledgedSaveWithErrors().setValue(true);
 			popup.hide();
 		});
-	}
-
-	/**
-	 * And overlay shown while a class is being decompiled.
-	 */
-	private class DecompileProgressOverlay extends VBox {
-		private DecompileProgressOverlay() {
-			Label title = new BoundLabel(Lang.getBinding("java.decompiling"));
-			Label text = new Label();
-			title.getStyleClass().add(Styles.TITLE_3);
-			text.getStyleClass().add(Styles.TEXT_SUBTLE);
-			text.setFont(new Font("JetBrains Mono", 12)); // Pulling from CSS applied to the editor.
-
-			// Layout
-			getChildren().addAll(new Spacer(Orientation.VERTICAL), title, text, new Spacer(Orientation.VERTICAL));
-			getStyleClass().addAll("background");
-			setFillWidth(true);
-			setAlignment(Pos.CENTER);
-
-			// Setup transition to play whenever decompilation is in progress.
-			BytecodeTransition transition = new BytecodeTransition(text);
-			decompileInProgress.addChangeListener((ob, old, cur) -> {
-				setVisible(cur);
-				if (cur) {
-					transition.update(path.getValue().asJvmClass());
-					transition.play();
-				} else
-					transition.stop();
-			});
-		}
-
-		private class BytecodeTransition extends Transition {
-			private final Labeled labeled;
-			private byte[] bytecode;
-
-			/**
-			 * @param labeled
-			 * 		Target label.
-			 */
-			public BytecodeTransition(@Nonnull Labeled labeled) {
-				this.labeled = labeled;
-			}
-
-			/**
-			 * @param info
-			 * 		Class to show bytecode of.
-			 */
-			public void update(@Nonnull JvmClassInfo info) {
-				this.bytecode = info.getBytecode();
-				setCycleDuration(Duration.millis(bytecode.length));
-			}
-
-			@Override
-			protected void interpolate(double fraction) {
-				int bytecodeSize = bytecode.length;
-				int textLength = 18;
-				int middle = (int) (fraction * bytecodeSize);
-				int start = middle - (textLength / 2);
-				int end = middle + (textLength / 2);
-
-				// We have two rows, top for hex, bottom for text.
-				StringBuilder sbHex = new StringBuilder();
-				StringBuilder sbText = new StringBuilder();
-				for (int i = start; i < end; i++) {
-					if (i < 0) {
-						sbHex.append("   ");
-						sbText.append("   ");
-					} else if (i >= bytecodeSize) {
-						sbHex.append(" ..");
-						sbText.append(" ..");
-					} else {
-						short b = (short) (bytecode[i] & 0xFF);
-						char c = (char) b;
-						if (Character.isWhitespace(c)) c = ' ';
-						else if (c < 32) c = '?';
-						String hex = StringUtil.limit(Integer.toHexString(b).toUpperCase(), 2);
-						if (hex.length() == 1) hex = "0" + hex;
-						sbHex.append(StringUtil.fillLeft(3, " ", hex));
-						sbText.append(StringUtil.fillLeft(3, " ", String.valueOf(c)));
-					}
-				}
-				labeled.setText(sbHex + "\n" + sbText);
-			}
-		}
 	}
 
 	/**

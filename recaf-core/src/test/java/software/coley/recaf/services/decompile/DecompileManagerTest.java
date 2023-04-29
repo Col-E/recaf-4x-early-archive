@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import software.coley.recaf.TestBase;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.decompile.cfr.CfrDecompiler;
+import software.coley.recaf.services.decompile.procyon.ProcyonDecompiler;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.HelloWorld;
 import software.coley.recaf.workspace.model.Workspace;
@@ -36,6 +37,13 @@ public class DecompileManagerTest extends TestBase {
 	void testCfr() {
 		JvmDecompiler decompiler = decompilerManager.getJvmDecompiler(CfrDecompiler.NAME);
 		assertNotNull(decompiler, "CFR decompiler was never registered with manager");
+		runJvmDecompilation(decompiler);
+	}
+
+	@Test
+	void testProcyon() {
+		JvmDecompiler decompiler = decompilerManager.getJvmDecompiler(ProcyonDecompiler.NAME);
+		assertNotNull(decompiler, "Procyon decompiler was never registered with manager");
 		runJvmDecompilation(decompiler);
 	}
 

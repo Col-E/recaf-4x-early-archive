@@ -65,6 +65,19 @@ public abstract class ClassPane extends BorderPane implements ClassNavigable, Up
 	}
 
 	/**
+	 * Refresh the display.
+	 */
+	protected void refreshDisplay() {
+		// Refresh display
+		clearDisplay();
+		generateDisplay();
+
+		// Refresh UI with path
+		if (getCenter() instanceof UpdatableNavigable updatable)
+			updatable.onUpdatePath(getPath());
+	}
+
+	/**
 	 * Generate display for the class denoted by {@link #getPath() the class path node}.
 	 * Children implementing this should call {@link #setDisplay(Node)}.
 	 */

@@ -58,7 +58,7 @@ public class ClassSource implements ClassFileSource {
 		if (className.equals(targetClassName)) {
 			code = targetClassBytecode;
 		} else {
-			ClassPathNode result = workspace.findJvmClass(className);
+			ClassPathNode result = workspace.findClass(className);
 			code = result == null ? null : result.getValue().asJvmClass().getBytecode();
 
 			// Simply CFR's work-load by gutting supporting class internals

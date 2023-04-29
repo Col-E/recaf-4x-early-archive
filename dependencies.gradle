@@ -48,6 +48,8 @@ project.ext {
 
     openrewrite = 'org.openrewrite:rewrite-java-17:7.39.1'
 
+    procyon = "org.bitbucket.mstrobel:procyon-compilertools:0.6.0"
+
     picocli = 'info.picocli:picocli:4.7.1'
 
     regex = 'net.sourceforge.jregex:jregex:1.2_01'
