@@ -3,6 +3,7 @@ package software.coley.recaf.info;
 import com.android.tools.r8.graph.DexProgramClass;
 import jakarta.annotation.Nonnull;
 import org.objectweb.asm.ClassReader;
+import software.coley.dextranslator.Options;
 import software.coley.dextranslator.ir.ConversionException;
 import software.coley.dextranslator.model.ApplicationData;
 import software.coley.recaf.info.builder.AndroidClassInfoBuilder;
@@ -29,6 +30,12 @@ public class BasicAndroidClassInfo extends BasicClassInfo implements AndroidClas
 		dexClass = builder.getDexClass();
 	}
 
+	@Override
+	public boolean canMapToJvmClass() {
+		// See below
+		return true;
+	}
+
 	/**
 	 * @return Translation into JVM class.
 	 */
@@ -38,8 +45,12 @@ public class BasicAndroidClassInfo extends BasicClassInfo implements AndroidClas
 		if (converted == null) {
 			try {
 				String name = getName();
-				byte[] convertedBytecode = ApplicationData.fromProgramClasses(Collections.singleton(dexClass))
-						.exportToJvmClass(name);
+				ApplicationData data = ApplicationData.fromProgramClasses(Collections.singleton(dexClass));
+				data.setOperationOptionsProvider(() -> new Options()
+						.enableLoadStoreOptimization()
+						.setLenient(true)
+						.setReplaceInvalidMethodBodies(true));
+				byte[] convertedBytecode = data.exportToJvmClass(name);
 				if (convertedBytecode == null)
 					throw new IllegalStateException("Failed to convert Dalvik model of " + name + " to JVM bytecode, " +
 							"conversion results did not include type name.");

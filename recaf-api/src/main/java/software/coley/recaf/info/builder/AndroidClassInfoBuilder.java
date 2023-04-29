@@ -68,9 +68,9 @@ public class AndroidClassInfoBuilder extends AbstractClassInfoBuilder<AndroidCla
 	@Nonnull
 	public AndroidClassInfoBuilder adaptFrom(@Nonnull DexProgramClass dexClass) {
 		this.dexClass = dexClass;
-		withName(mapDesc(dexClass.getTypeName()));
-		withSuperName(mapDesc(dexClass.getSuperType().getTypeName()));
-		withInterfaces(dexClass.getInterfaces().stream().map(DexType::getTypeName).toList());
+		withName(dexClass.getTypeName().replace('.', '/'));
+		withSuperName(dexClass.getSuperType().getTypeName().replace('.', '/'));
+		withInterfaces(dexClass.getInterfaces().stream().map(i -> i.getTypeName().replace('.', '/')).toList());
 		withAccess(dexClass.getAccessFlags().getAsCfAccessFlags());
 		withSourceFileName(dexClass.getSourceFile() == null ? null : dexClass.getSourceFile().toString());
 		withAnnotations(mapAnnos(dexClass.annotations()));
@@ -81,7 +81,7 @@ public class AndroidClassInfoBuilder extends AbstractClassInfoBuilder<AndroidCla
 		if (innerClasses != null) {
 			DexType outerType = innerClasses.getOuter();
 			if (outerType != null) {
-				withOuterClassName(outerType.getTypeName());
+				withOuterClassName(outerType.getTypeName().replace('.', '/'));
 			}
 		}
 		if (dexClass.hasEnclosingMethodAttribute()) {
@@ -89,16 +89,10 @@ public class AndroidClassInfoBuilder extends AbstractClassInfoBuilder<AndroidCla
 			if (enclosingMethod != null) {
 				withOuterMethodName(enclosingMethod.getName().toString());
 				withOuterMethodDescriptor(enclosingMethod.getProto().toDescriptorString());
-				withOuterClassName(enclosingMethod.getHolderType().getTypeName());
+				withOuterClassName(enclosingMethod.getHolderType().getTypeName().replace('.', '/'));
 			}
 		}
 		return this;
-	}
-
-	@Nullable
-	private String mapDesc(@Nullable String name) {
-		if (name == null) return null;
-		return name.substring(1, name.length() - 1);
 	}
 
 	@Nonnull
@@ -146,7 +140,8 @@ public class AndroidClassInfoBuilder extends AbstractClassInfoBuilder<AndroidCla
 
 	@Nonnull
 	private static BasicAnnotationInfo mapAnno(@Nonnull DexAnnotation anno) {
-		BasicAnnotationInfo info = new BasicAnnotationInfo(isNonZero(anno.getVisibility()), anno.getAnnotationType().getTypeName());
+		BasicAnnotationInfo info = new BasicAnnotationInfo(isNonZero(anno.getVisibility()),
+				anno.getAnnotationType().getTypeName().replace('.', '/'));
 		anno.annotation.forEachElement(element -> {
 			String name = element.getName().toString();
 			Object unbox = unbox(element.getValue());
@@ -157,7 +152,7 @@ public class AndroidClassInfoBuilder extends AbstractClassInfoBuilder<AndroidCla
 
 	@Nonnull
 	private static BasicAnnotationInfo mapAnno(@Nonnull DexEncodedAnnotation anno) {
-		BasicAnnotationInfo info = new BasicAnnotationInfo(true, anno.type.getTypeName());
+		BasicAnnotationInfo info = new BasicAnnotationInfo(true, anno.type.getTypeName().replace('.', '/'));
 		for (DexAnnotationElement element : anno.elements) {
 			String name = element.getName().toString();
 			DexValue value = element.getValue();

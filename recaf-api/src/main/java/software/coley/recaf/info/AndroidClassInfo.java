@@ -13,6 +13,14 @@ import java.util.function.Predicate;
  */
 public interface AndroidClassInfo extends ClassInfo {
 	/**
+	 * @return {@code true} when {@link #asJvmClass()} can act as a mapping operation.
+	 * {@code false} when mapping to JVM classes is unsupported.
+	 */
+	default boolean canMapToJvmClass() {
+		return false;
+	}
+
+	/**
 	 * @return New builder wrapping this class information.
 	 */
 	@Nonnull
