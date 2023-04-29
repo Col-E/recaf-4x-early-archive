@@ -20,7 +20,7 @@ import software.coley.recaf.ui.pane.editing.jvm.JvmClassEditorType;
 @ApplicationScoped
 public class ClassEditingConfig extends BasicConfigContainer {
 	public static final String ID = "class-editing";
-	private final ObservableObject<AndroidClassEditorType> defaultAndroidEditor = new ObservableObject<>(AndroidClassEditorType.SMALI);
+	private final ObservableObject<AndroidClassEditorType> defaultAndroidEditor = new ObservableObject<>(AndroidClassEditorType.DECOMPILE);
 	private final ObservableObject<JvmClassEditorType> defaultJvmEditor = new ObservableObject<>(JvmClassEditorType.DECOMPILE);
 
 	@Inject

@@ -6,5 +6,6 @@ package software.coley.recaf.ui.pane.editing.android;
  * @author Matt Coley
  */
 public enum AndroidClassEditorType {
-	SMALI
+	SMALI,
+	DECOMPILE
 }

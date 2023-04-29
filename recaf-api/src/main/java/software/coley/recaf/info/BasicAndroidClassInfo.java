@@ -64,7 +64,7 @@ public class BasicAndroidClassInfo extends BasicClassInfo implements AndroidClas
 	}
 
 	/**
-	 * @return Origin dex class node.
+	 * @return Backing program class node.
 	 */
 	@Nonnull
 	public DexProgramClass getDexClass() {

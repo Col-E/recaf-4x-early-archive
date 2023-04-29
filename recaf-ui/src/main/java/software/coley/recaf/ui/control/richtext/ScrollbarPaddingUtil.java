@@ -5,7 +5,7 @@ import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.layout.StackPane;
 import software.coley.recaf.ui.pane.editing.ProblemOverlay;
-import software.coley.recaf.ui.pane.editing.jvm.JvmDecompilerPaneConfigurator;
+import software.coley.recaf.ui.pane.editing.AbstractDecompilerPaneConfigurator;
 
 /**
  * Used by {@link Node} values to be shown on an editor's {@link Editor#getPrimaryStack()}.
@@ -13,7 +13,7 @@ import software.coley.recaf.ui.pane.editing.jvm.JvmDecompilerPaneConfigurator;
  *
  * @author Matt Coley
  * @see ProblemOverlay
- * @see JvmDecompilerPaneConfigurator
+ * @see AbstractDecompilerPaneConfigurator
  */
 public class ScrollbarPaddingUtil {
 	/**

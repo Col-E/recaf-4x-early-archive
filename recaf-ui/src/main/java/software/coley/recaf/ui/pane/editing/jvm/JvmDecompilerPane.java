@@ -1,89 +1,54 @@
 package software.coley.recaf.ui.pane.editing.jvm;
 
-import atlantafx.base.controls.Spacer;
 import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.animation.Transition;
-import javafx.collections.ObservableList;
-import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
 import javafx.scene.control.Labeled;
 import javafx.scene.control.TitledPane;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 import javafx.stage.Popup;
 import javafx.util.Duration;
-import org.fxmisc.richtext.CodeArea;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.objectweb.asm.ClassReader;
-import org.openrewrite.Cursor;
-import org.openrewrite.ExecutionContext;
-import org.openrewrite.InMemoryExecutionContext;
-import org.openrewrite.java.tree.J;
 import org.slf4j.Logger;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableInteger;
-import software.coley.observables.ObservableObject;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
-import software.coley.recaf.info.member.ClassMember;
-import software.coley.recaf.info.properties.builtin.RemapOriginTaskProperty;
-import software.coley.recaf.path.ClassPathNode;
-import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.compile.CompileMap;
 import software.coley.recaf.services.compile.CompilerDiagnostic;
 import software.coley.recaf.services.compile.JavacArgumentsBuilder;
 import software.coley.recaf.services.compile.JavacCompiler;
-import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.DecompilerManager;
-import software.coley.recaf.services.decompile.JvmDecompiler;
-import software.coley.recaf.services.decompile.NoopJvmDecompiler;
-import software.coley.recaf.services.mapping.MappingResults;
-import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.navigation.Actions;
-import software.coley.recaf.services.navigation.ClassNavigable;
-import software.coley.recaf.services.navigation.Navigable;
-import software.coley.recaf.services.navigation.UpdatableNavigable;
-import software.coley.recaf.services.source.AstMappingVisitor;
 import software.coley.recaf.services.source.AstResolveResult;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.richtext.Editor;
-import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
-import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
 import software.coley.recaf.ui.control.richtext.problem.Problem;
-import software.coley.recaf.ui.control.richtext.problem.ProblemGraphicFactory;
 import software.coley.recaf.ui.control.richtext.problem.ProblemPhase;
-import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.source.JavaContextActionSupport;
-import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
-import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
 import software.coley.recaf.ui.pane.editing.AbstractDecompilePane;
-import software.coley.recaf.util.*;
+import software.coley.recaf.ui.pane.editing.AbstractDecompilerPaneConfigurator;
+import software.coley.recaf.util.Animations;
+import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.JavaVersion;
+import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Displays a {@link JvmClassInfo} via a configured {@link Editor} as decompiled by {@link DecompilerManager}.
@@ -106,11 +71,11 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 							 @Nonnull DecompilerManager decompilerManager,
 							 @Nonnull JavacCompiler javac,
 							 @Nonnull Actions actions) {
-		super(config, keys, searchBar, contextActionSupport, decompilerManager, actions);
+		super(config, searchBar, contextActionSupport, decompilerManager);
 		this.javac = javac;
 
 		// Install configurator popup
-		JvmDecompilerPaneConfigurator configurator = new JvmDecompilerPaneConfigurator(config, decompiler,
+		AbstractDecompilerPaneConfigurator configurator = new JvmDecompilerPaneConfigurator(config, decompiler,
 				javacTarget, javacDebug, decompilerManager);
 		configurator.install(editor);
 
