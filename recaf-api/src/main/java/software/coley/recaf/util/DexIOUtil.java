@@ -1,9 +1,6 @@
 package software.coley.recaf.util;
 
 import com.android.tools.r8.graph.DexProgramClass;
-import com.android.tools.r8.utils.InternalOptions;
-import software.coley.dextranslator.Inputs;
-import software.coley.dextranslator.Options;
 import software.coley.dextranslator.model.ApplicationData;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.builder.AndroidClassInfoBuilder;
@@ -32,9 +29,7 @@ public class DexIOUtil {
 		BasicAndroidClassBundle classBundle = new BasicAndroidClassBundle();
 
 		// Read dex file content
-		InternalOptions internalOptions = new Options().getInternalOptions();
-		Inputs inputs = new Inputs().addDex(source.readAll());
-		ApplicationData data = ApplicationData.from(inputs, internalOptions);
+		ApplicationData data = ApplicationData.fromDex(source.readAll());
 
 		// Populate bundle
 		for (DexProgramClass dexClass : data.getApplication().classes()) {

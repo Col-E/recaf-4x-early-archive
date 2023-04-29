@@ -8,6 +8,7 @@ import software.coley.dextranslator.model.ApplicationData;
 import software.coley.recaf.info.builder.AndroidClassInfoBuilder;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 
+import java.io.IOException;
 import java.util.Collections;
 
 /**
@@ -44,7 +45,7 @@ public class BasicAndroidClassInfo extends BasicClassInfo implements AndroidClas
 							"conversion results did not include type name.");
 				ClassReader reader = new ClassReader(convertedBytecode);
 				converted = new JvmClassInfoBuilder(reader).build();
-			} catch (ConversionException ex) {
+			} catch (ConversionException | IOException ex) {
 				throw new IllegalStateException(ex);
 			}
 		}
