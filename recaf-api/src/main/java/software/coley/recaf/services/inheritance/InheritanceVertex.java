@@ -157,6 +157,15 @@ public class InheritanceVertex {
 	}
 
 	/**
+	 * @return {@code true} when a parent of this vertex, is this vertex.
+	 */
+	public boolean isLoop() {
+		String name = getName();
+		return allParents()
+				.anyMatch(v -> name.equals(v.getName()));
+	}
+
+	/**
 	 * @return {@code true} when the current vertex represents a {@code module-info}.
 	 */
 	public boolean isModule() {

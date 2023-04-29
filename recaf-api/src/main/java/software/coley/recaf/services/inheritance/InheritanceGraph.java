@@ -123,7 +123,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 
 		// Visit parent
 		InheritanceVertex superVertex = vertexProvider.apply(superName);
-		if (superVertex != null && !superVertex.isJavaLangObject() && superVertex.getValue() != null)
+		if (superVertex != null && !superVertex.isJavaLangObject() && superVertex.getValue() != null && !superVertex.isLoop())
 			populateParentToChildLookup(superVertex.getValue());
 
 		// Add direct interfaces
