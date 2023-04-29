@@ -1,21 +1,17 @@
 package software.coley.recaf.util;
 
-import org.jf.dexlib2.Opcodes;
-import org.jf.dexlib2.dexbacked.DexBackedClassDef;
-import org.jf.dexlib2.dexbacked.DexBackedDexFile;
-import org.jf.dexlib2.dexbacked.DexBackedField;
-import org.jf.dexlib2.dexbacked.DexBackedMethod;
+import com.android.tools.r8.graph.DexProgramClass;
+import com.android.tools.r8.utils.InternalOptions;
+import software.coley.dextranslator.Inputs;
+import software.coley.dextranslator.Options;
+import software.coley.dextranslator.model.ApplicationData;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.builder.AndroidClassInfoBuilder;
-import software.coley.recaf.info.member.*;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.BasicAndroidClassBundle;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Dex file reading and writing.
@@ -34,66 +30,20 @@ public class DexIOUtil {
 	 */
 	public static AndroidClassBundle read(ByteSource source) throws IOException {
 		BasicAndroidClassBundle classBundle = new BasicAndroidClassBundle();
-		Opcodes opcodes = Opcodes.getDefault();
-		DexBackedDexFile file = DexBackedDexFile.fromInputStream(opcodes, source.openStream());
 
-		// Record all classes in the file
-		for (DexBackedClassDef dexClass : file.getClasses()) {
-			AndroidClassInfoBuilder builder = new AndroidClassInfoBuilder()
-					.withName(dexClass.getType())
-					.withSuperName(dexClass.getSuperclass())
-					.withInterfaces(dexClass.getInterfaces())
-					.withAccess(dexClass.getAccessFlags())
-					.withSourceFileName(dexClass.getSourceFile());
-			// TODO: Parse metadata annotations for:
-			//   - signature
-			//   - outer-class-name
-			//   - outer-method-name/descriptor
-			//   - inner-classes
-			//   - other annotations
+		// Read dex file content
+		InternalOptions internalOptions = new Options().getInternalOptions();
+		Inputs inputs = new Inputs().addDex(source.readAll());
+		ApplicationData data = ApplicationData.from(inputs, internalOptions);
 
-			// Record fields
-			List<FieldMember> fieldMembers = new ArrayList<>();
-			for (DexBackedField field : dexClass.getFields()) {
-				String signature = null;
-				Object defaultValue = null;
-				fieldMembers.add(new BasicFieldMember(
-						field.getName(),
-						field.getType(),
-						signature,
-						field.getAccessFlags(),
-						defaultValue
-				));
-			}
-			builder.withFields(fieldMembers);
-
-			// Record methods
-			List<MethodMember> methodMembers = new ArrayList<>();
-			for (DexBackedMethod method : dexClass.getMethods()) {
-				StringBuilder sb = new StringBuilder("(");
-				for (CharSequence type : method.getParameterTypes()) {
-					sb.append(type);
-				}
-				sb.append(")").append(method.getReturnType());
-				String type = sb.toString();
-				String signature = null;
-				List<String> exceptions = Collections.emptyList();
-				List<LocalVariable> variables = Collections.emptyList();
-				methodMembers.add(new BasicMethodMember(
-						method.getName(),
-						type,
-						signature,
-						method.getAccessFlags(),
-						exceptions,
-						variables
-				));
-			}
-			builder.withMethods(methodMembers);
-
-			// Create class and add to bundle
-			AndroidClassInfo classInfo = builder.build();
+		// Populate bundle
+		for (DexProgramClass dexClass : data.getApplication().classes()) {
+			AndroidClassInfo classInfo = new AndroidClassInfoBuilder()
+					.adaptFrom(dexClass)
+					.build();
 			classBundle.initialPut(classInfo);
 		}
+
 		return classBundle;
 	}
 }

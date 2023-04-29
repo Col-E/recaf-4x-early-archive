@@ -378,4 +378,24 @@ public class NumberUtil {
 			return min;
 		return value;
 	}
+
+	/**
+	 * @param i
+	 * 		Some value.
+	 *
+	 * @return {@code i != 0}
+	 */
+	public static boolean isNonZero(int i) {
+		return i != 0;
+	}
+
+	/**
+	 * @param i
+	 * 		Some value.
+	 *
+	 * @return {@code i == 0}
+	 */
+	public static boolean isZero(int i) {
+		return i == 0;
+	}
 }

@@ -7,8 +7,9 @@ to parse bytecode. Most operations will be based on ASM since heavily abstracts 
 what would otherwise be tedious work simple. CafeDude is used for lower level operations and patching classes that
 are not compliant with ASM.
 
-**Android Dalvik Bytecode Manipulation**: Recaf uses [DexLib & Smali](https://github.com/JesusFreke/smali/) to parse
-and manipulate Android bytecode.
+**Android Dalvik Bytecode Manipulation**: Recaf uses [DexLib & Smali](https://github.com/google/smali) to parse
+and manipulate Android bytecode. To translate between Dalvik and JVM bytecode we use 
+[Dex-Translator](https://github.com/Col-E/dex-translator).
 
 **ZIP Files**: Recaf uses [LL-Java-Zip](https://github.com/Col-E/LL-Java-Zip) to read ZIP files. We do not use the
 standard `java.util.zip` classes because they do not allow for parsing a number of edge cases used certain obfuscators.

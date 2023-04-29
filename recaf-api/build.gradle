@@ -13,7 +13,7 @@ dependencies {
     api asm_util
     api cafedude
     api cdi_api
-    api dexlib
+    api dex_translator
     api directories
     api extra_collections
     api extra_observables
