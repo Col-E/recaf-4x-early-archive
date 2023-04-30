@@ -1,6 +1,5 @@
 def asmVersion = '9.4'
 def cafeDudeVersion = '1.10.2'
-def dexVersion = '3.0.2'
 def junitVersion = '5.9.2'
 
 project.ext {
@@ -12,7 +11,7 @@ project.ext {
 
     atlantafx = 'io.github.mkpaz:atlantafx-base:1.1.0'
 
-    dex_translator = 'software.coley:dex-translator:1.0.0' // Local artifact
+    dex_translator = 'software.coley:dex-translator:1.1.0'
 
     cafedude = "com.github.Col-E:CAFED00D:$cafeDudeVersion"
 
@@ -24,8 +23,8 @@ project.ext {
     directories = 'dev.dirs:directories:26'
     docking = 'com.github.Col-E:tiwulfx-dock:1.2.3'
 
-    extra_collections = 'com.github.Col-E:ExtraCollections:1.2.1'
-    extra_observables = 'com.github.Col-E:ExtraObservables:1.2.1'
+    extra_collections = 'software.coley:extra-collections:1.2.3'
+    extra_observables = 'software.coley:extra-observables:1.2.2'
 
     gson = 'com.google.code.gson:gson:2.10.1'
 
@@ -34,7 +33,7 @@ project.ext {
 
     instrument_server = 'software.coley:instrumentation-server:1.3.6'
 
-    llzip = "software.coley:lljzip:1.1.9"
+    llzip = "software.coley:lljzip:1.2.0"
 
     logging_impl = 'ch.qos.logback:logback-classic:1.2.10' // newer releases break in jar releases
 
