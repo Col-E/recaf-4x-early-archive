@@ -16,6 +16,7 @@ import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.marker.Range;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.ClassMember;
@@ -89,7 +90,33 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	 * @param targetClass
 	 * 		Class to initialize parser against.
 	 */
-	public void initialize(@Nonnull JvmClassInfo targetClass) {
+	public void initialize(@Nonnull ClassInfo targetClass) {
+		if (targetClass.isJvmClass()) {
+			initialize(targetClass.asJvmClass());
+		} else if (targetClass.isAndroidClass()) {
+			initialize(targetClass.asAndroidClass());
+		}
+	}
+
+	/**
+	 * Initializes the internal Java source parser by converting the Android class to a Java class.
+	 *
+	 * @param targetClass
+	 * 		Class to initialize parser against.
+	 */
+	private void initialize(@Nonnull AndroidClassInfo targetClass) {
+		if (targetClass.canMapToJvmClass()) {
+			initialize(targetClass.asJvmClass());
+		}
+	}
+
+	/**
+	 * Initializes the internal Java source parser.
+	 *
+	 * @param targetClass
+	 * 		Class to initialize parser against.
+	 */
+	private void initialize(@Nonnull JvmClassInfo targetClass) {
 		// Set name
 		className = EscapeUtil.escapeStandard(targetClass.getName());
 
@@ -370,8 +397,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 			// This addresses situations where changes to the class introduce new type dependencies.
 			// If we used the existing parser, the newly added types would be unresolvable.
 			ClassInfo classInfo = classPath.getValue();
-			if (classInfo.isJvmClass())
-				Executors.newSingleThreadExecutor().submit(() -> initialize(classInfo.asJvmClass()));
+			Executors.newSingleThreadExecutor().submit(() -> initialize(classInfo));
 		}
 	}
 }
