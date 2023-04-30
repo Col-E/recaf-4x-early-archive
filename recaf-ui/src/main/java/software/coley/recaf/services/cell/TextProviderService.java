@@ -225,7 +225,11 @@ public class TextProviderService implements Service {
 											   @Nonnull WorkspaceResource resource,
 											   @Nonnull ClassBundle<? extends ClassInfo> bundle,
 											   @Nonnull String packageName) {
-		return () -> formatConfig.filter(packageName);
+		return () -> {
+			if (packageName.isEmpty())
+				return Lang.get("tree.defaultpackage");
+			return formatConfig.filter(packageName);
+		};
 	}
 
 	/**
@@ -245,7 +249,11 @@ public class TextProviderService implements Service {
 												 @Nonnull WorkspaceResource resource,
 												 @Nonnull FileBundle bundle,
 												 @Nonnull String directoryName) {
-		return () -> formatConfig.filter(directoryName);
+		return () -> {
+			if (directoryName.isEmpty())
+				return Lang.get("tree.defaultdirectory");
+			return formatConfig.filter(directoryName);
+		};
 	}
 
 	/**

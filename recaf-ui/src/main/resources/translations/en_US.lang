@@ -358,6 +358,8 @@ mapgen.apply=Apply
 ##### Tree
 tree.classes=Classes
 tree.files=Files
+tree.defaultpackage=(Default package)
+tree.defaultdirectory=(Root directory)
 tree.prompt=Drag your files here
 tree.hidelibs=Hide libraries
 
