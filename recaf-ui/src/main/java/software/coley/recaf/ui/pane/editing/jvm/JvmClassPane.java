@@ -33,19 +33,7 @@ public class JvmClassPane extends ClassPane {
 						@Nonnull Instance<JvmDecompilerPane> decompilerProvider) {
 		editorType = config.getDefaultJvmEditor().getValue();
 		this.decompilerProvider = decompilerProvider;
-
-		// Setup so clicking on items in fields-and-methods pane will synchronize with content in our class pane.
-		fieldsAndMethodsPane.setupSelectionNavigationListener(this);
-
-		// Setup side-tabs
-		addSideTab(new BoundTab(Lang.getBinding("fieldsandmethods.title"),
-				new IconView(Icons.getImage(Icons.FIELD_N_METHOD)),
-				fieldsAndMethodsPane
-		));
-		addSideTab(new BoundTab(Lang.getBinding("hierarchy.title"),
-				CarbonIcons.FLOW,
-				inheritancePane
-		));
+		configureCommonSideTabs(fieldsAndMethodsPane, inheritancePane);
 	}
 
 	/**

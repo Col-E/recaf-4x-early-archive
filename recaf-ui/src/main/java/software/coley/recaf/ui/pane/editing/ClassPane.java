@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
+import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
@@ -13,8 +14,14 @@ import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
+import software.coley.recaf.ui.control.BoundTab;
+import software.coley.recaf.ui.control.IconView;
 import software.coley.recaf.ui.pane.editing.android.AndroidClassPane;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassPane;
+import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
+import software.coley.recaf.ui.pane.editing.tabs.InheritancePane;
+import software.coley.recaf.util.Icons;
+import software.coley.recaf.util.Lang;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,6 +89,30 @@ public abstract class ClassPane extends BorderPane implements ClassNavigable, Up
 	 * Children implementing this should call {@link #setDisplay(Node)}.
 	 */
 	protected abstract void generateDisplay();
+
+	/**
+	 * Configures common side-tab content of child types.
+	 *
+	 * @param fieldsAndMethodsPane
+	 * 		Tab content to show fields/methods of a class.
+	 * @param inheritancePane
+	 * 		Tab content to show the inheritance hierarchy of a class.
+	 */
+	protected void configureCommonSideTabs(@Nonnull FieldsAndMethodsPane fieldsAndMethodsPane,
+										   @Nonnull InheritancePane inheritancePane) {
+		// Setup so clicking on items in fields-and-methods pane will synchronize with content in our class pane.
+		fieldsAndMethodsPane.setupSelectionNavigationListener(this);
+
+		// Setup side-tabs
+		addSideTab(new BoundTab(Lang.getBinding("fieldsandmethods.title"),
+				new IconView(Icons.getImage(Icons.FIELD_N_METHOD)),
+				fieldsAndMethodsPane
+		));
+		addSideTab(new BoundTab(Lang.getBinding("hierarchy.title"),
+				CarbonIcons.FLOW,
+				inheritancePane
+		));
+	}
 
 	/**
 	 * @param tab
