@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.WorkspaceModificationListener;
+import software.coley.recaf.workspace.model.resource.AndroidApiResource;
 import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
@@ -21,7 +22,7 @@ public class BasicWorkspace implements Workspace {
 	private final List<WorkspaceModificationListener> modificationListeners = new ArrayList<>();
 	private final WorkspaceResource primary;
 	private final List<WorkspaceResource> supporting = new ArrayList<>();
-	private final List<WorkspaceResource> internal = Collections.singletonList(RuntimeWorkspaceResource.getInstance());
+	private final List<WorkspaceResource> internal;
 
 	/**
 	 * @param primary
@@ -40,6 +41,12 @@ public class BasicWorkspace implements Workspace {
 	public BasicWorkspace(WorkspaceResource primary, Collection<WorkspaceResource> supporting) {
 		this.primary = primary;
 		this.supporting.addAll(supporting);
+
+		if (primary.getAndroidClassBundles().isEmpty()) {
+			internal = Collections.singletonList(RuntimeWorkspaceResource.getInstance());
+		} else {
+			internal = List.of(RuntimeWorkspaceResource.getInstance(), AndroidApiResource.getInstance());
+		}
 	}
 
 	@Nonnull
