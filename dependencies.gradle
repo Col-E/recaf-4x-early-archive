@@ -45,7 +45,7 @@ project.ext {
 
     mockito = 'org.mockito:mockito-core:4.9.0'
 
-    openrewrite = 'org.openrewrite:rewrite-java-17:7.39.1'
+    openrewrite = 'org.openrewrite:rewrite-java-17:7.40.3'
 
     procyon = "org.bitbucket.mstrobel:procyon-compilertools:0.6.0"
 

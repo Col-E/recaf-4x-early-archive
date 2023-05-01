@@ -5,7 +5,7 @@ import org.openrewrite.java.tree.J;
 import software.coley.recaf.path.PathNode;
 
 /**
- * Wrapper for {@link AstContextHelper#resolve(J.CompilationUnit, int)} operations.
+ * Wrapper for {@link AstContextHelper#resolve(J.CompilationUnit, int, String)} operations.
  *
  * @param isDeclaration
  * 		Flag indicating if resolved item is a declaration or reference.

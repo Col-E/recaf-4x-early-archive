@@ -1,6 +1,7 @@
 package software.coley.recaf.services.source;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.openrewrite.Tree;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
@@ -124,14 +125,17 @@ public class AstUtils {
 	 * 		Offset to fetch contents of.
 	 * @param unit
 	 * 		Unit to look in.
+	 * @param backingText
+	 * 		Optional backing text that is the origin of the tree.
+	 * 		Can be used for detecting dropped tokens.
 	 *
 	 * @return Hierarchy of {@link Tree} elements at the given offset.
 	 * First item is the most specific node, last item is the {@link J.CompilationUnit}.
 	 */
 	@Nonnull
-	public static List<Tree> getAstPathAtOffset(int offset, @Nonnull J.CompilationUnit unit) {
+	public static List<Tree> getAstPathAtOffset(int offset, @Nonnull J.CompilationUnit unit, @Nullable String backingText) {
 		List<Tree> path = new ArrayList<>();
-		Map<Range, Tree> map = AstRangeMapper.computeRangeToTreeMapping(unit);
+		Map<Range, Tree> map = AstRangeMapper.computeRangeToTreeMapping(unit, backingText);
 		for (Map.Entry<Range, Tree> entry : map.entrySet()) {
 			Range range = entry.getKey();
 			int start = range.getStart().getOffset();

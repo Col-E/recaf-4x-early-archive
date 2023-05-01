@@ -369,7 +369,7 @@ public class AstServiceTest extends TestBase {
 				});
 				int start = source.indexOf("ClassWithConstructor(DummyEnum dummyEnum, StringSupplier supplier)");
 				int end = start + "ClassWithConstructor".length();
-				validateRange(unit, start, end, ClassMemberPathNode.class, memberPath -> {
+				validateRange(unit, start, end, source, ClassMemberPathNode.class, memberPath -> {
 					ClassMember member = memberPath.getValue();
 					assertEquals("<init>", member.getName());
 					assertEquals("(Lsoftware/coley/recaf/test/dummy/DummyEnum;" +
@@ -420,12 +420,12 @@ public class AstServiceTest extends TestBase {
 				});
 				int start = source.indexOf("StringList list");
 				int end = start + "StringList".length();
-				validateRange(unit, start, end, ClassPathNode.class, classPath -> {
+				validateRange(unit, start, end, source, ClassPathNode.class, classPath -> {
 					assertEquals("software/coley/recaf/test/dummy/StringList", classPath.getValue().getName());
 				});
 				start = source.indexOf("StringList.of");
 				end = start + "StringList".length();
-				validateRange(unit, start, end, ClassPathNode.class, classPath -> {
+				validateRange(unit, start, end, source, ClassPathNode.class, classPath -> {
 					assertEquals("software/coley/recaf/test/dummy/StringList", classPath.getValue().getName());
 				});
 			});
@@ -778,22 +778,108 @@ public class AstServiceTest extends TestBase {
 		}
 	}
 
+	@Nested
+	class ErroneousInput {
+		@Test
+		@SuppressWarnings("deprecation")
+		void testResolveWithInvalidTokens() {
+			// CFR can emit illegal code like this with patterns such as:
+			//   ** GOTO lbl-1000
+			//   else lbl-1000:
+			// So in our AST resolving we simply check if the AST model's text and the input text are the same
+			// for all given positions. When a mismatch is detected, its assumed the AST dropped tokens present
+			// in the input text since they were invalid.
+			//
+			// With this assumption we scan forward until we get our next match.
+			String source = """
+					package software.coley.recaf.test.dummy;
+										
+					enum DummyEnum {
+						ONE, TWO, THREE;
+						
+						void foo() {}
+						
+						void bar() {
+						   ** GOTO lbl-1000
+						   
+						   ONE.foo();
+						}
+					}
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				assertNotEquals(source, unit.print(), "Expected OpenRewrite AST to drop illegal chars");
+
+				int lastOne = source.lastIndexOf("ONE");
+				int lastFoo = source.lastIndexOf("foo");
+				validateRange(unit, lastOne, lastOne + 3, source, ClassMemberPathNode.class, memberPath -> {
+					ClassInfo owner = memberPath.getValueOfType(ClassInfo.class);
+					ClassMember member = memberPath.getValue();
+					assertEquals("software/coley/recaf/test/dummy/DummyEnum", owner.getName());
+					assertEquals("ONE", member.getName());
+				});
+				validateRange(unit, lastFoo, lastFoo, source, ClassMemberPathNode.class, memberPath -> {
+					ClassInfo owner = memberPath.getValueOfType(ClassInfo.class);
+					ClassMember member = memberPath.getValue();
+					assertEquals("software/coley/recaf/test/dummy/DummyEnum", owner.getName());
+					assertEquals("foo", member.getName());
+				});
+			});
+		}
+
+		@Test
+		void testResolveWithReplacedTokens() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+										
+					enum DummyEnum {
+						ONE, TWO, THREE;
+						
+						void foo() {}
+						
+						void bar() {
+						   ONE.foo();
+						}
+					}
+					""";
+			String sourceReplaced = source.replace("foo() {}", "xyz(int param) {\n\t\tbar();\n\t}");
+			handleUnit(source, (unit, ctx) -> {
+				// Now that the unit is parsed from the original source
+				// we will use the modified source to simulate the unit making changes to the source.
+				int lastOne = sourceReplaced.lastIndexOf("ONE");
+				int lastFoo = sourceReplaced.lastIndexOf("foo");
+				validateRange(unit, lastOne, lastOne + 3, sourceReplaced, ClassMemberPathNode.class, memberPath -> {
+					ClassInfo owner = memberPath.getValueOfType(ClassInfo.class);
+					ClassMember member = memberPath.getValue();
+					assertEquals("software/coley/recaf/test/dummy/DummyEnum", owner.getName());
+					assertEquals("ONE", member.getName());
+				});
+				validateRange(unit, lastFoo, lastFoo, sourceReplaced, ClassMemberPathNode.class, memberPath -> {
+					ClassInfo owner = memberPath.getValueOfType(ClassInfo.class);
+					ClassMember member = memberPath.getValue();
+					assertEquals("software/coley/recaf/test/dummy/DummyEnum", owner.getName());
+					assertEquals("foo", member.getName());
+				});
+			});
+		}
+	}
+
 	private static <T> void validateRange(@Nonnull J.CompilationUnit unit,
 										  @Nonnull String source, @Nonnull String match,
 										  @Nonnull Class<T> targetType,
 										  @Nonnull Consumer<T> consumer) {
 		int start = source.indexOf(match);
 		int end = start + match.length();
-		validateRange(unit, start, end, targetType, consumer);
+		validateRange(unit, start, end, source, targetType, consumer);
 	}
 
 	@SuppressWarnings("unchecked")
 	private static <T> void validateRange(@Nonnull J.CompilationUnit unit,
 										  int start, int end,
+										  @Nonnull String source,
 										  @Nonnull Class<T> targetType,
 										  @Nonnull Consumer<T> consumer) {
 		for (int i = start; i < end; i++) {
-			AstResolveResult result = helper.resolve(unit, i);
+			AstResolveResult result = helper.resolve(unit, i, source);
 			if (result != null && targetType.isAssignableFrom(result.path().getClass())) {
 				consumer.accept((T) result.path());
 			} else {

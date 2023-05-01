@@ -182,6 +182,23 @@ public class StringUtil {
 	}
 
 	/**
+	 * @param pattern
+	 * 		Pattern to look for.
+	 * @param text
+	 * 		Text to check.
+	 *
+	 * @return Number of times the given pattern appears in the text.
+	 */
+	public static int count(char pattern, String text) {
+		int count = 0;
+		int length = text.length();
+		for (int i = 0; i < length; i++) {
+			if (text.charAt(i) == pattern) count++;
+		}
+		return count;
+	}
+
+	/**
 	 * @param path
 	 * 		Some path.
 	 *

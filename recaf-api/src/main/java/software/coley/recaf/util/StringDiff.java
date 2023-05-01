@@ -38,7 +38,7 @@ public class StringDiff {
 						new RawText(b.getBytes(StandardCharsets.UTF_8)));
 
 		// Map to diff types that are easier to use.
-		// We want raw positions, not line numbers so we can do replace operations easily.
+		// We want raw positions, not line numbers, so we can do replace operations easily.
 		List<Diff> ret = new ArrayList<>();
 		for (Edit diff : diffs) {
 			DiffType type = DiffType.from(diff.getType());
@@ -52,6 +52,36 @@ public class StringDiff {
 			int posStartB = bPositions[beginB];
 			int posEndB = bPositions[endB];
 			String contentB = pull(bLines, beginB, endB);
+
+			// Shrink difference
+			int lengthA = contentA.length();
+			int lengthB = contentB.length();
+			int commonLength = Math.min(lengthA, lengthB);
+			int cutStart = 0;
+			while (cutStart < commonLength && contentA.charAt(cutStart) == contentB.charAt(cutStart))
+				cutStart++;
+			int cutEnd = 0;
+			while (cutEnd < commonLength && contentA.charAt(lengthA - cutEnd - 1) == contentB.charAt(lengthB - cutEnd - 1))
+				cutEnd++;
+			if (cutStart > 0) {
+				posStartA += cutStart;
+				posStartB += cutStart;
+				contentA = contentA.substring(cutStart);
+				contentB = contentB.substring(cutStart);
+			}
+			if (cutEnd > 0) {
+				posEndA -= cutEnd;
+				posEndB -= cutEnd;
+				contentA = contentA.substring(0, contentA.length() - cutEnd);
+				contentB = contentB.substring(0, contentB.length() - cutEnd);
+			}
+
+			// Check if shrinking changed type
+			if (contentA.isEmpty() && !contentB.isEmpty())
+				type = DiffType.INSERT;
+			else if (!contentA.isEmpty() && contentB.isEmpty())
+				type = DiffType.REMOVE;
+
 			ret.add(new Diff(type, posStartA, posStartB, posEndA, posEndB, contentA, contentB));
 		}
 		return ret;
@@ -93,6 +123,41 @@ public class StringDiff {
 	 * @author Matt Coley
 	 */
 	public record Diff(DiffType type, int startA, int startB, int endA, int endB, String textA, String textB) {
+		/**
+		 * @return {@code true} when {@link #type()} is {@link DiffType#CHANGE}.
+		 */
+		public boolean isReplace() {
+			return type == DiffType.CHANGE;
+		}
+
+		/**
+		 * @return {@code true} when {@link #type()} is {@link DiffType#REMOVE}.
+		 */
+		public boolean isRemoval() {
+			return type == DiffType.REMOVE;
+		}
+
+		/**
+		 * @return {@code true} when {@link #type()} is {@link DiffType#INSERT}.
+		 */
+		public boolean isInsert() {
+			return type == DiffType.INSERT;
+		}
+
+		/**
+		 * @return {@code true} when {@link #type()} is {@link DiffType#EMPTY}.
+		 */
+		public boolean isEmpty() {
+			return type == DiffType.EMPTY;
+		}
+
+		public boolean inRangeA(int pos) {
+			return pos >= startA && pos <= endA;
+		}
+
+		public boolean inRangeB(int pos) {
+			return pos >= startB && pos <= endB;
+		}
 	}
 
 	/**

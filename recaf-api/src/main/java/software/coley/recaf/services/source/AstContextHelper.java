@@ -42,12 +42,15 @@ public class AstContextHelper {
 	 * 		Compilation unit to look at.
 	 * @param offset
 	 * 		Offset in the source <i>(Assuming from the {@link String} the unit originates from)</i> resolve.
+	 * @param backingText
+	 * 		Optional backing text that is the origin of the tree.
+	 * 		Can be used for detecting dropped tokens.
 	 *
 	 * @return Resolved content at the given offset, or {@code null} if no resolution could be made.
 	 */
 	@Nullable
-	public AstResolveResult resolve(@Nonnull J.CompilationUnit unit, int offset) {
-		List<Tree> astPath = AstUtils.getAstPathAtOffset(offset, unit);
+	public AstResolveResult resolve(@Nonnull J.CompilationUnit unit, int offset, @Nullable String backingText) {
+		List<Tree> astPath = AstUtils.getAstPathAtOffset(offset, unit, backingText);
 
 		// If no AST path was found, we have no clue.
 		if (astPath.isEmpty())

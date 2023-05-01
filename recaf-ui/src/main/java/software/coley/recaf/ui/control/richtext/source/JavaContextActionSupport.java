@@ -149,7 +149,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 			queuedSelectionTask = () -> select(member);
 		} else {
 			queuedSelectionTask = null;
-			SortedMap<Range, Tree> map = AstRangeMapper.computeRangeToTreeMapping(unit);
+			SortedMap<Range, Tree> map = AstRangeMapper.computeRangeToTreeMapping(unit, editor.getText());
 			for (Map.Entry<Range, Tree> entry : map.entrySet()) {
 				Tree tree = entry.getValue();
 				Range range = entry.getKey();
@@ -221,7 +221,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	private AstResolveResult resolvePosition(int pos, boolean doOffset) {
 		if (unit == null) return null;
 		if (doOffset) pos = offset(pos);
-		return contextHelper.resolve(unit, pos);
+		return contextHelper.resolve(unit, pos, editor.getText());
 	}
 
 	/**
