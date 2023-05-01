@@ -161,6 +161,10 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 */
 	private void removeParentToChildLookup(@Nonnull String name, @Nonnull String parentName) {
 		parentToChild.remove(parentName, name);
+		InheritanceVertex parentVertex = getVertex(parentName);
+		InheritanceVertex childVertex = getVertex(name);
+		if (parentVertex != null) parentVertex.clearCachedVertices();
+		if (childVertex != null) childVertex.clearCachedVertices();
 	}
 
 	/**

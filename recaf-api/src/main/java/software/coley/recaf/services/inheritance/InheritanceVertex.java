@@ -300,7 +300,9 @@ public class InheritanceVertex {
 	 * @return All classes this extends or implements.
 	 */
 	public Stream<InheritanceVertex> allParents() {
-		return Streams.recurseWithoutCycles(this, InheritanceVertex::getParents);
+		// Skip 1 to skip ourselves (which we use as the seed vertex)
+		return Streams.recurseWithoutCycles(this, InheritanceVertex::getParents)
+				.skip(1);
 	}
 
 	/**
@@ -348,7 +350,9 @@ public class InheritanceVertex {
 	 * @return Stream of all classes extending or implementing this type.
 	 */
 	public Stream<InheritanceVertex> allChildren() {
-		return Streams.recurseWithoutCycles(this, InheritanceVertex::getChildren);
+		// Skip 1 to skip ourselves (which we use as the seed vertex)
+		return Streams.recurseWithoutCycles(this, InheritanceVertex::getChildren)
+				.skip(1);
 	}
 
 	/**
@@ -386,6 +390,17 @@ public class InheritanceVertex {
 	public Set<InheritanceVertex> getAllDirectVertices() {
 		return Sets.combine(getParents(), getChildren());
 	}
+
+	/**
+	 * Clears cached {@link #getParents()} and {@link #getChildren()} values.
+	 */
+	public void clearCachedVertices() {
+		synchronized (this) {
+			parents = null;
+			children = null;
+		}
+	}
+
 
 	/**
 	 * @return {@link #getValue() wrapped class's} name

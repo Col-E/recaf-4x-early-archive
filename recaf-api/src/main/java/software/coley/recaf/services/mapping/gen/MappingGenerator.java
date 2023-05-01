@@ -139,6 +139,7 @@ public class MappingGenerator implements Service {
 					// Field is 'inheritable' meaning it needs to have a consistent name
 					// for all children and parents of this vertex.
 					Set<InheritanceVertex> targetFamilyMembers = new HashSet<>();
+					targetFamilyMembers.add(vertex);
 					targetFamilyMembers.addAll(vertex.getAllChildren());
 					targetFamilyMembers.addAll(vertex.getAllParents());
 					targetFamilyMembers.forEach(immediateTreeVertex -> {
