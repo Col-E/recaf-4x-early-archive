@@ -9,8 +9,10 @@ import org.openrewrite.java.tree.J;
 
 import java.net.URI;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Delegating implementation of {@link JavaParser}.
@@ -65,5 +67,12 @@ public class DelegatingJavaParser implements JavaParser {
 	@Override
 	public JavaSourceSet getSourceSet(@Nonnull ExecutionContext ctx) {
 		return delegate.getSourceSet(ctx);
+	}
+
+	@Nonnull
+	@Override
+	public Path sourcePathFromSourceText(@Nonnull Path prefix, @Nonnull String sourceCode) {
+		// Bogus, we do not want obfuscated inputs triggering path get operations.
+		return Paths.get(UUID.randomUUID().toString());
 	}
 }
