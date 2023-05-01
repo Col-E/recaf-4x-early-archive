@@ -116,6 +116,10 @@ class InheritanceGraphTest extends TestBase {
 		// Assert that looking at child types of throwable finds NotFoodException.
 		// Our class extends Exception, which extends Throwable. So there should be a vertex between Throwable and our type.
 		JvmClassInfo notFoodException = classPath.getValue().asJvmClass();
+		List<ClassInfo> exceptionClasses = graph.getVertex("java/lang/Exception").getAllChildren().stream()
+				.map(InheritanceVertex::getValue)
+				.toList();
+		assertTrue(exceptionClasses.contains(notFoodException), "Subtypes of 'Exception' did not yield 'NotFoodException'");
 		List<ClassInfo> throwableClasses = graph.getVertex("java/lang/Throwable").getAllChildren().stream()
 				.map(InheritanceVertex::getValue)
 				.toList();
