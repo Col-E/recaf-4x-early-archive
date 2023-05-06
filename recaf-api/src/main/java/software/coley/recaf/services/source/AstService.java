@@ -53,8 +53,9 @@ public class AstService implements Service {
 		Set<String> classNames = target.getReferencedClasses();
 
 		// Collect bytes of all referenced classes.
+		// For android classes, it is assumed 'asJvmClass()' will lazily convert to JVM classes.
 		byte[][] classpath = classNames.stream()
-				.map(workspace::findJvmClass)
+				.map(workspace::findClass)
 				.filter(Objects::nonNull)
 				.map(path -> path.getValue().asJvmClass().getBytecode())
 				.toArray(byte[][]::new);
