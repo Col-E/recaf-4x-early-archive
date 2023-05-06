@@ -48,6 +48,9 @@ public class AstServiceTest extends TestBase {
 				ClassWithConstructor.class,
 				ClassWithExceptions.class,
 				ClassWithStaticInit.class,
+				OverlapClassAB.class,
+				OverlapInterfaceA.class,
+				OverlapInterfaceB.class,
 				StringList.class,
 				StringListUser.class,
 				HelloWorld.class,
@@ -167,6 +170,25 @@ public class AstServiceTest extends TestBase {
 			handleUnit(source, (unit, ctx) -> {
 				validateRange(unit, source, "interface HelloWorld", ClassPathNode.class, classPath -> {
 					assertEquals("software/coley/recaf/test/dummy/HelloWorld", classPath.getValue().getName());
+				});
+			});
+		}
+
+		@Test
+		void testResolveInterfaces() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+					public class OverlapClassAB implements OverlapInterfaceA, OverlapInterfaceB {
+						public void methodA() {}
+						public void methodB() {}
+					}
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				validateRange(unit, source, "OverlapInterfaceA", ClassPathNode.class, classPath -> {
+					assertEquals("software/coley/recaf/test/dummy/OverlapInterfaceA", classPath.getValue().getName());
+				});
+				validateRange(unit, source, "OverlapInterfaceB", ClassPathNode.class, classPath -> {
+					assertEquals("software/coley/recaf/test/dummy/OverlapInterfaceB", classPath.getValue().getName());
 				});
 			});
 		}
@@ -317,6 +339,26 @@ public class AstServiceTest extends TestBase {
 		}
 
 		@Test
+		void testStaticMethodCall_JavaLangSystem() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+					  										
+					class HelloWorld {
+						static void main(String[] args) {
+							System.loadLibrary("nativelibname");
+						}
+					}
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				validateRange(unit, source, "loadLibrary", ClassMemberPathNode.class, memberPath -> {
+					ClassMember member = memberPath.getValue();
+					assertEquals("loadLibrary", member.getName());
+					assertEquals("(Ljava/lang/String;)V", member.getDescriptor());
+				});
+			});
+		}
+
+		@Test
 		void testStaticFieldRef() {
 			String source = """
 					package software.coley.recaf.test.dummy;
@@ -425,6 +467,40 @@ public class AstServiceTest extends TestBase {
 				});
 				start = source.indexOf("StringList.of");
 				end = start + "StringList".length();
+				validateRange(unit, start, end, source, ClassPathNode.class, classPath -> {
+					assertEquals("software/coley/recaf/test/dummy/StringList", classPath.getValue().getName());
+				});
+			});
+		}
+
+		@Test
+		void testResolveThis() {
+			// OpenRewrite can be funky about how it treats 'this'.
+			// So we want to have a test to make sure it gets resolved correctly.
+			String source = """
+					package software.coley.recaf.test.dummy;
+					
+					import java.util.ArrayList;
+					import java.util.Arrays;
+					import java.util.LinkedHashSet;
+					import java.util.Set;
+					
+					public class StringList extends ArrayList<String> {
+						public Set<String> unique() {
+							Object string = this.toString();
+							
+							return new LinkedHashSet<>(this);
+						}
+					}
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				int start = source.indexOf("this");
+				int end = start + "this".length();
+				validateRange(unit, start, end, source, ClassPathNode.class, classPath -> {
+					assertEquals("software/coley/recaf/test/dummy/StringList", classPath.getValue().getName());
+				});
+				start = source.lastIndexOf("this");
+				end = start + "this".length();
 				validateRange(unit, start, end, source, ClassPathNode.class, classPath -> {
 					assertEquals("software/coley/recaf/test/dummy/StringList", classPath.getValue().getName());
 				});
