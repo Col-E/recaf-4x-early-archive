@@ -59,12 +59,14 @@ public class DelegatingJavaParser implements JavaParser {
 	}
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public void setSourceSet(@Nonnull String sourceSet) {
 		delegate.setSourceSet(sourceSet);
 	}
 
 	@Nonnull
 	@Override
+	@SuppressWarnings("deprecation")
 	public JavaSourceSet getSourceSet(@Nonnull ExecutionContext ctx) {
 		return delegate.getSourceSet(ctx);
 	}
