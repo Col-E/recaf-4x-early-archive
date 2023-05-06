@@ -2,6 +2,7 @@ package software.coley.recaf.services.source;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import org.objectweb.asm.Type;
 import org.openrewrite.Tree;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
@@ -12,6 +13,7 @@ import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.DirectoryPathNode;
+import software.coley.recaf.path.PathNode;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -113,7 +115,7 @@ public class AstContextHelper {
 				if (resolved != null)
 					return reference(resolved);
 			} else if (identifierType instanceof JavaType.Variable fieldType) {
-				ClassMemberPathNode resolved = resolveField(fieldType);
+				PathNode<?> resolved = resolveField(fieldType);
 				if (resolved != null)
 					return declared(resolved);
 			} else if (identifierType instanceof JavaType.FullyQualified qualified) {
@@ -144,7 +146,7 @@ public class AstContextHelper {
 				return reference(resolved);
 		} else if (ast instanceof J.FieldAccess fieldAst) {
 			JavaType.Variable fieldType = fieldAst.getName().getFieldType();
-			ClassMemberPathNode resolved = resolveField(fieldType);
+			PathNode<?> resolved = resolveField(fieldType);
 			if (resolved != null)
 				return reference(resolved);
 		} else if (ast instanceof J.NewClass newAst) {
@@ -152,6 +154,11 @@ public class AstContextHelper {
 			ClassPathNode resolved = resolveClass(classType);
 			if (resolved != null)
 				return reference(resolved);
+			if (newAst.getClazz() != null) {
+				resolved = resolveClass(newAst.getClazz().getType());
+				if (resolved != null)
+					return reference(resolved);
+			}
 		} else if (ast instanceof J.NewArray arrayAst) {
 			JavaType classType = arrayAst.getType();
 			ClassPathNode resolved = resolveClass(classType);
@@ -184,7 +191,7 @@ public class AstContextHelper {
 				return reference(resolved);
 		} else if (ast instanceof J.VariableDeclarations.NamedVariable variableAst) {
 			JavaType.Variable variableType = variableAst.getVariableType();
-			ClassMemberPathNode resolved = resolveField(variableType);
+			PathNode<?> resolved = resolveField(variableType);
 			if (resolved != null)
 				return declared(resolved);
 			ClassPathNode resolvedClass = resolveClass(variableType);
@@ -192,7 +199,7 @@ public class AstContextHelper {
 				return reference(resolvedClass);
 		} else if (ast instanceof J.VariableDeclarations variableAst) {
 			JavaType.Variable variableType = variableAst.getVariables().get(0).getVariableType();
-			ClassMemberPathNode resolved = resolveField(variableType);
+			PathNode<?> resolved = resolveField(variableType);
 			if (resolved != null)
 				return declared(resolved);
 		} else if (ast instanceof J.EnumValue enumAst) {
@@ -297,7 +304,7 @@ public class AstContextHelper {
 	 * @return Path to resolved field.
 	 */
 	@Nullable
-	public ClassMemberPathNode resolveField(@Nullable JavaType.Variable fieldType) {
+	public PathNode<?> resolveField(@Nullable JavaType.Variable fieldType) {
 		if (fieldType != null) {
 			// A variable's owner for fields is the declaring class which is a fully qualified type.
 			// Local variable's owner are methods, so we only check for fully qualified owner types.
@@ -308,6 +315,11 @@ public class AstContextHelper {
 				String desc = AstUtils.toDesc(fieldType);
 				ClassPathNode classPath = workspace.findClass(owner);
 				if (classPath != null) {
+					// Edge case, OpenRewrite will treat 'this' variable in *some* cases as a field.
+					if (name.equals("this") && Type.getType(desc).getInternalName().equals(owner))
+						return classPath;
+
+					// Iterate fields, find matching name/desc.
 					for (FieldMember field : classPath.getValue().getFields())
 						if (field.getName().equals(name) && (desc.contains("<unknown>") || field.getDescriptor().equals(desc)))
 							return classPath.child(field);
