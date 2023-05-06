@@ -3,10 +3,7 @@ package software.coley.recaf.services.compile;
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import javax.tools.FileObject;
-import javax.tools.ForwardingJavaFileManager;
-import javax.tools.JavaFileManager;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
@@ -41,7 +38,7 @@ public class VirtualFileManager extends ForwardingJavaFileManager<JavaFileManage
 	public Iterable<JavaFileObject> list(Location location, String packageName,
 										 Set<JavaFileObject.Kind> kinds, boolean recurse) throws IOException {
 		Iterable<JavaFileObject> list = super.list(location, packageName, kinds, recurse);
-		if ("CLASS_PATH".equals(location.getName()) && kinds.contains(JavaFileObject.Kind.CLASS)) {
+		if (StandardLocation.CLASS_PATH.equals(location) && kinds.contains(JavaFileObject.Kind.CLASS)) {
 			String formatted = packageName.isEmpty() ? "" : packageName.replace('.', '/') + '/';
 			Predicate<String> check;
 			if (recurse) {
@@ -62,8 +59,8 @@ public class VirtualFileManager extends ForwardingJavaFileManager<JavaFileManage
 
 	@Override
 	public String inferBinaryName(Location location, JavaFileObject file) {
-		if (file instanceof ResourceVirtualJavaFileObject && file.getKind() == JavaFileObject.Kind.CLASS) {
-			return ((ResourceVirtualJavaFileObject) file).getResourceName().replace('/', '.');
+		if (file instanceof ResourceVirtualJavaFileObject virtualObject && file.getKind() == JavaFileObject.Kind.CLASS) {
+			return virtualObject.getResourceName().replace('/', '.');
 		}
 		return super.inferBinaryName(location, file);
 	}
