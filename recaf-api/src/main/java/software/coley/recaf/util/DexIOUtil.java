@@ -26,19 +26,30 @@ public class DexIOUtil {
 	 * 		When the dex file cannot be read from.
 	 */
 	public static AndroidClassBundle read(ByteSource source) throws IOException {
-		BasicAndroidClassBundle classBundle = new BasicAndroidClassBundle();
+		return read(source.readAll());
+	}
 
+	/**
+	 * @param dex
+	 * 		Raw bytes of a dex file.
+	 *
+	 * @return Bundle of classes from the dex file.
+	 *
+	 * @throws IOException
+	 * 		When the dex file cannot be read from.
+	 */
+	public static AndroidClassBundle read(byte[] dex) throws IOException {
 		// Read dex file content
-		ApplicationData data = ApplicationData.fromDex(source.readAll());
+		ApplicationData data = ApplicationData.fromDex(dex);
 
 		// Populate bundle
+		BasicAndroidClassBundle classBundle = new BasicAndroidClassBundle();
 		for (DexProgramClass dexClass : data.getApplication().classes()) {
 			AndroidClassInfo classInfo = new AndroidClassInfoBuilder()
 					.adaptFrom(dexClass)
 					.build();
 			classBundle.initialPut(classInfo);
 		}
-
 		return classBundle;
 	}
 }

@@ -96,6 +96,14 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 			return handleZip(builder, readInfoAsZip, source);
 		}
 
+		// Check for DEX file format.
+		if (readInfoAsFile instanceof DexFileInfo) {
+			String dexName = readInfoAsFile.getName();
+			AndroidClassBundle dexBundle = DexIOUtil.read(readInfoAsFile.getRawContent());
+			return builder.withAndroidClassBundles(Map.of(dexName, dexBundle))
+					.build();
+		}
+
 		// Must be some edge case type: Modules, or an unknown file type
 		if (readInfoAsFile instanceof ModulesFileInfo) {
 			return handleModules(builder, (ModulesFileInfo) readInfoAsFile);
