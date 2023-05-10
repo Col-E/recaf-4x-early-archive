@@ -1,8 +1,8 @@
 package software.coley.recaf.util.io;
 
 import jakarta.annotation.Nonnull;
-import software.coley.llzip.ZipCompressions;
-import software.coley.llzip.part.LocalFileHeader;
+import software.coley.llzip.format.compression.ZipCompressions;
+import software.coley.llzip.format.model.LocalFileHeader;
 import software.coley.llzip.util.ByteData;
 import software.coley.llzip.util.ByteDataUtil;
 

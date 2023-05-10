@@ -22,8 +22,8 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.zip.DeflaterOutputStream;
 
-import static software.coley.llzip.ZipCompressions.DEFLATED;
-import static software.coley.llzip.ZipCompressions.STORED;
+import static software.coley.llzip.format.compression.ZipCompressions.DEFLATED;
+import static software.coley.llzip.format.compression.ZipCompressions.STORED;
 
 /**
  * Options for configuring / preparing a {@link WorkspaceExporter} when calling

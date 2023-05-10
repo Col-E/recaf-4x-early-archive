@@ -2,8 +2,8 @@ package software.coley.recaf.workspace.io;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import software.coley.llzip.ZipArchive;
 import software.coley.llzip.ZipIO;
+import software.coley.llzip.format.model.ZipArchive;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
