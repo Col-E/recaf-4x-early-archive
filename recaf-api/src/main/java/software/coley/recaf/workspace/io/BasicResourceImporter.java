@@ -25,6 +25,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.*;
@@ -257,7 +258,9 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 				try {
 					// Read info from file
 					ByteSource source = ByteSources.forPath(file);
-					String fileName = file.getFileName().toString();
+					String fileName = directoryPath.relativize(file).toString();
+					if (File.separator.equals("\\"))
+						fileName = fileName.replace('\\', '/');
 					Info info = infoImporter.readInfo(fileName, source);
 
 					// Add the info to the appropriate bundle
