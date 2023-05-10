@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
  * @author Matt Coley
  */
 public class BasicTextFileInfo extends BasicFileInfo implements TextFileInfo {
-	private final String text;
+	private String text;
 
 	/**
 	 * @param builder
@@ -18,11 +18,12 @@ public class BasicTextFileInfo extends BasicFileInfo implements TextFileInfo {
 	 */
 	public BasicTextFileInfo(FileInfoBuilder<?> builder) {
 		super(builder);
-		text = new String(getRawContent(), StandardCharsets.UTF_8);
 	}
 
 	@Override
 	public String getText() {
+		if (text == null)
+			text = new String(getRawContent(), StandardCharsets.UTF_8);
 		return text;
 	}
 }

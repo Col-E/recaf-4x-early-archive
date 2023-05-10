@@ -18,17 +18,11 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.info.AndroidClassInfo;
-import software.coley.recaf.info.ClassInfo;
-import software.coley.recaf.info.InnerClassInfo;
-import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.*;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
-import software.coley.recaf.path.ClassPathNode;
-import software.coley.recaf.path.IncompletePathException;
-import software.coley.recaf.path.PathNode;
-import software.coley.recaf.path.PathNodes;
+import software.coley.recaf.path.*;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.cell.IconProviderService;
 import software.coley.recaf.services.cell.TextProviderService;
@@ -43,7 +37,9 @@ import software.coley.recaf.ui.docking.DockingTab;
 import software.coley.recaf.ui.pane.editing.android.AndroidClassPane;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassEditorType;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassPane;
+import software.coley.recaf.ui.pane.editing.text.TextFilePane;
 import software.coley.recaf.util.EscapeUtil;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.util.visitors.ClassAnnotationRemovingVisitor;
@@ -51,8 +47,8 @@ import software.coley.recaf.util.visitors.MemberPredicate;
 import software.coley.recaf.util.visitors.MemberRemovingVisitor;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
-import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
+import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
@@ -81,6 +77,7 @@ public class Actions implements Service {
 	private final Instance<MappingApplier> applierProvider;
 	private final Instance<JvmClassPane> jvmPaneProvider;
 	private final Instance<AndroidClassPane> androidPaneProvider;
+	private final Instance<TextFilePane> textPaneProvider;
 	private final ActionsConfig config;
 
 	@Inject
@@ -91,7 +88,8 @@ public class Actions implements Service {
 				   @Nonnull IconProviderService iconService,
 				   @Nonnull Instance<MappingApplier> applierProvider,
 				   @Nonnull Instance<JvmClassPane> jvmPaneProvider,
-				   @Nonnull Instance<AndroidClassPane> androidPaneProvider) {
+				   @Nonnull Instance<AndroidClassPane> androidPaneProvider,
+				   @Nonnull Instance<TextFilePane> textPaneProvider) {
 		this.config = config;
 		this.navigationManager = navigationManager;
 		this.dockingManager = dockingManager;
@@ -100,6 +98,7 @@ public class Actions implements Service {
 		this.applierProvider = applierProvider;
 		this.jvmPaneProvider = jvmPaneProvider;
 		this.androidPaneProvider = androidPaneProvider;
+		this.textPaneProvider = textPaneProvider;
 	}
 
 	/**
@@ -141,7 +140,7 @@ public class Actions implements Service {
 		} else if (info.isAndroidClass()) {
 			return gotoDeclaration(workspace, resource, (AndroidClassBundle) bundle, info.asAndroidClass());
 		}
-		throw new IllegalStateException("Unsupported class type: " + info.getClass().getName());
+		throw new UnsupportedContent("Unsupported class type: " + info.getClass().getName());
 	}
 
 	/**
@@ -183,8 +182,10 @@ public class Actions implements Service {
 				JvmClassInfo updatedInfo = updatedPath.getValue().asJvmClass();
 				String updatedTitle = textService.getJvmClassInfoTextProvider(workspace, resource, bundle, updatedInfo).makeText();
 				Node updatedGraphic = iconService.getJvmClassInfoIconProvider(workspace, resource, bundle, updatedInfo).makeIcon();
-				tab.setText(updatedTitle);
-				tab.setGraphic(updatedGraphic);
+				FxThreadUtil.run(() -> {
+					tab.setText(updatedTitle);
+					tab.setGraphic(updatedGraphic);
+				});
 			});
 			ContextMenu menu = new ContextMenu();
 			ObservableList<MenuItem> items = menu.getItems();
@@ -247,12 +248,102 @@ public class Actions implements Service {
 				AndroidClassInfo updatedInfo = updatedPath.getValue().asAndroidClass();
 				String updatedTitle = textService.getAndroidClassInfoTextProvider(workspace, resource, bundle, updatedInfo).makeText();
 				Node updatedGraphic = iconService.getAndroidClassInfoIconProvider(workspace, resource, bundle, updatedInfo).makeIcon();
-				tab.setGraphic(updatedGraphic);
-				tab.setText(updatedTitle);
+				FxThreadUtil.run(() -> {
+					tab.setText(updatedTitle);
+					tab.setGraphic(updatedGraphic);
+				});
 			});
 			ContextMenu menu = new ContextMenu();
 			ObservableList<MenuItem> items = menu.getItems();
 			items.add(action("menu.tab.copypath", () -> {
+				ClipboardContent clipboard = new ClipboardContent();
+				clipboard.putString(info.getName());
+				Clipboard.getSystemClipboard().setContent(clipboard);
+			}));
+			items.add(separator());
+			addCloseActions(menu, tab);
+			tab.setContextMenu(menu);
+			return tab;
+		});
+	}
+
+	/**
+	 * Brings a {@link FileNavigable} component representing the given file into focus.
+	 * If no such component exists, one is created.
+	 * <br>
+	 * Automatically calls the type-specific goto-declaration handling.
+	 *
+	 * @param path
+	 * 		Path containing a file to open.
+	 *
+	 * @return Navigable content representing file content of the path.
+	 *
+	 * @throws IncompletePathException
+	 * 		When the path is missing parent elements.
+	 */
+	@Nonnull
+	public FileNavigable gotoDeclaration(@Nonnull FilePathNode path) throws IncompletePathException {
+		Workspace workspace = path.getValueOfType(Workspace.class);
+		WorkspaceResource resource = path.getValueOfType(WorkspaceResource.class);
+		FileBundle bundle = path.getValueOfType(FileBundle.class);
+		FileInfo info = path.getValue();
+		if (workspace == null) {
+			logger.error("Cannot resolve required path nodes for file '{}', missing workspace in path", info.getName());
+			throw new IncompletePathException(Workspace.class);
+		}
+		if (resource == null) {
+			logger.error("Cannot resolve required path nodes for file '{}', missing resource in path", info.getName());
+			throw new IncompletePathException(WorkspaceResource.class);
+		}
+		if (bundle == null) {
+			logger.error("Cannot resolve required path nodes for file '{}', missing bundle in path", info.getName());
+			throw new IncompletePathException(ClassBundle.class);
+		}
+
+		// Handle text vs binary
+		if (info.isTextFile()) {
+			return gotoDeclaration(workspace, resource, bundle, info.asTextFile());
+		}
+		throw new UnsupportedContent("Unsupported file type: " + info.getClass().getName());
+	}
+
+	/**
+	 * Brings a {@link FileNavigable} component representing the given text file into focus.
+	 * If no such component exists, one is created.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		Text file to go to.
+	 *
+	 * @return Navigable content representing text file content of the path.
+	 */
+	@Nonnull
+	public FileNavigable gotoDeclaration(@Nonnull Workspace workspace,
+										 @Nonnull WorkspaceResource resource,
+										 @Nonnull FileBundle bundle,
+										 @Nonnull TextFileInfo info) {
+		FilePathNode path = buildPath(workspace, resource, bundle, info);
+		return (FileNavigable) getOrCreatePathContent(path, () -> {
+			// Create text/graphic for the tab to create.
+			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
+			Node graphic = iconService.getFileInfoIconProvider(workspace, resource, bundle, info).makeIcon();
+			if (title == null) throw new IllegalStateException("Missing title");
+			if (graphic == null) throw new IllegalStateException("Missing graphic");
+
+			// Create content for the tab.
+			TextFilePane content = textPaneProvider.get();
+			content.onUpdatePath(path);
+
+			// Build the tab.
+			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
+			ContextMenu menu = new ContextMenu();
+			ObservableList<MenuItem> items = menu.getItems();
+			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> {
 				ClipboardContent clipboard = new ClipboardContent();
 				clipboard.putString(info.getName());
 				Clipboard.getSystemClipboard().setContent(clipboard);
@@ -355,7 +446,7 @@ public class Actions implements Service {
 			// TODO: Android renaming
 			logger.error("TODO: Android renaming");
 		} else {
-			throw new IllegalStateException("Unsupported class type: " + info.getClass().getName());
+			throw new UnsupportedContent("Unsupported class type: " + info.getClass().getName());
 		}
 	}
 
@@ -720,11 +811,32 @@ public class Actions implements Service {
 	 *
 	 * @return Class path node.
 	 */
+	@Nonnull
 	private static ClassPathNode buildPath(@Nonnull Workspace workspace,
 										   @Nonnull WorkspaceResource resource,
-										   @Nonnull Bundle<?> bundle,
+										   @Nonnull ClassBundle<?> bundle,
 										   @Nonnull ClassInfo info) {
 		return PathNodes.classPath(workspace, resource, bundle, info);
+	}
+
+	/**
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		File item to end path with.
+	 *
+	 * @return File path node.
+	 */
+	@Nonnull
+	private static FilePathNode buildPath(@Nonnull Workspace workspace,
+										  @Nonnull WorkspaceResource resource,
+										  @Nonnull FileBundle bundle,
+										  @Nonnull FileInfo info) {
+		return PathNodes.filePath(workspace, resource, bundle, info);
 	}
 
 	@Nonnull

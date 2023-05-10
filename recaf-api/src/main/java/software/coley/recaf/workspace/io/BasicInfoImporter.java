@@ -105,6 +105,7 @@ public class BasicInfoImporter implements InfoImporter {
 		//  - Everything else can be stored as a property.
 
 		// No special case known for file, treat as generic file
+		// Will be automatically mapped to a text file if the contents are all mappable characters.
 		return new FileInfoBuilder<>()
 				.withRawContent(data)
 				.withName(name)

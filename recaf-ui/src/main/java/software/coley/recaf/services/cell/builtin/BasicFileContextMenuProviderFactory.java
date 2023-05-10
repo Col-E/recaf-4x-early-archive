@@ -3,13 +3,18 @@ package software.coley.recaf.services.cell.builtin;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import javafx.collections.ObservableList;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.services.cell.*;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
+
+import static software.coley.recaf.util.Menus.action;
 
 /**
  * Basic implementation for {@link FileContextMenuProviderFactory}.
@@ -38,8 +43,17 @@ public class BasicFileContextMenuProviderFactory extends AbstractContextMenuProv
 			IconProvider iconProvider = iconService.getFileInfoIconProvider(workspace, resource, bundle, info);
 			ContextMenu menu = new ContextMenu();
 			addHeader(menu, nameProvider.makeText(), iconProvider.makeIcon());
+			ObservableList<MenuItem> items = menu.getItems();
+			if (info.isTextFile()) {
+				items.add(action("menu.goto.file", CarbonIcons.ARROW_RIGHT,
+						() -> actions.gotoDeclaration(workspace, resource, bundle, info.asTextFile())));
+			} else {
+				// TODO: Binary file support
+				//   items.add(action("menu.goto.file", CarbonIcons.ARROW_RIGHT,
+				//   		() -> actions.gotoDeclaration(workspace, resource, bundle, info)));
+			}
+
 			// TODO: implement operations
-			//  - Go to
 			//  - Copy
 			//  - Delete
 			//  - Refactor

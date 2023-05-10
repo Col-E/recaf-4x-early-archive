@@ -23,6 +23,7 @@ import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.*;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.navigation.Actions;
+import software.coley.recaf.services.navigation.UnsupportedContent;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.tree.TreeItems;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
@@ -130,16 +131,17 @@ public class CellConfigurationService implements Service {
 	 * @param item
 	 * 		Item to open.
 	 */
-	private void openPath(PathNode<?> item) {
+	private void openPath(@Nonnull PathNode<?> item) {
 		try {
 			if (item instanceof ClassPathNode classPathNode) {
 				actions.gotoDeclaration(classPathNode);
 			} else if (item instanceof FilePathNode filePathNode) {
-				// TODO: Action to open file
-				//   actions.gotoDeclaration(filePathNode);
+				actions.gotoDeclaration(filePathNode);
 			}
 		} catch (IncompletePathException ex) {
 			logger.error("Cannot open incomplete path", ex);
+		} catch (UnsupportedContent ex) {
+			logger.warn("Cannot open unsupported content type");
 		}
 	}
 
