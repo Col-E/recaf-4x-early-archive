@@ -66,7 +66,7 @@ public class BasicInfoImporter implements InfoImporter {
 		}
 
 		// Check for ZIP containers (For ZIP/JAR/JMod/WAR)
-		if (ByteHeaderUtil.match(data, ByteHeaderUtil.ZIP)) {
+		if (ByteHeaderUtil.matchAtAnyOffset(data, ByteHeaderUtil.ZIP)) {
 			ZipFileInfoBuilder builder = new ZipFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name);

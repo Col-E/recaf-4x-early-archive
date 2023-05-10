@@ -191,16 +191,67 @@ public class ByteHeaderUtil {
 	 * @return {@code true} when array prefix matches pattern.
 	 */
 	public static boolean match(byte[] array, int offset, int... pattern) {
-		int patternLen;
-		if (array == null || array.length < offset + (patternLen = pattern.length))
-			return false;
-		for (int i = offset; i < patternLen + offset; i++) {
+		return matchLength(array, offset, pattern) == pattern.length;
+	}
+
+	/**
+	 * @param array
+	 * 		File data to compare against.
+	 * @param offset
+	 * 		Offset into the data to check at.
+	 * @param pattern
+	 * 		The header pattern.
+	 *
+	 * @return Length of the pattern matched by the data in the array at the given offset.
+	 * If the result is the same length as the input pattern, it is a full match.
+	 */
+	public static int matchLength(byte[] array, int offset, int... pattern) {
+		int patternLen = pattern.length;
+		if (array == null || array.length < offset + patternLen)
+			return 0;
+		for (int i = 0; i < patternLen; i++) {
 			int patternVal = pattern[i];
 			if (patternVal == WILD)
 				continue;
-			if (array[i] != (byte) patternVal)
-				return false;
+			if (array[offset + i] != (byte) patternVal)
+				return Math.max(0, i - 1);
 		}
-		return true;
+		return patternLen;
+	}
+
+	/**
+	 * @param array
+	 * 		File data to compare against.
+	 * @param pattern
+	 * 		The header pattern.
+	 *
+	 * @return {@code true} when array contains the pattern.
+	 */
+	public static boolean matchAtAnyOffset(byte[] array, int... pattern) {
+		return matchAtAnyOffset(array, array.length, pattern);
+	}
+
+	/**
+	 * @param array
+	 * 		File data to compare against.
+	 * @param offsetLimit
+	 * 		Maximum offset to scan up to for matches.
+	 * @param pattern
+	 * 		The header pattern.
+	 *
+	 * @return {@code true} when array contains the pattern.
+	 */
+	public static boolean matchAtAnyOffset(byte[] array, int offsetLimit, int... pattern) {
+		int patternLength = pattern.length;
+		int length = array.length;
+		int end = Math.min(length - patternLength, offsetLimit);
+		int offset = 0;
+		while (offset < end) {
+			int matched = matchLength(array, offset, pattern);
+			if (matched == patternLength)
+				return true;
+			offset += Math.max(1, matched);
+		}
+		return false;
 	}
 }
