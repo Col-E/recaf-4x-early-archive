@@ -541,6 +541,7 @@ public class StringUtil {
 				entropy = calculateNonText(charArray, entropy, length, charBuf.position());
 				if (entropy == -1)
 					return false;
+				buffer.position(buffer.position() + bufferSize);
 			} catch (Exception ex) {
 				return false;
 			}
