@@ -9,10 +9,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CoderResult;
-import java.nio.charset.CodingErrorAction;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.*;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Random;
@@ -520,35 +517,33 @@ public class StringUtil {
 	 *
 	 * @return {@code true} when it contains only text.
 	 */
-	public static boolean isText(byte[] data) {
-		if (data.length == 0) {
+	public static boolean isText(@Nonnull byte[] data) {
+		if (data.length == 0)
 			return false;
-		}
 		CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder()
-				.onMalformedInput(CodingErrorAction.REPLACE)
-				.onUnmappableCharacter(CodingErrorAction.REPLACE);
+				.onMalformedInput(CodingErrorAction.REPORT)
+				.onUnmappableCharacter(CodingErrorAction.REPORT);
 		ByteBuffer buffer = ByteBuffer.wrap(data);
 		int length = data.length;
 		int entropy = 0;
-		int bufferSize = (int) (length * 0.01D);
-		if (bufferSize > 4096)
-			bufferSize = 4096;
-		else if (bufferSize == 0)
-			bufferSize = length; // Small file, set to length
+		int bufferSize = Math.min(length, 4096);
 		char[] charArray = new char[bufferSize];
 		CharBuffer charBuf = CharBuffer.wrap(charArray);
 		while (true) {
-			if (!buffer.hasRemaining()) {
-				return true;
-			}
-			CoderResult result = decoder.decode(buffer, charBuf, true);
-			if (result.isUnderflow())
-				decoder.flush(charBuf);
-			entropy = calculateNonText(charArray, entropy, length, charBuf.position());
-			if (entropy == -1) {
+			try {
+				if (!buffer.hasRemaining())
+					return true;
+				CoderResult result = decoder.decode(buffer, charBuf, true);
+				if (result.isMalformed() || result.isMalformed() || result.isUnmappable())
+					return false;
+				if (result.isUnderflow())
+					decoder.flush(charBuf);
+				entropy = calculateNonText(charArray, entropy, length, charBuf.position());
+				if (entropy == -1)
+					return false;
+			} catch (Exception ex) {
 				return false;
 			}
-			charBuf.rewind();
 		}
 	}
 
