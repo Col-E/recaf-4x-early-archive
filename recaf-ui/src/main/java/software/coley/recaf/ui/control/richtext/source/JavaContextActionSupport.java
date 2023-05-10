@@ -33,6 +33,7 @@ import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
 import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
 import software.coley.recaf.util.EscapeUtil;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.Workspace;
@@ -169,9 +170,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 					// Compare to passed member.
 					if (member.getName().equals(name) && (desc == null || member.getDescriptor().equals(desc))) {
 						// Select it in the editor.
-						CodeArea area = editor.getCodeArea();
-						area.selectRange(range.getEnd().getOffset(), range.getStart().getOffset());
-						area.showParagraphAtCenter(area.getCurrentParagraph());
+						selectRange(range);
 						return;
 					}
 				} else if (member.isField() && tree instanceof J.VariableDeclarations variableDeclarations) {
@@ -189,21 +188,31 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 						// Compare to passed member.
 						if (member.getName().equals(name) && (desc == null || member.getDescriptor().equals(desc))) {
 							// Select it in the editor.
-							CodeArea area = editor.getCodeArea();
-							area.selectRange(range.getEnd().getOffset(), range.getStart().getOffset());
-							area.showParagraphAtCenter(area.getCurrentParagraph());
+							selectRange(range);
 							return;
 						}
 					}
 				} else if (member.getName().equals("<clinit>") && tree instanceof J.Block block && block.isStatic()) {
 					// Select it in the editor.
-					CodeArea area = editor.getCodeArea();
-					area.selectRange(range.getEnd().getOffset(), range.getStart().getOffset());
-					area.showParagraphAtCenter(area.getCurrentParagraph());
+					selectRange(range);
 					return;
 				}
 			}
 		}
+	}
+
+	/**
+	 * Selects the range in the {@link #editor} on the FX thread.
+	 *
+	 * @param range
+	 * 		Range to select.
+	 */
+	private void selectRange(@Nonnull Range range) {
+		CodeArea area = editor.getCodeArea();
+		FxThreadUtil.run(() -> {
+			area.selectRange(range.getEnd().getOffset(), range.getStart().getOffset());
+			area.showParagraphAtCenter(area.getCurrentParagraph());
+		});
 	}
 
 	/**
