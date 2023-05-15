@@ -534,14 +534,14 @@ public class StringUtil {
 				if (!buffer.hasRemaining())
 					return true;
 				CoderResult result = decoder.decode(buffer, charBuf, true);
-				if (result.isMalformed() || result.isMalformed() || result.isUnmappable())
+				if (result.isMalformed() || result.isError() || result.isUnmappable())
 					return false;
 				if (result.isUnderflow())
 					decoder.flush(charBuf);
 				entropy = calculateNonText(charArray, entropy, length, charBuf.position());
 				if (entropy == -1)
 					return false;
-				buffer.position(buffer.position() + bufferSize);
+				buffer.position(Math.min(length, buffer.position() + bufferSize));
 			} catch (Exception ex) {
 				return false;
 			}
