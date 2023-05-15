@@ -66,7 +66,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 	private WorkspaceResource handleSingle(WorkspaceResourceBuilder builder,
 										   String pathName, ByteSource source) throws IOException {
 		// Read input as raw info in order to determine file-type.
-		Info readInfo = infoImporter.readInfo(pathName, source);
+		Info readInfo = infoImporter.readInfo(pathName.substring(pathName.lastIndexOf('/') + 1), source);
 
 		// Check if it is a single class.
 		if (readInfo.isClass()) {
