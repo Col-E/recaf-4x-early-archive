@@ -1,11 +1,11 @@
 package software.coley.recaf.ui.pane;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
@@ -22,9 +22,12 @@ import software.coley.recaf.ui.control.richtext.linegraphics.LineContainer;
 import software.coley.recaf.ui.control.richtext.linegraphics.LineGraphicFactory;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.StringUtil;
+import software.coley.recaf.util.threading.ThreadPoolFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Pane for displaying logger calls.
@@ -45,29 +48,66 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 		setCenter(editor);
 
 		// Initial line
-		infos.add(new LogCallInfo("Initial", Level.TRACE, null));
+		infos.add(new LogCallInfo("Initial", Level.TRACE, "", null));
 		codeArea.appendText("Current log will write to: " + StringUtil.pathToAbsoluteString(config.getCurrentLogPath()));
+
+		// We want to reduce the calls to the FX thread, so we will chunk log-appends into groups
+		// occurring every 500ms, which shouldn't be too noticeable, and save us some CPU time.
+		ThreadPoolFactory.newScheduledThreadPool("logging-pane")
+				.scheduleAtFixedRate(() -> {
+					int skip = codeArea.getParagraphs().size();
+					int size = infos.size();
+					if (size > skip) {
+						String collectedMessageLines = infos.stream().skip(skip)
+								.map(LogCallInfo::getAndPruneContent)
+								.collect(Collectors.joining("\n"));
+						FxThreadUtil.run(() -> {
+							codeArea.appendText("\n" + collectedMessageLines);
+							codeArea.showParagraphAtBottom(codeArea.getParagraphs().size() - 1);
+						});
+					}
+				}, 100, 500, TimeUnit.MILLISECONDS);
 	}
 
 	@Override
 	public void accept(String loggerName, Level level, String messageContent) {
-		infos.add(new LogCallInfo(loggerName, level, null));
-		FxThreadUtil.run(() -> {
-			codeArea.appendText("\n" + messageContent);
-			codeArea.showParagraphAtBottom(codeArea.getParagraphs().size() - 1);
-		});
+		infos.add(new LogCallInfo(loggerName, level, messageContent, null));
 	}
 
 	@Override
 	public void accept(String loggerName, Level level, String messageContent, Throwable throwable) {
-		infos.add(new LogCallInfo(loggerName, level, throwable));
-		FxThreadUtil.run(() -> {
-			codeArea.appendText("\n" + messageContent);
-			codeArea.showParagraphAtBottom(codeArea.getParagraphs().size() - 1);
-		});
+		infos.add(new LogCallInfo(loggerName, level, messageContent, throwable));
 	}
 
-	private record LogCallInfo(String loggerName, Level level, Throwable throwable) {
+	private static class LogCallInfo {
+		private final String loggerName;
+		private final Level level;
+		private final Throwable throwable;
+		private String messageContent;
+
+		LogCallInfo(@Nonnull String loggerName,
+					@Nonnull Level level,
+					@Nonnull String messageContent,
+					@Nullable Throwable throwable) {
+			this.loggerName = loggerName;
+			this.level = level;
+			this.messageContent = messageContent;
+			this.throwable = throwable;
+		}
+
+		/**
+		 * Gets the message content once, then clears it, so we don't hold a constant reference to it.
+		 *
+		 * @return Message content of log call.
+		 */
+		@Nonnull
+		public String getAndPruneContent() {
+			String content = messageContent;
+			if (content == null)
+				throw new IllegalStateException();
+			messageContent = null;
+			return content;
+		}
 	}
 
 	private class LoggingLineFactory implements LineGraphicFactory {
@@ -86,6 +126,8 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 
 		@Override
 		public void apply(@Nonnull LineContainer container, int paragraph) {
+			if (paragraph >= infos.size())
+				return;
 			LogCallInfo info = infos.get(paragraph);
 			Shape shape;
 			switch (info.level) {
