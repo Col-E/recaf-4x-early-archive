@@ -3,7 +3,7 @@ package software.coley.recaf.services.script;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jregex.Matcher;
+import regexodus.Matcher;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.compile.*;

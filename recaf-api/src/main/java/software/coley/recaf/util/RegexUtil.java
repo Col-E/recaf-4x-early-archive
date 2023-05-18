@@ -1,8 +1,8 @@
 package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
-import jregex.Matcher;
-import jregex.Pattern;
+import regexodus.Matcher;
+import regexodus.Pattern;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 

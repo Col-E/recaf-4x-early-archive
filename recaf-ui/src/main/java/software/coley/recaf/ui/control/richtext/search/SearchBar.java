@@ -25,7 +25,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextAlignment;
-import jregex.Matcher;
+import regexodus.Matcher;
 import org.fxmisc.richtext.CodeArea;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.ui.config.KeybindingConfig;

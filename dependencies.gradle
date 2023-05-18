@@ -1,6 +1,7 @@
 def asmVersion = '9.4'
 def cafeDudeVersion = '1.10.2'
 def junitVersion = '5.9.2'
+def androidToolsVersion = '31.2.0-alpha02'
 
 project.ext {
     asm = "org.ow2.asm:asm:$asmVersion"
@@ -51,7 +52,7 @@ project.ext {
 
     picocli = 'info.picocli:picocli:4.7.1'
 
-    regex = 'net.sourceforge.jregex:jregex:1.2_01'
+    regex = 'com.github.tommyettinger:regexodus:0.1.15'
 
     richtextfx = 'org.fxmisc.richtext:richtextfx:0.11.1'
 }

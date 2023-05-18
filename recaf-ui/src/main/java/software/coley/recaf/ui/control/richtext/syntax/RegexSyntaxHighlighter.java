@@ -1,11 +1,13 @@
 package software.coley.recaf.ui.control.richtext.syntax;
 
 import jakarta.annotation.Nonnull;
-import jregex.Matcher;
-import jregex.Pattern;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
+import org.slf4j.Logger;
+import regexodus.Matcher;
+import regexodus.Pattern;
 import software.coley.collections.Lists;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.util.IntRange;
 import software.coley.recaf.util.RegexUtil;
 
@@ -19,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @see RegexLanguages Predefined languages to pass to {@link RegexSyntaxHighlighter#RegexSyntaxHighlighter(RegexRule)}.
  */
 public class RegexSyntaxHighlighter implements SyntaxHighlighter {
+	private static final Logger logger = Logging.get(RegexSyntaxHighlighter.class);
 	private static final Map<List<RegexRule>, Pattern> patternCache = new ConcurrentHashMap<>();
 	private final RegexRule rootRule;
 
@@ -33,11 +36,16 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 	@Nonnull
 	@Override
 	public StyleSpans<Collection<String>> createStyleSpans(@Nonnull String text, int start, int end) {
-		StyleSpansBuilder<Collection<String>> builder = new StyleSpansBuilder<>();
-		Region region = new Region(text, null, rootRule, start, end);
-		region.split(rootRule.getSubRules());
-		region.visitBuilder(builder);
-		return builder.create();
+		try {
+			StyleSpansBuilder<Collection<String>> builder = new StyleSpansBuilder<>();
+			Region region = new Region(text, null, rootRule, start, end);
+			region.split(rootRule.getSubRules());
+			region.visitBuilder(builder);
+			return builder.create();
+		} catch (RuntimeException ex) {
+			logger.error("Error creating style spans for text", ex);
+			throw ex;
+		}
 	}
 
 	@Nonnull
