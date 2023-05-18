@@ -17,10 +17,7 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.util.StringDiff;
 import software.coley.recaf.util.StringDiff.DiffHelper;
 
-import java.util.Optional;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.util.*;
 
 import static org.openrewrite.Tree.randomId;
 
@@ -79,14 +76,12 @@ public class AstRangeMapper {
 
 				J t = (J) tree;
 
-				PositionPrintOutputCapture prefix = new PositionPrintOutputCapture(helper, ppoc.posInCurrent, ppoc.line, ppoc.column);
+				PositionPrintOutputCapture prefix = new PositionPrintOutputCapture(ppoc);
 				spacePrinter.visitSpace(t.getPrefix(), Space.Location.ANY, prefix);
 
 				Range.Position startPosition = new Range.Position(prefix.posInBacking, prefix.line, prefix.column);
 				t = super.visit(tree, outputCapture);
 				Range.Position endPosition = new Range.Position(ppoc.posInBacking, ppoc.line, ppoc.column);
-				if (startPosition.getOffset() > endPosition.getOffset())
-					throw new IllegalStateException();
 				Range range = new Range(randomId(), startPosition, endPosition);
 				rangeMap.put(range, t);
 
@@ -95,14 +90,12 @@ public class AstRangeMapper {
 
 			@Override
 			protected void visitModifier(@Nonnull J.Modifier modifier, PrintOutputCapture<ExecutionContext> p) {
-				PositionPrintOutputCapture prefix = new PositionPrintOutputCapture(helper, ppoc.posInCurrent, ppoc.line, ppoc.column);
+				PositionPrintOutputCapture prefix = new PositionPrintOutputCapture(ppoc);
 				spacePrinter.visitSpace(modifier.getPrefix(), Space.Location.ANY, prefix);
 
 				Range.Position startPosition = new Range.Position(prefix.posInBacking, prefix.line, prefix.column);
 				super.visitModifier(modifier, p);
 				Range.Position endPosition = new Range.Position(ppoc.posInBacking, ppoc.line, ppoc.column);
-				if (startPosition.getOffset() > endPosition.getOffset())
-					throw new IllegalStateException();
 				Range range = new Range(randomId(), startPosition, endPosition);
 				rangeMap.put(range, modifier);
 			}
@@ -132,24 +125,28 @@ public class AstRangeMapper {
 	}
 
 	private static class PositionPrintOutputCapture extends PrintOutputCapture<ExecutionContext> {
+		private final Set<StringDiff.Diff> diffsApplied;
 		private final DiffHelper diffHelper;
-		int posInBacking = 0;
-		int posInCurrent = 0;
-		int column = 0;
-		int line = 1;
+		private int posInBacking = 0;
+		private int posInCurrent = 0;
+		private int column = 0;
+		private int line = 1;
 		private boolean lineBoundary;
 
 		public PositionPrintOutputCapture(@Nullable DiffHelper diffHelper) {
 			super(new InMemoryExecutionContext());
 			this.diffHelper = diffHelper;
+			this.diffsApplied = new HashSet<>();
 		}
 
-		public PositionPrintOutputCapture(@Nullable DiffHelper diffHelper, int pos, int line, int column) {
-			this(diffHelper);
-			this.posInBacking = pos;
-			this.posInCurrent = pos;
-			this.line = line;
-			this.column = column;
+		public PositionPrintOutputCapture(@Nonnull PositionPrintOutputCapture ppoc) {
+			super(new InMemoryExecutionContext());
+			this.posInBacking = ppoc.posInBacking;
+			this.posInCurrent = ppoc.posInCurrent;
+			this.line = ppoc.line;
+			this.column = ppoc.column;
+			this.diffHelper = ppoc.diffHelper;
+			this.diffsApplied = ppoc.diffsApplied;
 		}
 
 		@Nonnull
@@ -170,6 +167,10 @@ public class AstRangeMapper {
 			return this;
 		}
 
+		private boolean hasNotAppliedDiff(StringDiff.Diff diff) {
+			return diffsApplied.add(diff);
+		}
+
 		private void next(char c) {
 			// Error correction. OpenRewrite will drop tokens it deems invalid/not-fitting the Java model at the given
 			// point. As such we should assume a move forward in the position should skip over the content in the
@@ -184,8 +185,10 @@ public class AstRangeMapper {
 				// This will keep the backing offset synchronized with what is next in the current text.
 				StringDiff.Diff removed = diffHelper.getRemoved(posInBacking);
 				if (removed != null) {
-					int removedLength = removed.textA().length();
-					posInBacking += removedLength;
+					if (hasNotAppliedDiff(removed)) {
+						int removedLength = removed.textA().length();
+						posInBacking += removedLength;
+					}
 				} else {
 					// If text is present in the AST but not the original, something got inserted.
 					// We want to move the offset for the backing text to before the insertion, but keep
@@ -194,8 +197,10 @@ public class AstRangeMapper {
 					// This will keep the backing offset synchronized with what is next in the current text.
 					StringDiff.Diff inserted = diffHelper.getInserted(posInCurrent);
 					if (inserted != null) {
-						int length = inserted.textB().length();
-						posInBacking -= length;
+						if (hasNotAppliedDiff(inserted)) {
+							int length = inserted.textB().length();
+							posInBacking -= length;
+						}
 					} else {
 						// If text is present in both but with some changes, we want to move the offset for
 						// the backing text to after the change, but only up to the difference in size of the length.
@@ -215,10 +220,12 @@ public class AstRangeMapper {
 						// want to move the offset forwards by 5.
 						StringDiff.Diff replaced = diffHelper.getReplaced(posInCurrent);
 						if (replaced != null) {
-							int aLength = replaced.textA().length();
-							int bLength = replaced.textB().length();
-							int lengthDiff = (bLength - aLength);
-							posInBacking -= lengthDiff;
+							if (hasNotAppliedDiff(replaced)) {
+								int aLength = replaced.textA().length();
+								int bLength = replaced.textB().length();
+								int lengthDiff = (bLength - aLength);
+								posInBacking -= lengthDiff;
+							}
 						}
 					}
 				}

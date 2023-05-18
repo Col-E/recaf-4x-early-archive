@@ -106,6 +106,7 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 			if (content == null)
 				throw new IllegalStateException();
 			messageContent = null;
+			// TODO: Make throwable strip out trace for memory shit
 			return content;
 		}
 	}
