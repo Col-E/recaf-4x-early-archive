@@ -1,5 +1,9 @@
 package software.coley.recaf.util;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
+import org.openrewrite.Cursor;
+import org.openrewrite.Tree;
 import org.openrewrite.shaded.jgit.diff.*;
 
 import java.nio.charset.StandardCharsets;
@@ -152,11 +156,11 @@ public class StringDiff {
 		}
 
 		public boolean inRangeA(int pos) {
-			return pos >= startA && pos <= endA;
+			return pos >= startA && pos < endA;
 		}
 
 		public boolean inRangeB(int pos) {
-			return pos >= startB && pos <= endB;
+			return pos >= startB && pos < endB;
 		}
 	}
 
@@ -184,6 +188,86 @@ public class StringDiff {
 				case REPLACE -> CHANGE;
 				case EMPTY -> EMPTY;
 			};
+		}
+	}
+
+	/**
+	 * Helper that holds diff information between the original text, and the test that the tree believes it is modeling.
+	 * In some instances these models may not be aligned and will have to be de-conflicted.
+	 */
+	public static class DiffHelper {
+		private final List<StringDiff.Diff> diffs;
+
+		/**
+		 * @param backingText
+		 * 		Original text that yields the tree.
+		 * @param tree
+		 * 		Tree model to compare against. Will be turned into a string representation.
+		 */
+		public DiffHelper(@Nonnull String backingText, @Nonnull Tree tree) {
+			String treePrintText = tree.print(new Cursor(null, tree));
+			this.diffs = StringDiff.diff(backingText, treePrintText);
+		}
+
+		/**
+		 * Replacements can be detected in both the original and AST text representations.
+		 * Thus, we can search in the 'b' ranges, which are those belonging to the AST and still maintain
+		 * the ability to grab a result.
+		 *
+		 * @param pos
+		 * 		Position in the AST's version of the text.
+		 *
+		 * @return Replace diff encompassing the given position,
+		 * or {@code null} if no replace diff wraps the requested range.
+		 */
+		@Nullable
+		public StringDiff.Diff getReplaced(int pos) {
+			for (StringDiff.Diff diff : diffs) {
+				if (diff.isReplace() && diff.inRangeB(pos)) {
+					return diff;
+				}
+			}
+			return null;
+		}
+
+		/**
+		 * Removals can only be detected in the original text representation.
+		 * Thus, we will search in the 'a' ranges, which are those belonging to the original backing text.
+		 *
+		 * @param pos
+		 * 		Position in the original backing version of the text.
+		 *
+		 * @return Removal diff encompassing the given position,
+		 * or {@code null} if no removal diff wraps the requested range.
+		 */
+		@Nullable
+		public StringDiff.Diff getRemoved(int pos) {
+			for (StringDiff.Diff diff : diffs) {
+				if (diff.isRemoval() && diff.inRangeA(pos)) {
+					return diff;
+				}
+			}
+			return null;
+		}
+
+		/**
+		 * Insertions can only be detected in the AST's text representation.
+		 * Thus, we will search in the 'b' ranges, which are those belonging to the AST.
+		 *
+		 * @param pos
+		 * 		Position in the AST's version of the text.
+		 *
+		 * @return Insertion diff encompassing the given position,
+		 * or {@code null} if no insertion diff wraps the requested range.
+		 */
+		@Nullable
+		public StringDiff.Diff getInserted(int pos) {
+			for (StringDiff.Diff diff : diffs) {
+				if (diff.isInsert() && diff.inRangeB(pos)) {
+					return diff;
+				}
+			}
+			return null;
 		}
 	}
 }

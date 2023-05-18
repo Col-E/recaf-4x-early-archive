@@ -2,7 +2,10 @@ package software.coley.recaf.services.source;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import org.openrewrite.*;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.InMemoryExecutionContext;
+import org.openrewrite.PrintOutputCapture;
+import org.openrewrite.Tree;
 import org.openrewrite.java.JavaPrinter;
 import org.openrewrite.java.UpdateSourcePositions;
 import org.openrewrite.java.tree.J;
@@ -12,8 +15,12 @@ import org.openrewrite.marker.Range;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.util.StringDiff;
+import software.coley.recaf.util.StringDiff.DiffHelper;
 
-import java.util.*;
+import java.util.Optional;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.UUID;
 
 import static org.openrewrite.Tree.randomId;
 
@@ -78,6 +85,8 @@ public class AstRangeMapper {
 				Range.Position startPosition = new Range.Position(prefix.posInBacking, prefix.line, prefix.column);
 				t = super.visit(tree, outputCapture);
 				Range.Position endPosition = new Range.Position(ppoc.posInBacking, ppoc.line, ppoc.column);
+				if (startPosition.getOffset() > endPosition.getOffset())
+					throw new IllegalStateException();
 				Range range = new Range(randomId(), startPosition, endPosition);
 				rangeMap.put(range, t);
 
@@ -92,6 +101,8 @@ public class AstRangeMapper {
 				Range.Position startPosition = new Range.Position(prefix.posInBacking, prefix.line, prefix.column);
 				super.visitModifier(modifier, p);
 				Range.Position endPosition = new Range.Position(ppoc.posInBacking, ppoc.line, ppoc.column);
+				if (startPosition.getOffset() > endPosition.getOffset())
+					throw new IllegalStateException();
 				Range range = new Range(randomId(), startPosition, endPosition);
 				rangeMap.put(range, modifier);
 			}
@@ -172,18 +183,20 @@ public class AstRangeMapper {
 				//
 				// This will keep the backing offset synchronized with what is next in the current text.
 				StringDiff.Diff removed = diffHelper.getRemoved(posInBacking);
-				if (removed != null)
-					posInBacking += removed.textA().length();
-				else {
+				if (removed != null) {
+					int removedLength = removed.textA().length();
+					posInBacking += removedLength;
+				} else {
 					// If text is present in the AST but not the original, something got inserted.
 					// We want to move the offset for the backing text to before the insertion, but keep
 					// the current offset for the current text.
 					//
 					// This will keep the backing offset synchronized with what is next in the current text.
 					StringDiff.Diff inserted = diffHelper.getInserted(posInCurrent);
-					if (inserted != null)
-						posInBacking -= inserted.textB().length();
-					else {
+					if (inserted != null) {
+						int length = inserted.textB().length();
+						posInBacking -= length;
+					} else {
 						// If text is present in both but with some changes, we want to move the offset for
 						// the backing text to after the change, but only up to the difference in size of the length.
 						//
@@ -231,86 +244,6 @@ public class AstRangeMapper {
 			if (c == '\n') {
 				lineBoundary = true;
 			}
-		}
-	}
-
-	/**
-	 * Helper that holds diff information between the original text, and the test that the tree believes it is modeling.
-	 * In some instances these models may not be aligned and will have to be de-conflicted.
-	 */
-	static class DiffHelper {
-		private final List<StringDiff.Diff> diffs;
-
-		/**
-		 * @param backingText
-		 * 		Original text that yields the tree.
-		 * @param tree
-		 * 		Tree model to compare against. Will be turned into a string representation.
-		 */
-		private DiffHelper(@Nonnull String backingText, @Nonnull Tree tree) {
-			String treePrintText = tree.print(new Cursor(null, tree));
-			this.diffs = StringDiff.diff(backingText, treePrintText);
-		}
-
-		/**
-		 * Replacements can be detected in both the original and AST text representations.
-		 * Thus, we can search in the 'b' ranges, which are those belonging to the AST and still maintain
-		 * the ability to grab a result.
-		 *
-		 * @param pos
-		 * 		Position in the AST's version of the text.
-		 *
-		 * @return Replace diff encompassing the given position,
-		 * or {@code null} if no replace diff wraps the requested range.
-		 */
-		@Nullable
-		public StringDiff.Diff getReplaced(int pos) {
-			for (StringDiff.Diff diff : diffs) {
-				if (diff.isReplace() && diff.inRangeB(pos)) {
-					return diff;
-				}
-			}
-			return null;
-		}
-
-		/**
-		 * Removals can only be detected in the original text representation.
-		 * Thus, we will search in the 'a' ranges, which are those belonging to the original backing text.
-		 *
-		 * @param pos
-		 * 		Position in the original backing version of the text.
-		 *
-		 * @return Removal diff encompassing the given position,
-		 * or {@code null} if no removal diff wraps the requested range.
-		 */
-		@Nullable
-		public StringDiff.Diff getRemoved(int pos) {
-			for (StringDiff.Diff diff : diffs) {
-				if (diff.isRemoval() && diff.inRangeA(pos)) {
-					return diff;
-				}
-			}
-			return null;
-		}
-
-		/**
-		 * Insertions can only be detected in the AST's text representation.
-		 * Thus, we will search in the 'b' ranges, which are those belonging to the AST.
-		 *
-		 * @param pos
-		 * 		Position in the AST's version of the text.
-		 *
-		 * @return Insertion diff encompassing the given position,
-		 * or {@code null} if no insertion diff wraps the requested range.
-		 */
-		@Nullable
-		public StringDiff.Diff getInserted(int pos) {
-			for (StringDiff.Diff diff : diffs) {
-				if (diff.isInsert() && diff.inRangeB(pos)) {
-					return diff;
-				}
-			}
-			return null;
 		}
 	}
 }
