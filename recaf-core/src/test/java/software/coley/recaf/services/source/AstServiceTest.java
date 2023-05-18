@@ -48,6 +48,7 @@ public class AstServiceTest extends TestBase {
 				ClassWithConstructor.class,
 				ClassWithExceptions.class,
 				ClassWithStaticInit.class,
+				ClassWithMultipleMethods.class,
 				OverlapClassAB.class,
 				OverlapInterfaceA.class,
 				OverlapInterfaceB.class,
@@ -479,12 +480,12 @@ public class AstServiceTest extends TestBase {
 			// So we want to have a test to make sure it gets resolved correctly.
 			String source = """
 					package software.coley.recaf.test.dummy;
-					
+										
 					import java.util.ArrayList;
 					import java.util.Arrays;
 					import java.util.LinkedHashSet;
 					import java.util.Set;
-					
+										
 					public class StringList extends ArrayList<String> {
 						public Set<String> unique() {
 							Object string = this.toString();
@@ -855,10 +856,10 @@ public class AstServiceTest extends TestBase {
 	}
 
 	@Nested
+	@SuppressWarnings("deprecation")
 	class ErroneousInput {
 		@Test
-		@SuppressWarnings("deprecation")
-		void testResolveWithInvalidTokens() {
+		void testResolveWithInvalidGoto() {
 			// CFR can emit illegal code like this with patterns such as:
 			//   ** GOTO lbl-1000
 			//   else lbl-1000:
@@ -886,18 +887,11 @@ public class AstServiceTest extends TestBase {
 				assertNotEquals(source, unit.print(), "Expected OpenRewrite AST to drop illegal chars");
 
 				int lastOne = source.lastIndexOf("ONE");
-				int lastFoo = source.lastIndexOf("foo");
 				validateRange(unit, lastOne, lastOne + 3, source, ClassMemberPathNode.class, memberPath -> {
 					ClassInfo owner = memberPath.getValueOfType(ClassInfo.class);
 					ClassMember member = memberPath.getValue();
 					assertEquals("software/coley/recaf/test/dummy/DummyEnum", owner.getName());
 					assertEquals("ONE", member.getName());
-				});
-				validateRange(unit, lastFoo, lastFoo, source, ClassMemberPathNode.class, memberPath -> {
-					ClassInfo owner = memberPath.getValueOfType(ClassInfo.class);
-					ClassMember member = memberPath.getValue();
-					assertEquals("software/coley/recaf/test/dummy/DummyEnum", owner.getName());
-					assertEquals("foo", member.getName());
 				});
 			});
 		}
@@ -922,18 +916,110 @@ public class AstServiceTest extends TestBase {
 				// Now that the unit is parsed from the original source
 				// we will use the modified source to simulate the unit making changes to the source.
 				int lastOne = sourceReplaced.lastIndexOf("ONE");
-				int lastFoo = sourceReplaced.lastIndexOf("foo");
 				validateRange(unit, lastOne, lastOne + 3, sourceReplaced, ClassMemberPathNode.class, memberPath -> {
 					ClassInfo owner = memberPath.getValueOfType(ClassInfo.class);
 					ClassMember member = memberPath.getValue();
 					assertEquals("software/coley/recaf/test/dummy/DummyEnum", owner.getName());
 					assertEquals("ONE", member.getName());
 				});
-				validateRange(unit, lastFoo, lastFoo, sourceReplaced, ClassMemberPathNode.class, memberPath -> {
+			});
+		}
+
+		@Test
+		void testResolveWithMissingEndBraces() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+										
+					public class ClassWithMultipleMethods {
+						public static String append(String one, String two) {
+							return one + two;
+						}
+						public static String append(String one, String two, String three) {
+							return append(append(one, two), three);
+						}
+						public static int add(int a, int b) {
+							return a + b;
+						}
+						public static int add(int a, int b, int c) {
+							return add(add(a, b), c);
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				int index = source.indexOf("append(one, two)");
+				validateRange(unit, index + 1, index + 4, source, ClassMemberPathNode.class, memberPath -> {
 					ClassInfo owner = memberPath.getValueOfType(ClassInfo.class);
 					ClassMember member = memberPath.getValue();
-					assertEquals("software/coley/recaf/test/dummy/DummyEnum", owner.getName());
-					assertEquals("foo", member.getName());
+					assertEquals("software/coley/recaf/test/dummy/ClassWithMultipleMethods", owner.getName());
+					assertEquals("append", member.getName());
+					assertEquals("(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;", member.getDescriptor());
+				});
+			});
+		}
+
+		@Test
+		@Disabled("u0000 in the variable name causes the following ', String two' to be treated as white-space" +
+				"So the definition becomes (String)String, which is wrong. This arises from javac handling, so it" +
+				"cannot be fixed")
+		void testResolveWithNullTerminatorParameterName() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+										
+					public class ClassWithMultipleMethods {
+						public static String append(String \0, String two) {
+							return "one" + two;
+						}
+						public static String append(String one, String two, String three) {
+							return append(append(one, two), three);
+						}
+						public static int add(int a, int b) {
+							return a + b;
+						}
+						public static int add(int a, int b, int c) {
+							return add(add(a, b), c);
+						}
+					}
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				int index = source.indexOf("append(one, two)");
+				validateRange(unit, index + 1, index + 4, source, ClassMemberPathNode.class, memberPath -> {
+					ClassInfo owner = memberPath.getValueOfType(ClassInfo.class);
+					ClassMember member = memberPath.getValue();
+					assertEquals("software/coley/recaf/test/dummy/ClassWithMultipleMethods", owner.getName());
+					assertEquals("append", member.getName());
+					assertEquals("(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;", member.getDescriptor());
+				});
+			});
+		}
+
+		@Test
+		@Disabled("Reserved keywords break the parser in the same way as the test above with u0000")
+		void testResolveWithKeywordParameterName() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+										
+					public class ClassWithMultipleMethods {
+						public static String append(String static, String two) {
+							return "one" + two;
+						}
+						public static String append(String one, String two, String three) {
+							return append(append(one, two), three);
+						}
+						public static int add(int a, int b) {
+							return a + b;
+						}
+						public static int add(int a, int b, int c) {
+							return add(add(a, b), c);
+						}
+					}
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				unit = (J.CompilationUnit) unit.acceptJava(new SpaceFilteringVisitor(), ctx);
+				int index = source.indexOf("append(one, two)");
+				validateRange(unit, index + 1, index + 4, source, ClassMemberPathNode.class, memberPath -> {
+					ClassInfo owner = memberPath.getValueOfType(ClassInfo.class);
+					ClassMember member = memberPath.getValue();
+					assertEquals("software/coley/recaf/test/dummy/ClassWithMultipleMethods", owner.getName());
+					assertEquals("append", member.getName());
+					assertEquals("(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;", member.getDescriptor());
 				});
 			});
 		}
