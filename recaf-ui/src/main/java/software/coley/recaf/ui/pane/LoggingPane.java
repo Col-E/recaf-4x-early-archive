@@ -55,16 +55,22 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 		// occurring every 500ms, which shouldn't be too noticeable, and save us some CPU time.
 		ThreadPoolFactory.newScheduledThreadPool("logging-pane")
 				.scheduleAtFixedRate(() -> {
-					int skip = codeArea.getParagraphs().size();
-					int size = infos.size();
-					if (size > skip) {
-						String collectedMessageLines = infos.stream().skip(skip)
-								.map(LogCallInfo::getAndPruneContent)
-								.collect(Collectors.joining("\n"));
-						FxThreadUtil.run(() -> {
-							codeArea.appendText("\n" + collectedMessageLines);
-							codeArea.showParagraphAtBottom(codeArea.getParagraphs().size() - 1);
-						});
+					try {
+						int skip = codeArea.getParagraphs().size();
+						int size = infos.size();
+						if (size > skip) {
+							String collectedMessageLines = infos.stream().skip(skip)
+									.map(LogCallInfo::getAndPruneContent)
+									.collect(Collectors.joining("\n"));
+							FxThreadUtil.run(() -> {
+								codeArea.appendText("\n" + collectedMessageLines);
+								codeArea.showParagraphAtBottom(codeArea.getParagraphs().size() - 1);
+							});
+						}
+					} catch (Throwable t) {
+						// We don't want to cause infinite loops by causing uncaught exceptions to trigger another
+						// logger call, so we will just print the trace here and move on.
+						t.printStackTrace();
 					}
 				}, 100, 500, TimeUnit.MILLISECONDS);
 	}
