@@ -28,12 +28,14 @@ public class StringDiff {
 		// Track line info.
 		String[] aLines = a.split("\n");
 		String[] bLines = b.split("\n");
-		int[] aPositions = new int[aLines.length];
-		int[] bPositions = new int[bLines.length];
-		for (int i = 0; i < aPositions.length - 1; i++)
+		int[] aPositions = new int[aLines.length + 1];
+		int[] bPositions = new int[bLines.length + 1];
+		for (int i = 0; i < aPositions.length - 2; i++)
 			aPositions[i + 1] = aPositions[i] + aLines[i].length() + 1;
-		for (int i = 0; i < bPositions.length - 1; i++)
+		for (int i = 0; i < bPositions.length - 2; i++)
 			bPositions[i + 1] = bPositions[i] + bLines[i].length() + 1;
+		aPositions[aLines.length] = Integer.MAX_VALUE;
+		bPositions[bLines.length] = Integer.MAX_VALUE;
 
 		// Use JGit to diff.
 		EditList diffs = DiffAlgorithm.getAlgorithm(DiffAlgorithm.SupportedAlgorithm.MYERS)
