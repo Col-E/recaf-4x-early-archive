@@ -1,23 +1,24 @@
-package software.coley.recaf.ui.pane.editing.text;
+package software.coley.recaf.ui.pane.editing.binary;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import software.coley.recaf.info.TextFileInfo;
+import software.coley.recaf.info.BinaryXmlFileInfo;
 import software.coley.recaf.ui.pane.editing.FilePane;
+import software.coley.recaf.ui.pane.editing.text.TextPane;
 
 /**
- * Displays {@link TextFileInfo}.
+ * Displays {@link BinaryXmlFileInfo}.
  *
  * @author Matt Coley
  */
 @Dependent
-public class TextFilePane extends FilePane {
-	private final Instance<TextPane> textProvider;
+public class BinaryXmlFilePane extends FilePane {
+	private final Instance<DecodingXmlPane> textProvider;
 
 	@Inject
-	public TextFilePane(@Nonnull Instance<TextPane> textProvider) {
+	public BinaryXmlFilePane(@Nonnull Instance<DecodingXmlPane> textProvider) {
 		this.textProvider = textProvider;
 	}
 

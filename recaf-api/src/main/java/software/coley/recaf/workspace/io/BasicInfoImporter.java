@@ -97,6 +97,18 @@ public class BasicInfoImporter implements InfoImporter {
 					.withRawContent(data)
 					.withName(name)
 					.build();
+		} else if (name.endsWith(".arsc") &&
+				ByteHeaderUtil.match(data, ByteHeaderUtil.ARSC)) {
+			return new ArscFileInfoBuilder()
+					.withRawContent(data)
+					.withName(name)
+					.build();
+		} else if (name.endsWith(".xml") &&
+				ByteHeaderUtil.match(data, ByteHeaderUtil.BINARY_XML)) {
+			return new BinaryXmlFileInfoBuilder()
+					.withRawContent(data)
+					.withName(name)
+					.build();
 		}
 
 		// TODO: Record content-type (for quick recognition of media and other common file types)

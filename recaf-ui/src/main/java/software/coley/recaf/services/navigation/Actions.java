@@ -35,6 +35,7 @@ import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingRegion;
 import software.coley.recaf.ui.docking.DockingTab;
 import software.coley.recaf.ui.pane.editing.android.AndroidClassPane;
+import software.coley.recaf.ui.pane.editing.binary.BinaryXmlFilePane;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassEditorType;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassPane;
 import software.coley.recaf.ui.pane.editing.text.TextFilePane;
@@ -77,6 +78,7 @@ public class Actions implements Service {
 	private final Instance<MappingApplier> applierProvider;
 	private final Instance<JvmClassPane> jvmPaneProvider;
 	private final Instance<AndroidClassPane> androidPaneProvider;
+	private final Instance<BinaryXmlFilePane> binaryXmlPaneProvider;
 	private final Instance<TextFilePane> textPaneProvider;
 	private final ActionsConfig config;
 
@@ -89,6 +91,7 @@ public class Actions implements Service {
 				   @Nonnull Instance<MappingApplier> applierProvider,
 				   @Nonnull Instance<JvmClassPane> jvmPaneProvider,
 				   @Nonnull Instance<AndroidClassPane> androidPaneProvider,
+				   @Nonnull Instance<BinaryXmlFilePane> binaryXmlPaneProvider,
 				   @Nonnull Instance<TextFilePane> textPaneProvider) {
 		this.config = config;
 		this.navigationManager = navigationManager;
@@ -98,6 +101,7 @@ public class Actions implements Service {
 		this.applierProvider = applierProvider;
 		this.jvmPaneProvider = jvmPaneProvider;
 		this.androidPaneProvider = androidPaneProvider;
+		this.binaryXmlPaneProvider = binaryXmlPaneProvider;
 		this.textPaneProvider = textPaneProvider;
 	}
 
@@ -303,9 +307,60 @@ public class Actions implements Service {
 		// Handle text vs binary
 		if (info.isTextFile()) {
 			return gotoDeclaration(workspace, resource, bundle, info.asTextFile());
+		} else if (info instanceof BinaryXmlFileInfo binaryXml) {
+			return gotoDeclaration(workspace, resource, bundle, binaryXml);
 		}
 		throw new UnsupportedContent("Unsupported file type: " + info.getClass().getName());
 	}
+
+	/**
+	 * Brings a {@link FileNavigable} component representing the given binary XML file into focus.
+	 * If no such component exists, one is created.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		Binary XML file to go to.
+	 *
+	 * @return Navigable content representing binary XML file content of the path.
+	 */
+	@Nonnull
+	public FileNavigable gotoDeclaration(@Nonnull Workspace workspace,
+										 @Nonnull WorkspaceResource resource,
+										 @Nonnull FileBundle bundle,
+										 @Nonnull BinaryXmlFileInfo info) {
+		FilePathNode path = buildPath(workspace, resource, bundle, info);
+		return (FileNavigable) getOrCreatePathContent(path, () -> {
+			// Create text/graphic for the tab to create.
+			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
+			Node graphic = iconService.getFileInfoIconProvider(workspace, resource, bundle, info).makeIcon();
+			if (title == null) throw new IllegalStateException("Missing title");
+			if (graphic == null) throw new IllegalStateException("Missing graphic");
+
+			// Create content for the tab.
+			BinaryXmlFilePane content = binaryXmlPaneProvider.get();
+			content.onUpdatePath(path);
+
+			// Build the tab.
+			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
+			ContextMenu menu = new ContextMenu();
+			ObservableList<MenuItem> items = menu.getItems();
+			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> {
+				ClipboardContent clipboard = new ClipboardContent();
+				clipboard.putString(info.getName());
+				Clipboard.getSystemClipboard().setContent(clipboard);
+			}));
+			items.add(separator());
+			addCloseActions(menu, tab);
+			tab.setContextMenu(menu);
+			return tab;
+		});
+	}
+
 
 	/**
 	 * Brings a {@link FileNavigable} component representing the given text file into focus.

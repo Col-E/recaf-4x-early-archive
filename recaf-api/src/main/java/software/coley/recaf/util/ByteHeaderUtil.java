@@ -86,8 +86,10 @@ public class ByteHeaderUtil {
 			MP4_FYTP_MMP4,
 			MP4_FYTP_MP42
 	);
+	// Android files (Modular chunk system, use unsigned short LE headers)
+	public static final int[] BINARY_XML = {0x03, 0x00};
+	public static final int[] ARSC = {0x02, 0x00};
 	// Misc
-	public static final int[] BINARY_XML = {0x03, 0x00, 0x08, 0x00};
 	public static final int[] PDF = {0x25, 0x50, 0x44, 0x46, 0x2D};
 
 	/**

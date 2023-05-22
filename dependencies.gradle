@@ -10,9 +10,11 @@ project.ext {
     asm_tree = "org.ow2.asm:asm-tree:$asmVersion"
     asm_util = "org.ow2.asm:asm-util:$asmVersion"
 
-    atlantafx = 'io.github.mkpaz:atlantafx-base:1.1.0'
+    android_common = "com.android.tools:common:$androidToolsVersion"
+    apk_analyzer = "com.android.tools.apkparser:apkanalyzer:$androidToolsVersion"
+    binary_resources = "com.android.tools.apkparser:binary-resources:$androidToolsVersion"
 
-    dex_translator = 'software.coley:dex-translator:1.1.0'
+    atlantafx = 'io.github.mkpaz:atlantafx-base:1.1.0'
 
     cafedude = "com.github.Col-E:CAFED00D:$cafeDudeVersion"
 
@@ -20,6 +22,8 @@ project.ext {
 
     cdi_api = 'jakarta.enterprise:jakarta.enterprise.cdi-api:4.0.1'
     cdi_impl = 'org.jboss.weld.se:weld-se-core:5.1.0.Final'
+
+    dex_translator = 'software.coley:dex-translator:1.1.1'
 
     directories = 'dev.dirs:directories:26'
     docking = 'com.github.Col-E:tiwulfx-dock:1.2.3'
@@ -37,6 +41,8 @@ project.ext {
     llzip = "software.coley:lljzip:1.3.0"
 
     logging_impl = 'ch.qos.logback:logback-classic:1.2.10' // newer releases break in jar releases
+
+    jackson = 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.15.1'
 
     jlinker = 'com.github.xxDark:jlinker:1.0.4'
 

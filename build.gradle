@@ -17,6 +17,7 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
+        google()
         maven { url 'https://jitpack.io' }
         maven { url 'https://maven.quiltmc.org/repository/release/' }
     }

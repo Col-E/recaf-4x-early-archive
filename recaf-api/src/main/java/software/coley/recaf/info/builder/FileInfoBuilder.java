@@ -43,21 +43,25 @@ public class FileInfoBuilder<B extends FileInfoBuilder<?>> {
 		FileInfoBuilder<?> builder;
 		if (info.isZipFile()) {
 			// Handle different container types
-			if (info instanceof JarFileInfo) {
-				builder = new JarFileInfoBuilder((JarFileInfo) info);
-			} else if (info instanceof JModFileInfo) {
-				builder = new JModFileInfoBuilder((JModFileInfo) info);
-			} else if (info instanceof WarFileInfo) {
-				builder = new WarFileInfoBuilder((WarFileInfo) info);
+			if (info instanceof JarFileInfo jarInfo) {
+				builder = new JarFileInfoBuilder(jarInfo);
+			} else if (info instanceof JModFileInfo modInfo) {
+				builder = new JModFileInfoBuilder(modInfo);
+			} else if (info instanceof WarFileInfo warInfo) {
+				builder = new WarFileInfoBuilder(warInfo);
 			} else {
 				builder = new ZipFileInfoBuilder(info.asZipFile());
 			}
-		} else if (info instanceof DexFileInfo) {
-			builder = new DexFileInfoBuilder((DexFileInfo) info);
-		} else if (info instanceof ModulesFileInfo) {
-			builder = new ModulesFileInfoBuilder((ModulesFileInfo) info);
-		} else if (info instanceof TextFileInfo) {
-			builder = new TextFileInfoBuilder((TextFileInfo) info);
+		} else if (info instanceof DexFileInfo dexInfo) {
+			builder = new DexFileInfoBuilder(dexInfo);
+		} else if (info instanceof ModulesFileInfo modInfo) {
+			builder = new ModulesFileInfoBuilder(modInfo);
+		} else if (info instanceof TextFileInfo textInfo) {
+			builder = new TextFileInfoBuilder(textInfo);
+		} else if (info instanceof BinaryXmlFileInfo xmlInfo) {
+			builder = new BinaryXmlFileInfoBuilder(xmlInfo);
+		} else if (info instanceof ArscFileInfo arscInfo) {
+			builder = new ArscFileInfoBuilder(arscInfo);
 		} else {
 			builder = new FileInfoBuilder<>(info);
 		}
