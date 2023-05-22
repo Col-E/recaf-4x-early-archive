@@ -39,7 +39,7 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 		try {
 			StyleSpansBuilder<Collection<String>> builder = new StyleSpansBuilder<>();
 			Region region = new Region(text, null, rootRule, start, end);
-			region.split(rootRule.getSubRules());
+			region.split(rootRule.subRules());
 			region.visitBuilder(builder);
 			return builder.create();
 		} catch (RuntimeException ex) {
@@ -59,14 +59,14 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 		// of one of these matches, the range covers the new start/end. Primary example of this is multi-line comments.
 		//
 		// Example: Deleting the last '/' will expand the range forwards.
-		for (RegexRule rule : rootRule.getSubRules()) {
-			String backtrackMark = rule.getBacktrackMark();
-			String advanceMark = rule.getAdvanceMark();
+		for (RegexRule rule : rootRule.subRules()) {
+			String backtrackMark = rule.backtrackMark();
+			String advanceMark = rule.advanceMark();
 
 			if (advanceMark != null && backtrackMark != null) {
 				// If the range is a FULL match (from start to finish, no leading or trailing text)
 				// then we do not need to change anything.
-				if (rangeText.matches(rule.getRegex()))
+				if (rangeText.matches(rule.regex()))
 					break;
 
 				// Positions of marks within the text.
@@ -132,8 +132,8 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 		if (rules.isEmpty()) return RegexUtil.pattern("({EMPTY}EMPTY)");
 		StringBuilder sb = new StringBuilder();
 		for (RegexRule rule : rules) {
-			String pattern = rule.getRegex();
-			sb.append("({").append(rule.getName()).append("}").append(pattern).append(")|");
+			String pattern = rule.regex();
+			sb.append("({").append(rule.name()).append("}").append(pattern).append(")|");
 		}
 		return RegexUtil.pattern(sb.substring(0, sb.length() - 1));
 	}
@@ -148,7 +148,7 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 	 */
 	private static RegexRule getRuleFromMatcher(Collection<RegexRule> rules, Matcher matcher) {
 		return rules.stream()
-				.filter(rule -> matcher.group(rule.getName()) != null)
+				.filter(rule -> matcher.group(rule.name()) != null)
 				.findFirst()
 				.orElse(null);
 	}
@@ -208,7 +208,7 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 				Region localChild = new Region(text, this, matchedRule, start + localStart, start + localEnd);
 
 				// Break the new region into smaller ones if the rule associated with the match has sub-rules.
-				List<RegexRule> subrules = matchedRule.getSubRules();
+				List<RegexRule> subrules = matchedRule.subRules();
 				if (!subrules.isEmpty()) localChild.split(subrules);
 
 				// Add child (splitting technically handled in output logic)
@@ -251,7 +251,7 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 		 */
 		public List<String> currentClasses() {
 			if (parent == null) return Collections.emptyList();
-			return Lists.combine(parent.currentClasses(), rule.getClasses());
+			return Lists.combine(parent.currentClasses(), rule.classes());
 		}
 
 		/**
@@ -259,7 +259,7 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 		 */
 		public List<String> unmatchedClasses() {
 			if (parent == null) return Collections.emptyList();
-			return Lists.combine(parent.unmatchedClasses(), parent.rule.getClasses());
+			return Lists.combine(parent.unmatchedClasses(), parent.rule.classes());
 		}
 	}
 }

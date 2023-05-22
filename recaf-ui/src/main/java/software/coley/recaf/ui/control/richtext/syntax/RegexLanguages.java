@@ -1,7 +1,7 @@
 package software.coley.recaf.ui.control.richtext.syntax;
 
-import com.google.gson.Gson;
-import com.google.gson.stream.JsonReader;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import jakarta.annotation.Nonnull;
 
 import java.io.IOException;
@@ -14,7 +14,7 @@ import java.io.InputStreamReader;
  * @see RegexSyntaxHighlighter Highlighter implementation that accepts these rule-sets.
  */
 public class RegexLanguages {
-	private static final Gson GSON = new Gson();
+	private static final JsonMapper MAPPER = new JsonMapper();
 	private static final RegexRule LANG_JAVA;
 	private static final RegexRule LANG_XML;
 
@@ -34,9 +34,8 @@ public class RegexLanguages {
 	@SuppressWarnings("all")
 	@Nonnull
 	private static RegexRule read(@Nonnull String path) throws IOException {
-		try (JsonReader json = new JsonReader(new InputStreamReader(RegexLanguages.class.getResourceAsStream(path)))) {
-			return GSON.fromJson(json, RegexRule.class);
-		}
+		JsonParser parser = MAPPER.createParser(new InputStreamReader(RegexLanguages.class.getResourceAsStream(path)));
+		return parser.readValueAs(RegexRule.class);
 	}
 
 	/**
