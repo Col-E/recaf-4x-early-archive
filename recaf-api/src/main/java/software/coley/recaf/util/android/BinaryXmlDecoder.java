@@ -106,7 +106,7 @@ public class BinaryXmlDecoder {
 		 */
 		public XmlPrinter(@Nullable ArscFileInfo arsc) {
 			builder = new XmlBuilder();
-			arscRes = arsc == null ? null : AndroidRes.fromArsc(arsc);
+			arscRes = arsc == null ? null : arsc.getResourceInfo();
 		}
 
 		/**
