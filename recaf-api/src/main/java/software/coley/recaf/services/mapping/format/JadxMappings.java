@@ -19,7 +19,7 @@ import software.coley.recaf.util.StringUtil;
  */
 @Dependent
 public class JadxMappings extends AbstractMappingFileFormat {
-	public static final String NAME = "Jadx";
+	public static final String NAME = "Jadx (Legacy)";
 
 	/**
 	 * New jadx instance.
