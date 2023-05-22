@@ -70,7 +70,7 @@ public abstract class NameGeneratorFilter {
 	 *
 	 * @return {@code true} if the generator should create a new name for the method.
 	 */
-	public boolean shouldMapMethod(@Nonnull ClassInfo owner,@Nonnull  MethodMember method) {
+	public boolean shouldMapMethod(@Nonnull ClassInfo owner, @Nonnull MethodMember method) {
 		if (defaultMap)
 			return next == null || next.shouldMapMethod(owner, method);
 		else
