@@ -6,11 +6,14 @@ import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.marker.JavaSourceSet;
 import org.openrewrite.java.tree.J;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,6 +23,7 @@ import java.util.UUID;
  * @author Matt Coley
  */
 public class DelegatingJavaParser implements JavaParser {
+	private static final Logger logger = Logging.get(DelegatingJavaParser.class);
 	private final JavaParser delegate;
 
 	/**
@@ -35,10 +39,15 @@ public class DelegatingJavaParser implements JavaParser {
 	public List<J.CompilationUnit> parseInputs(@Nonnull Iterable<Input> sources,
 											   @Nullable Path relativeTo,
 											   @Nonnull ExecutionContext ctx) {
-		// The default source-set type generation logic is not well optimized.
-		// We also do not gain significant benefits from it, so we can skip it entirely.
-		ctx.putMessage(SKIP_SOURCE_SET_TYPE_GENERATION, true);
-		return delegate.parseInputs(sources, relativeTo, ctx);
+		try {
+			// The default source-set type generation logic is not well optimized.
+			// We also do not gain significant benefits from it, so we can skip it entirely.
+			ctx.putMessage(SKIP_SOURCE_SET_TYPE_GENERATION, true);
+			return delegate.parseInputs(sources, relativeTo, ctx);
+		} catch (Throwable t) {
+			logger.error("Error while parsing source into AST", t);
+			return Collections.emptyList();
+		}
 	}
 
 	@Nonnull
