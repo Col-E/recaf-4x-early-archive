@@ -36,6 +36,7 @@ public class HelpMenu extends Menu {
 
 		getItems().add(action("menu.help.sysinfo", CarbonIcons.INFORMATION, this::openSystem));
 		getItems().add(action("menu.help.docs", CarbonIcons.NOTEBOOK_REFERENCE, this::openDocumentation));
+		getItems().add(action("menu.help.docsdev", CarbonIcons.NOTEBOOK_REFERENCE, this::openDeveloperDocumentation));
 		getItems().add(action("menu.help.github", CarbonIcons.LOGO_GITHUB, this::openGithub));
 		getItems().add(action("menu.help.issues", CarbonIcons.LOGO_GITHUB, this::openGithubIssues));
 		getItems().add(action("menu.help.discord", Icons.DISCORD, this::openDiscord));
@@ -75,8 +76,16 @@ public class HelpMenu extends Menu {
 	 * Let's be honest, nobody reads this... <i>Unless we force them to.</i>
 	 */
 	private void openDocumentation() {
-		browse("https://www.coley.software/Recaf-documentation/");
+		browse("https://recaf.gitbook.io/user-documentation/");
 	}
+
+	/**
+	 * Now, if you're reading this one, that's pretty cool.
+	 */
+	private void openDeveloperDocumentation() {
+		browse("https://recaf.gitbook.io/developer-documentation/");
+	}
+
 
 	private static void browse(String uri) {
 		try {
