@@ -11,6 +11,8 @@ import software.coley.recaf.config.BasicCollectionConfigValue;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
+import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.info.properties.builtin.InputFilePathProperty;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
@@ -206,7 +208,11 @@ public class RecentFilesConfig extends BasicConfigContainer {
 		 */
 		public static ResourceModel from(@Nonnull WorkspaceResource resource) {
 			if (resource instanceof WorkspaceFileResource fileResource) {
-				return new ResourceModel(fileResource.getFileInfo().getName());
+				FileInfo fileInfo = fileResource.getFileInfo();
+				Path inputPath = InputFilePathProperty.get(fileInfo);
+				if (inputPath != null)
+					return new ResourceModel(StringUtil.pathToAbsoluteString(inputPath));
+				return new ResourceModel(fileInfo.getName());
 			} else if (resource instanceof WorkspaceDirectoryResource fileResource) {
 				return new ResourceModel(StringUtil.pathToAbsoluteString(fileResource.getDirectoryPath()));
 			}

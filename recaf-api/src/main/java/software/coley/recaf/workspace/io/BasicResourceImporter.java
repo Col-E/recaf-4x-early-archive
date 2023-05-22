@@ -68,6 +68,9 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		// Read input as raw info in order to determine file-type.
 		Info readInfo = infoImporter.readInfo(pathName.substring(pathName.lastIndexOf('/') + 1), source);
 
+		// Associate input path with the read value.
+		InputFilePathProperty.set(readInfo, Paths.get(pathName));
+
 		// Check if it is a single class.
 		if (readInfo.isClass()) {
 			// If it is a class, we know it MUST be a single JVM class since Android classes do not exist
