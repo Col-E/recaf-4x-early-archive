@@ -6,7 +6,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import software.coley.recaf.services.Service;
-import software.coley.recaf.services.ServiceConfig;
 
 import java.util.Map;
 import java.util.Set;

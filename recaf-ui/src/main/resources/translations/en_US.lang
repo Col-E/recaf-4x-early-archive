@@ -57,6 +57,7 @@ menu.search.noresults=No results
 menu.mappings=Mappings
 menu.mappings.apply=Apply
 menu.mappings.export=Export
+menu.mappings.export.unsupported=%s (Unsupported)
 menu.mappings.generate=Generate
 menu.mappings.view=Current mappings
 menu.scripting=Scripting

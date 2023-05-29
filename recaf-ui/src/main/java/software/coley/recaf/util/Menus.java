@@ -1,5 +1,8 @@
 package software.coley.recaf.util;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
+import javafx.beans.binding.StringBinding;
 import javafx.scene.Node;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
@@ -27,7 +30,8 @@ public class Menus {
 	 *
 	 * @return Header menu item.
 	 */
-	public static MenuItem createHeader(String name, Node graphic, int limit) {
+	@Nonnull
+	public static MenuItem createHeader(@Nonnull String name, @Nullable Node graphic, int limit) {
 		MenuItem header = new MenuItem(TextDisplayUtil.shortenEscapeLimit(name, limit));
 		header.getStyleClass().add("context-menu-header");
 		header.setGraphic(graphic);
@@ -41,7 +45,8 @@ public class Menus {
 	 *
 	 * @return Menu instance.
 	 */
-	public static Menu menu(String textKey) {
+	@Nonnull
+	public static Menu menu(@Nonnull String textKey) {
 		return menu(textKey, (String) null);
 	}
 
@@ -53,7 +58,8 @@ public class Menus {
 	 *
 	 * @return Menu instance, with optional graphic.
 	 */
-	public static Menu menu(String textKey, String imagePath) {
+	@Nonnull
+	public static Menu menu(@Nonnull String textKey, @Nullable String imagePath) {
 		return menu(textKey, imagePath, false);
 	}
 
@@ -67,7 +73,8 @@ public class Menus {
 	 *
 	 * @return Menu instance, with optional graphic.
 	 */
-	public static Menu menu(String textKey, String imagePath, boolean antialias) {
+	@Nonnull
+	public static Menu menu(@Nonnull String textKey, @Nullable String imagePath, boolean antialias) {
 		Node graphic = imagePath == null ? null :
 				antialias ? Icons.getScaledIconView(imagePath) : Icons.getIconView(imagePath);
 		Menu menu = new Menu();
@@ -84,7 +91,8 @@ public class Menus {
 	 *
 	 * @return Menu instance, with graphic.
 	 */
-	public static Menu menu(String textKey, Ikon icon) {
+	@Nonnull
+	public static Menu menu(@Nonnull String textKey, @Nonnull Ikon icon) {
 		return menu(textKey, icon, null);
 	}
 
@@ -98,7 +106,8 @@ public class Menus {
 	 *
 	 * @return Menu instance, with graphic.
 	 */
-	public static Menu menu(String textKey, Ikon icon, Color color) {
+	@Nonnull
+	public static Menu menu(@Nonnull String textKey, @Nonnull Ikon icon, @Nullable Color color) {
 		FontIconView graphic = color == null ?
 				new FontIconView(icon) :
 				new FontIconView(icon, IconView.DEFAULT_ICON_SIZE, color);
@@ -113,7 +122,8 @@ public class Menus {
 	 *
 	 * @return Menu instance, with optional graphic.
 	 */
-	public static Menu menu(String textKey, Node graphic) {
+	@Nonnull
+	public static Menu menu(@Nonnull String textKey, @Nullable Node graphic) {
 		Menu menu = new Menu();
 		menu.textProperty().bind(Lang.getBinding(textKey));
 		menu.setGraphic(graphic);
@@ -130,7 +140,8 @@ public class Menus {
 	 *
 	 * @return Menu instance, with behavior on-click.
 	 */
-	public static Menu actionMenu(String textKey, String imagePath, Runnable runnable) {
+	@Nonnull
+	public static Menu actionMenu(@Nonnull String textKey, @Nullable String imagePath, @Nonnull Runnable runnable) {
 		return actionMenu(textKey, imagePath, runnable, false);
 	}
 
@@ -146,7 +157,9 @@ public class Menus {
 	 *
 	 * @return Menu instance, with behavior on-click.
 	 */
-	public static Menu actionMenu(String textKey, String imagePath, Runnable runnable, boolean antialias) {
+	@Nonnull
+	public static Menu actionMenu(@Nonnull String textKey, @Nullable String imagePath,
+								  @Nonnull Runnable runnable, boolean antialias) {
 		Node graphic = imagePath == null ? null :
 				antialias ? Icons.getScaledIconView(imagePath) : Icons.getIconView(imagePath);
 		return new ActionMenu(Lang.getBinding(textKey), graphic, runnable);
@@ -160,7 +173,8 @@ public class Menus {
 	 *
 	 * @return Action menu item with behavior on-click.
 	 */
-	public static ActionMenuItem action(String textKey, Runnable runnable) {
+	@Nonnull
+	public static ActionMenuItem action(@Nonnull String textKey, @Nonnull Runnable runnable) {
 		return action(textKey, (String) null, runnable);
 	}
 
@@ -174,7 +188,8 @@ public class Menus {
 	 *
 	 * @return Action menu item with behavior on-click.
 	 */
-	public static ActionMenuItem action(String textKey, String imagePath, Runnable runnable) {
+	@Nonnull
+	public static ActionMenuItem action(@Nonnull String textKey, @Nullable String imagePath, @Nonnull Runnable runnable) {
 		return action(textKey, imagePath, runnable, false);
 	}
 
@@ -190,7 +205,9 @@ public class Menus {
 	 *
 	 * @return Action menu item with behavior on-click.
 	 */
-	public static ActionMenuItem action(String textKey, String imagePath, Runnable runnable, boolean antialias) {
+	@Nonnull
+	public static ActionMenuItem action(@Nonnull String textKey, @Nullable String imagePath,
+										@Nonnull Runnable runnable, boolean antialias) {
 		Node graphic = imagePath == null ? null :
 				antialias ? Icons.getScaledIconView(imagePath) : Icons.getIconView(imagePath);
 		return action(textKey, graphic, runnable);
@@ -206,7 +223,8 @@ public class Menus {
 	 *
 	 * @return Action menu item with behavior on-click.
 	 */
-	public static ActionMenuItem action(String textKey, Ikon icon, Runnable runnable) {
+	@Nonnull
+	public static ActionMenuItem action(@Nonnull String textKey, @Nonnull Ikon icon, @Nonnull Runnable runnable) {
 		return action(textKey, icon, null, runnable);
 	}
 
@@ -220,7 +238,8 @@ public class Menus {
 	 *
 	 * @return Action menu item with behavior on-click.
 	 */
-	public static ActionMenuItem action(String textKey, Ikon icon, Color color, Runnable runnable) {
+	@Nonnull
+	public static ActionMenuItem action(@Nonnull String textKey, @Nonnull Ikon icon, @Nullable Color color, @Nonnull Runnable runnable) {
 		FontIconView graphic = color == null ?
 				new FontIconView(icon) :
 				new FontIconView(icon, IconView.DEFAULT_ICON_SIZE, color);
@@ -237,8 +256,24 @@ public class Menus {
 	 *
 	 * @return Action menu item with behavior on-click.
 	 */
-	public static ActionMenuItem action(String textKey, Node graphic, Runnable runnable) {
-		return new ActionMenuItem(Lang.getBinding(textKey), graphic, runnable);
+	@Nonnull
+	public static ActionMenuItem action(@Nonnull String textKey, @Nullable Node graphic, @Nonnull Runnable runnable) {
+		return action(Lang.getBinding(textKey), graphic, runnable);
+	}
+
+	/**
+	 * @param textBinding
+	 * 		Menu text binding.
+	 * @param graphic
+	 * 		Menu graphic.
+	 * @param runnable
+	 * 		Action to run on click.
+	 *
+	 * @return Action menu item with behavior on-click.
+	 */
+	@Nonnull
+	public static ActionMenuItem action(@Nonnull StringBinding textBinding, @Nullable Node graphic, @Nonnull Runnable runnable) {
+		return new ActionMenuItem(textBinding, graphic, runnable);
 	}
 
 	/**
@@ -251,7 +286,8 @@ public class Menus {
 	 *
 	 * @return Action menu item with behavior on-click.
 	 */
-	public static ActionMenuItem actionLiteral(String text, String imagePath, Runnable runnable) {
+	@Nonnull
+	public static ActionMenuItem actionLiteral(@Nullable String text, @Nullable String imagePath, @Nonnull Runnable runnable) {
 		Node graphic = imagePath == null ? null : Icons.getIconView(imagePath);
 		return new ActionMenuItem(text, graphic, runnable);
 	}
@@ -266,7 +302,8 @@ public class Menus {
 	 *
 	 * @return Action menu item with behavior on-click.
 	 */
-	public static ActionMenuItem actionLiteral(String text, Ikon icon, Runnable runnable) {
+	@Nonnull
+	public static ActionMenuItem actionLiteral(@Nullable String text, @Nonnull Ikon icon, @Nonnull Runnable runnable) {
 		FontIconView graphic = new FontIconView(icon);
 		return new ActionMenuItem(text, graphic, runnable);
 	}
@@ -274,6 +311,7 @@ public class Menus {
 	/**
 	 * @return New menu separator.
 	 */
+	@Nonnull
 	public static SeparatorMenuItem separator() {
 		return new SeparatorMenuItem();
 	}

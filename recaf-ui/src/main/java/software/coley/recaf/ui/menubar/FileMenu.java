@@ -8,14 +8,12 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
-import org.kordamp.ikonli.javafx.FontIcon;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.ui.config.RecentFilesConfig;
 import software.coley.recaf.ui.control.ClosableActionMenuItem;
 import software.coley.recaf.ui.control.FontIconView;
-import software.coley.recaf.ui.control.IconView;
 import software.coley.recaf.ui.wizard.MultiPathWizardPage;
 import software.coley.recaf.ui.wizard.SinglePathWizardPage;
 import software.coley.recaf.ui.wizard.WizardStage;
@@ -112,12 +110,12 @@ public class FileMenu extends WorkspaceAwareMenu {
 		menuRecent.getItems().clear();
 		List<RecentFilesConfig.WorkspaceModel> recentWorkspaces = recentFilesConfig.getRecentWorkspaces().getValue();
 		for (RecentFilesConfig.WorkspaceModel model : recentWorkspaces) {
-			int libraryCount = model.getLibraries().size();
+			int libraryCount = model.libraries().size();
 			String title;
 			if (libraryCount > 0) {
-				title = model.getPrimary().getSimpleName() + " + " + libraryCount;
+				title = model.primary().getSimpleName() + " + " + libraryCount;
 			} else {
-				title = model.getPrimary().getSimpleName();
+				title = model.primary().getSimpleName();
 			}
 
 			Runnable remove = () -> recentWorkspaces.remove(model);
@@ -126,9 +124,9 @@ public class FileMenu extends WorkspaceAwareMenu {
 				Node graphic = Icons.getIconView(Icons.FILE_JAR); // TODO: Derive proper icon
 				menuRecent.getItems().add(new ClosableActionMenuItem(title, graphic, () -> {
 					// Get paths from model
-					Path primaryPath = Paths.get(model.getPrimary().getPath());
-					List<Path> supportingPaths = model.getLibraries().stream()
-							.map(resource -> Paths.get(resource.getPath()))
+					Path primaryPath = Paths.get(model.primary().path());
+					List<Path> supportingPaths = model.libraries().stream()
+							.map(resource -> Paths.get(resource.path()))
 							.toList();
 
 					// Pass to loader

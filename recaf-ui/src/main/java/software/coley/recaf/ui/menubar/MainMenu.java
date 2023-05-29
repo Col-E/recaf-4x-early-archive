@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.menubar;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.scene.control.MenuBar;
@@ -13,7 +14,11 @@ import javafx.scene.control.MenuBar;
 @Dependent
 public class MainMenu extends MenuBar {
 	@Inject
-	public MainMenu(FileMenu fileMenu, ConfigMenu configMenu, ScriptMenu scriptMenu, HelpMenu helpMenu) {
-		getMenus().addAll(fileMenu, configMenu, scriptMenu, helpMenu);
+	public MainMenu(@Nonnull FileMenu fileMenu,
+					@Nonnull ConfigMenu configMenu,
+					@Nonnull MappingMenu mappingMenu,
+					@Nonnull ScriptMenu scriptMenu,
+					@Nonnull HelpMenu helpMenu) {
+		getMenus().addAll(fileMenu, configMenu, mappingMenu, scriptMenu, helpMenu);
 	}
 }

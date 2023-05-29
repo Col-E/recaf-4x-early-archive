@@ -24,7 +24,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Config for tracking recent file interactions.
@@ -66,16 +65,15 @@ public class RecentFilesConfig extends BasicConfigContainer {
 				.toList();
 		WorkspaceModel workspaceModel = new WorkspaceModel(primary, libraries);
 
-		// Update value
-		if (recentWorkspaces.contains(workspaceModel)) {
-			// Re-insert at 0'th position so that its at the "top" of the list.
-			List<WorkspaceModel> updatedList = new ArrayList<>(recentWorkspaces.getValue());
+		// Update recent workspace list, where new items are inserted at the beginning.
+		// Old items are removed near the end.
+		List<WorkspaceModel> updatedList = new ArrayList<>(recentWorkspaces.getValue());
+		if (recentWorkspaces.contains(workspaceModel))
 			updatedList.remove(workspaceModel);
-			updatedList.add(0, workspaceModel);
-			recentWorkspaces.setValue(updatedList);
-		} else {
-			recentWorkspaces.add(workspaceModel);
-		}
+		while (updatedList.size() >= maxRecentWorkspaces.getValue())
+			updatedList.remove(updatedList.size() - 1);
+		updatedList.add(0, workspaceModel);
+		recentWorkspaces.setValue(updatedList);
 	}
 
 	/**
@@ -83,7 +81,7 @@ public class RecentFilesConfig extends BasicConfigContainer {
 	 *
 	 * @see WorkspaceModel#canLoadWorkspace()
 	 */
-	public void refreshWorkspaces() {
+	public void clearUnloadable() {
 		List<WorkspaceModel> current = recentWorkspaces.getValue();
 		List<WorkspaceModel> loadable = current.stream()
 				.filter(WorkspaceModel::canLoadWorkspace)
@@ -95,6 +93,7 @@ public class RecentFilesConfig extends BasicConfigContainer {
 	/**
 	 * @return Number of recent items to track.
 	 */
+	@Nonnull
 	public ObservableInteger getMaxRecentWorkspaces() {
 		return maxRecentWorkspaces;
 	}
@@ -102,6 +101,7 @@ public class RecentFilesConfig extends BasicConfigContainer {
 	/**
 	 * @return Recent workspaces.
 	 */
+	@Nonnull
 	public ObservableObject<List<WorkspaceModel>> getRecentWorkspaces() {
 		return recentWorkspaces;
 	}
@@ -109,6 +109,7 @@ public class RecentFilesConfig extends BasicConfigContainer {
 	/**
 	 * @return Last path used to open a workspace with.
 	 */
+	@Nonnull
 	public ObservableString getLastWorkspaceOpenDirectory() {
 		return lastWorkspaceOpenDirectory;
 	}
@@ -116,6 +117,7 @@ public class RecentFilesConfig extends BasicConfigContainer {
 	/**
 	 * @return Last path used to export a workspace to.
 	 */
+	@Nonnull
 	public ObservableString getLastWorkspaceExportDirectory() {
 		return lastWorkspaceExportDirectory;
 	}
@@ -123,83 +125,40 @@ public class RecentFilesConfig extends BasicConfigContainer {
 	/**
 	 * Basic wrapper for workspaces.
 	 *
+	 * @param primary
+	 * 		Primary resource of the workspace.
+	 * @param libraries
+	 * 		Workspace supporting libraries.
+	 *
 	 * @author Matt Coley
 	 * @see ResourceModel
 	 */
-	public static class WorkspaceModel {
-		private final ResourceModel primary;
-		private final List<ResourceModel> libraries;
-
-		/**
-		 * @param primary
-		 * 		Primary resource of the workspace.
-		 * @param libraries
-		 * 		Workspace supporting libraries.
-		 */
-		public WorkspaceModel(ResourceModel primary, List<ResourceModel> libraries) {
-			this.primary = primary;
-			this.libraries = libraries;
-		}
-
-		/**
-		 * @return Primary resource of the workspace.
-		 */
-		public ResourceModel getPrimary() {
-			return primary;
-		}
-
-		/**
-		 * @return Workspace supporting libraries.
-		 */
-		public List<ResourceModel> getLibraries() {
-			return libraries;
-		}
-
+	public record WorkspaceModel(ResourceModel primary, List<ResourceModel> libraries) {
 		/**
 		 * @return {@code true} when the files still exist at their expected locations.
 		 */
 		public boolean canLoadWorkspace() {
-			Path path = Paths.get(getPrimary().getPath());
+			Path path = Paths.get(primary().path());
 			if (!Files.exists(path))
 				return false;
-			for (ResourceModel model : getLibraries()) {
-				path = Paths.get(model.getPath());
+			for (ResourceModel model : libraries()) {
+				path = Paths.get(model.path());
 				if (!Files.exists(path))
 					return false;
 			}
 			return true;
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
-			WorkspaceModel that = (WorkspaceModel) o;
-			return primary.equals(that.primary) && libraries.equals(that.libraries);
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(primary, libraries);
 		}
 	}
 
 	/**
 	 * Wrapper for a resources content source path.
 	 *
+	 * @param path
+	 * 		Path to the resource content source.
+	 *
 	 * @author Matt Coley
 	 */
-	public static class ResourceModel {
-		private final String path;
-
-		/**
-		 * @param path
-		 * 		Path to the resource content source.
-		 */
-		public ResourceModel(String path) {
-			this.path = path;
-		}
-
+	public record ResourceModel(String path) {
 		/**
 		 * @param resource
 		 * 		Some resource sourced from a file or directory.
@@ -226,13 +185,14 @@ public class RecentFilesConfig extends BasicConfigContainer {
 		 *
 		 * @return {@code true} when it can be represented by this model.
 		 */
-		public static boolean isSupported(WorkspaceResource resource) {
+		public static boolean isSupported(@Nonnull WorkspaceResource resource) {
 			return resource instanceof WorkspaceFileResource || resource instanceof WorkspaceDirectoryResource;
 		}
 
 		/**
 		 * @return Shortened path of resource's content source.
 		 */
+		@Nonnull
 		public String getSimpleName() {
 			String name = path;
 			int slashIndex = name.lastIndexOf('/');
@@ -244,21 +204,9 @@ public class RecentFilesConfig extends BasicConfigContainer {
 		/**
 		 * @return Path to the resource content source. Can be a file path, maven coordinates, or url.
 		 */
-		public String getPath() {
+		@Override
+		public String path() {
 			return path;
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
-			ResourceModel that = (ResourceModel) o;
-			return path.equals(that.path);
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(path);
 		}
 	}
 }
