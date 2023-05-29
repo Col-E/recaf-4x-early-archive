@@ -3,13 +3,15 @@ package software.coley.recaf.info.properties.builtin;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
-import software.coley.recaf.info.Info;
 import software.coley.recaf.info.properties.BasicProperty;
+import software.coley.recaf.services.mapping.MappingApplier;
 
 /**
  * Built in property to track the original name of an {@link ClassInfo}.
  *
  * @author Matt Coley
+ * @see HasMappedReferenceProperty If a class isn't mapped, but has references to something that is, this is added.
+ * @see MappingApplier Adds this property to renamed classes.
  */
 public class OriginalClassNameProperty extends BasicProperty<String> {
 	public static final String KEY = "original-class-name";

@@ -445,7 +445,7 @@ public class Actions implements Service {
 
 					// Apply the mappings.
 					MappingApplier applier = applierProvider.get();
-					MappingResults results = applier.applyToPrimary(mappings);
+					MappingResults results = applier.applyToPrimaryResource(mappings);
 					results.apply();
 				})
 				.withTitle(Lang.getBinding("dialog.title.move-class"))
@@ -534,7 +534,7 @@ public class Actions implements Service {
 
 			// Apply the mappings.
 			MappingApplier applier = applierProvider.get();
-			MappingResults results = applier.applyToPrimary(mappings);
+			MappingResults results = applier.applyToPrimaryResource(mappings);
 			results.apply();
 		};
 		new NamePopup(renameTask)

@@ -6,6 +6,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.properties.builtin.HasMappedReferenceProperty;
 import software.coley.recaf.info.properties.builtin.OriginalClassNameProperty;
 import software.coley.recaf.info.properties.builtin.RemapOriginTaskProperty;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
@@ -63,13 +64,16 @@ public class MappingApplier {
 										 @Nonnull JvmClassBundle bundle,
 										 @Nonnull List<JvmClassInfo> classes) {
 		enrich(mappings);
-		MappingResults results = new MappingResults(mappings);
+		MappingResults results = new MappingResults(mappings)
+				.withAggregateManager(aggregateMappingManager);
 
-		// Apply mappings in the thread pool
+		// Apply mappings to the provided classes, collecting into the results model.
 		ExecutorService service = ThreadUtil.phasingService(applierThreadPool);
 		for (JvmClassInfo classInfo : classes)
-			service.execute(() -> applyMapping(results, workspace, resource, bundle, classInfo, mappings));
+			service.execute(() -> dumpIntoResults(results, workspace, resource, bundle, classInfo, mappings));
 		ThreadUtil.blockUntilComplete(service);
+
+		// Yield results
 		return results;
 	}
 
@@ -82,11 +86,24 @@ public class MappingApplier {
 	 * @return Result wrapper detailing affected classes from the mapping operation.
 	 */
 	@Nonnull
-	public MappingResults applyToPrimary(@Nonnull Mappings mappings) {
+	public MappingResults applyToPrimaryResource(@Nonnull Mappings mappings) {
 		enrich(mappings);
 		WorkspaceResource resource = workspace.getPrimaryResource();
-		return applyMappingsWithoutAggregation(workspace, resource, mappings)
+
+		MappingResults results = new MappingResults(mappings)
 				.withAggregateManager(aggregateMappingManager);
+
+		// Apply mappings to all classes in the primary resource, collecting into the results model.
+		ExecutorService service = ThreadUtil.phasingService(applierThreadPool);
+		Stream.concat(resource.jvmClassBundleStream(), resource.versionedJvmClassBundleStream()).forEach(bundle -> {
+			bundle.forEach(classInfo -> {
+				service.execute(() -> dumpIntoResults(results, workspace, resource, bundle, classInfo, mappings));
+			});
+		});
+		ThreadUtil.blockUntilComplete(service);
+
+		// Yield results
+		return results;
 	}
 
 	private void enrich(Mappings mappings) {
@@ -99,34 +116,9 @@ public class MappingApplier {
 	}
 
 	/**
-	 * @param workspace
-	 * 		Workspace to pull class info from when additional context is needed.
-	 * @param resource
-	 * 		Resource to apply mappings to.
-	 * @param mappings
-	 * 		The mappings to apply.
-	 *
-	 * @return Result wrapper detailing affected classes from the mapping operation.
-	 */
-	@Nonnull
-	public static MappingResults applyMappingsWithoutAggregation(@Nonnull Workspace workspace,
-																 @Nonnull WorkspaceResource resource,
-																 @Nonnull Mappings mappings) {
-		MappingResults results = new MappingResults(mappings);
-
-		// Apply mappings in the thread pool
-		ExecutorService service = ThreadUtil.phasingService(applierThreadPool);
-		Stream.concat(resource.jvmClassBundleStream(), resource.versionedJvmClassBundleStream()).forEach(bundle -> {
-			bundle.forEach(classInfo -> {
-				service.execute(() -> applyMapping(results, workspace, resource, bundle, classInfo, mappings));
-			});
-		});
-		ThreadUtil.blockUntilComplete(service);
-		return results;
-	}
-
-	/**
-	 * Applies mappings locally to the given
+	 * Applies mappings locally and dumps them into the provided results collection.
+	 * <p>
+	 * To apply these mappings you need to call {@link MappingResults#apply()}.
 	 *
 	 * @param results
 	 * 		Results collection to insert into.
@@ -141,12 +133,12 @@ public class MappingApplier {
 	 * @param mappings
 	 * 		The mappings to apply.
 	 */
-	public static void applyMapping(@Nonnull MappingResults results,
-									@Nonnull Workspace workspace,
-									@Nonnull WorkspaceResource resource,
-									@Nonnull JvmClassBundle bundle,
-									@Nonnull JvmClassInfo classInfo,
-									@Nonnull Mappings mappings) {
+	private static void dumpIntoResults(@Nonnull MappingResults results,
+										@Nonnull Workspace workspace,
+										@Nonnull WorkspaceResource resource,
+										@Nonnull JvmClassBundle bundle,
+										@Nonnull JvmClassInfo classInfo,
+										@Nonnull Mappings mappings) {
 		String originalName = classInfo.getName();
 
 		// Apply renamer
@@ -160,9 +152,20 @@ public class MappingApplier {
 			JvmClassInfo updatedInfo = classInfo.toJvmClassBuilder()
 					.adaptFrom(new ClassReader(cw.toByteArray()))
 					.build();
+
+			// Mark has referencing something mapped.
+			HasMappedReferenceProperty.set(updatedInfo);
+
+			// Set the result wrapper that caused this class to update.
 			updatedInfo.setProperty(new RemapOriginTaskProperty(results));
-			updatedInfo.setPropertyIfMissing(OriginalClassNameProperty.KEY,
-					() -> new OriginalClassNameProperty(originalName));
+
+			// If the name changed, mark what the original was.
+			// If this property was set before (A --> B, now B --> C) then we won't update it.
+			if (!updatedInfo.getName().equals(originalName))
+				updatedInfo.setPropertyIfMissing(OriginalClassNameProperty.KEY,
+						() -> new OriginalClassNameProperty(originalName));
+
+			// Add to the results collection.
 			results.add(workspace, resource, bundle, classInfo, updatedInfo);
 		}
 	}
