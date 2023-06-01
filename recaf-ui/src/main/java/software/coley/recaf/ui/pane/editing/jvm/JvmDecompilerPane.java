@@ -11,7 +11,6 @@ import javafx.scene.control.Labeled;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.stage.Popup;
 import javafx.util.Duration;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.objectweb.asm.ClassReader;
@@ -31,6 +30,7 @@ import software.coley.recaf.services.source.AstResolveResult;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
+import software.coley.recaf.ui.control.ModalPaneComponent;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.problem.Problem;
 import software.coley.recaf.ui.control.richtext.problem.ProblemPhase;
@@ -61,6 +61,7 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 	private static final ExecutorService compilePool = ThreadPoolFactory.newSingleThreadExecutor("recompile");
 	private final ObservableInteger javacTarget = new ObservableInteger(-1); // use negative to match class file's ver
 	private final ObservableBoolean javacDebug = new ObservableBoolean(true);
+	private final ModalPaneComponent overlayModal = new ModalPaneComponent();
 	private final JavacCompiler javac;
 
 	@Inject
@@ -90,6 +91,10 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 					actions.rename(result.path());
 			}
 		});
+
+		// Install overlay modal
+		overlayModal.setPersistent(true);
+		overlayModal.install(editor);
 	}
 
 	/**
@@ -215,6 +220,7 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 		acknowledge.setDisable(true); // Enabled after a delay.
 
 		VBox content = new VBox(new BoundLabel(Lang.getBinding("java.savewitherrors")), acknowledge);
+		content.setFillWidth(false);
 		content.setSpacing(10);
 		content.setAlignment(Pos.CENTER);
 
@@ -223,12 +229,9 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 		wrapper.setCollapsible(false);
 		wrapper.setContent(content);
 		wrapper.getStyleClass().add(Styles.ELEVATED_4);
+		wrapper.setMaxWidth(650);
 
-		Popup popup = new Popup();
-		popup.getContent().add(wrapper);
-		popup.show(getScene().getWindow());
-		popup.setAutoHide(false);
-		popup.setHideOnEscape(false);
+		overlayModal.show(wrapper);
 
 		// Start transition which counts down how long until the popup can be closed.
 		WaitToAcknowledgeTransition wait = new WaitToAcknowledgeTransition(acknowledge);
@@ -245,7 +248,7 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 		// When pressed, mark flag so prompt is not shown again.
 		acknowledge.setOnAction(e -> {
 			config.getAcknowledgedSaveWithErrors().setValue(true);
-			popup.hide();
+			overlayModal.hide();
 		});
 	}
 
@@ -253,7 +256,7 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 	 * Transition to handle countdown to allow acknowledging <i>"I can not save with errors"</i>.
 	 */
 	private static class WaitToAcknowledgeTransition extends Transition {
-		private static final int SECONDS = 5;
+		private static final int SECONDS = 8;
 		private final Labeled labeled;
 
 		private WaitToAcknowledgeTransition(Labeled labeled) {

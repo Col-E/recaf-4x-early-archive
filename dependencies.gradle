@@ -14,7 +14,7 @@ project.ext {
     apk_analyzer = "com.android.tools.apkparser:apkanalyzer:$androidToolsVersion"
     binary_resources = "com.android.tools.apkparser:binary-resources:$androidToolsVersion"
 
-    atlantafx = 'io.github.mkpaz:atlantafx-base:1.1.0'
+    atlantafx = 'io.github.mkpaz:atlantafx-base:2.0.0'
 
     cafedude = "com.github.Col-E:CAFED00D:$cafeDudeVersion"
 

@@ -1,6 +1,7 @@
 package software.coley.recaf.ui;
 
 import atlantafx.base.theme.Theme;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * AtlantaFX Recaf theme.
@@ -16,6 +17,13 @@ public class RecafTheme implements Theme {
 	@Override
 	public String getUserAgentStylesheet() {
 		return "/style/recaf.css";
+	}
+
+	@Nullable
+	@Override
+	public String getUserAgentStylesheetBSS() {
+		// Not used
+		return null;
 	}
 
 	@Override
