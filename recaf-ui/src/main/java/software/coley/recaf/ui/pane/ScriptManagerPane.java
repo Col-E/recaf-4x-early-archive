@@ -101,12 +101,13 @@ public class ScriptManagerPane extends BorderPane {
 		scriptList.setPadding(new Insets(10));
 
 		ScrollPane scroll = new ScrollPane(scriptList);
+		scroll.getStyleClass().add("dark-scroll-pane");
 		scroll.setFitToWidth(true);
 		setCenter(scroll);
 
 		HBox controls = new HBox();
 		controls.setStyle("""
-				-fx-background-color: -color-base-3;
+				-fx-background-color: -color-bg-default;
 				-fx-border-color: -color-border-default;
 				-fx-border-width: 1 0 0 0;
 				""");
@@ -116,7 +117,7 @@ public class ScriptManagerPane extends BorderPane {
 				new ActionButton(CarbonIcons.EDIT, getBinding("menu.scripting.new"), this::newScript),
 				new ActionButton(CarbonIcons.FOLDER, getBinding("menu.scripting.browse"), this::browse)
 		);
-		controls.getChildren().forEach(b -> b.getStyleClass().add(Styles.ACCENT));
+		controls.getChildren().forEach(b -> b.getStyleClass().add("muted"));
 		setBottom(controls);
 	}
 

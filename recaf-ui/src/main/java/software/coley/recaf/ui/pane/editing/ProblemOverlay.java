@@ -47,7 +47,7 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 		FontIconView iconError = new FontIconView(CarbonIcons.ERROR, Color.RED);
 		Button indicator = new Button();
 		indicator.setFocusTraversable(false);
-		indicator.getStyleClass().addAll(Styles.SMALL, Styles.ACCENT);
+		indicator.getStyleClass().addAll(Styles.SMALL, "muted");
 		indicator.graphicProperty().bind(problemCount.map(size -> {
 			// Skip before linked to an editor.
 			if (editor == null)
@@ -96,11 +96,13 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 			// Go to previous line with a problem.
 			CodeArea codeArea = editor.getCodeArea();
 			int line = codeArea.getCurrentParagraph() + 1;
-			tracking.getProblems().ceilingKey(line + 1);
 			Integer prevLineWithError = tracking.getProblems().floorKey(line - 1);
+			if (prevLineWithError == null)
+				prevLineWithError = tracking.getProblems().floorKey(line);
 			if (prevLineWithError != null) {
 				codeArea.moveTo(prevLineWithError - 1, 0);
 				codeArea.selectLine();
+				codeArea.showParagraphAtCenter(codeArea.getCurrentParagraph());
 			}
 		});
 		Button next = new ActionButton(CarbonIcons.ARROW_DOWN, () -> {
@@ -113,13 +115,16 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 			CodeArea codeArea = editor.getCodeArea();
 			int line = codeArea.getCurrentParagraph() + 1;
 			Integer nextLineWithError = tracking.getProblems().ceilingKey(line + 1);
+			if (nextLineWithError == null)
+				nextLineWithError = tracking.getProblems().ceilingKey(line);
 			if (nextLineWithError != null) {
 				codeArea.moveTo(nextLineWithError - 1, 0);
 				codeArea.selectLine();
+				codeArea.showParagraphAtCenter(codeArea.getCurrentParagraph());
 			}
 		});
-		prev.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.CENTER_PILL, Styles.SMALL, Styles.ACCENT);
-		next.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.RIGHT_PILL, Styles.SMALL, Styles.ACCENT);
+		prev.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.CENTER_PILL, Styles.SMALL, "muted");
+		next.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.RIGHT_PILL, Styles.SMALL,  "muted");
 		prev.setFocusTraversable(false);
 		next.setFocusTraversable(false);
 		HBox buttons = new HBox(prev, next);

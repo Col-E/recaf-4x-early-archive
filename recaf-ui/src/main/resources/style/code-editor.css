@@ -24,12 +24,12 @@
 }
 
 .code-area {
-	-fx-background-color: -color-base-4;
-	-fx-accent: -color-flair-7;
+	-fx-background-color: -color-bg-default;
+	-fx-accent: -color-accent-7;
     -fx-cursor: text;
 }
 .code-area .text {
-    -fx-fill: -color-fg-default;
+    -fx-fill: -color-base-3;
     -fx-font-family: 'JetBrains Mono';
     -fx-font-size: 12px;
 }
@@ -43,7 +43,7 @@ complete line, spanning the full width of the text-area.
     -fx-padding: -0.5 0 -0.5 0;
 }
 .code-area .paragraph-box:has-caret {
-    -fx-background-color: -color-base-5;
+    -fx-background-color: -color-base-8;
 }
 .code-area .paragraph-box .paragraph-text {
     -fx-line-spacing: 1;
@@ -62,7 +62,7 @@ Style for caret, which is the vertical line indicating where in the text you are
 Style for handling selection color.
 */
 .code-area .main-selection {
-    -fx-fill: -color-flair-6;
+    -fx-fill: -color-accent-6;
 }
 
 /*
@@ -70,7 +70,7 @@ Style for handling selection color.
 Style for line numbers added next to paragraphs. Simply shows what lines text is on.
 */
 .code-area .lineno {
-	-fx-background-color: -color-base-2;
+	-fx-background-color: -color-bg-overlay;
 	-fx-max-height: 1000px;
 }
 .code-area .lineno .text {
@@ -93,7 +93,7 @@ The caret is next to the brace opener on line 2, which is closed on line 4.
 Thus, lines [2-4] will be matched lines, and 1, 5+ will be unmatched.
 */
 .code-area .matched-brace-line .line {
-    -fx-border-color: transparent transparent transparent -color-flair-9;
+    -fx-border-color: transparent transparent transparent -color-accent-3;
     -fx-border-width: 0 0 0 2px;
     -fx-pref-width: 1;
 }

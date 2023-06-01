@@ -19,7 +19,6 @@ import software.coley.recaf.ui.control.richtext.linegraphics.LineContainer;
  * @see SelectedBracketTracking
  */
 public class BracketMatchGraphicFactory extends AbstractLineGraphicFactory {
-	private static final Insets PADDING = new Insets(0, 0, 0, 5);
 	private Editor editor;
 
 	/**

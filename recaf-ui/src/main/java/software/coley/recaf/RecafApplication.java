@@ -2,6 +2,7 @@ package software.coley.recaf;
 
 import jakarta.annotation.Nonnull;
 import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -56,7 +57,7 @@ public class RecafApplication extends Application implements WorkspaceOpenListen
 		BorderPane wrapper = new BorderPane();
 		wrapper.setTop(menu);
 		wrapper.setCenter(splitPane);
-		wrapper.getStyleClass().addAll("padded", "inset");
+		wrapper.getStyleClass().addAll("padded", "bg-inset");
 		root.setCenter(pane);
 
 		// Register listener

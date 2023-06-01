@@ -62,6 +62,7 @@ public class InheritancePane extends StackPane implements UpdatableNavigable {
 		toggle.textProperty().bind(contentType.map(c -> c == TreeContent.CHILDREN ?
 				Lang.get("hierarchy.children") : Lang.get("hierarchy.parents")));
 		toggle.getStyleClass().add(Styles.ROUNDED);
+		toggle.setFocusTraversable(false);
 		toggle.setPrefWidth(100);
 		StackPane.setAlignment(toggle, Pos.BOTTOM_RIGHT);
 		StackPane.setMargin(toggle, new Insets(10));

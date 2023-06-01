@@ -30,7 +30,7 @@ public class WorkspaceRootPane extends BorderPane {
 	public WorkspaceRootPane(@Nonnull DockingManager dockingManager,
 							 @Nonnull WorkspaceExplorerPane explorerPane,
 							 @Nonnull WorkspaceInformationPane informationPane) {
-		getStyleClass().add("inset");
+		getStyleClass().add("bg-inset");
 
 		// Add workspace explorer tree.
 		DockingRegion dockTree = dockingManager.newRegion();

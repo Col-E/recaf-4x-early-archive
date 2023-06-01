@@ -3,6 +3,7 @@ package software.coley.recaf.ui.menubar;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.geometry.Insets;
 import javafx.scene.control.MenuBar;
 
 /**
@@ -20,5 +21,6 @@ public class MainMenu extends MenuBar {
 					@Nonnull ScriptMenu scriptMenu,
 					@Nonnull HelpMenu helpMenu) {
 		getMenus().addAll(fileMenu, configMenu, mappingMenu, scriptMenu, helpMenu);
+		setPadding(new Insets(0, 0, 2, 0));
 	}
 }

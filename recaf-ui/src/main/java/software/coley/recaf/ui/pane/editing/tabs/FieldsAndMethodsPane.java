@@ -10,6 +10,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -219,7 +220,8 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 		showSynthetics.addListener(listener);
 		sortAlphabetically.addListener(listener2);
 		sortByVisibility.addListener(listener2);
-		return new HBox(
+
+		Button[] buttons = {
 				// Show synthetics
 				new BoundToggleIcon(Icons.SYNTHETIC, showSynthetics).withTooltip("fieldsandmethods.showoutlinedsynths"),
 				// Member type
@@ -231,7 +233,11 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 				// Sort alphabetically/visibility
 				new BoundToggleIcon(Icons.SORT_ALPHABETICAL, sortAlphabetically).withTooltip("fieldsandmethods.sortalphabetically"),
 				new BoundToggleIcon(Icons.SORT_VISIBILITY, sortByVisibility).withTooltip("fieldsandmethods.sortbyvisibility")
-		);
+		};
+		for (Button button : buttons)
+			button.setFocusTraversable(false);
+
+		return new HBox(buttons);
 	}
 
 	@Nonnull

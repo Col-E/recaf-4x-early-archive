@@ -187,7 +187,6 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 		public TabAdapter(Tab tab) {
 			this.tab = tab;
 			ObservableList<String> styleClasses = getStyleClass();
-			styleClasses.add(Styles.ACCENT);
 			setPadding(new Insets(5));
 			setSpacing(5);
 
@@ -203,18 +202,18 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 			// Handle visual state change with selection & hover events.
 			selected.addChangeListener((ob, old, cur) -> {
 				if (cur) {
-					if (!styleClasses.contains("button"))
-						styleClasses.add("button");
+					if (!styleClasses.contains("side-tab"))
+						styleClasses.add("side-tab");
 				} else
-					styleClasses.remove("button");
+					styleClasses.remove("side-tab");
 			});
 			setOnMouseEntered(e -> {
-				if (!selected.getValue() && !styleClasses.contains("button"))
-					styleClasses.add("button");
+				if (!selected.getValue() && !styleClasses.contains("side-tab"))
+					styleClasses.add("side-tab");
 			});
 			setOnMouseExited(e -> {
 				if (!selected.getValue())
-					styleClasses.remove("button");
+					styleClasses.remove("side-tab");
 			});
 		}
 	}
