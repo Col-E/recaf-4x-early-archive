@@ -19,8 +19,6 @@ import org.openrewrite.Cursor;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.java.tree.J;
-import software.coley.observables.AbstractObservable;
-import software.coley.observables.ChangeListener;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.info.AndroidClassInfo;
@@ -87,9 +85,9 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 	protected ClassPathNode path;
 
 	protected AbstractDecompilePane(@Nonnull DecompilerPaneConfig config,
-								 @Nonnull SearchBar searchBar,
-								 @Nonnull JavaContextActionSupport contextActionSupport,
-								 @Nonnull DecompilerManager decompilerManager) {
+									@Nonnull SearchBar searchBar,
+									@Nonnull JavaContextActionSupport contextActionSupport,
+									@Nonnull DecompilerManager decompilerManager) {
 		this.config = config;
 		this.contextActionSupport = contextActionSupport;
 		this.decompilerManager = decompilerManager;
@@ -165,12 +163,10 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 					throw new IllegalStateException("Decompiler component received non-convertible Android class");
 			}
 
-			if (classInfo.isJvmClass()) {
-				// Check if we can update the text efficiently with a remapper.
-				// If not, then schedule a decompilation instead.
-				if (!config.getUseMappingAcceleration().getValue() || !handleRemapUpdate(classInfo))
-					decompile();
-			}
+			// Check if we can update the text efficiently with a remapper.
+			// If not, then schedule a decompilation instead.
+			if (!config.getUseMappingAcceleration().getValue() || !handleRemapUpdate(classInfo))
+				decompile();
 		}
 	}
 
