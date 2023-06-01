@@ -166,7 +166,7 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 				button.setFocusTraversable(false);
 				button.setMaxWidth(Double.MAX_VALUE);
 				button.setAlignment(Pos.CENTER_LEFT);
-				button.getStyleClass().add(Styles.ACCENT);
+				button.getStyleClass().add("muted");
 				vmButtonMap.put(descriptor, button);
 				vmButtonsList.getChildren().add(button);
 
@@ -245,6 +245,7 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 			// Give the button a rounded appearance, which becomes solid
 			connectButton.setMinWidth(120);
 			connectButton.getStyleClass().add(Styles.ROUNDED);
+			connectButton.setFocusTraversable(false);
 			connectedVm.addChangeListener((obs, old, cur) -> {
 				if (cur == descriptor) {
 					connectButton.getStyleClass().addAll(Styles.ACCENT, Styles.SUCCESS);
@@ -306,7 +307,7 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 						columns.add(valueColumn);
 
 						propertyTable.getStyleClass().addAll(Styles.STRIPED, Tweaks.EDGE_TO_EDGE);
-						propertyTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+						propertyTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 						keyColumn.setMaxWidth(1f * Integer.MAX_VALUE * 25);
 						valueColumn.setMaxWidth(1f * Integer.MAX_VALUE * 75);
 
@@ -365,7 +366,7 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 							columns.add(valueColumn);
 
 							propertyTable.getStyleClass().addAll(Styles.STRIPED, Tweaks.EDGE_TO_EDGE);
-							propertyTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+							propertyTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 							keyColumn.setMaxWidth(1f * Integer.MAX_VALUE * 25);
 							valueColumn.setMaxWidth(1f * Integer.MAX_VALUE * 75);
 
