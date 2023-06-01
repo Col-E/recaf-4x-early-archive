@@ -29,7 +29,7 @@ public class DecompilerPaneConfig extends BasicConfigContainer {
 	public DecompilerPaneConfig() {
 		super(ConfigGroups.SERVICE_UI, "decompile-pane" + CONFIG_SUFFIX);
 		addValue(new BasicConfigValue<>("timeout-seconds", Integer.class, timeoutSeconds));
-		addValue(new BasicConfigValue<>("mapping-acceleration", Boolean.class, acknowledgedSaveWithErrors));
+		addValue(new BasicConfigValue<>("mapping-acceleration", Boolean.class, useMappingAcceleration));
 		addValue(new BasicConfigValue<>("acknowledged-save-with-errors", Boolean.class, acknowledgedSaveWithErrors, true));
 	}
 
