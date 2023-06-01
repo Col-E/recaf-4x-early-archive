@@ -380,6 +380,24 @@ public class NumberUtil {
 	}
 
 	/**
+	 * @param value
+	 * 		Base value.
+	 * @param min
+	 * 		Clamp min.
+	 * @param max
+	 * 		Clamp max.
+	 *
+	 * @return Value, or min if value below min, or max if value above max.
+	 */
+	public static double doubleClamp(double value, double min, double max) {
+		if (value > max)
+			return max;
+		if (value < min)
+			return min;
+		return value;
+	}
+
+	/**
 	 * @param i
 	 * 		Some value.
 	 *

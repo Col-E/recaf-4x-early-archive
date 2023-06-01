@@ -357,6 +357,11 @@ mapgen.header.newfilter=Input filter content
 mapgen.copy=Copy to clipboard
 mapgen.apply=Apply
 
+## Mapping view
+mapprog=Mapping progress
+mapprog.metric.size=Class file size
+mapprog.metric.membercount=Class fields & methods
+
 ##### Tree
 tree.classes=Classes
 tree.files=Files

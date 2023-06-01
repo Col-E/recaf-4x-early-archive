@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.window;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import software.coley.recaf.services.attach.AttachManager;
@@ -18,8 +19,9 @@ import software.coley.recaf.util.threading.ThreadUtil;
 @Dependent
 public class RemoteVirtualMachinesWindow extends AbstractIdentifiableStage {
 	@Inject
-	public RemoteVirtualMachinesWindow(RemoteVirtualMachinesPane remoteVirtualMachinesPane,
-									   AttachManager attachManager, AttachManagerConfig attachManagerConfig) {
+	public RemoteVirtualMachinesWindow(@Nonnull RemoteVirtualMachinesPane remoteVirtualMachinesPane,
+									   @Nonnull AttachManager attachManager,
+									   @Nonnull AttachManagerConfig attachManagerConfig) {
 		super(WindowManager.WIN_REMOTE_VMS);
 
 		// Bind attach manager scanning state to the visibility of this window.

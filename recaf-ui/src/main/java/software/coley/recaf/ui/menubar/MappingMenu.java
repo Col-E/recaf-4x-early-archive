@@ -6,10 +6,11 @@ import jakarta.inject.Inject;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
-import software.coley.dextranslator.util.ThreadPools;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingApplier;
 import software.coley.recaf.services.mapping.MappingResults;
@@ -22,6 +23,7 @@ import software.coley.recaf.ui.config.RecentFilesConfig;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
+import software.coley.recaf.workspace.WorkspaceManager;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -36,17 +38,30 @@ import static software.coley.recaf.util.Menus.*;
  * @author Matt Coley
  */
 @Dependent
-public class MappingMenu extends Menu {
+public class MappingMenu extends WorkspaceAwareMenu {
 	private static final Logger logger = Logging.get(MappingMenu.class);
 	private final ExecutorService exportPool = ThreadPoolFactory.newSingleThreadExecutor("mapping-export");
 	private final ExecutorService importPool = ThreadPoolFactory.newSingleThreadExecutor("mapping-import");
+	private final WindowManager windowManager;
+	private final WorkspaceManager workspaceManager;
+	private final AggregateMappingManager aggregateMappingManager;
+	private final CellConfigurationService configurationService;
 
 	@Inject
 	public MappingMenu(@Nonnull WindowManager windowManager,
+					   @Nonnull WorkspaceManager workspaceManager,
 					   @Nonnull AggregateMappingManager aggregateMappingManager,
 					   @Nonnull MappingFormatManager formatManager,
 					   @Nonnull MappingApplier mappingApplier,
+					   @Nonnull CellConfigurationService configurationService,
 					   @Nonnull RecentFilesConfig recentFiles) {
+		super(workspaceManager);
+
+		this.windowManager = windowManager;
+		this.workspaceManager = workspaceManager;
+		this.aggregateMappingManager = aggregateMappingManager;
+		this.configurationService = configurationService;
+
 		textProperty().bind(getBinding("menu.mappings"));
 		setGraphic(new FontIconView(CarbonIcons.MAP_BOUNDARY));
 
@@ -72,7 +87,7 @@ public class MappingMenu extends Menu {
 							logger.info("Loaded mappings from {} in {} format", file.getName(), formatName);
 
 							// TODO: UI to preview before/after using TreeMapPane
-							MappingResults results = mappingApplier.applyToPrimary(parsedMappings);
+							MappingResults results = mappingApplier.applyToPrimaryResource(parsedMappings);
 							results.apply();
 							logger.info("Applied mappings from {}", file.getName());
 						} catch (Exception ex) {
@@ -121,7 +136,10 @@ public class MappingMenu extends Menu {
 		getItems().add(export);
 
 		// getItems().add(action("menu.mappings.generate", CarbonIcons.LICENSE_MAINTENANCE, this::openGenerate));
-		// getItems().add(action("menu.mappings.view", CarbonIcons.VIEW, this::openView));
+		getItems().add(action("menu.mappings.view", CarbonIcons.VIEW, this::openView));
+
+		// Disable if attached via agent, or there is no workspace
+		disableProperty().bind(hasAgentWorkspace.or(hasWorkspace.not()));
 	}
 
 	private void openGenerate() {
@@ -129,6 +147,8 @@ public class MappingMenu extends Menu {
 	}
 
 	private void openView() {
-		// TODO: preview (% already mapped, % will be mapped(already/unmapped), % unmapped)
+		Stage window = windowManager.getMappingPreviewWindow();
+		window.show();
+		window.requestFocus();
 	}
 }
