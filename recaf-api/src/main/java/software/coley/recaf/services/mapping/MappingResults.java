@@ -96,6 +96,10 @@ public class MappingResults {
 	 */
 	@SuppressWarnings("unchecked")
 	public void apply() {
+		// Track changes in aggregate manager, if given.
+		if (aggregateMappingManager != null)
+			aggregateMappingManager.updateAggregateMappings(mappings);
+
 		// Record mapping application jobs into a sorted set.
 		// We want to apply some changes before others.
 		SortedSet<ApplicationEntry> applicationEntries = new TreeSet<>();
@@ -125,10 +129,6 @@ public class MappingResults {
 		// Apply changes in sorted order.
 		for (ApplicationEntry entry : applicationEntries)
 			entry.applicationRunnable().run();
-
-		// Track changes in aggregate manager, if given.
-		if (aggregateMappingManager != null)
-			aggregateMappingManager.updateAggregateMappings(mappings);
 	}
 
 	/**

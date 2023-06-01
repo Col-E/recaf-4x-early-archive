@@ -31,9 +31,14 @@ public class BasicMappingsRemapper extends Remapper {
 
 	@Override
 	public String mapType(String internalName) {
+		// Type can be null (object supertype, or module-info)
+		if (internalName == null)
+			return null;
+
 		// Check for array type
 		if (internalName.charAt(0) == '[')
 			return mapDesc(internalName);
+
 		// Standard internal name
 		return map(internalName);
 	}
