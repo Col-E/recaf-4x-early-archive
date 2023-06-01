@@ -710,6 +710,27 @@ public class AstServiceTest extends TestBase {
 				assertTrue(modified.contains("private Howdy(String s) {}"));
 				assertTrue(modified.contains("Howdy() {}"));
 			});
+
+			source = """
+					package software.coley.recaf.test.dummy;
+					public class ClassWithConstructor {
+					  	private ClassWithConstructor() {}
+					  	ClassWithConstructor(int i) {}
+					  	protected ClassWithConstructor(int i, int j) {}
+					  	public ClassWithConstructor(DummyEnum dummyEnum, StringSupplier supplier) {}
+					}
+					""";
+			handleUnit(source, (unit, ctx) -> {
+				IntermediateMappings mappings = new IntermediateMappings();
+				mappings.addClass(ClassWithConstructor.class.getName().replace('.', '/'), "com/example/Howdy");
+				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
+
+				String modified = unit.acceptJava(visitor, ctx).print(new Cursor(null, unit));
+				assertTrue(modified.contains("Howdy() {}"));
+				assertTrue(modified.contains("Howdy(int i) {}"));
+				assertTrue(modified.contains("Howdy(int i, int j) {}"));
+				assertTrue(modified.contains("Howdy(DummyEnum dummyEnum, StringSupplier supplier) {}"));
+			});
 		}
 
 		@Test
