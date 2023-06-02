@@ -625,9 +625,10 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 	public WorkspaceResource importResource(URL url) throws IOException {
 		// Extract name from URL
 		String path = url.getFile();
-		if (path.isEmpty()) {
+		if (path.isEmpty())
 			path = url.toString();
-		}
+		if (path.charAt(0) == '/')
+			path = path.substring(1);
 
 		// Load content, parse into resource.
 		byte[] bytes = IOUtil.toByteArray(url.openStream());
