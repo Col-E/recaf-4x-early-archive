@@ -9,7 +9,7 @@ import javafx.scene.control.TextField;
  *
  * @author Matt Coley
  */
-public class BoundTextField extends TextField {
+public class BoundTextField extends TextField implements Tooltipable {
 	/**
 	 * @param destination
 	 * 		Property to sync with text field contents.

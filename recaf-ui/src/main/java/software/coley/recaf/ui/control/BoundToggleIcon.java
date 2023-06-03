@@ -5,10 +5,8 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.Tooltip;
 import software.coley.observables.ObservableBoolean;
 import software.coley.recaf.util.Icons;
-import software.coley.recaf.util.Lang;
 
 /**
  * Toggle button for a {@link BooleanProperty}.
@@ -16,7 +14,7 @@ import software.coley.recaf.util.Lang;
  * @author Amejonah
  * @author Matt Coley
  */
-public class BoundToggleIcon extends Button {
+public class BoundToggleIcon extends Button implements Tooltipable {
 	/**
 	 * @param graphic
 	 * 		Button graphic path for {@link Icons#getIconView(String)}.
@@ -63,18 +61,5 @@ public class BoundToggleIcon extends Button {
 		setGraphic(graphic);
 		setOnAction(e -> observable.setValue(!observable.getValue()));
 		observable.addChangeListener((ob, old, cur) -> setOpacity(cur ? 1.0 : 0.4));
-	}
-
-	/**
-	 * @param tooltipKey
-	 * 		Translation key for tooltip display.
-	 *
-	 * @return Self.
-	 */
-	public BoundToggleIcon withTooltip(@Nonnull String tooltipKey) {
-		Tooltip tooltip = new Tooltip();
-		tooltip.textProperty().bind(Lang.getBinding(tooltipKey));
-		setTooltip(tooltip);
-		return this;
 	}
 }

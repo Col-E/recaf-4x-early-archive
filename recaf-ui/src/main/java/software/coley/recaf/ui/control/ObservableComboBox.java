@@ -16,7 +16,7 @@ import java.util.List;
  *
  * @author Matt Coley
  */
-public class ObservableComboBox<T> extends ComboBox<T> {
+public class ObservableComboBox<T> extends ComboBox<T> implements Tooltipable {
 	/**
 	 * @param value
 	 * 		Observable.

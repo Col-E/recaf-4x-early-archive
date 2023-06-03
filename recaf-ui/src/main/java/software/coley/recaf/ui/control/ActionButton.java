@@ -11,7 +11,7 @@ import org.kordamp.ikonli.Ikon;
  *
  * @author Matt Coley
  */
-public class ActionButton extends Button {
+public class ActionButton extends Button implements Tooltipable {
 	/**
 	 * @param text
 	 * 		Button display text.

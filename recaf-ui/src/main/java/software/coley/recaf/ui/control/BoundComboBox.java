@@ -16,7 +16,7 @@ import java.util.List;
  *
  * @author Matt Coley
  */
-public class BoundComboBox<T> extends ComboBox<T> {
+public class BoundComboBox<T> extends ComboBox<T> implements Tooltipable {
 	/**
 	 * @param value
 	 * 		property.

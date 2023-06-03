@@ -15,7 +15,7 @@ import software.coley.observables.ObservableInteger;
  *
  * @author Matt Coley
  */
-public class ObservableSpinner<T> extends Spinner<T> {
+public class ObservableSpinner<T> extends Spinner<T> implements Tooltipable {
 	private ObservableSpinner(@Nonnull Observable<T> observable) {
 		valueProperty().addListener((ob, old, cur) -> observable.setValue(cur));
 	}

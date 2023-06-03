@@ -9,7 +9,7 @@ import javafx.scene.control.Label;
  *
  * @author Matt Coley
  */
-public class BoundLabel extends Label {
+public class BoundLabel extends Label implements Tooltipable {
 	/**
 	 * @param binding
 	 * 		Text binding.

@@ -5,9 +5,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.Property;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.Tooltip;
 import software.coley.observables.ObservableObject;
-import software.coley.recaf.util.Lang;
 
 import java.util.function.Function;
 
@@ -17,7 +15,7 @@ import java.util.function.Function;
  * @author Amejonah
  * @author Matt Coley
  */
-public class BoundMultiToggleIcon<E extends Enum<?>> extends Button {
+public class BoundMultiToggleIcon<E extends Enum<?>> extends Button implements Tooltipable {
 	/**
 	 * @param enumClass
 	 * 		Enum class.
@@ -55,18 +53,5 @@ public class BoundMultiToggleIcon<E extends Enum<?>> extends Button {
 			int index = (enumProperty.getValue().ordinal() + 1) % enumClass.getEnumConstants().length;
 			enumProperty.setValue(enumClass.getEnumConstants()[index]);
 		});
-	}
-
-	/**
-	 * @param tooltipKey
-	 * 		Translation key for tooltip display.
-	 *
-	 * @return Self.
-	 */
-	public BoundMultiToggleIcon<E> withTooltip(@Nonnull String tooltipKey) {
-		Tooltip tooltip = new Tooltip();
-		tooltip.textProperty().bind(Lang.getBinding(tooltipKey));
-		setTooltip(tooltip);
-		return this;
 	}
 }

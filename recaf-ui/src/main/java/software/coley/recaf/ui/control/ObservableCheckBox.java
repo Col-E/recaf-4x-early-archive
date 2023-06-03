@@ -10,7 +10,7 @@ import software.coley.observables.ObservableBoolean;
  *
  * @author Matt Coley
  */
-public class ObservableCheckBox extends CheckBox {
+public class ObservableCheckBox extends CheckBox implements Tooltipable {
 	/**
 	 * @param observable
 	 * 		Value to bind to.

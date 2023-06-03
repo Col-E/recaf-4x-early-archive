@@ -23,7 +23,7 @@ public class WindowFactory implements Service {
 	private final WindowManager windowManager;
 
 	@Inject
-	public WindowFactory(WindowFactoryConfig config, WindowManager windowManager) {
+	public WindowFactory(@Nonnull WindowFactoryConfig config, @Nonnull WindowManager windowManager) {
 		this.config = config;
 		this.windowManager = windowManager;
 	}
