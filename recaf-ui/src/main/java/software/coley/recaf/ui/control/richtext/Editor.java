@@ -420,7 +420,7 @@ public class Editor extends BorderPane {
 
 		@Override
 		public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-			codeArea.moveTo(pos);
+			codeArea.moveTo(Math.min(codeArea.getLength(), pos));
 			observable.removeListener(this);
 		}
 	}
