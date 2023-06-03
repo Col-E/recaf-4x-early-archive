@@ -2,6 +2,7 @@ package software.coley.recaf.ui.menubar;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
@@ -10,7 +11,6 @@ import javafx.stage.Stage;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingApplier;
 import software.coley.recaf.services.mapping.MappingResults;
@@ -18,9 +18,12 @@ import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
 import software.coley.recaf.services.mapping.format.MappingFileFormat;
 import software.coley.recaf.services.mapping.format.MappingFormatManager;
+import software.coley.recaf.services.window.WindowFactory;
 import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.ui.config.RecentFilesConfig;
 import software.coley.recaf.ui.control.FontIconView;
+import software.coley.recaf.ui.pane.MappingGeneratorPane;
+import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.WorkspaceManager;
@@ -43,24 +46,21 @@ public class MappingMenu extends WorkspaceAwareMenu {
 	private final ExecutorService exportPool = ThreadPoolFactory.newSingleThreadExecutor("mapping-export");
 	private final ExecutorService importPool = ThreadPoolFactory.newSingleThreadExecutor("mapping-import");
 	private final WindowManager windowManager;
-	private final WorkspaceManager workspaceManager;
-	private final AggregateMappingManager aggregateMappingManager;
-	private final CellConfigurationService configurationService;
+	private final WindowFactory windowFactory;
 
 	@Inject
 	public MappingMenu(@Nonnull WindowManager windowManager,
+					   @Nonnull WindowFactory windowFactory,
 					   @Nonnull WorkspaceManager workspaceManager,
 					   @Nonnull AggregateMappingManager aggregateMappingManager,
 					   @Nonnull MappingFormatManager formatManager,
 					   @Nonnull MappingApplier mappingApplier,
-					   @Nonnull CellConfigurationService configurationService,
+					   @Nonnull Instance<MappingGeneratorPane> generatorPaneInstance,
 					   @Nonnull RecentFilesConfig recentFiles) {
 		super(workspaceManager);
 
 		this.windowManager = windowManager;
-		this.workspaceManager = workspaceManager;
-		this.aggregateMappingManager = aggregateMappingManager;
-		this.configurationService = configurationService;
+		this.windowFactory = windowFactory;
 
 		textProperty().bind(getBinding("menu.mappings"));
 		setGraphic(new FontIconView(CarbonIcons.MAP_BOUNDARY));
@@ -86,7 +86,6 @@ public class MappingMenu extends WorkspaceAwareMenu {
 							IntermediateMappings parsedMappings = format.parse(mappingsText);
 							logger.info("Loaded mappings from {} in {} format", file.getName(), formatName);
 
-							// TODO: UI to preview before/after using TreeMapPane
 							MappingResults results = mappingApplier.applyToPrimaryResource(parsedMappings);
 							results.apply();
 							logger.info("Applied mappings from {}", file.getName());
@@ -135,15 +134,19 @@ public class MappingMenu extends WorkspaceAwareMenu {
 		getItems().add(apply);
 		getItems().add(export);
 
-		// getItems().add(action("menu.mappings.generate", CarbonIcons.LICENSE_MAINTENANCE, this::openGenerate));
+		getItems().add(action("menu.mappings.generate", CarbonIcons.LICENSE_MAINTENANCE,
+				() -> openGenerate(generatorPaneInstance)));
 		getItems().add(action("menu.mappings.view", CarbonIcons.VIEW, this::openView));
 
 		// Disable if attached via agent, or there is no workspace
 		disableProperty().bind(hasAgentWorkspace.or(hasWorkspace.not()));
 	}
 
-	private void openGenerate() {
-		// TODO: Configurable UI, preview (% already mapped, % will be mapped(already/unmapped), % unmapped)
+	private void openGenerate(@Nonnull Instance<MappingGeneratorPane> generatorPaneInstance) {
+		RecafScene scene = new RecafScene(generatorPaneInstance.get());
+		Stage window = windowFactory.createAnonymousStage(scene, getBinding("mapgen"), 800, 400);
+		window.show();
+		window.requestFocus();
 	}
 
 	private void openView() {

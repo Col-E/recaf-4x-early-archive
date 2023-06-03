@@ -1,8 +1,11 @@
 package software.coley.recaf.util;
 
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.BiPredicate;
 
 /**
@@ -33,6 +36,15 @@ public enum TextMatchMode {
 	REGEX((key, text) -> regmatch(text, key));
 
 	private static final Logger logger = Logging.get(TextMatchMode.class);
+	private static final List<TextMatchMode> list = Arrays.asList(values());
+
+	/**
+	 * @return Modes as list.
+	 */
+	@Nonnull
+	public static List<TextMatchMode> valuesList() {
+		return list;
+	}
 
 	private static boolean regmatch(String text, String key) {
 		try {

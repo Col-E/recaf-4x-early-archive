@@ -15,14 +15,14 @@ import java.util.Set;
  *
  * @author Matt Coley
  */
-public class IncludeKeywordsFilter extends NameGeneratorFilter {
+public class IncludeKeywordNameFilter extends NameGeneratorFilter {
 	private static final Set<String> keywords = new HashSet<>();
 
 	/**
 	 * @param next
 	 * 		Next filter to link. Chaining filters allows for {@code thisFilter && nextFilter}.
 	 */
-	public IncludeKeywordsFilter(NameGeneratorFilter next) {
+	public IncludeKeywordNameFilter(@Nonnull NameGeneratorFilter next) {
 		super(next, false);
 	}
 

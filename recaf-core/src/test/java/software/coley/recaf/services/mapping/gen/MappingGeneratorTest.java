@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.objectweb.asm.Opcodes;
 import software.coley.recaf.TestBase;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
@@ -11,7 +12,9 @@ import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
-import software.coley.recaf.services.mapping.gen.filter.ExcludeClassNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.ExcludeClassesFilter;
+import software.coley.recaf.services.mapping.gen.filter.ExcludeModifiersNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeModifiersNameFilter;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.*;
 import software.coley.recaf.util.StringUtil;
@@ -20,6 +23,7 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.io.IOException;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -136,11 +140,16 @@ public class MappingGeneratorTest extends TestBase {
 		}
 
 		@Test
-		void testExcludeClassNameFilter() {
-			// Filter to exclude classes by name
+		void testExcludeClassNameFilterWithInheritance() {
+			// Filter to exclude classes by name and by extension their declared members
 			//  - Classes extending them with overridden methods, the overrides should not be remapped
-			ExcludeClassNameFilter filter =
-					new ExcludeClassNameFilter(null, "AccessibleMethods", TextMatchMode.ENDS_WITH);
+			//
+			// We make this filter so that it will target 'AccessibleMethods' which is the base type.
+			// The child type 'AccessibleMethodsChild' will not be matched by this filter.
+			// The default action of naming this not affect the methods declared in the child class since
+			// those methods are overrides of an affected class.
+			ExcludeClassesFilter filter =
+					new ExcludeClassesFilter(null, "AccessibleMethods", TextMatchMode.ENDS_WITH);
 
 			// Apply and assert all items are mapped except the base classes types
 			Mappings mappings = mappingGenerator.generate(workspace, resource, inheritanceGraph, nameGenerator, filter);
@@ -188,6 +197,57 @@ public class MappingGeneratorTest extends TestBase {
 						assertNotNull(mappedMethod, "Method not mapped: " + info.getName() + "." + method.getName());
 				}
 			}
+		}
+
+		@Test
+		void testExcludeModifiersOnAll() {
+			// Filter to exclude anything private, protected, and public, leaving only package-private items
+			ExcludeModifiersNameFilter filter =
+					new ExcludeModifiersNameFilter(null, List.of(Opcodes.ACC_PRIVATE, Opcodes.ACC_PROTECTED, Opcodes.ACC_PUBLIC), true, true, true);
+
+			// Generate mappings
+			Mappings mappings = mappingGenerator.generate(workspace, resource, inheritanceGraph, nameGenerator, filter);
+
+			// There is 1 package-private field in our workspace
+			//  - 'packageField' in 'AccessibleFields'
+			// There are only 2 package-private method in our workspace:
+			//  - 'packageMethod' in 'AccessibleMethods'
+			//  - 'packageMethod' in 'AccessibleMethodsChild'
+			IntermediateMappings intermediate = mappings.exportIntermediate();
+			assertEquals(0, intermediate.getClasses().size());
+			assertEquals(1, intermediate.getFields().size());
+			assertEquals(2, intermediate.getMethods().size());
+		}
+
+		@Test
+		void testExcludeNotTargetingClassYieldsAllClassesMapped() {
+			// Generic exception filter that targets fields/methods.
+			//  - The classes are not targeted, and since this is an exclude this makes the default action map
+			//  - Thus all classes should get mapped
+			ExcludeModifiersNameFilter filter =
+					new ExcludeModifiersNameFilter(null, List.of(Opcodes.ACC_PRIVATE), false, true, true);
+
+			// Generate mappings and assert all classes were mapped.
+			Mappings mappings = mappingGenerator.generate(workspace, resource, inheritanceGraph, nameGenerator, filter);
+			IntermediateMappings intermediate = mappings.exportIntermediate();
+			assertEquals(5, intermediate.getClasses().size());
+		}
+
+		@Test
+		void testIncludeModifiers() {
+			// Filter to include only private methods
+			IncludeModifiersNameFilter filter =
+					new IncludeModifiersNameFilter(null, List.of(Opcodes.ACC_PRIVATE), false, false, true);
+
+			// Generate mappings
+			Mappings mappings = mappingGenerator.generate(workspace, resource, inheritanceGraph, nameGenerator, filter);
+
+			// There is only 1 private method in our workspace:
+			//  - 'privateMethod' in 'AccessibleMethods'
+			IntermediateMappings intermediate = mappings.exportIntermediate();
+			assertEquals(0, intermediate.getClasses().size());
+			assertEquals(0, intermediate.getFields().size());
+			assertEquals(1, intermediate.getMethods().size());
 		}
 	}
 }

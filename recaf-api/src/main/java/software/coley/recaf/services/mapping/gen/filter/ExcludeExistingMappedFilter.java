@@ -1,6 +1,7 @@
 package software.coley.recaf.services.mapping.gen.filter;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
@@ -21,7 +22,7 @@ public class ExcludeExistingMappedFilter extends NameGeneratorFilter {
 	 * @param aggregate
 	 * 		Aggregate mappings instance to use when checking for existing mapping entries.
 	 */
-	public ExcludeExistingMappedFilter(NameGeneratorFilter next, AggregatedMappings aggregate) {
+	public ExcludeExistingMappedFilter(@Nullable NameGeneratorFilter next, @Nonnull AggregatedMappings aggregate) {
 		super(next, true);
 		this.aggregate = aggregate;
 	}

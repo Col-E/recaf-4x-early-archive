@@ -1,6 +1,7 @@
 package software.coley.recaf.services.mapping.gen.filter;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
@@ -32,7 +33,7 @@ public class ExcludeModifiersNameFilter extends NameGeneratorFilter {
 	 * @param targetMethods
 	 * 		Check against methods.
 	 */
-	public ExcludeModifiersNameFilter(NameGeneratorFilter next, Collection<Integer> flags,
+	public ExcludeModifiersNameFilter(@Nullable NameGeneratorFilter next, @Nonnull Collection<Integer> flags,
 									  boolean targetClasses, boolean targetFields, boolean targetMethods) {
 		super(next, true);
 		this.flags = flags.stream().mapToInt(i -> i).toArray();

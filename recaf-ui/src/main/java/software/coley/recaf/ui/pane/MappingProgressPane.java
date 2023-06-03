@@ -21,7 +21,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import javafx.util.StringConverter;
 import org.reactfx.EventStreams;
 import software.coley.collections.tree.SortedTreeImpl;
 import software.coley.collections.tree.Tree;
@@ -43,6 +42,7 @@ import software.coley.recaf.ui.window.MappingProgressWindow;
 import software.coley.recaf.util.Colors;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
+import software.coley.recaf.util.ToStringConverter;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.Workspace;
@@ -146,18 +146,7 @@ public class MappingProgressPane extends BorderPane implements ResourceJvmClassL
 
 		// Layout
 		ComboBox<Metric> comboMetric = new ComboBox<>(FXCollections.observableArrayList(metrics));
-		comboMetric.setConverter(new StringConverter<>() {
-			@Override
-			public String toString(Metric metric) {
-				return metric.name().get();
-			}
-
-			@Override
-			public Metric fromString(String metricName) {
-				// unused
-				return null;
-			}
-		});
+		comboMetric.setConverter(ToStringConverter.from(metric -> metric.name().get()));
 		metric.bind(comboMetric.getSelectionModel().selectedItemProperty());
 		comboMetric.getSelectionModel().select(0);
 		BorderPane wrapper = new BorderPane();
@@ -256,6 +245,11 @@ public class MappingProgressPane extends BorderPane implements ResourceJvmClassL
 		Tree<String, ClassPathNode> tree = new SortedTreeImpl<>();
 		workspace.findClasses(classInfo -> true)
 				.forEach(classPath -> {
+					// Only match classes in the primary resource
+					WorkspaceResource resource = classPath.getValueOfType(WorkspaceResource.class);
+					if (resource != workspace.getPrimaryResource())
+						return;
+
 					ClassInfo info = classPath.getValue();
 					String[] sections = info.getName().split("/");
 					Tree<String, ClassPathNode> path = tree;

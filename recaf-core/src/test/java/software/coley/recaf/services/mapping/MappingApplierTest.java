@@ -15,7 +15,7 @@ import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
-import software.coley.recaf.services.mapping.gen.AlphabetNameGenerator;
+import software.coley.recaf.services.mapping.gen.generator.AlphabetNameGenerator;
 import software.coley.recaf.services.mapping.gen.MappingGenerator;
 import software.coley.recaf.services.mapping.gen.NameGenerator;
 import software.coley.recaf.services.mapping.gen.NameGeneratorFilter;

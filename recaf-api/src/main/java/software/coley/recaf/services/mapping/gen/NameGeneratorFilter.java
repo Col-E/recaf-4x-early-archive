@@ -1,6 +1,7 @@
 package software.coley.recaf.services.mapping.gen;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
@@ -21,7 +22,7 @@ public abstract class NameGeneratorFilter {
 	 *        {@code true} to make renaming things the default, treating chains as limitations on the baseline.
 	 *        {@code false} to make keeping names the default, treating chains as expansions on the baseline.
 	 */
-	protected NameGeneratorFilter(NameGeneratorFilter next, boolean defaultMap) {
+	protected NameGeneratorFilter(@Nullable NameGeneratorFilter next, boolean defaultMap) {
 		this.next = next;
 		this.defaultMap = defaultMap;
 	}

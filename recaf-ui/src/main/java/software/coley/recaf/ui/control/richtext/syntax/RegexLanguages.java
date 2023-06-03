@@ -17,6 +17,7 @@ public class RegexLanguages {
 	private static final JsonMapper MAPPER = new JsonMapper();
 	private static final RegexRule LANG_JAVA;
 	private static final RegexRule LANG_XML;
+	private static final RegexRule LANG_ENGIMA_MAP;
 
 	// Prevent construction
 	private RegexLanguages() {
@@ -26,6 +27,7 @@ public class RegexLanguages {
 		try {
 			LANG_JAVA = read("/syntax/java.json");
 			LANG_XML = read("/syntax/xml.json");
+			LANG_ENGIMA_MAP = read("/syntax/enigma.json");
 		} catch (Exception ex) {
 			throw new IllegalStateException("Failed to read syntax rules from resources", ex);
 		}
@@ -52,5 +54,13 @@ public class RegexLanguages {
 	@Nonnull
 	public static RegexRule getXmlLanguage() {
 		return LANG_XML;
+	}
+
+	/**
+	 * @return Root rule for Engima regex matching.
+	 */
+	@Nonnull
+	public static RegexRule getLangEngimaMap() {
+		return LANG_ENGIMA_MAP;
 	}
 }

@@ -1,23 +1,25 @@
 package software.coley.recaf.services.mapping.gen.filter;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.mapping.gen.NameGeneratorFilter;
+import software.coley.recaf.util.EscapeUtil;
 
 /**
- * Filter that includes names that are outside the standard ASCII range used for normal class/member names.
+ * Filter that includes names that contain whitespaces, which are illegal in standard Java source.
  *
  * @author Matt Coley
  */
-public class IncludeNonAsciiFilter extends NameGeneratorFilter {
+public class IncludeWhitespaceNameFilter extends NameGeneratorFilter {
 	/**
 	 * @param next
 	 * 		Next filter to link. Chaining filters allows for {@code thisFilter && nextFilter}.
 	 */
-	public IncludeNonAsciiFilter(NameGeneratorFilter next) {
+	public IncludeWhitespaceNameFilter(@Nullable NameGeneratorFilter next) {
 		super(next, false);
 	}
 
@@ -46,12 +48,11 @@ public class IncludeNonAsciiFilter extends NameGeneratorFilter {
 		return shouldMap(info.getName());
 	}
 
-	private static boolean shouldMap(ClassMember info) {
-		return shouldMap(info.getName());
+	private static boolean shouldMap(ClassMember member) {
+		return shouldMap(member.getName());
 	}
 
 	private static boolean shouldMap(String name) {
-		return name.codePoints()
-				.anyMatch(code -> (code < 0x21 || code > 0x7A));
+		return EscapeUtil.containsWhitespace(name);
 	}
 }

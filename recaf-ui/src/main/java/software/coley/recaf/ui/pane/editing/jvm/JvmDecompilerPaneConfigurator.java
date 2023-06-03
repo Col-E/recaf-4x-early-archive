@@ -5,7 +5,6 @@ import jakarta.annotation.Nonnull;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
-import javafx.util.StringConverter;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableInteger;
 import software.coley.observables.ObservableObject;
@@ -17,6 +16,7 @@ import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.pane.editing.AbstractDecompilerPaneConfigurator;
 import software.coley.recaf.util.JavaVersion;
 import software.coley.recaf.util.Lang;
+import software.coley.recaf.util.ToStringConverter;
 
 /**
  * Overlay component for {@link Editor} that allows quick configuration of properties of a {@link JvmDecompilerPane}.
@@ -77,20 +77,12 @@ public class JvmDecompilerPaneConfigurator extends AbstractDecompilerPaneConfigu
 			// Edge case for 'automatic'
 			getItems().add(-1);
 			setValue(-1);
-			setConverter(new StringConverter<>() {
-				@Override
-				public String toString(Integer version) {
-					int v = version;
-					if (v < 0)
-						return Lang.get("java.targetversion.auto");
-					return String.valueOf(v);
-				}
-
-				@Override
-				public Integer fromString(String versionString) {
-					throw new UnsupportedOperationException();
-				}
-			});
+			setConverter(ToStringConverter.from(version -> {
+				int v = version;
+				if (v < 0)
+					return Lang.get("java.targetversion.auto");
+				return String.valueOf(v);
+			}));
 
 			// Update property.
 			valueProperty().addListener((ob, old, cur) -> javacTarget.setValue(cur));
