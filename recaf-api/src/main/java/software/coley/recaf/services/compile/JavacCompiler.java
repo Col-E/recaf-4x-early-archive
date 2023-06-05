@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import software.coley.collections.Lists;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.Service;
@@ -49,8 +50,30 @@ public class JavacCompiler implements Service {
 	 *
 	 * @return Compilation result wrapper.
 	 */
+	@Nonnull
 	public CompilerResult compile(@Nonnull JavacArguments arguments,
 								  @Nullable Workspace workspace,
+								  @Nullable JavacListener listener) {
+		return compile(arguments, workspace, listener);
+	}
+
+	/**
+	 * @param arguments
+	 * 		Wrapper of all arguments.
+	 * @param workspace
+	 * 		Optional workspace to include for additional classpath support.
+	 * @param supplementaryResources
+	 * 		Optional resources to further extend the compilation classpath with.
+	 * @param listener
+	 * 		Optional listener to handle feedback with,
+	 * 		mirroring what is reported by {@link CompilerResult#getDiagnostics()}
+	 *
+	 * @return Compilation result wrapper.
+	 */
+	@Nonnull
+	public CompilerResult compile(@Nonnull JavacArguments arguments,
+								  @Nullable Workspace workspace,
+								  @Nullable List<WorkspaceResource> supplementaryResources,
 								  @Nullable JavacListener listener) {
 		if (compiler == null)
 			return new CompilerResult(new IllegalStateException("Cannot load 'javac' compiler."));
@@ -64,6 +87,8 @@ public class JavacCompiler implements Service {
 		// Create a file manager to track files in-memory rather than on-disk
 		List<WorkspaceResource> virtualClassPath = workspace == null ?
 				Collections.emptyList() : workspace.getAllResources(true);
+		if (supplementaryResources != null)
+			virtualClassPath = Lists.combine(virtualClassPath, supplementaryResources);
 		List<CompilerDiagnostic> diagnostics = new ArrayList<>();
 		JavacListener listenerWrapper = createRecordingListener(listener, diagnostics);
 		JavaFileManager fmFallback = compiler.getStandardFileManager(listenerWrapper, Locale.getDefault(), UTF_8);
