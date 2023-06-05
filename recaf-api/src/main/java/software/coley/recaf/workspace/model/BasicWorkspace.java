@@ -42,10 +42,11 @@ public class BasicWorkspace implements Workspace {
 		this.primary = primary;
 		this.supporting.addAll(supporting);
 
+		RuntimeWorkspaceResource runtimeResource = RuntimeWorkspaceResource.getInstance();
 		if (primary.getAndroidClassBundles().isEmpty()) {
-			internal = Collections.singletonList(RuntimeWorkspaceResource.getInstance());
+			internal = Collections.singletonList(runtimeResource);
 		} else {
-			internal = List.of(RuntimeWorkspaceResource.getInstance(), AndroidApiResource.getInstance());
+			internal = List.of(runtimeResource, AndroidApiResource.getInstance());
 		}
 	}
 

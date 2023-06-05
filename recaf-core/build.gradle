@@ -9,4 +9,5 @@ dependencies {
     api picocli
     api cfr
     api procyon
+    api jphantom
 }

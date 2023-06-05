@@ -37,7 +37,7 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 	 * @param builder
 	 * 		Builder to pull information from.
 	 */
-	public BasicWorkspaceResource(WorkspaceResourceBuilder builder) {
+	public BasicWorkspaceResource(@Nonnull WorkspaceResourceBuilder builder) {
 		this(builder.getJvmClassBundle(),
 				builder.getFileBundle(),
 				builder.getVersionedJvmClassBundles(),
