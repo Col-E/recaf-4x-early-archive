@@ -11,6 +11,10 @@ import software.coley.recaf.TestBase;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.services.compile.CompilerResult;
+import software.coley.recaf.services.compile.JavacArguments;
+import software.coley.recaf.services.compile.JavacArgumentsBuilder;
+import software.coley.recaf.services.compile.JavacCompiler;
 import software.coley.recaf.workspace.model.EmptyWorkspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -25,10 +29,12 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class PhantomGeneratorTest extends TestBase implements Opcodes {
 	private static PhantomGenerator generator;
+	private static JavacCompiler compiler;
 
 	@BeforeAll
 	static void setup() {
 		generator = recaf.get(PhantomGenerator.class);
+		compiler = recaf.get(JavacCompiler.class);
 	}
 
 	@Test
@@ -53,21 +59,37 @@ public class PhantomGeneratorTest extends TestBase implements Opcodes {
 		List<JvmClassInfo> dummyWrapped = Collections.singletonList(dummyInfo);
 
 		// Generate phantoms
-		try {
-			WorkspaceResource phantoms = generator.createPhantomsForClasses(EmptyWorkspace.get(), dummyWrapped);
-			JvmClassBundle phantomBundle = phantoms.getJvmClassBundle();
-			JvmClassInfo cdnePhantom = phantomBundle.get("ClassDoesNotExist");
-			JvmClassInfo idnePhantom = phantomBundle.get("InterfaceDoesNotExist");
-			assertNotNull(cdnePhantom, "Missing phantom: ClassDoesNotExist");
-			assertNotNull(idnePhantom, "Missing phantom: InterfaceDoesNotExist");
-			assertFalse(cdnePhantom.hasInterfaceModifier());
-			assertTrue(idnePhantom.hasInterfaceModifier());
-			MethodMember cdneCtor = cdnePhantom.getDeclaredMethod("<init>", "()V");
-			MethodMember idneDoSomething = idnePhantom.getDeclaredMethod("doSomething", "()V");
-			assertNotNull(cdneCtor, "Missing phantom: ClassDoesNotExist.<init>");
-			assertNotNull(idneDoSomething, "Missing phantom: InterfaceDoesNotExist.doSomething");
-		} catch (PhantomGenerationFailure ex) {
-			fail(ex);
-		}
+		EmptyWorkspace workspace = EmptyWorkspace.get();
+		WorkspaceResource phantoms = assertDoesNotThrow(() -> generator.createPhantomsForClasses(workspace, dummyWrapped));
+		JvmClassBundle phantomBundle = phantoms.getJvmClassBundle();
+		JvmClassInfo cdnePhantom = phantomBundle.get("ClassDoesNotExist");
+		JvmClassInfo idnePhantom = phantomBundle.get("InterfaceDoesNotExist");
+		assertNotNull(cdnePhantom, "Missing phantom: ClassDoesNotExist");
+		assertNotNull(idnePhantom, "Missing phantom: InterfaceDoesNotExist");
+		assertFalse(cdnePhantom.hasInterfaceModifier());
+		assertTrue(idnePhantom.hasInterfaceModifier());
+		MethodMember cdneCtor = cdnePhantom.getDeclaredMethod("<init>", "()V");
+		MethodMember idneDoSomething = idnePhantom.getDeclaredMethod("doSomething", "()V");
+		assertNotNull(cdneCtor, "Missing phantom: ClassDoesNotExist.<init>");
+		assertNotNull(idneDoSomething, "Missing phantom: InterfaceDoesNotExist.doSomething");
+
+		// Show compiler integration works
+		String exampleSrc = """
+				public abstract class Example extends ClassDoesNotExist implements InterfaceDoesNotExist {
+				    public Example() {
+				        super();
+				        doSomething();
+				    }
+				}
+				""";
+		JavacArguments args = new JavacArgumentsBuilder()
+				.withClassName("Example")
+				.withClassSource(exampleSrc)
+				.withVersionTarget(11)
+				.build();
+		CompilerResult resultWithoutPhantoms = compiler.compile(args, null, null, null);
+		CompilerResult resultWithPhantoms = compiler.compile(args, null, Collections.singletonList(phantoms), null);
+		assertFalse(resultWithoutPhantoms.wasSuccess(), "Class should not compile without phantoms");
+		assertTrue(resultWithPhantoms.wasSuccess(), "Class should compile with phantoms");
 	}
 }
