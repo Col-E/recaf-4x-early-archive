@@ -88,8 +88,6 @@ public class MappingProgressPane extends BorderPane implements ResourceJvmClassL
 	private IntermediateMappings mappings;
 	private Callable<Boolean> pendingUpdate;
 
-	// TODO: When this pane is visible, closing the main window does not close recaf
-
 	@Inject
 	public MappingProgressPane(@Nonnull CellConfigurationService configurationService,
 							   @Nonnull Instance<AggregateMappingManager> aggregateMappingManagerInstance,
