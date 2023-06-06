@@ -22,8 +22,11 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
+import software.coley.recaf.info.properties.builtin.CachedDecompileProperty;
 import software.coley.recaf.services.compile.*;
+import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.DecompilerManager;
+import software.coley.recaf.services.decompile.JvmDecompiler;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.phantom.PhantomGenerationException;
 import software.coley.recaf.services.phantom.PhantomGenerator;
@@ -184,10 +187,22 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 				// but it would be ugly. Find the new name for the class and any inners, copy over properties from
 				// the old names, apply mapping operations to patch broken references, etc.
 				CompileMap compilations = result.getCompilations();
-				boolean wasClassRenamed = !compilations.containsKey(infoName) || info.getInnerClasses().stream()
-						.anyMatch(inner -> !compilations.containsKey(inner.getInnerClassName()));
-				if (wasClassRenamed) {
+
+				// Check if the target name still exists.
+				if (!compilations.containsKey(infoName)) {
 					logger.warn("Please only rename classes via mapping operations.");
+					return;
+				}
+
+				// Check if any non-external-reference inner class entry no longer exists.
+				//  - Removal/updating/insertion is OK, renaming is not.
+				Map<String, InnerClassInfo> realInners = info.getInnerClasses().stream()
+						.filter(inner -> !inner.isExternalReference())
+						.collect(Collectors.toMap(InnerClassInfo::getInnerClassName, Function.identity()));
+
+				// Ensure all names in the compilation exist in the previous inner classes info
+				if (!realInners.isEmpty() && compilations.keySet().stream().anyMatch(name -> !realInners.containsKey(name))) {
+					logger.warn("Please only rename inner classes via mapping operations.");
 					Animations.animateWarn(this, 1000);
 					return;
 				}
@@ -211,7 +226,6 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 									.toJvmClassBuilder()
 									.adaptFrom(new ClassReader(bytecode))
 									.build();
-							bundle.put(newInfo);
 						} else {
 							// Class is new.
 							newInfo = new JvmClassInfoBuilder(new ClassReader(bytecode)).build();
