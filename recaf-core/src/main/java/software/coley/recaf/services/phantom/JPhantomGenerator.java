@@ -43,7 +43,7 @@ public class JPhantomGenerator implements PhantomGenerator {
 
 	@Nonnull
 	@Override
-	public WorkspaceResource createPhantomsForWorkspace(@Nonnull Workspace workspace) throws PhantomGenerationFailure {
+	public WorkspaceResource createPhantomsForWorkspace(@Nonnull Workspace workspace) throws PhantomGenerationException {
 		// Extract all JVM classes from workspace
 		Map<String, JvmClassInfo> classMap = workspace.getPrimaryResource().jvmClassBundleStream()
 				.flatMap(Bundle::stream)
@@ -51,27 +51,27 @@ public class JPhantomGenerator implements PhantomGenerator {
 
 		// Generate phantoms for them and wrap into resource
 		try {
-			Map<String, byte[]> generated = generate(classMap);
+			Map<String, byte[]> generated = generate(workspace, classMap);
 			return wrap(generated);
 		} catch (IOException ex) {
-			throw new PhantomGenerationFailure(ex, "JPhantom encountered a problem");
+			throw new PhantomGenerationException(ex, "JPhantom encountered a problem");
 		}
 	}
 
 	@Nonnull
 	@Override
 	public WorkspaceResource createPhantomsForClasses(@Nonnull Workspace workspace, @Nonnull Collection<JvmClassInfo> classes)
-			throws PhantomGenerationFailure {
+			throws PhantomGenerationException {
 		// Convert collection to map
 		Map<String, JvmClassInfo> classMap = classes.stream()
 				.collect(Collectors.toMap(Info::getName, Function.identity()));
 
 		// Generate phantoms for them and wrap into resource
 		try {
-			Map<String, byte[]> generated = generate(classMap);
+			Map<String, byte[]> generated = generate(workspace, classMap);
 			return wrap(generated);
 		} catch (IOException ex) {
-			throw new PhantomGenerationFailure(ex, "JPhantom encountered a problem");
+			throw new PhantomGenerationException(ex, "JPhantom encountered a problem");
 		}
 	}
 
@@ -95,6 +95,8 @@ public class JPhantomGenerator implements PhantomGenerator {
 	}
 
 	/**
+	 * @param workspace
+	 * 		Workspace to check for class existence within.
 	 * @param inputMap
 	 * 		Input map of classes to create phantoms for.
 	 *
@@ -104,7 +106,8 @@ public class JPhantomGenerator implements PhantomGenerator {
 	 * 		When {@link JPhantom#run()} fails.
 	 */
 	@Nonnull
-	public static Map<String, byte[]> generate(@Nonnull Map<String, JvmClassInfo> inputMap) throws IOException {
+	public static Map<String, byte[]> generate(@Nonnull Workspace workspace,
+											   @Nonnull Map<String, JvmClassInfo> inputMap) throws IOException {
 		Map<String, byte[]> out = new HashMap<>();
 
 		// Write the parameter passed classes to a temp jar
@@ -142,7 +145,14 @@ public class JPhantomGenerator implements PhantomGenerator {
 		try {
 			JPhantom phantom = new JPhantom(nodes, hierarchy, members);
 			phantom.run();
-			phantom.getGenerated().forEach((k, v) -> out.put(k.getInternalName(), decorate(v)));
+			phantom.getGenerated().forEach((k, v) -> {
+				// Only put items not found in the workspace.
+				// We may call the generator on a small scope, and thus create phantoms of classes that
+				// exist in the workspace, but were not in the provided scope.
+				String name = k.getInternalName();
+				if (workspace.findJvmClass(name) == null)
+					out.put(name, decorate(v));
+			});
 			logger.debug("Phantom analysis complete, generated {} classes", out.size());
 		} finally {
 			// Cleanup

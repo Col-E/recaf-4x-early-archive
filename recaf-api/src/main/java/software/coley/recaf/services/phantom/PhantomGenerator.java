@@ -19,12 +19,12 @@ public interface PhantomGenerator {
 	 *
 	 * @return Resource containing generated phantoms, targeting missing references across all classes.
 	 *
-	 * @throws PhantomGenerationFailure
+	 * @throws PhantomGenerationException
 	 * 		When generating phantoms failed.
 	 */
 	@Nonnull
 	WorkspaceResource createPhantomsForWorkspace(@Nonnull Workspace workspace)
-			throws PhantomGenerationFailure;
+			throws PhantomGenerationException;
 
 	/**
 	 * @param workspace
@@ -34,10 +34,10 @@ public interface PhantomGenerator {
 	 *
 	 * @return Resource containing generated phantoms, targeting only the specified classes.
 	 *
-	 * @throws PhantomGenerationFailure
+	 * @throws PhantomGenerationException
 	 * 		When generating phantoms failed.
 	 */
 	@Nonnull
 	WorkspaceResource createPhantomsForClasses(@Nonnull Workspace workspace, @Nonnull Collection<JvmClassInfo> classes)
-			throws PhantomGenerationFailure;
+			throws PhantomGenerationException;
 }

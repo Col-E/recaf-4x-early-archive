@@ -5,14 +5,14 @@ package software.coley.recaf.services.phantom;
  *
  * @author Matt Coley
  */
-public class PhantomGenerationFailure extends Exception {
+public class PhantomGenerationException extends Exception {
 	/**
 	 * @param cause
 	 * 		Root cause of the failure.
 	 * @param message
 	 * 		Additional detail message.
 	 */
-	public PhantomGenerationFailure(Throwable cause, String message) {
+	public PhantomGenerationException(Throwable cause, String message) {
 		super(message, cause);
 	}
 
@@ -20,7 +20,7 @@ public class PhantomGenerationFailure extends Exception {
 	 * @param cause
 	 * 		Root cause of the failure.
 	 */
-	public PhantomGenerationFailure(Throwable cause) {
+	public PhantomGenerationException(Throwable cause) {
 		super(cause);
 	}
 
@@ -28,7 +28,7 @@ public class PhantomGenerationFailure extends Exception {
 	 * @param message
 	 * 		Additional detail message.
 	 */
-	public PhantomGenerationFailure(String message) {
+	public PhantomGenerationException(String message) {
 		super(message);
 	}
 }
