@@ -22,6 +22,7 @@ import java.io.StringWriter;
 @ApplicationScoped
 public class ProcyonDecompiler extends AbstractJvmDecompiler {
 	public static final String NAME = "Procyon";
+	private final ProcyonConfig config;
 
 	/**
 	 * New Procyon decompiler instance.
@@ -32,6 +33,7 @@ public class ProcyonDecompiler extends AbstractJvmDecompiler {
 	@Inject
 	public ProcyonDecompiler(@Nonnull ProcyonConfig config) {
 		super(NAME, Procyon.version(), config);
+		this.config = config;
 	}
 
 	@Override
@@ -40,9 +42,7 @@ public class ProcyonDecompiler extends AbstractJvmDecompiler {
 				new TargetedTypeLoader(name, bytecode),
 				new WorkspaceTypeLoader(workspace)
 		);
-		// TODO: Flesh out ProcyonConfig and populate settings from the config value
-		DecompilerSettings settings = DecompilerSettings.javaDefaults();
-		settings.setForceExplicitImports(true);
+		DecompilerSettings settings = config.toSettings();
 		settings.setTypeLoader(loader);
 		MetadataSystem system = new MetadataSystem(loader);
 		TypeReference ref = system.lookupType(name);
