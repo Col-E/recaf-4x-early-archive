@@ -71,8 +71,8 @@ import java.util.stream.Collectors;
 public class JvmDecompilerPane extends AbstractDecompilePane {
 	private static final Logger logger = Logging.get(JvmDecompilerPane.class);
 	private static final ExecutorService compilePool = ThreadPoolFactory.newSingleThreadExecutor("recompile");
-	private final ObservableInteger javacTarget = new ObservableInteger(-1); // use negative to match class file's ver
-	private final ObservableBoolean javacDebug = new ObservableBoolean(true);
+	private final ObservableInteger javacTarget;
+	private final ObservableBoolean javacDebug;
 	private final ModalPaneComponent overlayModal = new ModalPaneComponent();
 	private final PhantomGenerator phantomGenerator;
 	private final JavacCompilerConfig javacConfig;
@@ -90,6 +90,8 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 							 @Nonnull Actions actions) {
 		super(config, searchBar, contextActionSupport, decompilerManager);
 		this.phantomGenerator = phantomGenerator;
+		this.javacDebug = new ObservableBoolean(javacConfig.getDefaultEmitDebug().getValue());
+		this.javacTarget = new ObservableInteger(javacConfig.getDefaultTargetVersion().getValue());
 		this.javacConfig = javacConfig;
 		this.javac = javac;
 
@@ -166,11 +168,12 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 			return phantomResources;
 		}, compilePool).completeOnTimeout(null, 2, TimeUnit.SECONDS).thenApplyAsync(phantomResources -> {
 			// Populate javac args
+			boolean debug = javacDebug.getValue();
 			JavacArgumentsBuilder builder = new JavacArgumentsBuilder()
 					.withVersionTarget(useConfiguredVersion(info))
-					.withDebugVariables(javacDebug.getValue())
-					.withDebugSourceName(javacDebug.getValue())
-					.withDebugLineNumbers(javacDebug.getValue())
+					.withDebugVariables(debug)
+					.withDebugSourceName(debug)
+					.withDebugLineNumbers(debug)
 					.withClassSource(editor.getText())
 					.withClassName(infoName);
 

@@ -392,6 +392,8 @@ service.analysis.entry-points.none=No entries found
 service.compile=Compilation
 service.compile.java-compiler-config=Javac
 service.compile.java-compiler-config.generate-phantoms=Generate missing classes
+service.compile.java-compiler-config.default-emit-debug=Default to include debug
+service.compile.java-compiler-config.default-target-version=Default to class version
 service.debug=Attach/Debug
 service.debug.attach-config=Attach config
 service.debug.attach-config.attach-jmx-bean-agent=Attach JMX bean agent
@@ -619,11 +621,6 @@ service.ui.workspace-explorer-config.drag-drop-action=Drag & drop behavior
 # conf.compiler.debug.lines=Include line numbers
 # conf.compiler.debug.sourcefile=Include source file
 #
-# conf.decompiler=Decompile
-# conf.decompiler.general=General
-# conf.decompiler.general.impl=Decompiler implementation
-# conf.decompiler.general.enabletimeout=Enable decompiler timeout
-# conf.decompiler.general.timeout=Timeout in milliseconds
 # conf.decompiler.filter=Filtering
 # conf.decompiler.filter.escapeunicode=Escape unicode
 # conf.decompiler.filter.generics=Strip type arguments
@@ -632,27 +629,11 @@ service.ui.workspace-explorer-config.drag-drop-action=Drag & drop behavior
 # conf.decompiler.classfile=Classfile
 # conf.decompiler.classfile.maxouterdepth=Max outer class breadcrumbs depth\n(-1: disable check, 0: disable breadcrumbs)
 #
-# conf.dialog=Dialogs
-# conf.dialog.fileprompt=File prompts
-# conf.dialog.fileprompt.load=Recent load location
-# conf.dialog.fileprompt.export=Recent export location
-# conf.dialog.fileprompt.loadmap=Recent input mappings location
-# conf.dialog.fileprompt.exportmap=Recent output mappings location
-#
-# conf.export=Exporting
-# conf.export.general=General
-# conf.export.general.shadeLibs=Bundle libraries into output
-# conf.export.general.compress=Use compression in archives
-#
 # conf.plugin=Plugins
 # conf.plugin.general=General
 # conf.plugin.general.enabled=Enabled
 # conf.plugin.general.remote=Remote
 # conf.plugin.general.remotetime=Cache timestamp
-#
-# conf.recent=Recent
-# conf.recent.max=Max tracked items
-# conf.recent.workspaces=Recent workspaces
 #
 # conf.ssvm=SSVM
 # conf.ssvm.access=File IO access
