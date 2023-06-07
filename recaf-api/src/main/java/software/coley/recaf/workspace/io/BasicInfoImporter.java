@@ -7,6 +7,7 @@ import me.coley.cafedude.classfile.VersionConstants;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.tree.ClassNode;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.Info;
@@ -14,6 +15,7 @@ import software.coley.recaf.info.builder.*;
 import software.coley.recaf.util.ByteHeaderUtil;
 import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.io.ByteSource;
+import software.coley.recaf.util.visitors.CustomAttributeCollectingVisitor;
 
 import java.io.IOException;
 
@@ -169,9 +171,13 @@ public class BasicInfoImporter implements InfoImporter {
 	 */
 	private static boolean isAsmCompliantClass(byte[] content) {
 		try {
-			ClassVisitor visitor = new ClassWriter(0);
+			CustomAttributeCollectingVisitor visitor = new CustomAttributeCollectingVisitor(new ClassWriter(0));
 			ClassReader reader = new ClassReader(content);
 			reader.accept(visitor, 0);
+			if (visitor.hasCustomAttributes()) {
+				throw new IllegalStateException("Unknown attributes found in class: " + reader.getClassName() + "[" +
+						String.join(", ", visitor.getCustomAttributeNames()) + "]");
+			}
 			return true;
 		} catch (Throwable t) {
 			return false;
