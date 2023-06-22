@@ -30,7 +30,7 @@ public class LaunchCommand implements Callable<Boolean> {
 	private File input;
 	@Option(names = {"-s", "--script"}, description = "Script to run on startup.")
 	private File script;
-	@Option(names = {"-h", "--headless"}, description = "Flag to skip over initializing the UI.")
+	@Option(names = {"-h", "--headless"}, description = "Flag to skip over initializing the UI. Should be paired with -i or -s.")
 	private boolean headless;
 	@Option(names = {"-v", "--version"}, description = "Display the version information.")
 	private boolean version;
@@ -62,6 +62,7 @@ public class LaunchCommand implements Callable<Boolean> {
 				List<Bean<?>> beans = beanManager.getBeans(Service.class).stream()
 						.sorted(Comparator.comparing(o -> o.getBeanClass().getName()))
 						.toList();
+				System.out.println("Services: " + beans.size());
 				for (Bean<?> bean : beans)
 					System.out.println(" - " + bean.getBeanClass().getName());
 			} catch (Throwable t) {

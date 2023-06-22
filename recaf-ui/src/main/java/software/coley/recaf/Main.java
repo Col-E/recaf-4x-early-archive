@@ -45,6 +45,9 @@ public class Main {
 	 * 		Application arguments.
 	 */
 	public static void main(String[] args) {
+		// Add a class reference for our UI module.
+		Bootstrap.setWeldConsumer(weld -> weld.addPackage(true, Main.class));
+
 		// Handle arguments.
 		LaunchCommand launchArgValues = new LaunchCommand();
 		try {
@@ -65,9 +68,6 @@ public class Main {
 				return;
 			}
 		}
-
-		// Add a class reference for our UI module.
-		Bootstrap.setWeldConsumer(weld -> weld.addPackage(true, Main.class));
 
 		// Invoke the bootstrapper, initializing the UI once the container is built.
 		recaf = Bootstrap.get();
