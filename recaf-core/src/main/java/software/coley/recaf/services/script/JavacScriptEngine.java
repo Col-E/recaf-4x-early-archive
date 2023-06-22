@@ -64,7 +64,8 @@ public class JavacScriptEngine implements ScriptEngine {
 			"org.objectweb.asm.*",
 			"org.objectweb.asm.tree.*",
 			"jakarta.enterprise.context.*",
-			"jakarta.inject.*"
+			"jakarta.inject.*",
+			"org.slf4j.Logger"
 	);
 	private final Map<Integer, GenerateResult> generateResultMap = new HashMap<>();
 	private final ExecutorService compileAndRunPool = ThreadPoolFactory.newSingleThreadExecutor("script-loader");
@@ -242,6 +243,7 @@ public class JavacScriptEngine implements ScriptEngine {
 		// Create code (just a basic class with a static 'run' method)
 		StringBuilder code = new StringBuilder(
 				"@Dependent public class " + className + " implements Runnable, Opcodes { " +
+						"private static final Logger log = Logging.get(\"script\"); " +
 						"Workspace workspace; " +
 						"@Inject " + className +"(Workspace workspace) { this.workspace = workspace; } " +
 						"public void run() {\n" + script + "\n" + "}" +
