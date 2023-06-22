@@ -8,6 +8,7 @@ import picocli.CommandLine.Option;
 import software.coley.recaf.Bootstrap;
 import software.coley.recaf.RecafBuildConfig;
 import software.coley.recaf.services.Service;
+import software.coley.recaf.util.StringUtil;
 
 import java.io.File;
 import java.util.Comparator;
@@ -56,12 +57,17 @@ public class LaunchCommand implements Callable<Boolean> {
 			return true;
 		}
 		if (listServices) {
-			BeanManager beanManager = Bootstrap.get().getContainer().getBeanManager();
-			List<Bean<?>> beans = beanManager.getBeans(Service.class).stream()
-					.sorted(Comparator.comparing(o -> o.getBeanClass().getName()))
-					.toList();
-			for (Bean<?> bean : beans)
-				System.out.println(" - " + bean.getBeanClass().getName());
+			try {
+				BeanManager beanManager = Bootstrap.get().getContainer().getBeanManager();
+				List<Bean<?>> beans = beanManager.getBeans(Service.class).stream()
+						.sorted(Comparator.comparing(o -> o.getBeanClass().getName()))
+						.toList();
+				for (Bean<?> bean : beans)
+					System.out.println(" - " + bean.getBeanClass().getName());
+			} catch (Throwable t) {
+				System.out.println("Error occurred iterating over services...");
+				System.out.println(StringUtil.traceToString(t));
+			}
 			System.out.println("=====================================================");
 			return true;
 		}
