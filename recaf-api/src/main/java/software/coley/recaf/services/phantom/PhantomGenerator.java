@@ -2,6 +2,7 @@ package software.coley.recaf.services.phantom;
 
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.services.Service;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
@@ -12,7 +13,7 @@ import java.util.Collection;
  *
  * @author Matt Coley
  */
-public interface PhantomGenerator {
+public interface PhantomGenerator extends Service {
 	/**
 	 * @param workspace
 	 * 		Workspace to scan for classes with missing references.

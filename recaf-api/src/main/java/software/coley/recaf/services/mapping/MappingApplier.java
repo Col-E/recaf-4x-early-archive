@@ -9,6 +9,8 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.properties.builtin.HasMappedReferenceProperty;
 import software.coley.recaf.info.properties.builtin.OriginalClassNameProperty;
 import software.coley.recaf.info.properties.builtin.RemapOriginTaskProperty;
+import software.coley.recaf.services.Service;
+import software.coley.recaf.services.ServiceConfig;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
@@ -29,19 +31,23 @@ import java.util.stream.Stream;
  * @see MappingResults
  */
 @WorkspaceScoped
-public class MappingApplier {
-	private static final ExecutorService applierThreadPool = ThreadPoolFactory.newFixedThreadPool("mapping-applier");
+public class MappingApplier implements Service {
+	public static final String SERVICE_ID = "mapping-applier";
+	private static final ExecutorService applierThreadPool = ThreadPoolFactory.newFixedThreadPool(SERVICE_ID);
 	private final InheritanceGraph inheritanceGraph;
 	private final AggregateMappingManager aggregateMappingManager;
 	private final Workspace workspace;
+	private final MappingApplierConfig config;
 
 	@Inject
-	public MappingApplier(@Nonnull InheritanceGraph inheritanceGraph,
+	public MappingApplier(@Nonnull MappingApplierConfig config,
+						  @Nonnull InheritanceGraph inheritanceGraph,
 						  @Nonnull AggregateMappingManager aggregateMappingManager,
 						  @Nonnull Workspace workspace) {
 		this.inheritanceGraph = inheritanceGraph;
 		this.aggregateMappingManager = aggregateMappingManager;
 		this.workspace = workspace;
+		this.config = config;
 	}
 
 	/**
@@ -168,5 +174,17 @@ public class MappingApplier {
 			// Add to the results collection.
 			results.add(workspace, resource, bundle, classInfo, updatedInfo);
 		}
+	}
+
+	@Nonnull
+	@Override
+	public String getServiceId() {
+		return SERVICE_ID;
+	}
+
+	@Nonnull
+	@Override
+	public MappingApplierConfig getServiceConfig() {
+		return config;
 	}
 }

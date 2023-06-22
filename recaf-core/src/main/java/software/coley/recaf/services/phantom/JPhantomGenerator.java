@@ -2,6 +2,7 @@ package software.coley.recaf.services.phantom;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.clyze.jphantom.ClassMembers;
 import org.clyze.jphantom.JPhantom;
 import org.clyze.jphantom.Options;
@@ -39,7 +40,14 @@ import java.util.stream.Collectors;
  */
 @ApplicationScoped
 public class JPhantomGenerator implements PhantomGenerator {
+	public static final String SERVICE_ID = "jphantom-generator";
 	private static final Logger logger = Logging.get(JPhantomGenerator.class);
+	private final JPhantomGeneratorConfig config;
+
+	@Inject
+	public JPhantomGenerator(@Nonnull JPhantomGeneratorConfig config) {
+		this.config = config;
+	}
 
 	@Nonnull
 	@Override
@@ -251,5 +259,17 @@ public class JPhantomGenerator implements PhantomGenerator {
 		};
 		classReader.accept(cv, ClassReader.SKIP_FRAMES);
 		return cw.toByteArray();
+	}
+
+	@Nonnull
+	@Override
+	public String getServiceId() {
+		return SERVICE_ID;
+	}
+
+	@Nonnull
+	@Override
+	public JPhantomGeneratorConfig getServiceConfig() {
+		return config;
 	}
 }
