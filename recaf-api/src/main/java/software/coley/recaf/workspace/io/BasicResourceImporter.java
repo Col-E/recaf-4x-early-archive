@@ -153,7 +153,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 			try {
 				info = infoImporter.readInfo(entryName, headerSource);
 			} catch (IOException ex) {
-				logger.error("IO error reading ZIP entry '{}' - skipping", entryName);
+				logger.error("IO error reading ZIP entry '{}' - skipping", entryName, ex);
 				return;
 			}
 
@@ -270,7 +270,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 					addInfo(classes, files, androidClassBundles, versionedJvmClassBundles, embeddedResources,
 							source, fileName, info);
 				} catch (IOException ex) {
-					logger.error("IO error reading ZIP entry '{}' - skipping", file);
+					logger.error("IO error reading ZIP entry '{}' - skipping", file, ex);
 				}
 
 				return FileVisitResult.CONTINUE;
