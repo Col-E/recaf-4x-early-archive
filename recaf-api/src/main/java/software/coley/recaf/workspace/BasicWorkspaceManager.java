@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.workspace.model.EmptyWorkspace;
@@ -24,7 +25,13 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 	private final List<WorkspaceOpenListener> openListeners = new ArrayList<>();
 	private final List<WorkspaceCloseListener> closeListeners = new ArrayList<>();
 	private final List<WorkspaceModificationListener> defaultModificationListeners = new ArrayList<>();
+	private final WorkspaceManagerConfig config;
 	private Workspace current;
+
+	@Inject
+	public BasicWorkspaceManager(@Nonnull WorkspaceManagerConfig config) {
+		this.config = config;
+	}
 
 	@Override
 	@Produces
@@ -124,5 +131,17 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 	@Override
 	public void removeDefaultWorkspaceModificationListeners(WorkspaceModificationListener listener) {
 		defaultModificationListeners.remove(listener);
+	}
+
+	@Nonnull
+	@Override
+	public String getServiceId() {
+		return SERVICE_ID;
+	}
+
+	@Nonnull
+	@Override
+	public WorkspaceManagerConfig getServiceConfig() {
+		return config;
 	}
 }
