@@ -29,7 +29,7 @@ class InfoImporterTest {
 
 	@BeforeAll
 	static void setup() {
-		importer = new BasicInfoImporter(mockedPatcher);
+		importer = new BasicInfoImporter(new InfoImporterConfig(), mockedPatcher);
 	}
 
 	@Test

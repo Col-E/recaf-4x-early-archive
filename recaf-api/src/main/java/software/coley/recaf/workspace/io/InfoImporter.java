@@ -2,6 +2,7 @@ package software.coley.recaf.workspace.io;
 
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.Info;
+import software.coley.recaf.services.Service;
 import software.coley.recaf.util.io.ByteSource;
 
 import java.io.IOException;
@@ -11,7 +12,9 @@ import java.io.IOException;
  *
  * @author Matt Coley
  */
-public interface InfoImporter {
+public interface InfoImporter extends Service {
+	String SERVICE_ID = "info-importer";
+
 	/**
 	 * @param name
 	 * 		Name to pass for {@link Info#getName()} if it cannot be inferred from the content source.

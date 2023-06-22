@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.builder.*;
+import software.coley.recaf.services.ServiceConfig;
 import software.coley.recaf.util.ByteHeaderUtil;
 import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.io.ByteSource;
@@ -26,10 +27,12 @@ import java.io.IOException;
 public class BasicInfoImporter implements InfoImporter {
 	private static final Logger logger = Logging.get(BasicInfoImporter.class);
 	private final ClassPatcher classPatcher;
+	private final InfoImporterConfig config;
 
 	@Inject
-	public BasicInfoImporter(ClassPatcher classPatcher) {
+	public BasicInfoImporter(@Nonnull InfoImporterConfig config, @Nonnull ClassPatcher classPatcher) {
 		this.classPatcher = classPatcher;
+		this.config = config;
 	}
 
 	@Nonnull
@@ -180,5 +183,17 @@ public class BasicInfoImporter implements InfoImporter {
 		} catch (Throwable t) {
 			return false;
 		}
+	}
+
+	@Nonnull
+	@Override
+	public String getServiceId() {
+		return SERVICE_ID;
+	}
+
+	@Nonnull
+	@Override
+	public InfoImporterConfig getServiceConfig() {
+		return config;
 	}
 }
