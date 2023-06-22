@@ -13,7 +13,6 @@ import software.coley.recaf.services.script.ScriptEngine;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.JFXValidation;
 import software.coley.recaf.util.Lang;
-import software.coley.recaf.workspace.PathLoadingManager;
 import software.coley.recaf.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.io.ResourceImporter;
 import software.coley.recaf.workspace.model.BasicWorkspace;
@@ -85,11 +84,11 @@ public class Main {
 		initLogging();
 		if (launchArgs.isHeadless()) {
 			initPlugins();
-			initHandling();
+			initHandleInputs();
 		} else {
 			initTranslations();
 			initPlugins();
-			FxThreadUtil.delayedRun(500, Main::initHandling);
+			FxThreadUtil.delayedRun(500, Main::initHandleInputs);
 			RecafApplication.launch(RecafApplication.class, launchArgs.getArgs());
 		}
 	}
@@ -171,7 +170,7 @@ public class Main {
 		}
 	}
 
-	private static void initHandling() {
+	private static void initHandleInputs() {
 		// Open initial file if found.
 		try {
 			File input = launchArgs.getInput();
