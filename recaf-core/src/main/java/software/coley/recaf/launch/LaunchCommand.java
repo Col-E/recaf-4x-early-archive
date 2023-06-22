@@ -10,8 +10,11 @@ import software.coley.recaf.RecafBuildConfig;
 import software.coley.recaf.services.Service;
 
 import java.io.File;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 /**
  * Launch arguments for Recaf.
@@ -21,7 +24,7 @@ import java.util.concurrent.Callable;
  */
 @Command(name = "recaf", mixinStandardHelpOptions = true, version = RecafBuildConfig.VERSION,
 		description = "Recaf: The modern Java reverse engineering tool.")
-public class LaunchCommand implements Callable<Void> {
+public class LaunchCommand implements Callable<Boolean> {
 	@Option(names = {"-i", "--input"}, description = "Input to load into a workspace on startup.")
 	private File input;
 	@Option(names = {"-s", "--script"}, description = "Script to run on startup.")
@@ -34,7 +37,7 @@ public class LaunchCommand implements Callable<Void> {
 	private boolean listServices;
 
 	@Override
-	public Void call() throws Exception {
+	public Boolean call() throws Exception {
 		if (version || listServices)
 			System.out.println("======================= RECAF =======================");
 		if (version) {
@@ -50,15 +53,19 @@ public class LaunchCommand implements Callable<Void> {
 					RecafBuildConfig.GIT_DATE,
 					RecafBuildConfig.GIT_BRANCH
 			);
+			return true;
 		}
 		if (listServices) {
 			BeanManager beanManager = Bootstrap.get().getContainer().getBeanManager();
-			Set<Bean<?>> beans = beanManager.getBeans(Service.class);
+			List<Bean<?>> beans = beanManager.getBeans(Service.class).stream()
+					.sorted(Comparator.comparing(o -> o.getBeanClass().getName()))
+					.toList();
 			for (Bean<?> bean : beans)
 				System.out.println(" - " + bean.getBeanClass().getName());
 			System.out.println("=====================================================");
+			return true;
 		}
-		return null;
+		return false;
 	}
 
 	/**

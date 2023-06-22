@@ -48,7 +48,14 @@ public class Main {
 	public static void main(String[] args) {
 		// Handle arguments.
 		LaunchCommand launchArgValues = new LaunchCommand();
-		CommandLine.populateCommand(launchArgValues, args);
+		try {
+			CommandLine.populateCommand(launchArgValues, args);
+			if (launchArgValues.call())
+				return;
+		} catch (Exception ex) {
+			CommandLine.usage(launchArgValues, System.out);
+			return;
+		}
 
 		// Validate the JFX environment is available if not running in headless mode.
 		// Abort if not available.
