@@ -54,7 +54,7 @@ public class JavacCompiler implements Service {
 	public CompilerResult compile(@Nonnull JavacArguments arguments,
 								  @Nullable Workspace workspace,
 								  @Nullable JavacListener listener) {
-		return compile(arguments, workspace, listener);
+		return compile(arguments, workspace, null, listener);
 	}
 
 	/**
